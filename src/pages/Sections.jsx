@@ -30,14 +30,6 @@ const sections = [
     description: 'Scouts offers a broad range of activities designed to develop skills for life. From camping expeditions to community projects, Scouts challenge themselves and make a difference.',
     activities: ['Expeditions', 'Camping', 'Water activities', 'Climbing', 'Pioneering', 'International trips'],
   },
-  {
-    name: 'Explorers',
-    ages: '14-18 years',
-    color: '#003d4c',
-    tagline: 'Leadership and independence',
-    description: 'Explorer Scouts take on more responsibility for their own programme and development. They work towards their Duke of Edinburgh Awards and have opportunities for international adventures.',
-    activities: ['DofE Awards', 'Young Leaders', 'International experiences', 'Community action', 'Adventurous activities', 'Leadership development'],
-  },
 ];
 
 export default function Sections() {
