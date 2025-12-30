@@ -7,14 +7,6 @@ import { ArrowRight } from 'lucide-react';
 
 const sections = [
   {
-    name: 'Squirrels',
-    ages: '4-6 years',
-    color: '#e63329',
-    tagline: 'The first step into scouting',
-    description: 'Squirrels is our youngest section, designed for children aged 4-6. Through games, crafts, songs and stories, Squirrels begin their scouting adventure in a fun, safe environment.',
-    activities: ['Creative play', 'Simple crafts', 'Story time', 'Games and songs', 'Nature exploration', 'Making friends'],
-  },
-  {
     name: 'Beavers',
     ages: '6-8 years',
     color: '#006eb6',
