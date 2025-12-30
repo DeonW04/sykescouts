@@ -30,8 +30,8 @@ export default function Layout({ children, currentPageName }) {
                 </svg>
               </div>
               <div>
-                <span className="text-xl font-bold text-[#7413dc]">Scouts</span>
-                <span className="block text-xs text-gray-500">Your Scout Group</span>
+                <span className="text-xl font-bold text-[#7413dc]">40th Rochdale</span>
+                <span className="block text-xs text-gray-500">Syke Scout Group</span>
               </div>
             </Link>
 
