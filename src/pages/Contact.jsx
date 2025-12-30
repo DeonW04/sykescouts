@@ -36,17 +36,17 @@ export default function Contact() {
     {
       icon: MapPin,
       title: 'Our Location',
-      details: ['Scout Headquarters', '[Your Address Here]', '[Town, Postcode]'],
+      details: ['Syke Methodist Church', '206 Syke Road', 'Syke, OL12 9TF'],
     },
     {
       icon: Mail,
       title: 'Email Us',
-      details: ['[your-email@example.com]', 'We aim to respond within 48 hours'],
+      details: ['info@sykescouts.org', 'We aim to respond within 48 hours'],
     },
     {
       icon: Clock,
       title: 'Meeting Times',
-      details: ['Beavers: [Day] 6:00pm', 'Cubs: [Day] 6:30pm', 'Scouts: [Day] 7:00pm'],
+      details: ['Beavers: Tuesday 6:15pm-7:30pm', 'Cubs: Thursday 6:15-7:30pm', 'Scouts: Thursday 7:45-9:15pm'],
     },
   ];
 
