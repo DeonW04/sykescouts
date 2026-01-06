@@ -93,17 +93,17 @@ export default function HeroSection() {
               Join our scout group for adventure, friendship, and personal growth. 
               We help young people aged 6-14 develop confidence, teamwork, and leadership skills.
             </p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Link to={createPageUrl('JoinUs')}>
-                <Button size="lg" className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white px-8">
+            <div className="mt-8 flex flex-wrap gap-4 relative z-10">
+              <Link to={createPageUrl('JoinUs')} className="inline-block">
+                <button className="px-8 py-3 bg-[#7413dc] hover:bg-[#5c0fb0] text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2">
                   Join Scouts
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
+                  <ArrowRight className="w-5 h-5" />
+                </button>
               </Link>
-              <Link to={createPageUrl('About')}>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-black">
+              <Link to={createPageUrl('About')} className="inline-block">
+                <button className="px-8 py-3 border-2 border-white text-white hover:bg-white hover:text-black rounded-lg font-medium transition-colors duration-200">
                   Learn More
-                </Button>
+                </button>
               </Link>
             </div>
           </motion.div>
