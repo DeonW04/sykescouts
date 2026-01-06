@@ -1,9 +1,71 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Play } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const ImageCarousel = () => {
+  const images = [
+    'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/2e87b5f25_492395842_2704743879914647_1991593466070344351_n_2704743866581315.jpg',
+    'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/b5c4d9296_campfire.jpg',
+    'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/a7545720b_487691994_10162610204869169_513148409949064129_n_10162610203574169.jpg',
+  ];
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % images.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const goToNext = () => setCurrentIndex((prev) => (prev + 1) % images.length);
+  const goToPrev = () => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+
+  return (
+    <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border-4 border-white/20">
+      <AnimatePresence mode="wait">
+        <motion.img
+          key={currentIndex}
+          src={images[currentIndex]}
+          alt="Scout group activities"
+          className="w-full h-full object-cover"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        />
+      </AnimatePresence>
+
+      <button
+        onClick={goToPrev}
+        className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-all"
+      >
+        <ChevronLeft className="w-6 h-6" />
+      </button>
+      <button
+        onClick={goToNext}
+        className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-all"
+      >
+        <ChevronRight className="w-6 h-6" />
+      </button>
+
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+        {images.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => setCurrentIndex(idx)}
+            className={`w-2 h-2 rounded-full transition-all ${
+              idx === currentIndex ? 'bg-white w-6' : 'bg-white/50'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
 
 export default function HeroSection() {
   return (
@@ -29,7 +91,7 @@ export default function HeroSection() {
             </h1>
             <p className="mt-6 text-lg text-gray-200 max-w-xl">
               Join our scout group for adventure, friendship, and personal growth. 
-              We help young people aged 4-18 develop confidence, teamwork, and leadership skills.
+              We help young people aged 6-14 develop confidence, teamwork, and leadership skills.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link to={createPageUrl('JoinUs')}>
@@ -39,29 +101,21 @@ export default function HeroSection() {
                 </Button>
               </Link>
               <Link to={createPageUrl('About')}>
-                <Button size="lg" variant="outline" className="border-white text-black hover:bg-white hover:text-[#004851]">
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#004851]">
                   Learn More
                 </Button>
               </Link>
             </div>
           </motion.div>
 
-          {/* Image Placeholder */}
+          {/* Image Carousel */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="relative"
           >
-            <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-[#7413dc] to-[#004851] flex items-center justify-center border-4 border-white/20">
-              <div className="text-center p-8">
-                <div className="w-20 h-20 mx-auto mb-4 bg-white/20 rounded-full flex items-center justify-center">
-                  <Play className="w-10 h-10 text-white ml-1" />
-                </div>
-                <p className="text-white/80 text-sm">Your photos will appear here</p>
-                <p className="text-white/60 text-xs mt-1">Upload images to customize</p>
-              </div>
-            </div>
+            <ImageCarousel />
             {/* Decorative Elements */}
             <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-[#ffe627] rounded-lg -z-10" />
             <div className="absolute -top-4 -right-4 w-16 h-16 bg-[#7413dc] rounded-full -z-10" />
