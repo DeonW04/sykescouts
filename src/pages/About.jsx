@@ -201,7 +201,7 @@ Our group is run by volunteers, and we’re always looking for adults who can he
               </Button>
             </Link>
             <Link to={createPageUrl('Volunteer')}>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-[#7413dc]">
+              <Button size="lg" className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-[#7413dc]">
                 Volunteer With Us
               </Button>
             </Link>
