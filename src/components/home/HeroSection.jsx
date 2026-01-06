@@ -29,7 +29,7 @@ export default function HeroSection() {
             </h1>
             <p className="mt-6 text-lg text-gray-200 max-w-xl">
               Join our scout group for adventure, friendship, and personal growth. 
-              We help young people aged 4-18 develop confidence, teamwork, and leadership skills.
+              We help young people aged 6-14 develop confidence, teamwork, and leadership skills.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link to={createPageUrl('JoinUs')}>
