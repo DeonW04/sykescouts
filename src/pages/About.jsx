@@ -7,27 +7,27 @@ import { motion } from 'framer-motion';
 
 export default function About() {
   const values = [
-    {
-      icon: Heart,
-      title: 'Integrity',
-      description: 'We act with integrity and do what is right.',
-    },
-    {
-      icon: Users,
-      title: 'Respect',
-      description: 'We show respect for others and ourselves.',
-    },
-    {
-      icon: Target,
-      title: 'Care',
-      description: 'We support others and take care of the world around us.',
-    },
-    {
-      icon: Award,
-      title: 'Belief',
-      description: 'We explore our beliefs, attitudes and spirituality.',
-    },
-  ];
+  {
+    icon: Heart,
+    title: 'Integrity',
+    description: 'We act with integrity and do what is right.'
+  },
+  {
+    icon: Users,
+    title: 'Respect',
+    description: 'We show respect for others and ourselves.'
+  },
+  {
+    icon: Target,
+    title: 'Care',
+    description: 'We support others and take care of the world around us.'
+  },
+  {
+    icon: Award,
+    title: 'Belief',
+    description: 'We explore our beliefs, attitudes and spirituality.'
+  }];
+
 
   return (
     <div className="min-h-screen">
@@ -37,8 +37,8 @@ export default function About() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-3xl"
-          >
+            className="max-w-3xl">
+
             <h1 className="text-4xl md:text-5xl font-bold text-white">
               About Our Scout Group
             </h1>
@@ -57,8 +57,8 @@ export default function About() {
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
+              viewport={{ once: true }}>
+
               <h2 className="text-3xl font-bold text-gray-900">
                 Welcome to Our Group
               </h2>
@@ -73,10 +73,10 @@ export default function About() {
                 to community service, from earning badges to international jamborees - 
                 there's always something exciting happening!
               </p>
-              <p className="mt-4 text-gray-600 leading-relaxed">
-                Whether your child is looking to try new activities, make new friends, 
-                or develop confidence and leadership skills, our scout group provides 
-                a supportive and inclusive environment for them to thrive.
+              <p className="mt-4 text-gray-600 leading-relaxed">Whether your child is looking to try new activities, make new friends, or develop confidence and leadership skills, our scout group provides a supportive and inclusive environment for them to thrive.
+
+Our group is run by volunteers, and we’re always looking for adults who can help, whether regularly or occasionally. No previous experience is needed, and full support and training are provided — just enthusiasm and a willingness to get involved.
+
               </p>
             </motion.div>
 
@@ -85,8 +85,8 @@ export default function About() {
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-[#7413dc]/20 to-[#004851]/20 flex items-center justify-center border-2 border-dashed border-gray-300"
-            >
+              className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-[#7413dc]/20 to-[#004851]/20 flex items-center justify-center border-2 border-dashed border-gray-300">
+
               <div className="text-center p-8">
                 <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
                   <Users className="w-8 h-8 text-gray-400" />
@@ -106,8 +106,8 @@ export default function About() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-3xl font-bold text-gray-900 text-center mb-12"
-          >
+            className="text-3xl font-bold text-gray-900 text-center mb-12">
+
             When & Where We Meet
           </motion.h2>
 
@@ -116,8 +116,8 @@ export default function About() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="bg-white rounded-xl p-8 shadow-sm"
-            >
+              className="bg-white rounded-xl p-8 shadow-sm">
+
               <div className="w-12 h-12 bg-[#7413dc]/10 rounded-lg flex items-center justify-center mb-4">
                 <MapPin className="w-6 h-6 text-[#7413dc]" />
               </div>
@@ -134,8 +134,8 @@ export default function About() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="bg-white rounded-xl p-8 shadow-sm"
-            >
+              className="bg-white rounded-xl p-8 shadow-sm">
+
               <div className="w-12 h-12 bg-[#7413dc]/10 rounded-lg flex items-center justify-center mb-4">
                 <Clock className="w-6 h-6 text-[#7413dc]" />
               </div>
@@ -157,8 +157,8 @@ export default function About() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
-          >
+            className="text-center mb-12">
+
             <h2 className="text-3xl font-bold text-gray-900">Our Scout Values</h2>
             <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
               These values guide everything we do at Scouts
@@ -166,22 +166,22 @@ export default function About() {
           </motion.div>
 
           <div className="grid md:grid-cols-4 gap-6">
-            {values.map((value, index) => (
-              <motion.div
-                key={value.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="text-center p-6"
-              >
+            {values.map((value, index) =>
+            <motion.div
+              key={value.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+              className="text-center p-6">
+
                 <div className="w-16 h-16 mx-auto bg-[#7413dc] rounded-full flex items-center justify-center mb-4">
                   <value.icon className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="font-bold text-gray-900 text-lg">{value.title}</h3>
                 <p className="mt-2 text-gray-600 text-sm">{value.description}</p>
               </motion.div>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -208,6 +208,6 @@ export default function About() {
           </div>
         </div>
       </section>
-    </div>
-  );
+    </div>);
+
 }
