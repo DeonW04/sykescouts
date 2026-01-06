@@ -127,9 +127,6 @@ export default function About() {
                 [Your Address Here]<br />
                 [Town, Postcode]
               </p>
-              <p className="mt-4 text-sm text-gray-500">
-                Please update with your actual meeting location
-              </p>
             </motion.div>
 
             <motion.div
