@@ -23,16 +23,12 @@ export default function Layout({ children, currentPageName }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
-            <Link to={createPageUrl('Home')} className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-[#7413dc] rounded-full flex items-center justify-center">
-                <svg viewBox="0 0 100 100" className="w-8 h-8 text-white fill-current">
-                  <path d="M50 10 L60 40 L90 40 L65 60 L75 90 L50 70 L25 90 L35 60 L10 40 L40 40 Z" />
-                </svg>
-              </div>
-              <div>
-                <span className="text-xl font-bold text-[#7413dc]">40th Rochdale</span>
-                <span className="block text-xs text-gray-500">Syke Scout Group</span>
-              </div>
+            <Link to={createPageUrl('Home')} className="flex items-center">
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png" 
+                alt="40th Rochdale (Syke) Scouts" 
+                className="h-16 w-auto"
+              />
             </Link>
 
             {/* Desktop Nav */}
