@@ -154,7 +154,7 @@ export default function Layout({ children, currentPageName }) {
 
           <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-500">
-              © {new Date().getFullYear()} Your Scout Group. All rights reserved.
+              © {new Date().getFullYear()} 40th Rochdale (Syke) Scouts. All rights reserved.
             </p>
             <p className="text-xs text-gray-500">
               Part of The Scout Association, registered charity number 306101 (England and Wales)
