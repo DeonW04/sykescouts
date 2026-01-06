@@ -8,6 +8,8 @@ import Sections from './pages/Sections';
 import Volunteer from './pages/Volunteer';
 import ParentDashboard from './pages/ParentDashboard';
 import LeaderDashboard from './pages/LeaderDashboard';
+import LeaderMembers from './pages/LeaderMembers';
+import MemberDetail from './pages/MemberDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -22,6 +24,8 @@ export const PAGES = {
     "Volunteer": Volunteer,
     "ParentDashboard": ParentDashboard,
     "LeaderDashboard": LeaderDashboard,
+    "LeaderMembers": LeaderMembers,
+    "MemberDetail": MemberDetail,
 }
 
 export const pagesConfig = {
