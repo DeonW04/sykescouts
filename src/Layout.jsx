@@ -1,11 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { base44 } from '@/api/base44Client';
 
 export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isLeader, setIsLeader] = useState(false);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (isAuth) {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+        
+        if (currentUser.role === 'admin') {
+          setIsLeader(true);
+        } else {
+          const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
+          setIsLeader(leaders.length > 0);
+        }
+      }
+    } catch (error) {
+      setUser(null);
+      setIsLeader(false);
+    }
+  };
 
   const navLinks = [
     { name: 'Home', page: 'Home' },
@@ -48,16 +75,32 @@ export default function Layout({ children, currentPageName }) {
 
             {/* CTA Buttons */}
             <div className="hidden lg:flex items-center gap-3">
-              <Link to={createPageUrl('JoinUs')}>
-                <Button variant="outline" className="border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white">
-                  Join Scouts
-                </Button>
-              </Link>
-              <Link to={createPageUrl('Volunteer')}>
-                <Button className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white">
-                  Volunteer
-                </Button>
-              </Link>
+              {!user ? (
+                <>
+                  <Link to={createPageUrl('JoinUs')}>
+                    <Button variant="outline" className="border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white">
+                      Join Scouts
+                    </Button>
+                  </Link>
+                  <Link to={createPageUrl('Volunteer')}>
+                    <Button className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white">
+                      Volunteer
+                    </Button>
+                  </Link>
+                  <button
+                    onClick={() => base44.auth.redirectToLogin()}
+                    className="px-6 py-2 bg-[#004851] hover:bg-[#003840] text-white rounded-lg font-medium transition-colors"
+                  >
+                    Parent / Leader Sign In
+                  </button>
+                </>
+              ) : (
+                <Link to={createPageUrl(isLeader ? 'LeaderDashboard' : 'ParentDashboard')}>
+                  <Button className="bg-[#004851] hover:bg-[#003840] text-white">
+                    {isLeader ? 'Leader Portal' : 'Parent Portal'}
+                  </Button>
+                </Link>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -91,16 +134,35 @@ export default function Layout({ children, currentPageName }) {
                 </Link>
               ))}
               <div className="flex flex-col gap-3 pt-4 border-t border-gray-100">
-                <Link to={createPageUrl('JoinUs')} onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="outline" className="w-full border-[#7413dc] text-[#7413dc]">
-                    Join Scouts
-                  </Button>
-                </Link>
-                <Link to={createPageUrl('Volunteer')} onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="w-full bg-[#7413dc] hover:bg-[#5c0fb0] text-white">
-                    Volunteer
-                  </Button>
-                </Link>
+                {!user ? (
+                  <>
+                    <Link to={createPageUrl('JoinUs')} onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full border-[#7413dc] text-[#7413dc]">
+                        Join Scouts
+                      </Button>
+                    </Link>
+                    <Link to={createPageUrl('Volunteer')} onClick={() => setMobileMenuOpen(false)}>
+                      <Button className="w-full bg-[#7413dc] hover:bg-[#5c0fb0] text-white">
+                        Volunteer
+                      </Button>
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        base44.auth.redirectToLogin();
+                      }}
+                      className="w-full px-6 py-2 bg-[#004851] hover:bg-[#003840] text-white rounded-lg font-medium transition-colors"
+                    >
+                      Parent / Leader Sign In
+                    </button>
+                  </>
+                ) : (
+                  <Link to={createPageUrl(isLeader ? 'LeaderDashboard' : 'ParentDashboard')} onClick={() => setMobileMenuOpen(false)}>
+                    <Button className="w-full bg-[#004851] hover:bg-[#003840] text-white">
+                      {isLeader ? 'Leader Portal' : 'Parent Portal'}
+                    </Button>
+                  </Link>
+                )}
               </div>
             </nav>
           </div>
