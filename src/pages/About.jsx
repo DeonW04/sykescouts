@@ -59,8 +59,8 @@ export default function About() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}>
 
-              <h2 className="text-3xl font-bold text-gray-900">
-                Welcome to Our Group
+              <h2 className="text-3xl font-bold text-gray-900">Welcome to Syke Scouts
+
               </h2>
               <p className="mt-4 text-gray-600 leading-relaxed">
                 Our scout group is part of The Scout Association, the UK's largest 
