@@ -5,13 +5,25 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Search, Plus, Users } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function LeaderMembers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sectionFilter, setSectionFilter] = useState('all');
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
+    parent_name: '',
+    parent_email: '',
+    parent_phone: '',
+    child_name: '',
+    child_dob: '',
+  });
 
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
@@ -51,6 +63,33 @@ export default function LeaderMembers() {
     return matchesSearch && matchesSection;
   });
 
+  const handleSendInvite = async (e) => {
+    e.preventDefault();
+    setSending(true);
+
+    try {
+      const response = await base44.functions.invoke('sendMemberInvite', inviteForm);
+      
+      if (response.data.success) {
+        toast.success('Invitation sent successfully!');
+        setShowInviteDialog(false);
+        setInviteForm({
+          parent_name: '',
+          parent_email: '',
+          parent_phone: '',
+          child_name: '',
+          child_dob: '',
+        });
+      } else {
+        toast.error('Failed to send invitation');
+      }
+    } catch (error) {
+      toast.error('Error sending invitation: ' + error.message);
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-[#004851] text-white py-8">
@@ -60,10 +99,85 @@ export default function LeaderMembers() {
               <h1 className="text-3xl font-bold">Members</h1>
               <p className="mt-2 text-white/80">{members.length} total members</p>
             </div>
-            <Button className="bg-white text-[#004851] hover:bg-gray-100">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Member
-            </Button>
+            <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+              <DialogTrigger asChild>
+                <Button className="bg-white text-[#004851] hover:bg-gray-100">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Member
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Invite Parent to Register Child</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSendInvite} className="space-y-4 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="parent_name">Parent Name *</Label>
+                    <Input
+                      id="parent_name"
+                      value={inviteForm.parent_name}
+                      onChange={(e) => setInviteForm({ ...inviteForm, parent_name: e.target.value })}
+                      required
+                      placeholder="Full name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="parent_email">Parent Email Address *</Label>
+                    <Input
+                      id="parent_email"
+                      type="email"
+                      value={inviteForm.parent_email}
+                      onChange={(e) => setInviteForm({ ...inviteForm, parent_email: e.target.value })}
+                      required
+                      placeholder="email@example.com"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="parent_phone">Parent Phone Number *</Label>
+                    <Input
+                      id="parent_phone"
+                      type="tel"
+                      value={inviteForm.parent_phone}
+                      onChange={(e) => setInviteForm({ ...inviteForm, parent_phone: e.target.value })}
+                      required
+                      placeholder="07xxx xxxxxx"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="child_name">Child's Name *</Label>
+                    <Input
+                      id="child_name"
+                      value={inviteForm.child_name}
+                      onChange={(e) => setInviteForm({ ...inviteForm, child_name: e.target.value })}
+                      required
+                      placeholder="Full name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="child_dob">Child's Date of Birth *</Label>
+                    <Input
+                      id="child_dob"
+                      type="date"
+                      value={inviteForm.child_dob}
+                      onChange={(e) => setInviteForm({ ...inviteForm, child_dob: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    disabled={sending}
+                    className="w-full bg-[#7413dc] hover:bg-[#5c0fb0]"
+                  >
+                    {sending ? 'Sending Invite...' : 'Send Invite'}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>

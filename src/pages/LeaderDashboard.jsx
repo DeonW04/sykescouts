@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -60,12 +62,12 @@ export default function LeaderDashboard() {
   }
 
   const quickActions = [
-    { icon: Users, label: 'Members', count: totalMembers, link: '/leader/members' },
-    { icon: CheckSquare, label: 'Attendance', count: 0, link: '/leader/attendance' },
-    { icon: Calendar, label: 'Programme', count: 0, link: '/leader/programme' },
-    { icon: Award, label: 'Badges', count: 0, link: '/leader/badges' },
-    { icon: Calendar, label: 'Events', count: 0, link: '/leader/events' },
-    { icon: Mail, label: 'Communications', count: 0, link: '/leader/communications' },
+    { icon: Users, label: 'Members', count: totalMembers, page: 'LeaderMembers' },
+    { icon: CheckSquare, label: 'Attendance', count: 0 },
+    { icon: Calendar, label: 'Programme', count: 0 },
+    { icon: Award, label: 'Badges', count: 0 },
+    { icon: Calendar, label: 'Events', count: 0 },
+    { icon: Mail, label: 'Communications', count: 0 },
   ];
 
   return (
@@ -101,8 +103,23 @@ export default function LeaderDashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-                <CardContent className="p-4 text-center">
+              {action.page ? (
+                <Link to={createPageUrl(action.page)}>
+                  <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+                    <CardContent className="p-4 text-center">
+                      <div className="w-12 h-12 mx-auto bg-[#004851]/10 rounded-full flex items-center justify-center mb-3">
+                        <action.icon className="w-6 h-6 text-[#004851]" />
+                      </div>
+                      <h3 className="text-sm font-medium text-gray-900">{action.label}</h3>
+                      {action.count > 0 && (
+                        <p className="text-xs text-gray-500 mt-1">{action.count} total</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Link>
+              ) : (
+                <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+                  <CardContent className="p-4 text-center">
                   <div className="w-12 h-12 mx-auto bg-[#004851]/10 rounded-full flex items-center justify-center mb-3">
                     <action.icon className="w-6 h-6 text-[#004851]" />
                   </div>
@@ -112,6 +129,7 @@ export default function LeaderDashboard() {
                   )}
                 </CardContent>
               </Card>
+              )}
             </motion.div>
           ))}
         </div>

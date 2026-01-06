@@ -10,6 +10,7 @@ import ParentDashboard from './pages/ParentDashboard';
 import LeaderDashboard from './pages/LeaderDashboard';
 import LeaderMembers from './pages/LeaderMembers';
 import MemberDetail from './pages/MemberDetail';
+import CompleteRegistration from './pages/CompleteRegistration';
 import __Layout from './Layout.jsx';
 
 
@@ -26,6 +27,7 @@ export const PAGES = {
     "LeaderDashboard": LeaderDashboard,
     "LeaderMembers": LeaderMembers,
     "MemberDetail": MemberDetail,
+    "CompleteRegistration": CompleteRegistration,
 }
 
 export const pagesConfig = {
