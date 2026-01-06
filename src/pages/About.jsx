@@ -123,12 +123,9 @@ export default function About() {
               </div>
               <h3 className="text-xl font-bold text-gray-900">Our Location</h3>
               <p className="mt-2 text-gray-600">
-                Scout Headquarters<br />
-                [Your Address Here]<br />
-                [Town, Postcode]
-              </p>
-              <p className="mt-4 text-sm text-gray-500">
-                Please update with your actual meeting location
+                Syke Methodist Church<br />
+                206 Syke Road<br />
+                Rochdale, OL12 9TF
               </p>
             </motion.div>
 
@@ -144,13 +141,10 @@ export default function About() {
               </div>
               <h3 className="text-xl font-bold text-gray-900">Meeting Times</h3>
               <ul className="mt-2 space-y-2 text-gray-600">
-                <li><strong>Beavers:</strong> [Day] 6:00pm - 7:00pm</li>
-                <li><strong>Cubs:</strong> [Day] 6:30pm - 8:00pm</li>
-                <li><strong>Scouts:</strong> [Day] 7:00pm - 9:00pm</li>
+                <li><strong>Beavers:</strong> Tuesday 6:15pm - 7:30pm</li>
+                <li><strong>Cubs:</strong> Thursday 6:15pm - 7:30pm</li>
+                <li><strong>Scouts:</strong> Thursday 7:45pm - 9:15pm</li>
               </ul>
-              <p className="mt-4 text-sm text-gray-500">
-                Please update with your actual meeting times
-              </p>
             </motion.div>
           </div>
         </div>
