@@ -33,11 +33,9 @@ export default function JoinUs() {
   const [submitted, setSubmitted] = useState(false);
 
   const sections = [
-    { value: 'squirrels', label: 'Squirrels (4-6 years)' },
     { value: 'beavers', label: 'Beavers (6-8 years)' },
     { value: 'cubs', label: 'Cubs (8-10½ years)' },
     { value: 'scouts', label: 'Scouts (10½-14 years)' },
-    { value: 'explorers', label: 'Explorers (14-18 years)' },
   ];
 
   const handleSubmit = async (e) => {

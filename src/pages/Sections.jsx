@@ -47,7 +47,7 @@ export default function Sections() {
               Our Sections
             </h1>
             <p className="mt-6 text-xl text-gray-200">
-              From ages 4 to 18, we have a section for every young person ready for adventure
+              From ages 6 to 14, we have a section for every young person ready for adventure
             </p>
           </motion.div>
         </div>

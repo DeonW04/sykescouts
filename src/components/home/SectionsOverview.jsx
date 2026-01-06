@@ -5,12 +5,6 @@ import { motion } from 'framer-motion';
 
 const sections = [
   {
-    name: 'Squirrels',
-    ages: '4-6 years',
-    color: '#e63329',
-    description: 'First steps into scouting adventure',
-  },
-  {
     name: 'Beavers',
     ages: '6-8 years',
     color: '#006eb6',
@@ -27,12 +21,6 @@ const sections = [
     ages: '10½-14 years',
     color: '#004851',
     description: 'Camping, expeditions and challenges',
-  },
-  {
-    name: 'Explorers',
-    ages: '14-18 years',
-    color: '#003d4c',
-    description: 'Leadership and independence',
   },
 ];
 
@@ -54,7 +42,7 @@ export default function SectionsOverview() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {sections.map((section, index) => (
             <motion.div
               key={section.name}

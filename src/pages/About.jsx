@@ -64,7 +64,7 @@ export default function About() {
               </h2>
               <p className="mt-4 text-gray-600 leading-relaxed">
                 Our scout group is part of The Scout Association, the UK's largest 
-                youth organisation. We provide young people aged 4-18 with the opportunity 
+                youth organisation. We provide young people aged 6-14 with the opportunity 
                 to experience adventure, develop skills, and make lifelong friends.
               </p>
               <p className="mt-4 text-gray-600 leading-relaxed">
