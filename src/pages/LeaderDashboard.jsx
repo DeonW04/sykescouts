@@ -84,10 +84,12 @@ export default function LeaderDashboard() {
               </p>
             </div>
             {user.role === 'admin' && (
-              <Button className="bg-white text-[#004851] hover:bg-gray-100">
-                <Settings className="w-4 h-4 mr-2" />
-                Admin Settings
-              </Button>
+              <Link to={createPageUrl('AdminSettings')}>
+                <Button className="bg-white text-[#004851] hover:bg-gray-100">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Admin Settings
+                </Button>
+              </Link>
             )}
           </div>
         </div>
