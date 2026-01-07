@@ -8,7 +8,6 @@ import { motion } from 'framer-motion';
 
 export default function ParentDashboard() {
   const [user, setUser] = useState(null);
-  const [parent, setParent] = useState(null);
 
   useEffect(() => {
     loadUserData();
@@ -17,21 +16,16 @@ export default function ParentDashboard() {
   const loadUserData = async () => {
     const currentUser = await base44.auth.me();
     setUser(currentUser);
-
-    const parents = await base44.entities.Parent.filter({ user_id: currentUser.id });
-    if (parents.length > 0) {
-      setParent(parents[0]);
-    }
   };
 
   const { data: children = [] } = useQuery({
-    queryKey: ['children', parent?.id],
+    queryKey: ['children', user?.email],
     queryFn: async () => {
-      if (!parent) return [];
-      const members = await base44.entities.Member.filter({});
-      return members.filter(m => m.parent_ids?.includes(parent.id));
+      if (!user?.email) return [];
+      const members = await base44.entities.Member.filter({ parent_email: user.email });
+      return members;
     },
-    enabled: !!parent,
+    enabled: !!user?.email,
   });
 
   const { data: upcomingEvents = [] } = useQuery({
@@ -74,7 +68,7 @@ export default function ParentDashboard() {
     enabled: children.length > 0,
   });
 
-  if (!user || !parent) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
