@@ -147,6 +147,7 @@ export default function ParentDashboard() {
   ];
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-[#7413dc] text-white py-8">
@@ -408,5 +409,6 @@ export default function ParentDashboard() {
         </DialogFooter>
         </DialogContent>
         </Dialog>
+        </>
         );
         }
