@@ -298,57 +298,47 @@ export default function MemberDetail() {
 
           {/* Parents Tab */}
           <TabsContent value="parents" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Parent/Guardian</span>
-                  <div className="flex items-center gap-2">
-                    {member.parent_email && (
-                      <>
-                        <Badge variant={parentAccountExists ? "default" : "secondary"} className="flex items-center gap-1">
-                          {parentAccountExists ? (
-                            <>
-                              <CheckCircle className="w-3 h-3" />
-                              Account Linked
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="w-3 h-3" />
-                              No Account Yet
-                            </>
-                          )}
-                        </Badge>
-                        {!parentAccountExists && (
-                          <Button 
-                            size="sm"
-                            onClick={handleSendInvite}
-                            disabled={sendingInvite}
-                            className="bg-[#7413dc] hover:bg-[#5c0fb0]"
-                          >
-                            <Send className="w-3 h-3 mr-1" />
-                            {sendingInvite ? 'Sending...' : 'Send Invite'}
-                          </Button>
-                        )}
-                      </>
-                    )}
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Parent One</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-600">Name</p>
+                    <p className="font-medium">{member.parent_one_name || 'Not provided'}</p>
                   </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-600">Name</p>
-                  <p className="font-medium">{member.parent_name || 'Not provided'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-medium">{member.parent_email || 'Not provided'}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Phone</p>
-                  <p className="font-medium">{member.parent_phone || 'Not provided'}</p>
-                </div>
-              </CardContent>
-            </Card>
+                  <div>
+                    <p className="text-sm text-gray-600">Email</p>
+                    <p className="font-medium">{member.parent_one_email || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Phone</p>
+                    <p className="font-medium">{member.parent_one_phone || 'Not provided'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Parent Two</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-600">Name</p>
+                    <p className="font-medium">{member.parent_two_name || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Email</p>
+                    <p className="font-medium">{member.parent_two_email || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Phone</p>
+                    <p className="font-medium">{member.parent_two_phone || 'Not provided'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Medical Tab */}

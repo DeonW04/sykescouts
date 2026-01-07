@@ -70,9 +70,12 @@ export default function MyChild() {
       emergency_contact_name: child.emergency_contact_name || '',
       emergency_contact_phone: child.emergency_contact_phone || '',
       emergency_contact_relationship: child.emergency_contact_relationship || '',
-      parent_name: child.parent_name || '',
-      parent_email: child.parent_email || '',
-      parent_phone: child.parent_phone || '',
+      parent_one_name: child.parent_one_name || '',
+      parent_one_email: child.parent_one_email || '',
+      parent_one_phone: child.parent_one_phone || '',
+      parent_two_name: child.parent_two_name || '',
+      parent_two_email: child.parent_two_email || '',
+      parent_two_phone: child.parent_two_phone || '',
     });
     setEditMode(true);
   };
@@ -276,51 +279,99 @@ export default function MyChild() {
 
           {/* Parent Details Tab */}
           <TabsContent value="parent">
-            <Card>
-              <CardHeader>
-                <CardTitle>Parent/Guardian Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Parent/Guardian Name</Label>
-                  {editMode ? (
-                    <Input
-                      value={editForm.parent_name}
-                      onChange={(e) => setEditForm({ ...editForm, parent_name: e.target.value })}
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="mt-1 font-medium">{child.parent_name || 'Not provided'}</p>
-                  )}
-                </div>
-                <div>
-                  <Label>Email Address</Label>
-                  {editMode ? (
-                    <Input
-                      type="email"
-                      value={editForm.parent_email}
-                      onChange={(e) => setEditForm({ ...editForm, parent_email: e.target.value })}
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="mt-1 font-medium">{child.parent_email || 'Not provided'}</p>
-                  )}
-                </div>
-                <div>
-                  <Label>Phone Number</Label>
-                  {editMode ? (
-                    <Input
-                      type="tel"
-                      value={editForm.parent_phone}
-                      onChange={(e) => setEditForm({ ...editForm, parent_phone: e.target.value })}
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="mt-1 font-medium">{child.parent_phone || 'Not provided'}</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Parent One</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Name</Label>
+                    {editMode ? (
+                      <Input
+                        value={editForm.parent_one_name}
+                        onChange={(e) => setEditForm({ ...editForm, parent_one_name: e.target.value })}
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 font-medium">{child.parent_one_name || 'Not provided'}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Email Address</Label>
+                    {editMode ? (
+                      <Input
+                        type="email"
+                        value={editForm.parent_one_email}
+                        onChange={(e) => setEditForm({ ...editForm, parent_one_email: e.target.value })}
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 font-medium">{child.parent_one_email || 'Not provided'}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Phone Number</Label>
+                    {editMode ? (
+                      <Input
+                        type="tel"
+                        value={editForm.parent_one_phone}
+                        onChange={(e) => setEditForm({ ...editForm, parent_one_phone: e.target.value })}
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 font-medium">{child.parent_one_phone || 'Not provided'}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Parent Two</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Name</Label>
+                    {editMode ? (
+                      <Input
+                        value={editForm.parent_two_name}
+                        onChange={(e) => setEditForm({ ...editForm, parent_two_name: e.target.value })}
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 font-medium">{child.parent_two_name || 'Not provided'}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Email Address</Label>
+                    {editMode ? (
+                      <Input
+                        type="email"
+                        value={editForm.parent_two_email}
+                        onChange={(e) => setEditForm({ ...editForm, parent_two_email: e.target.value })}
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 font-medium">{child.parent_two_email || 'Not provided'}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label>Phone Number</Label>
+                    {editMode ? (
+                      <Input
+                        type="tel"
+                        value={editForm.parent_two_phone}
+                        onChange={(e) => setEditForm({ ...editForm, parent_two_phone: e.target.value })}
+                        className="mt-1"
+                      />
+                    ) : (
+                      <p className="mt-1 font-medium">{child.parent_two_phone || 'Not provided'}</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Medical Info Tab */}
