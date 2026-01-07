@@ -123,7 +123,6 @@ export default function AdminSettings() {
       const response = await base44.functions.invoke('updateUser', {
         userId: selectedUser.id,
         full_name: editForm.full_name,
-        email: editForm.email,
         role: role,
       });
 
@@ -260,8 +259,10 @@ export default function AdminSettings() {
                 id="edit_email"
                 type="email"
                 value={editForm.email}
-                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                disabled
+                className="bg-gray-100"
               />
+              <p className="text-xs text-gray-500">Email cannot be changed</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="user_type">User Type</Label>

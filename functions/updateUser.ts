@@ -9,17 +9,17 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    const { userId, full_name, email, role } = await req.json();
+    const { userId, full_name, role } = await req.json();
 
-    // Use service role to update user
+    // Use service role to update user (email cannot be changed)
     await base44.asServiceRole.entities.User.update(userId, {
       full_name,
-      email,
       role,
     });
 
     return Response.json({ success: true });
   } catch (error) {
+    console.error('Error in updateUser function:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
