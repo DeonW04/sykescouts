@@ -12,6 +12,7 @@ import ParentDashboard from './pages/ParentDashboard';
 import Parents from './pages/Parents';
 import Sections from './pages/Sections';
 import Volunteer from './pages/Volunteer';
+import MyChild from './pages/MyChild';
 import __Layout from './Layout.jsx';
 
 
@@ -30,6 +31,7 @@ export const PAGES = {
     "Parents": Parents,
     "Sections": Sections,
     "Volunteer": Volunteer,
+    "MyChild": MyChild,
 }
 
 export const pagesConfig = {

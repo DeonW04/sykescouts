@@ -5,8 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Calendar, Award, AlertCircle, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 
 export default function ParentDashboard() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -80,10 +83,10 @@ export default function ParentDashboard() {
   }
 
   const quickStats = [
-    { icon: Users, label: 'My Child', count: children.length, color: 'bg-blue-500' },
-    { icon: Calendar, label: 'Programme', count: nextMeeting ? 1 : 0, color: 'bg-green-500' },
-    { icon: Calendar, label: 'Events/Camps', count: upcomingEvents.length, color: 'bg-purple-500' },
-    { icon: Award, label: 'Badges', count: badgeProgress.length, color: 'bg-yellow-500' },
+    { icon: Users, label: 'My Child', color: 'bg-blue-500', onClick: () => navigate(createPageUrl('MyChild')) },
+    { icon: Calendar, label: 'Programme', color: 'bg-green-500', onClick: () => {} },
+    { icon: Calendar, label: 'Events/Camps', color: 'bg-purple-500', onClick: () => {} },
+    { icon: Award, label: 'Badges', color: 'bg-yellow-500', onClick: () => {} },
   ];
 
   return (
@@ -106,16 +109,16 @@ export default function ParentDashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className="hover:shadow-lg transition-shadow">
+              <Card 
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={stat.onClick}
+              >
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">{stat.label}</p>
-                      <p className="text-3xl font-bold text-gray-900 mt-2">{stat.count}</p>
-                    </div>
-                    <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
+                  <div className="flex flex-col items-center text-center">
+                    <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center mb-3`}>
                       <stat.icon className="w-6 h-6 text-white" />
                     </div>
+                    <p className="text-sm font-medium text-gray-900">{stat.label}</p>
                   </div>
                 </CardContent>
               </Card>
