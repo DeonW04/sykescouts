@@ -288,7 +288,7 @@ export default function AdminSettings() {
                   {sections.map(section => (
                     <div key={section.id} className="flex items-center space-x-2">
                       <Checkbox
-                        id={section.id}
+                        id={`section-${section.id}`}
                         checked={editForm.section_ids.includes(section.id)}
                         onCheckedChange={(checked) => {
                           if (checked) {
@@ -304,7 +304,7 @@ export default function AdminSettings() {
                           }
                         }}
                       />
-                      <Label htmlFor={section.id} className="cursor-pointer">
+                      <Label htmlFor={`section-${section.id}`} className="cursor-pointer">
                         {section.display_name}
                       </Label>
                     </div>
