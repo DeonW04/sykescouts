@@ -21,9 +21,12 @@ export default function LeaderMembers() {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [sending, setSending] = useState(false);
   const [inviteForm, setInviteForm] = useState({
-    parent_name: '',
-    parent_email: '',
-    parent_phone: '',
+    parent_one_name: '',
+    parent_one_email: '',
+    parent_one_phone: '',
+    parent_two_name: '',
+    parent_two_email: '',
+    parent_two_phone: '',
     child_name: '',
     child_dob: '',
   });
@@ -98,9 +101,12 @@ export default function LeaderMembers() {
       await base44.entities.Member.create({
         full_name: inviteForm.child_name,
         date_of_birth: inviteForm.child_dob,
-        parent_name: inviteForm.parent_name,
-        parent_email: inviteForm.parent_email,
-        parent_phone: inviteForm.parent_phone,
+        parent_one_name: inviteForm.parent_one_name,
+        parent_one_email: inviteForm.parent_one_email,
+        parent_one_phone: inviteForm.parent_one_phone,
+        parent_two_name: inviteForm.parent_two_name,
+        parent_two_email: inviteForm.parent_two_email,
+        parent_two_phone: inviteForm.parent_two_phone,
         active: true,
         join_date: new Date().toISOString().split('T')[0],
       });
@@ -108,9 +114,12 @@ export default function LeaderMembers() {
       toast.success('Member added successfully!');
       setShowInviteDialog(false);
       setInviteForm({
-        parent_name: '',
-        parent_email: '',
-        parent_phone: '',
+        parent_one_name: '',
+        parent_one_email: '',
+        parent_one_phone: '',
+        parent_two_name: '',
+        parent_two_email: '',
+        parent_two_phone: '',
         child_name: '',
         child_dob: '',
       });

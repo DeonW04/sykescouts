@@ -17,6 +17,12 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
     date_of_birth: member?.date_of_birth || '',
     section_id: member?.section_id || '',
     patrol: member?.patrol || '',
+    parent_one_name: member?.parent_one_name || '',
+    parent_one_email: member?.parent_one_email || '',
+    parent_one_phone: member?.parent_one_phone || '',
+    parent_two_name: member?.parent_two_name || '',
+    parent_two_email: member?.parent_two_email || '',
+    parent_two_phone: member?.parent_two_phone || '',
     address: member?.address || '',
     medical_info: member?.medical_info || '',
     allergies: member?.allergies || '',
@@ -46,8 +52,9 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
         </DialogHeader>
 
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="personal">Personal</TabsTrigger>
+            <TabsTrigger value="parents">Parents</TabsTrigger>
             <TabsTrigger value="medical">Medical</TabsTrigger>
             <TabsTrigger value="notes">Notes</TabsTrigger>
           </TabsList>
@@ -116,7 +123,74 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
               />
             </div>
 
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="photo_consent"
+                checked={formData.photo_consent}
+                onCheckedChange={(checked) => setFormData({ ...formData, photo_consent: checked })}
+              />
+              <Label htmlFor="photo_consent" className="cursor-pointer">Photo consent given</Label>
+            </div>
+            </TabsContent>
+
+            <TabsContent value="parents" className="space-y-4 mt-4">
             <div className="space-y-4">
+              <Label className="text-base font-semibold">Parent One</Label>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Name</Label>
+                  <Input
+                    value={formData.parent_one_name}
+                    onChange={(e) => setFormData({ ...formData, parent_one_name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={formData.parent_one_email}
+                    onChange={(e) => setFormData({ ...formData, parent_one_email: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input
+                  value={formData.parent_one_phone}
+                  onChange={(e) => setFormData({ ...formData, parent_one_phone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <Label className="text-base font-semibold">Parent Two</Label>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Name</Label>
+                  <Input
+                    value={formData.parent_two_name}
+                    onChange={(e) => setFormData({ ...formData, parent_two_name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={formData.parent_two_email}
+                    onChange={(e) => setFormData({ ...formData, parent_two_email: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input
+                  value={formData.parent_two_phone}
+                  onChange={(e) => setFormData({ ...formData, parent_two_phone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t">
               <Label className="text-base font-semibold">Emergency Contact</Label>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -142,16 +216,7 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
                 />
               </div>
             </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="photo_consent"
-                checked={formData.photo_consent}
-                onCheckedChange={(checked) => setFormData({ ...formData, photo_consent: checked })}
-              />
-              <Label htmlFor="photo_consent" className="cursor-pointer">Photo consent given</Label>
-            </div>
-          </TabsContent>
+            </TabsContent>
 
           <TabsContent value="medical" className="space-y-4 mt-4">
             <div className="space-y-2">
