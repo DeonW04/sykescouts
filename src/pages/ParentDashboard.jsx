@@ -51,7 +51,7 @@ export default function ParentDashboard() {
     queryFn: async () => {
       if (children.length === 0) return null;
       const sectionIds = [...new Set(children.map(c => c.section_id))];
-      const programmes = await base44.entities.Programme.filter({ published: true });
+      const programmes = await base44.entities.Programme.filter({ shown_in_portal: true });
       const upcoming = programmes.filter(p => 
         sectionIds.includes(p.section_id) &&
         new Date(p.date) > new Date()

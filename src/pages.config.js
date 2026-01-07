@@ -7,14 +7,14 @@ import Home from './pages/Home';
 import JoinUs from './pages/JoinUs';
 import LeaderDashboard from './pages/LeaderDashboard';
 import LeaderMembers from './pages/LeaderMembers';
+import LeaderProgramme from './pages/LeaderProgramme';
+import MeetingDetail from './pages/MeetingDetail';
 import MemberDetail from './pages/MemberDetail';
 import MyChild from './pages/MyChild';
 import ParentDashboard from './pages/ParentDashboard';
 import Parents from './pages/Parents';
 import Sections from './pages/Sections';
 import Volunteer from './pages/Volunteer';
-import LeaderProgramme from './pages/LeaderProgramme';
-import MeetingDetail from './pages/MeetingDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -28,14 +28,14 @@ export const PAGES = {
     "JoinUs": JoinUs,
     "LeaderDashboard": LeaderDashboard,
     "LeaderMembers": LeaderMembers,
+    "LeaderProgramme": LeaderProgramme,
+    "MeetingDetail": MeetingDetail,
     "MemberDetail": MemberDetail,
     "MyChild": MyChild,
     "ParentDashboard": ParentDashboard,
     "Parents": Parents,
     "Sections": Sections,
     "Volunteer": Volunteer,
-    "LeaderProgramme": LeaderProgramme,
-    "MeetingDetail": MeetingDetail,
 }
 
 export const pagesConfig = {
