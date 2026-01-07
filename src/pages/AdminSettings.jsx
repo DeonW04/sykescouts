@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Settings, Users, Shield, Mail, Edit } from 'lucide-react';
 import { toast } from 'sonner';
@@ -13,7 +14,7 @@ import { toast } from 'sonner';
 export default function AdminSettings() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editForm, setEditForm] = useState({ full_name: '', email: '' });
+  const [editForm, setEditForm] = useState({ full_name: '', email: '', user_type: '' });
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery({
@@ -94,18 +95,41 @@ export default function AdminSettings() {
 
   const handleEditUser = (user) => {
     setSelectedUser(user);
+    const userType = getUserType(user.id);
     setEditForm({
       full_name: user.full_name,
       email: user.email,
+      user_type: userType.type.toLowerCase(),
     });
     setShowEditDialog(true);
   };
 
-  const handleSaveUser = () => {
-    updateUserMutation.mutate({
-      userId: selectedUser.id,
-      data: editForm,
-    });
+  const handleSaveUser = async () => {
+    try {
+      // Update basic user info
+      await base44.entities.User.update(selectedUser.id, {
+        full_name: editForm.full_name,
+        email: editForm.email,
+      });
+
+      // Handle user type changes
+      const currentType = getUserType(selectedUser.id).type.toLowerCase();
+      
+      if (editForm.user_type === 'leader' && currentType !== 'leader') {
+        // Make user a leader
+        await base44.entities.Leader.create({
+          user_id: selectedUser.id,
+          phone: '',
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['all-users'] });
+      queryClient.invalidateQueries({ queryKey: ['all-leaders'] });
+      setShowEditDialog(false);
+      toast.success('User updated successfully');
+    } catch (error) {
+      toast.error('Error updating user: ' + error.message);
+    }
   };
 
   return (
@@ -172,17 +196,6 @@ export default function AdminSettings() {
                           <Edit className="w-3 h-3 mr-1" />
                           Edit
                         </Button>
-                        {!isLeader && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => promoteToLeaderMutation.mutate(user.id)}
-                            disabled={promoteToLeaderMutation.isPending}
-                          >
-                            <Shield className="w-3 h-3 mr-1" />
-                            Make Leader
-                          </Button>
-                        )}
                         <Button
                           size="sm"
                           variant="outline"
@@ -226,12 +239,27 @@ export default function AdminSettings() {
                 onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="user_type">User Type</Label>
+              <Select
+                value={editForm.user_type}
+                onValueChange={(value) => setEditForm({ ...editForm, user_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="parent">Parent</SelectItem>
+                  <SelectItem value="leader">Leader</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <Button
               onClick={handleSaveUser}
-              disabled={updateUserMutation.isPending}
               className="w-full"
             >
-              {updateUserMutation.isPending ? 'Saving...' : 'Save Changes'}
+              Save Changes
             </Button>
           </div>
         </DialogContent>
