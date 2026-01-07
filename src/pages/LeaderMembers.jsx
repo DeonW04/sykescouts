@@ -94,7 +94,7 @@ export default function LeaderMembers() {
     setSending(true);
 
     try {
-      // Create member record immediately
+      // Create member record
       await base44.entities.Member.create({
         full_name: inviteForm.child_name,
         date_of_birth: inviteForm.child_dob,
@@ -104,11 +104,8 @@ export default function LeaderMembers() {
         active: true,
         join_date: new Date().toISOString().split('T')[0],
       });
-
-      // Send invitation email
-      await base44.functions.invoke('sendMemberInvite', inviteForm);
       
-      toast.success('Member added and invitation sent!');
+      toast.success('Member added successfully!');
       setShowInviteDialog(false);
       setInviteForm({
         parent_name: '',
@@ -143,7 +140,7 @@ export default function LeaderMembers() {
               </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Invite Parent to Register Child</DialogTitle>
+                  <DialogTitle>Add New Member</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSendInvite} className="space-y-4 mt-4">
                   <div className="space-y-2">
@@ -208,7 +205,7 @@ export default function LeaderMembers() {
                     disabled={sending}
                     className="w-full bg-[#7413dc] hover:bg-[#5c0fb0]"
                   >
-                    {sending ? 'Sending Invite...' : 'Send Invite'}
+                    {sending ? 'Adding Member...' : 'Add Member'}
                   </Button>
                 </form>
               </DialogContent>
