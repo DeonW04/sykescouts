@@ -9,12 +9,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Settings, Users, Shield, Mail, Edit } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 
 export default function AdminSettings() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editForm, setEditForm] = useState({ full_name: '', email: '', user_type: 'parent' });
+  const [editForm, setEditForm] = useState({ full_name: '', email: '', user_type: 'parent', section_ids: [] });
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery({
@@ -30,6 +31,11 @@ export default function AdminSettings() {
   const { data: parents = [] } = useQuery({
     queryKey: ['all-parents'],
     queryFn: () => base44.entities.Parent.filter({}),
+  });
+
+  const { data: sections = [] } = useQuery({
+    queryKey: ['sections'],
+    queryFn: () => base44.entities.Section.filter({ active: true }),
   });
 
   const promoteToLeaderMutation = useMutation({
@@ -100,10 +106,12 @@ export default function AdminSettings() {
     if (user.role === 'admin') {
       typeValue = 'admin';
     }
+    const leaderRecord = leaders.find(l => l.user_id === user.id);
     setEditForm({
       full_name: user.full_name,
       email: user.email,
       user_type: typeValue,
+      section_ids: leaderRecord?.section_ids || [],
     });
     setShowEditDialog(true);
   };
@@ -120,13 +128,22 @@ export default function AdminSettings() {
 
       // Handle user type changes
       const currentType = getUserType(selectedUser.id).type.toLowerCase();
+      const leaderRecord = leaders.find(l => l.user_id === selectedUser.id);
       
-      if (editForm.user_type === 'leader' && currentType !== 'leader') {
-        // Make user a leader
-        await base44.entities.Leader.create({
-          user_id: selectedUser.id,
-          phone: '',
-        });
+      if (editForm.user_type === 'leader') {
+        if (currentType !== 'leader') {
+          // Create new leader record
+          await base44.entities.Leader.create({
+            user_id: selectedUser.id,
+            phone: '',
+            section_ids: editForm.section_ids,
+          });
+        } else if (leaderRecord) {
+          // Update existing leader record with section assignments
+          await base44.entities.Leader.update(leaderRecord.id, {
+            section_ids: editForm.section_ids,
+          });
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ['all-users'] });
@@ -256,6 +273,39 @@ export default function AdminSettings() {
                 </SelectContent>
               </Select>
             </div>
+
+            {editForm.user_type === 'leader' && (
+              <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                <Label>Assigned Sections</Label>
+                <div className="space-y-2">
+                  {sections.map(section => (
+                    <div key={section.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={section.id}
+                        checked={editForm.section_ids.includes(section.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setEditForm({
+                              ...editForm,
+                              section_ids: [...editForm.section_ids, section.id]
+                            });
+                          } else {
+                            setEditForm({
+                              ...editForm,
+                              section_ids: editForm.section_ids.filter(id => id !== section.id)
+                            });
+                          }
+                        }}
+                      />
+                      <Label htmlFor={section.id} className="cursor-pointer">
+                        {section.display_name}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <Button
               onClick={handleSaveUser}
               className="w-full"
