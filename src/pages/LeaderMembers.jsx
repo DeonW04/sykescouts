@@ -28,15 +28,38 @@ export default function LeaderMembers() {
     child_dob: '',
   });
 
+  React.useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    const currentUser = await base44.auth.me();
+    setUser(currentUser);
+    
+    if (currentUser.role === 'admin') {
+      setIsAdmin(true);
+    } else {
+      const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
+      if (leaders.length > 0) {
+        setLeaderSections(leaders[0].section_ids || []);
+      }
+    }
+  };
+
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
     queryFn: () => base44.entities.Section.filter({ active: true }),
   });
 
-  const { data: members = [], isLoading, refetch: refetchMembers } = useQuery({
+  const { data: allMembers = [], isLoading, refetch: refetchMembers } = useQuery({
     queryKey: ['members'],
     queryFn: () => base44.entities.Member.filter({ active: true }),
+    enabled: !!user,
   });
+
+  const members = isAdmin 
+    ? allMembers 
+    : allMembers.filter(m => leaderSections.includes(m.section_id));
 
   const calculateAge = (dob) => {
     const birthDate = new Date(dob);

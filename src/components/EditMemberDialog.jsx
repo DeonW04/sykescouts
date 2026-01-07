@@ -6,12 +6,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 
 export default function EditMemberDialog({ member, open, onOpenChange, onSave }) {
   const [formData, setFormData] = useState({
     full_name: member?.full_name || '',
     preferred_name: member?.preferred_name || '',
     date_of_birth: member?.date_of_birth || '',
+    section_id: member?.section_id || '',
     patrol: member?.patrol || '',
     address: member?.address || '',
     medical_info: member?.medical_info || '',
@@ -23,6 +27,11 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
     emergency_contact_relationship: member?.emergency_contact_relationship || '',
     photo_consent: member?.photo_consent || false,
     notes: member?.notes || '',
+  });
+
+  const { data: sections = [] } = useQuery({
+    queryKey: ['sections'],
+    queryFn: () => base44.entities.Section.filter({ active: true }),
   });
 
   const handleSave = () => {
@@ -71,12 +80,31 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
                 />
               </div>
               <div className="space-y-2">
-                <Label>Patrol/Six</Label>
-                <Input
-                  value={formData.patrol}
-                  onChange={(e) => setFormData({ ...formData, patrol: e.target.value })}
-                />
+                <Label>Section</Label>
+                <Select
+                  value={formData.section_id}
+                  onValueChange={(value) => setFormData({ ...formData, section_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select section" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sections.map(section => (
+                      <SelectItem key={section.id} value={section.id}>
+                        {section.display_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Patrol/Six</Label>
+              <Input
+                value={formData.patrol}
+                onChange={(e) => setFormData({ ...formData, patrol: e.target.value })}
+              />
             </div>
 
             <div className="space-y-2">
