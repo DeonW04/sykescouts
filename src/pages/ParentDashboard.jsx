@@ -3,18 +3,44 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, AlertCircle, Clock } from 'lucide-react';
+import { Users, Calendar, Award, AlertCircle, Clock, Check, X } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { useMutation } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function ParentDashboard() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
+  const [consentDialog, setConsentDialog] = useState(null);
+  const [textInputs, setTextInputs] = useState({});
+  const [dropdownValues, setDropdownValues] = useState({});
 
   useEffect(() => {
     loadUserData();
   }, []);
+
+  const respondToActionMutation = useMutation({
+    mutationFn: async ({ actionId, memberId, response }) => {
+      return base44.entities.ActionResponse.create({
+        action_required_id: actionId,
+        member_id: memberId,
+        parent_email: user.email,
+        response,
+        response_date: new Date().toISOString(),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['actions-required'] });
+      toast.success('Response recorded');
+    },
+  });
 
   const loadUserData = async () => {
     const currentUser = await base44.auth.me();
@@ -176,7 +202,95 @@ export default function ParentDashboard() {
                     {actionsRequired.map(action => (
                       <div key={action.id} className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                         <p className="font-medium text-sm text-orange-900">{action.action_text}</p>
-                        <p className="text-xs text-orange-700 mt-1">Please respond as soon as possible</p>
+
+                        {children.map(child => (
+                          <div key={child.id} className="mt-3 pt-3 border-t border-orange-200">
+                            <p className="text-xs text-orange-700 font-medium mb-2">{child.full_name}</p>
+
+                            {action.action_purpose === 'attendance' && (
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => respondToActionMutation.mutate({ actionId: action.id, memberId: child.id, response: 'Yes' })}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <Check className="w-3 h-3 mr-1" />
+                                  Yes
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => respondToActionMutation.mutate({ actionId: action.id, memberId: child.id, response: 'No' })}
+                                >
+                                  <X className="w-3 h-3 mr-1" />
+                                  No
+                                </Button>
+                              </div>
+                            )}
+
+                            {action.action_purpose === 'consent' && (
+                              <Button
+                                size="sm"
+                                onClick={() => setConsentDialog({ action, child })}
+                                className="bg-[#7413dc] hover:bg-[#5c0fb0]"
+                              >
+                                Give Consent
+                              </Button>
+                            )}
+
+                            {action.action_purpose === 'custom_dropdown' && (
+                              <div className="flex gap-2">
+                                <Select
+                                  value={dropdownValues[`${action.id}-${child.id}`] || ''}
+                                  onValueChange={(value) => setDropdownValues({ ...dropdownValues, [`${action.id}-${child.id}`]: value })}
+                                >
+                                  <SelectTrigger className="text-sm">
+                                    <SelectValue placeholder="Select option" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {action.dropdown_options?.map((option, idx) => (
+                                      <SelectItem key={idx} value={option}>{option}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    const value = dropdownValues[`${action.id}-${child.id}`];
+                                    if (value) {
+                                      respondToActionMutation.mutate({ actionId: action.id, memberId: child.id, response: value });
+                                    }
+                                  }}
+                                >
+                                  Submit
+                                </Button>
+                              </div>
+                            )}
+
+                            {action.action_purpose === 'text_input' && (
+                              <div className="flex gap-2">
+                                <Input
+                                  size="sm"
+                                  placeholder="Enter response"
+                                  value={textInputs[`${action.id}-${child.id}`] || ''}
+                                  onChange={(e) => setTextInputs({ ...textInputs, [`${action.id}-${child.id}`]: e.target.value })}
+                                  className="text-sm"
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    const value = textInputs[`${action.id}-${child.id}`];
+                                    if (value) {
+                                      respondToActionMutation.mutate({ actionId: action.id, memberId: child.id, response: value });
+                                    }
+                                  }}
+                                >
+                                  Submit
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     ))}
                   </div>
@@ -260,7 +374,39 @@ export default function ParentDashboard() {
             </Card>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
+        </div>
+        </div>
+
+        <Dialog open={!!consentDialog} onOpenChange={() => setConsentDialog(null)}>
+        <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Confirm Consent</DialogTitle>
+          <DialogDescription>
+            {consentDialog?.action.action_text}
+          </DialogDescription>
+        </DialogHeader>
+        <p className="text-sm">
+          Are you giving consent for <strong>{consentDialog?.child.full_name}</strong>?
+        </p>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setConsentDialog(null)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              respondToActionMutation.mutate({
+                actionId: consentDialog.action.id,
+                memberId: consentDialog.child.id,
+                response: `Yes - ${new Date().toLocaleString()}`,
+              });
+              setConsentDialog(null);
+            }}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            Give Consent
+          </Button>
+        </DialogFooter>
+        </DialogContent>
+        </Dialog>
+        );
+        }
