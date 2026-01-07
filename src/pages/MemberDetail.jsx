@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, User, Users, Heart, Award, Calendar, FileText } from 'lucide-react';
+import { ArrowLeft, Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle } from 'lucide-react';
+import EditMemberDialog from '../components/EditMemberDialog';
+import { toast } from 'sonner';
 
 export default function MemberDetail() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const memberId = urlParams.get('id');
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const { data: member, isLoading } = useQuery({
     queryKey: ['member', memberId],
@@ -66,6 +70,16 @@ export default function MemberDetail() {
     enabled: !!memberId,
   });
 
+  const { data: parentAccountExists } = useQuery({
+    queryKey: ['parent-account', member?.parent_email],
+    queryFn: async () => {
+      if (!member?.parent_email) return false;
+      const users = await base44.entities.User.filter({ email: member.parent_email });
+      return users.length > 0;
+    },
+    enabled: !!member?.parent_email,
+  });
+
   const calculateAge = (dob) => {
     const birthDate = new Date(dob);
     const today = new Date();
@@ -78,6 +92,17 @@ export default function MemberDetail() {
     }
     
     return { years, months };
+  };
+
+  const handleSaveMember = async (formData) => {
+    try {
+      await base44.entities.Member.update(memberId, formData);
+      queryClient.invalidateQueries({ queryKey: ['member', memberId] });
+      setShowEditDialog(false);
+      toast.success('Member updated successfully');
+    } catch (error) {
+      toast.error('Error updating member: ' + error.message);
+    }
   };
 
   if (isLoading) {
@@ -140,7 +165,10 @@ export default function MemberDetail() {
                 </div>
               </div>
             </div>
-            <Button className="bg-white text-[#004851] hover:bg-gray-100">
+            <Button 
+              onClick={() => setShowEditDialog(true)}
+              className="bg-white text-[#004851] hover:bg-gray-100"
+            >
               <Edit className="w-4 h-4 mr-2" />
               Edit
             </Button>
@@ -249,46 +277,42 @@ export default function MemberDetail() {
 
           {/* Parents Tab */}
           <TabsContent value="parents" className="space-y-6">
-            {parentUsers.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center text-gray-500">
-                  No parent information available
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid md:grid-cols-2 gap-6">
-                {parents.map((parent, index) => {
-                  const user = parentUsers.find(u => u.id === parent.user_id);
-                  return (
-                    <Card key={parent.id}>
-                      <CardHeader>
-                        <CardTitle>Parent/Guardian {index + 1}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div>
-                          <p className="text-sm text-gray-600">Name</p>
-                          <p className="font-medium">{user?.full_name || 'Unknown'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Email</p>
-                          <p className="font-medium">{user?.email || 'Not provided'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Phone</p>
-                          <p className="font-medium">{parent.phone}</p>
-                        </div>
-                        {parent.address && (
-                          <div>
-                            <p className="text-sm text-gray-600">Address</p>
-                            <p className="font-medium whitespace-pre-line">{parent.address}</p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Parent/Guardian</span>
+                  {member.parent_email && (
+                    <Badge variant={parentAccountExists ? "default" : "secondary"} className="flex items-center gap-1">
+                      {parentAccountExists ? (
+                        <>
+                          <CheckCircle className="w-3 h-3" />
+                          Account Linked
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-3 h-3" />
+                          No Account Yet
+                        </>
+                      )}
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-sm text-gray-600">Name</p>
+                  <p className="font-medium">{member.parent_name || 'Not provided'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Email</p>
+                  <p className="font-medium">{member.parent_email || 'Not provided'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Phone</p>
+                  <p className="font-medium">{member.parent_phone || 'Not provided'}</p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Medical Tab */}
@@ -385,6 +409,13 @@ export default function MemberDetail() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <EditMemberDialog
+        member={member}
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onSave={handleSaveMember}
+      />
     </div>
   );
 }
