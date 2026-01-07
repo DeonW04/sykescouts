@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, Send } from 'lucide-react';
 import EditMemberDialog from '../components/EditMemberDialog';
 import { toast } from 'sonner';
 
@@ -102,6 +102,27 @@ export default function MemberDetail() {
       toast.success('Member updated successfully');
     } catch (error) {
       toast.error('Error updating member: ' + error.message);
+    }
+  };
+
+  const [sendingInvite, setSendingInvite] = useState(false);
+
+  const handleSendInvite = async () => {
+    setSendingInvite(true);
+    try {
+      await base44.functions.invoke('sendMemberInvite', {
+        parent_name: member.parent_name,
+        parent_email: member.parent_email,
+        parent_phone: member.parent_phone,
+        child_name: member.full_name,
+        child_dob: member.date_of_birth,
+      });
+      toast.success('Invitation sent successfully!');
+      queryClient.invalidateQueries({ queryKey: ['parent-account', member.parent_email] });
+    } catch (error) {
+      toast.error('Error sending invitation: ' + error.message);
+    } finally {
+      setSendingInvite(false);
     }
   };
 
@@ -281,21 +302,36 @@ export default function MemberDetail() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Parent/Guardian</span>
-                  {member.parent_email && (
-                    <Badge variant={parentAccountExists ? "default" : "secondary"} className="flex items-center gap-1">
-                      {parentAccountExists ? (
-                        <>
-                          <CheckCircle className="w-3 h-3" />
-                          Account Linked
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="w-3 h-3" />
-                          No Account Yet
-                        </>
-                      )}
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {member.parent_email && (
+                      <>
+                        <Badge variant={parentAccountExists ? "default" : "secondary"} className="flex items-center gap-1">
+                          {parentAccountExists ? (
+                            <>
+                              <CheckCircle className="w-3 h-3" />
+                              Account Linked
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="w-3 h-3" />
+                              No Account Yet
+                            </>
+                          )}
+                        </Badge>
+                        {!parentAccountExists && (
+                          <Button 
+                            size="sm"
+                            onClick={handleSendInvite}
+                            disabled={sendingInvite}
+                            className="bg-[#7413dc] hover:bg-[#5c0fb0]"
+                          >
+                            <Send className="w-3 h-3 mr-1" />
+                            {sendingInvite ? 'Sending...' : 'Send Invite'}
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
