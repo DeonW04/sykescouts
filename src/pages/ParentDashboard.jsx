@@ -71,6 +71,37 @@ export default function ParentDashboard() {
     enabled: children.length > 0,
   });
 
+  const { data: actionsRequired = [] } = useQuery({
+    queryKey: ['actions-required', children],
+    queryFn: async () => {
+      if (children.length === 0) return [];
+      const sectionIds = [...new Set(children.map(c => c.section_id))];
+      
+      // Get all programmes for these sections
+      const programmes = await base44.entities.Programme.filter({});
+      const relevantProgrammeIds = programmes
+        .filter(p => sectionIds.includes(p.section_id))
+        .map(p => p.id);
+      
+      // Get all actions for these programmes
+      const allActions = await base44.entities.ActionRequired.filter({});
+      const relevantActions = allActions.filter(a => relevantProgrammeIds.includes(a.programme_id));
+      
+      // Get all responses from this parent
+      const responses = await base44.entities.ActionResponse.filter({ parent_email: user?.email });
+      
+      // Filter out actions that have been completed for all children
+      return relevantActions.filter(action => {
+        // Check if all children have responded to this action
+        const allChildrenResponded = children.every(child => 
+          responses.some(r => r.action_required_id === action.id && r.member_id === child.id)
+        );
+        return !allChildrenResponded;
+      });
+    },
+    enabled: children.length > 0 && !!user,
+  });
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -138,7 +169,18 @@ export default function ParentDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-500 text-sm">No actions required at this time.</p>
+                {actionsRequired.length === 0 ? (
+                  <p className="text-gray-500 text-sm">No actions required at this time.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {actionsRequired.map(action => (
+                      <div key={action.id} className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <p className="font-medium text-sm text-orange-900">{action.action_text}</p>
+                        <p className="text-xs text-orange-700 mt-1">Please respond as soon as possible</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
