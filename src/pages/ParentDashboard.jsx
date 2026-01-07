@@ -51,8 +51,10 @@ export default function ParentDashboard() {
     queryKey: ['children', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      const members = await base44.entities.Member.filter({ parent_email: user.email });
-      return members;
+      const allMembers = await base44.entities.Member.filter({});
+      return allMembers.filter(m => 
+        m.parent_one_email === user.email || m.parent_two_email === user.email
+      );
     },
     enabled: !!user?.email,
   });
