@@ -7,8 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { CheckCircle, XCircle } from 'lucide-react';
 
 export default function EditMemberDialog({ member, open, onOpenChange, onSave }) {
   const [formData, setFormData] = useState({
@@ -39,6 +41,18 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
     queryKey: ['sections'],
     queryFn: () => base44.entities.Section.filter({ active: true }),
   });
+
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User.list(),
+    enabled: open,
+  });
+
+  // Check if parent 1 has an account
+  const parent1HasAccount = formData.parent_one_email && allUsers.some(u => u.email === formData.parent_one_email);
+  
+  // Check if parent 2 has an account
+  const parent2HasAccount = formData.parent_two_email && allUsers.some(u => u.email === formData.parent_two_email);
 
   const handleSave = () => {
     onSave(formData);
@@ -135,7 +149,22 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
 
             <TabsContent value="parents" className="space-y-4 mt-4">
             <div className="space-y-4">
-              <Label className="text-base font-semibold">Parent One</Label>
+              <div className="flex items-center gap-2">
+                <Label className="text-base font-semibold">Parent One</Label>
+                {formData.parent_one_email && (
+                  parent1HasAccount ? (
+                    <Badge className="bg-green-100 text-green-800 border-green-300">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Account Registered
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-gray-100 text-gray-600">
+                      <XCircle className="w-3 h-3 mr-1" />
+                      No Account
+                    </Badge>
+                  )
+                )}
+              </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Name</Label>
@@ -163,7 +192,22 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
             </div>
 
             <div className="space-y-4 pt-4 border-t">
-              <Label className="text-base font-semibold">Parent Two</Label>
+              <div className="flex items-center gap-2">
+                <Label className="text-base font-semibold">Parent Two</Label>
+                {formData.parent_two_email && (
+                  parent2HasAccount ? (
+                    <Badge className="bg-green-100 text-green-800 border-green-300">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Account Registered
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-gray-100 text-gray-600">
+                      <XCircle className="w-3 h-3 mr-1" />
+                      No Account
+                    </Badge>
+                  )
+                )}
+              </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Name</Label>
