@@ -120,12 +120,16 @@ export default function AdminSettings() {
     try {
       // Update basic user info and role
       const role = editForm.user_type === 'admin' ? 'admin' : 'user';
-      await base44.functions.invoke('updateUser', {
+      const response = await base44.functions.invoke('updateUser', {
         userId: selectedUser.id,
         full_name: editForm.full_name,
         email: editForm.email,
         role: role,
       });
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
 
       // Handle user type changes
       const currentType = getUserType(selectedUser.id).type.toLowerCase();
@@ -153,6 +157,7 @@ export default function AdminSettings() {
       setShowEditDialog(false);
       toast.success('User updated successfully');
     } catch (error) {
+      console.error('Error updating user:', error);
       toast.error('Error updating user: ' + error.message);
     }
   };
