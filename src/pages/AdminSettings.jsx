@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 export default function AdminSettings() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editForm, setEditForm] = useState({ full_name: '', email: '', user_type: '' });
+  const [editForm, setEditForm] = useState({ full_name: '', email: '', user_type: 'parent' });
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery({
@@ -96,20 +96,26 @@ export default function AdminSettings() {
   const handleEditUser = (user) => {
     setSelectedUser(user);
     const userType = getUserType(user.id);
+    let typeValue = userType.type.toLowerCase();
+    if (user.role === 'admin') {
+      typeValue = 'admin';
+    }
     setEditForm({
       full_name: user.full_name,
       email: user.email,
-      user_type: userType.type.toLowerCase(),
+      user_type: typeValue,
     });
     setShowEditDialog(true);
   };
 
   const handleSaveUser = async () => {
     try {
-      // Update basic user info
+      // Update basic user info and role
+      const role = editForm.user_type === 'admin' ? 'admin' : 'user';
       await base44.entities.User.update(selectedUser.id, {
         full_name: editForm.full_name,
         email: editForm.email,
+        role: role,
       });
 
       // Handle user type changes
@@ -125,6 +131,7 @@ export default function AdminSettings() {
 
       queryClient.invalidateQueries({ queryKey: ['all-users'] });
       queryClient.invalidateQueries({ queryKey: ['all-leaders'] });
+      queryClient.invalidateQueries({ queryKey: ['all-parents'] });
       setShowEditDialog(false);
       toast.success('User updated successfully');
     } catch (error) {
@@ -162,10 +169,9 @@ export default function AdminSettings() {
               </div>
             ) : (
               <div className="space-y-2">
-                <div className="grid grid-cols-5 gap-4 px-4 py-2 bg-gray-50 rounded-lg font-semibold text-sm text-gray-700">
+                <div className="grid grid-cols-4 gap-4 px-4 py-2 bg-gray-50 rounded-lg font-semibold text-sm text-gray-700">
                   <div>Name</div>
                   <div>Email</div>
-                  <div>Role</div>
                   <div>Type</div>
                   <div className="text-right">Actions</div>
                 </div>
@@ -174,17 +180,12 @@ export default function AdminSettings() {
                   const isLeader = leaders.some(l => l.user_id === user.id);
                   
                   return (
-                    <div key={user.id} className="grid grid-cols-5 gap-4 px-4 py-3 bg-white border rounded-lg items-center">
+                    <div key={user.id} className="grid grid-cols-4 gap-4 px-4 py-3 bg-white border rounded-lg items-center">
                       <div className="font-medium">{user.full_name}</div>
                       <div className="text-sm text-gray-600">{user.email}</div>
                       <div>
-                        <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                          {user.role}
-                        </Badge>
-                      </div>
-                      <div>
                         <Badge className={userType.color}>
-                          {userType.type}
+                          {user.role === 'admin' ? 'Admin' : userType.type}
                         </Badge>
                       </div>
                       <div className="flex justify-end gap-2">
@@ -249,9 +250,9 @@ export default function AdminSettings() {
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">User</SelectItem>
                   <SelectItem value="parent">Parent</SelectItem>
                   <SelectItem value="leader">Leader</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
