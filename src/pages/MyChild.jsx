@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Heart, Phone, Edit, Save, X } from 'lucide-react';
+import { ArrowLeft, User, Heart, Phone, Edit, Save, X, UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
@@ -70,6 +70,9 @@ export default function MyChild() {
       emergency_contact_name: child.emergency_contact_name || '',
       emergency_contact_phone: child.emergency_contact_phone || '',
       emergency_contact_relationship: child.emergency_contact_relationship || '',
+      parent_name: child.parent_name || '',
+      parent_email: child.parent_email || '',
+      parent_phone: child.parent_phone || '',
     });
     setEditMode(true);
   };
@@ -205,6 +208,10 @@ export default function MyChild() {
               <User className="w-4 h-4 mr-2" />
               Personal Info
             </TabsTrigger>
+            <TabsTrigger value="parent">
+              <UserCircle className="w-4 h-4 mr-2" />
+              Parent Details
+            </TabsTrigger>
             <TabsTrigger value="medical">
               <Heart className="w-4 h-4 mr-2" />
               Medical Info
@@ -261,6 +268,55 @@ export default function MyChild() {
                     />
                   ) : (
                     <p className="mt-1 font-medium whitespace-pre-line">{child.address || 'Not provided'}</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Parent Details Tab */}
+          <TabsContent value="parent">
+            <Card>
+              <CardHeader>
+                <CardTitle>Parent/Guardian Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Parent/Guardian Name</Label>
+                  {editMode ? (
+                    <Input
+                      value={editForm.parent_name}
+                      onChange={(e) => setEditForm({ ...editForm, parent_name: e.target.value })}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="mt-1 font-medium">{child.parent_name || 'Not provided'}</p>
+                  )}
+                </div>
+                <div>
+                  <Label>Email Address</Label>
+                  {editMode ? (
+                    <Input
+                      type="email"
+                      value={editForm.parent_email}
+                      onChange={(e) => setEditForm({ ...editForm, parent_email: e.target.value })}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="mt-1 font-medium">{child.parent_email || 'Not provided'}</p>
+                  )}
+                </div>
+                <div>
+                  <Label>Phone Number</Label>
+                  {editMode ? (
+                    <Input
+                      type="tel"
+                      value={editForm.parent_phone}
+                      onChange={(e) => setEditForm({ ...editForm, parent_phone: e.target.value })}
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="mt-1 font-medium">{child.parent_phone || 'Not provided'}</p>
                   )}
                 </div>
               </CardContent>
