@@ -105,9 +105,8 @@ export default function ParentDashboard() {
       
       // Get all programmes for these sections
       const programmes = await base44.entities.Programme.filter({});
-      const relevantProgrammeIds = programmes
-        .filter(p => sectionIds.includes(p.section_id))
-        .map(p => p.id);
+      const relevantProgrammes = programmes.filter(p => sectionIds.includes(p.section_id));
+      const relevantProgrammeIds = relevantProgrammes.map(p => p.id);
       
       // Get all actions for these programmes
       const allActions = await base44.entities.ActionRequired.filter({});
@@ -116,8 +115,14 @@ export default function ParentDashboard() {
       // Get all responses from this parent
       const responses = await base44.entities.ActionResponse.filter({ parent_email: user?.email });
       
+      // Add programme details to each action
+      const actionsWithProgrammes = relevantActions.map(action => ({
+        ...action,
+        programme: relevantProgrammes.find(p => p.id === action.programme_id)
+      }));
+      
       // Filter out actions that have been completed for all children
-      return relevantActions.filter(action => {
+      return actionsWithProgrammes.filter(action => {
         // Check if all children have responded to this action
         const allChildrenResponded = children.every(child => 
           responses.some(r => r.action_required_id === action.id && r.member_id === child.id)
@@ -203,6 +208,15 @@ export default function ParentDashboard() {
                     {actionsRequired.map(action => (
                       <div key={action.id} className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                         <p className="font-medium text-sm text-orange-900">{action.action_text}</p>
+                        {action.programme && (
+                          <p className="text-xs text-orange-600 mt-1">
+                            {action.programme.title} - {new Date(action.programme.date).toLocaleDateString('en-GB', { 
+                              weekday: 'short', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
+                          </p>
+                        )}
 
                         {children.map(child => (
                           <div key={child.id} className="mt-3 pt-3 border-t border-orange-200">
