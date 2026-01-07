@@ -15,6 +15,7 @@ import { createPageUrl } from '../utils';
 
 export default function CompleteRegistration() {
   const [user, setUser] = useState(null);
+  const [isLeader, setIsLeader] = useState(false);
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [noChildFound, setNoChildFound] = useState(false);
@@ -55,6 +56,14 @@ export default function CompleteRegistration() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
       setUserForm({ full_name: currentUser.full_name });
+
+      // Check if user is a leader
+      if (currentUser.role === 'admin') {
+        setIsLeader(true);
+      } else {
+        const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
+        setIsLeader(leaders.length > 0);
+      }
     } catch (error) {
       base44.auth.redirectToLogin();
     }
@@ -114,6 +123,15 @@ export default function CompleteRegistration() {
     
     try {
       await base44.auth.updateMe({ full_name: userForm.full_name });
+      
+      // If user is a leader, complete onboarding immediately
+      if (isLeader) {
+        await base44.auth.updateMe({ onboarding_complete: true });
+        toast.success('Registration completed successfully!');
+        window.location.href = createPageUrl('LeaderDashboard');
+        return;
+      }
+      
       setUser({ ...user, full_name: userForm.full_name });
       setStep(2);
     } catch (error) {
