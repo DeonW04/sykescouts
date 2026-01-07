@@ -11,8 +11,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Save, Calendar, Users, Award, Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Calendar, Users, Award, Eye, EyeOff, Plus, Trash2, ListTodo, Shield, AlertCircle, Upload, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import TodoSection from '../components/meeting/TodoSection';
+import ParentPortalSection from '../components/meeting/ParentPortalSection';
+import RiskAssessmentSection from '../components/meeting/RiskAssessmentSection';
+import BadgesSection from '../components/meeting/BadgesSection';
 
 export default function MeetingDetail() {
   const navigate = useNavigate();
@@ -28,6 +32,7 @@ export default function MeetingDetail() {
     activities: [{ time: '', activity: '', badge_links: [] }],
     equipment_needed: '',
     published: false,
+    shown_in_portal: false,
   });
 
   const { data: section } = useQuery({
@@ -79,6 +84,7 @@ export default function MeetingDetail() {
           : [{ time: '', activity: '', badge_links: [] }],
         equipment_needed: existingProgramme.equipment_needed || '',
         published: existingProgramme.published || false,
+        shown_in_portal: existingProgramme.shown_in_portal || false,
       });
     }
   }, [existingProgramme]);
@@ -216,16 +222,36 @@ export default function MeetingDetail() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="plan" className="space-y-6">
-          <TabsList className="bg-white border">
+          <TabsList className="bg-white border grid grid-cols-6">
             <TabsTrigger value="plan">
               <Calendar className="w-4 h-4 mr-2" />
               Plan Meeting
+            </TabsTrigger>
+            <TabsTrigger value="todo">
+              <ListTodo className="w-4 h-4 mr-2" />
+              To Do
             </TabsTrigger>
             <TabsTrigger value="attendance">
               <Users className="w-4 h-4 mr-2" />
               Attendance
             </TabsTrigger>
+            <TabsTrigger value="parent">
+              <Eye className="w-4 h-4 mr-2" />
+              Parent Portal
+            </TabsTrigger>
+            <TabsTrigger value="risk">
+              <Shield className="w-4 h-4 mr-2" />
+              Risk Assessments
+            </TabsTrigger>
+            <TabsTrigger value="badges">
+              <Award className="w-4 h-4 mr-2" />
+              Badges
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="todo" className="space-y-6">
+            <TodoSection programmeId={existingProgramme?.id} />
+          </TabsContent>
 
           <TabsContent value="plan" className="space-y-6">
             <Card>
@@ -317,6 +343,22 @@ export default function MeetingDetail() {
                 />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="parent" className="space-y-6">
+            <ParentPortalSection 
+              programmeId={existingProgramme?.id}
+              formData={formData}
+              setFormData={setFormData}
+            />
+          </TabsContent>
+
+          <TabsContent value="risk" className="space-y-6">
+            <RiskAssessmentSection programmeId={existingProgramme?.id} />
+          </TabsContent>
+
+          <TabsContent value="badges" className="space-y-6">
+            <BadgesSection programmeId={existingProgramme?.id} />
           </TabsContent>
 
           <TabsContent value="attendance">
