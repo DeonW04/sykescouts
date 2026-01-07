@@ -218,9 +218,19 @@ export default function Layout({ children, currentPageName }) {
             <p className="text-sm text-gray-500">
               © {new Date().getFullYear()} 40th Rochdale (Syke) Scouts. All rights reserved.
             </p>
-            <p className="text-xs text-gray-500">
-              Part of The Scout Association, registered charity number 306101 (England and Wales)
-            </p>
+            <div className="flex items-center gap-4">
+              {user && (
+                <button
+                  onClick={() => base44.auth.logout()}
+                  className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  Sign Out
+                </button>
+              )}
+              <p className="text-xs text-gray-500">
+                Part of The Scout Association, registered charity number 306101 (England and Wales)
+              </p>
+            </div>
           </div>
         </div>
       </footer>
