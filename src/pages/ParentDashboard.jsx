@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, FileText, CreditCard, Bell } from 'lucide-react';
+import { Users, Calendar, Award, AlertCircle, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function ParentDashboard() {
@@ -40,9 +40,36 @@ export default function ParentDashboard() {
       if (children.length === 0) return [];
       const sectionIds = [...new Set(children.map(c => c.section_id))];
       const events = await base44.entities.Event.filter({ published: true });
-      return events.filter(e => 
-        e.section_ids?.some(sid => sectionIds.includes(sid))
-      ).slice(0, 5);
+      const upcoming = events.filter(e => 
+        e.section_ids?.some(sid => sectionIds.includes(sid)) &&
+        new Date(e.start_date) > new Date()
+      ).sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+      return upcoming;
+    },
+    enabled: children.length > 0,
+  });
+
+  const { data: nextMeeting } = useQuery({
+    queryKey: ['next-meeting', children],
+    queryFn: async () => {
+      if (children.length === 0) return null;
+      const sectionIds = [...new Set(children.map(c => c.section_id))];
+      const programmes = await base44.entities.Programme.filter({ published: true });
+      const upcoming = programmes.filter(p => 
+        sectionIds.includes(p.section_id) &&
+        new Date(p.date) > new Date()
+      ).sort((a, b) => new Date(a.date) - new Date(b.date));
+      return upcoming[0] || null;
+    },
+    enabled: children.length > 0,
+  });
+
+  const { data: badgeProgress = [] } = useQuery({
+    queryKey: ['badge-progress', children],
+    queryFn: async () => {
+      if (children.length === 0) return [];
+      const allProgress = await base44.entities.BadgeProgress.filter({});
+      return allProgress.filter(p => children.some(c => c.id === p.member_id));
     },
     enabled: children.length > 0,
   });
@@ -58,13 +85,11 @@ export default function ParentDashboard() {
     );
   }
 
-  const quickActions = [
-    { icon: Users, label: 'View Children', count: children.length },
-    { icon: Calendar, label: 'Upcoming Events', count: upcomingEvents.length },
-    { icon: Award, label: 'Badge Progress', count: 0 },
-    { icon: FileText, label: 'Forms', count: 0 },
-    { icon: CreditCard, label: 'Payments', count: 0 },
-    { icon: Bell, label: 'Notifications', count: 0 },
+  const quickStats = [
+    { icon: Users, label: 'My Child', count: children.length, color: 'bg-blue-500' },
+    { icon: Calendar, label: 'Programme', count: nextMeeting ? 1 : 0, color: 'bg-green-500' },
+    { icon: Calendar, label: 'Events/Camps', count: upcomingEvents.length, color: 'bg-purple-500' },
+    { icon: Award, label: 'Badges', count: badgeProgress.length, color: 'bg-yellow-500' },
   ];
 
   return (
@@ -78,109 +103,124 @@ export default function ParentDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Quick Actions Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          {quickActions.map((action, index) => (
+        {/* Quick Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {quickStats.map((stat, index) => (
             <motion.div
-              key={action.label}
+              key={stat.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 mx-auto bg-[#7413dc]/10 rounded-full flex items-center justify-center mb-3">
-                    <action.icon className="w-6 h-6 text-[#7413dc]" />
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{stat.label}</p>
+                      <p className="text-3xl font-bold text-gray-900 mt-2">{stat.count}</p>
+                    </div>
+                    <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
+                      <stat.icon className="w-6 h-6 text-white" />
+                    </div>
                   </div>
-                  <h3 className="text-sm font-medium text-gray-900">{action.label}</h3>
-                  {action.count > 0 && (
-                    <p className="text-xs text-gray-500 mt-1">{action.count} items</p>
-                  )}
                 </CardContent>
               </Card>
             </motion.div>
           ))}
         </div>
 
-        {/* Children Overview */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                My Children
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {children.length === 0 ? (
-                <p className="text-gray-500">No children registered yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {children.map((child) => (
-                    <div
-                      key={child.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium text-gray-900">{child.full_name}</p>
-                        <p className="text-sm text-gray-500">
-                          Age {new Date().getFullYear() - new Date(child.date_of_birth).getFullYear()}
-                        </p>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        View Profile
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* Main Dashboard Content */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left Side - Actions Required */}
+          <div className="lg:col-span-1">
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-orange-500" />
+                  Actions Required
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-500 text-sm">No actions required at this time.</p>
+              </CardContent>
+            </Card>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Upcoming Events
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {upcomingEvents.length === 0 ? (
-                <p className="text-gray-500">No upcoming events.</p>
-              ) : (
-                <div className="space-y-3">
-                  {upcomingEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium text-gray-900">{event.title}</p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(event.start_date).toLocaleDateString()}
-                        </p>
+          {/* Right Side - Meetings and Events */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Next Weekly Meeting */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-green-500" />
+                  Next Weekly Meeting
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {nextMeeting ? (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <h3 className="font-semibold text-green-900 text-lg">{nextMeeting.title}</h3>
+                    <p className="text-green-700 text-sm mt-1">
+                      {new Date(nextMeeting.date).toLocaleDateString('en-GB', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </p>
+                    {nextMeeting.description && (
+                      <p className="text-green-600 text-sm mt-2">{nextMeeting.description}</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No upcoming meetings scheduled.</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Upcoming Events and Camps */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-purple-500" />
+                  Upcoming Events and Camps
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {upcomingEvents.length === 0 ? (
+                  <p className="text-gray-500">No upcoming events or camps.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {upcomingEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-start justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        <div>
+                          <p className="font-semibold text-gray-900">{event.title}</p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {new Date(event.start_date).toLocaleDateString('en-GB', { 
+                              weekday: 'short', 
+                              month: 'short', 
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </p>
+                          {event.location && (
+                            <p className="text-xs text-gray-500 mt-1">{event.location}</p>
+                          )}
+                        </div>
+                        <Button variant="outline" size="sm">
+                          View Details
+                        </Button>
                       </div>
-                      <Button variant="outline" size="sm">
-                        Details
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
-
-        {/* Coming Soon Notice */}
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-6">
-            <h3 className="font-semibold text-blue-900 mb-2">More Features Coming Soon!</h3>
-            <p className="text-blue-700 text-sm">
-              We're building out badge tracking, payment management, attendance history, 
-              and more. Check back soon!
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

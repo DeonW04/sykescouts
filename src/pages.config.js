@@ -1,4 +1,5 @@
 import About from './pages/About';
+import AdminSettings from './pages/AdminSettings';
 import CompleteRegistration from './pages/CompleteRegistration';
 import Contact from './pages/Contact';
 import Gallery from './pages/Gallery';
@@ -11,12 +12,12 @@ import ParentDashboard from './pages/ParentDashboard';
 import Parents from './pages/Parents';
 import Sections from './pages/Sections';
 import Volunteer from './pages/Volunteer';
-import AdminSettings from './pages/AdminSettings';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "About": About,
+    "AdminSettings": AdminSettings,
     "CompleteRegistration": CompleteRegistration,
     "Contact": Contact,
     "Gallery": Gallery,
@@ -29,7 +30,6 @@ export const PAGES = {
     "Parents": Parents,
     "Sections": Sections,
     "Volunteer": Volunteer,
-    "AdminSettings": AdminSettings,
 }
 
 export const pagesConfig = {
