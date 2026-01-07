@@ -74,6 +74,25 @@ export default function MeetingDetail() {
     enabled: !!section,
   });
 
+  const { data: actionsRequired = [] } = useQuery({
+    queryKey: ['actions-required', existingProgramme],
+    queryFn: async () => {
+      if (!existingProgramme) return [];
+      return base44.entities.ActionRequired.filter({ programme_id: existingProgramme.id });
+    },
+    enabled: !!existingProgramme,
+  });
+
+  const { data: actionResponses = [] } = useQuery({
+    queryKey: ['action-responses', actionsRequired],
+    queryFn: async () => {
+      if (actionsRequired.length === 0) return [];
+      const allResponses = await base44.entities.ActionResponse.filter({});
+      return allResponses.filter(r => actionsRequired.some(a => a.id === r.action_required_id));
+    },
+    enabled: actionsRequired.length > 0,
+  });
+
   useEffect(() => {
     if (existingProgramme) {
       setFormData({
@@ -162,6 +181,11 @@ export default function MeetingDetail() {
   const getAttendanceStatus = (memberId) => {
     const record = attendance.find(a => a.member_id === memberId);
     return record?.status || 'not_marked';
+  };
+
+  const getActionResponse = (actionId, memberId) => {
+    const response = actionResponses.find(r => r.action_required_id === actionId && r.member_id === memberId);
+    return response?.response || null;
   };
 
   return (
@@ -367,54 +391,82 @@ export default function MeetingDetail() {
                 <CardTitle>Mark Attendance</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  {members.map(member => {
-                    const status = getAttendanceStatus(member.id);
-                    return (
-                      <div
-                        key={member.id}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-[#7413dc] rounded-full flex items-center justify-center text-white font-semibold">
-                            {member.full_name.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="font-medium">{member.full_name}</p>
-                            {member.patrol && (
-                              <p className="text-sm text-gray-500">{member.patrol}</p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant={status === 'present' ? 'default' : 'outline'}
-                            onClick={() => handleAttendanceChange(member.id, 'present')}
-                            className={status === 'present' ? 'bg-green-600 hover:bg-green-700' : ''}
-                          >
-                            Present
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={status === 'absent' ? 'default' : 'outline'}
-                            onClick={() => handleAttendanceChange(member.id, 'absent')}
-                            className={status === 'absent' ? 'bg-red-600 hover:bg-red-700' : ''}
-                          >
-                            Absent
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={status === 'apologies' ? 'default' : 'outline'}
-                            onClick={() => handleAttendanceChange(member.id, 'apologies')}
-                            className={status === 'apologies' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
-                          >
-                            Apologies
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-3 font-semibold">Member</th>
+                        <th className="text-left p-3 font-semibold">Attendance</th>
+                        {actionsRequired.map(action => (
+                          <th key={action.id} className="text-left p-3 font-semibold whitespace-nowrap">
+                            {action.column_title}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {members.map(member => {
+                        const status = getAttendanceStatus(member.id);
+                        return (
+                          <tr key={member.id} className="border-b hover:bg-gray-50">
+                            <td className="p-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-[#7413dc] rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                                  {member.full_name.charAt(0)}
+                                </div>
+                                <div>
+                                  <p className="font-medium">{member.full_name}</p>
+                                  {member.patrol && (
+                                    <p className="text-sm text-gray-500">{member.patrol}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant={status === 'present' ? 'default' : 'outline'}
+                                  onClick={() => handleAttendanceChange(member.id, 'present')}
+                                  className={status === 'present' ? 'bg-green-600 hover:bg-green-700' : ''}
+                                >
+                                  Present
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant={status === 'absent' ? 'default' : 'outline'}
+                                  onClick={() => handleAttendanceChange(member.id, 'absent')}
+                                  className={status === 'absent' ? 'bg-red-600 hover:bg-red-700' : ''}
+                                >
+                                  Absent
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant={status === 'apologies' ? 'default' : 'outline'}
+                                  onClick={() => handleAttendanceChange(member.id, 'apologies')}
+                                  className={status === 'apologies' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
+                                >
+                                  Apologies
+                                </Button>
+                              </div>
+                            </td>
+                            {actionsRequired.map(action => {
+                              const response = getActionResponse(action.id, member.id);
+                              return (
+                                <td key={action.id} className="p-3">
+                                  {response ? (
+                                    <span className="text-sm text-gray-700">{response}</span>
+                                  ) : (
+                                    <span className="text-sm text-red-600">Awaiting...</span>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </CardContent>
             </Card>
