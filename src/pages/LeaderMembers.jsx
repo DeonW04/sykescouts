@@ -152,61 +152,83 @@ export default function LeaderMembers() {
                   <DialogTitle>Add New Member</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSendInvite} className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="parent_name">Parent Name *</Label>
-                    <Input
-                      id="parent_name"
-                      value={inviteForm.parent_name}
-                      onChange={(e) => setInviteForm({ ...inviteForm, parent_name: e.target.value })}
-                      required
-                      placeholder="Full name"
-                    />
+                  <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                    <Label className="text-base font-semibold">Parent One</Label>
+                    <div className="space-y-2">
+                      <Label>Name *</Label>
+                      <Input
+                        required
+                        value={inviteForm.parent_one_name}
+                        onChange={(e) => setInviteForm({ ...inviteForm, parent_one_name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Email *</Label>
+                      <Input
+                        type="email"
+                        required
+                        value={inviteForm.parent_one_email}
+                        onChange={(e) => setInviteForm({ ...inviteForm, parent_one_email: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Phone *</Label>
+                      <Input
+                        type="tel"
+                        required
+                        value={inviteForm.parent_one_phone}
+                        onChange={(e) => setInviteForm({ ...inviteForm, parent_one_phone: e.target.value })}
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="parent_email">Parent Email Address *</Label>
-                    <Input
-                      id="parent_email"
-                      type="email"
-                      value={inviteForm.parent_email}
-                      onChange={(e) => setInviteForm({ ...inviteForm, parent_email: e.target.value })}
-                      required
-                      placeholder="email@example.com"
-                    />
+                  <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                    <Label className="text-base font-semibold">Parent Two (Optional)</Label>
+                    <div className="space-y-2">
+                      <Label>Name</Label>
+                      <Input
+                        value={inviteForm.parent_two_name}
+                        onChange={(e) => setInviteForm({ ...inviteForm, parent_two_name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Email</Label>
+                      <Input
+                        type="email"
+                        value={inviteForm.parent_two_email}
+                        onChange={(e) => setInviteForm({ ...inviteForm, parent_two_email: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Phone</Label>
+                      <Input
+                        type="tel"
+                        value={inviteForm.parent_two_phone}
+                        onChange={(e) => setInviteForm({ ...inviteForm, parent_two_phone: e.target.value })}
+                      />
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="parent_phone">Parent Phone Number *</Label>
-                    <Input
-                      id="parent_phone"
-                      type="tel"
-                      value={inviteForm.parent_phone}
-                      onChange={(e) => setInviteForm({ ...inviteForm, parent_phone: e.target.value })}
-                      required
-                      placeholder="07xxx xxxxxx"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="child_name">Child's Name *</Label>
-                    <Input
-                      id="child_name"
-                      value={inviteForm.child_name}
-                      onChange={(e) => setInviteForm({ ...inviteForm, child_name: e.target.value })}
-                      required
-                      placeholder="Full name"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="child_dob">Child's Date of Birth *</Label>
-                    <Input
-                      id="child_dob"
-                      type="date"
-                      value={inviteForm.child_dob}
-                      onChange={(e) => setInviteForm({ ...inviteForm, child_dob: e.target.value })}
-                      required
-                    />
+                  <div className="space-y-3 p-3 bg-blue-50 rounded-lg border-t-2 border-blue-300">
+                    <Label className="text-base font-semibold">Child Details</Label>
+                    <div className="space-y-2">
+                      <Label>Child Full Name *</Label>
+                      <Input
+                        required
+                        value={inviteForm.child_name}
+                        onChange={(e) => setInviteForm({ ...inviteForm, child_name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Child's Date of Birth *</Label>
+                      <Input
+                        id="child_dob"
+                        type="date"
+                        value={inviteForm.child_dob}
+                        onChange={(e) => setInviteForm({ ...inviteForm, child_dob: e.target.value })}
+                        required
+                      />
+                    </div>
                   </div>
 
                   <Button 
