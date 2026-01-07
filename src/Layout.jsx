@@ -9,6 +9,7 @@ export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [isLeader, setIsLeader] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
     checkAuth();
@@ -27,12 +28,55 @@ export default function Layout({ children, currentPageName }) {
           const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
           setIsLeader(leaders.length > 0);
         }
+
+        // Check if onboarding is complete for authenticated users
+        if (!currentUser.onboarding_complete && currentPageName !== 'CompleteRegistration') {
+          window.location.href = createPageUrl('CompleteRegistration');
+          return;
+        }
       }
     } catch (error) {
       setUser(null);
       setIsLeader(false);
+    } finally {
+      setCheckingAuth(false);
     }
   };
+
+  // Define protected pages
+  const leaderPages = ['LeaderDashboard', 'LeaderMembers', 'LeaderProgramme', 'MeetingDetail', 'MemberDetail', 'AdminSettings'];
+  const parentPages = ['ParentDashboard', 'MyChild'];
+  const protectedPages = [...leaderPages, ...parentPages];
+  const publicPages = ['Home', 'About', 'Sections', 'Parents', 'Gallery', 'Contact', 'JoinUs', 'Volunteer'];
+
+  // Access control - check after auth is loaded
+  useEffect(() => {
+    if (!checkingAuth) {
+      // Redirect unauthenticated users from protected pages
+      if (!user && protectedPages.includes(currentPageName)) {
+        base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+        return;
+      }
+
+      // Redirect parents from leader pages
+      if (user && !isLeader && leaderPages.includes(currentPageName)) {
+        window.location.href = createPageUrl('ParentDashboard');
+        return;
+      }
+    }
+  }, [user, isLeader, currentPageName, checkingAuth]);
+
+  // Show loading while checking authentication
+  if (checkingAuth && protectedPages.includes(currentPageName)) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const navLinks = [
     { name: 'Home', page: 'Home' },
