@@ -1,33 +1,35 @@
 import About from './pages/About';
+import CompleteRegistration from './pages/CompleteRegistration';
 import Contact from './pages/Contact';
 import Gallery from './pages/Gallery';
 import Home from './pages/Home';
 import JoinUs from './pages/JoinUs';
-import Parents from './pages/Parents';
-import Sections from './pages/Sections';
-import Volunteer from './pages/Volunteer';
-import ParentDashboard from './pages/ParentDashboard';
 import LeaderDashboard from './pages/LeaderDashboard';
 import LeaderMembers from './pages/LeaderMembers';
 import MemberDetail from './pages/MemberDetail';
-import CompleteRegistration from './pages/CompleteRegistration';
+import ParentDashboard from './pages/ParentDashboard';
+import Parents from './pages/Parents';
+import Sections from './pages/Sections';
+import Volunteer from './pages/Volunteer';
+import AdminSettings from './pages/AdminSettings';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "About": About,
+    "CompleteRegistration": CompleteRegistration,
     "Contact": Contact,
     "Gallery": Gallery,
     "Home": Home,
     "JoinUs": JoinUs,
-    "Parents": Parents,
-    "Sections": Sections,
-    "Volunteer": Volunteer,
-    "ParentDashboard": ParentDashboard,
     "LeaderDashboard": LeaderDashboard,
     "LeaderMembers": LeaderMembers,
     "MemberDetail": MemberDetail,
-    "CompleteRegistration": CompleteRegistration,
+    "ParentDashboard": ParentDashboard,
+    "Parents": Parents,
+    "Sections": Sections,
+    "Volunteer": Volunteer,
+    "AdminSettings": AdminSettings,
 }
 
 export const pagesConfig = {
