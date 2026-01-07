@@ -13,6 +13,9 @@ import { Search, Plus, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function LeaderMembers() {
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [leaderSections, setLeaderSections] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sectionFilter, setSectionFilter] = useState('all');
   const [showInviteDialog, setShowInviteDialog] = useState(false);
