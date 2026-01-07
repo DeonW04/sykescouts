@@ -120,7 +120,8 @@ export default function AdminSettings() {
     try {
       // Update basic user info and role
       const role = editForm.user_type === 'admin' ? 'admin' : 'user';
-      await base44.entities.User.update(selectedUser.id, {
+      await base44.functions.invoke('updateUser', {
+        userId: selectedUser.id,
         full_name: editForm.full_name,
         email: editForm.email,
         role: role,
