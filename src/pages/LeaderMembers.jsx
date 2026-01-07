@@ -30,7 +30,7 @@ export default function LeaderMembers() {
     queryFn: () => base44.entities.Section.filter({ active: true }),
   });
 
-  const { data: members = [], isLoading } = useQuery({
+  const { data: members = [], isLoading, refetch: refetchMembers } = useQuery({
     queryKey: ['members'],
     queryFn: () => base44.entities.Member.filter({ active: true }),
   });
@@ -68,23 +68,32 @@ export default function LeaderMembers() {
     setSending(true);
 
     try {
-      const response = await base44.functions.invoke('sendMemberInvite', inviteForm);
+      // Create member record immediately
+      await base44.entities.Member.create({
+        full_name: inviteForm.child_name,
+        date_of_birth: inviteForm.child_dob,
+        parent_name: inviteForm.parent_name,
+        parent_email: inviteForm.parent_email,
+        parent_phone: inviteForm.parent_phone,
+        active: true,
+        join_date: new Date().toISOString().split('T')[0],
+      });
+
+      // Send invitation email
+      await base44.functions.invoke('sendMemberInvite', inviteForm);
       
-      if (response.data.success) {
-        toast.success('Invitation sent successfully!');
-        setShowInviteDialog(false);
-        setInviteForm({
-          parent_name: '',
-          parent_email: '',
-          parent_phone: '',
-          child_name: '',
-          child_dob: '',
-        });
-      } else {
-        toast.error('Failed to send invitation');
-      }
+      toast.success('Member added and invitation sent!');
+      setShowInviteDialog(false);
+      setInviteForm({
+        parent_name: '',
+        parent_email: '',
+        parent_phone: '',
+        child_name: '',
+        child_dob: '',
+      });
+      refetchMembers();
     } catch (error) {
-      toast.error('Error sending invitation: ' + error.message);
+      toast.error('Error adding member: ' + error.message);
     } finally {
       setSending(false);
     }
