@@ -65,7 +65,7 @@ export default function LeaderDashboard() {
     { icon: Users, label: 'Members', count: totalMembers, page: 'LeaderMembers' },
     { icon: CheckSquare, label: 'Attendance', count: 0 },
     { icon: Calendar, label: 'Programme', count: 0, page: 'LeaderProgramme' },
-    { icon: Award, label: 'Badges', count: 0 },
+    { icon: Award, label: 'Badges', count: 0, page: 'LeaderBadges' },
     { icon: Calendar, label: 'Events', count: 0 },
     { icon: Mail, label: 'Communications', count: 0 },
   ];
