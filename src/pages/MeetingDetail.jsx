@@ -138,18 +138,24 @@ export default function MeetingDetail() {
       const existing = attendance.find(a => a.member_id === memberId);
       
       if (existing) {
-        return base44.entities.Attendance.update(existing.id, { status });
+        await base44.entities.Attendance.update(existing.id, { status });
       } else {
-        return base44.entities.Attendance.create({
+        await base44.entities.Attendance.create({
           member_id: memberId,
           section_id: sectionId,
           date,
           status,
         });
       }
+      
+      // Auto-award badges if programme exists
+      if (existingProgramme?.id) {
+        await base44.functions.invoke('awardBadgesFromAttendance', { programmeId: existingProgramme.id });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      toast.success('Attendance saved and badges awarded');
     },
   });
 
@@ -383,6 +389,7 @@ export default function MeetingDetail() {
           </TabsContent>
 
           <TabsContent value="badges" className="space-y-6">
+            <ProgrammeBadgeCriteriaSection programmeId={existingProgramme?.id} />
             <BadgesSection programmeId={existingProgramme?.id} />
           </TabsContent>
 
