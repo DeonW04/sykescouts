@@ -1,0 +1,235 @@
+import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Award, Plus, X, Search } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+
+export default function ProgrammeBadgeCriteriaSection({ programmeId }) {
+  const queryClient = useQueryClient();
+  const [showDialog, setShowDialog] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedBadge, setSelectedBadge] = useState(null);
+  const [selectedReqs, setSelectedReqs] = useState([]);
+
+  const { data: badges = [] } = useQuery({
+    queryKey: ['badges'],
+    queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
+  });
+
+  const { data: linkedCriteria = [] } = useQuery({
+    queryKey: ['programme-criteria', programmeId],
+    queryFn: () => base44.entities.ProgrammeBadgeCriteria.filter({ programme_id: programmeId }),
+    enabled: !!programmeId,
+  });
+
+  const { data: allModules = [] } = useQuery({
+    queryKey: ['all-modules'],
+    queryFn: () => base44.entities.BadgeModule.filter({}),
+  });
+
+  const { data: allRequirements = [] } = useQuery({
+    queryKey: ['all-requirements'],
+    queryFn: () => base44.entities.BadgeRequirement.filter({}),
+  });
+
+  const addCriteriaMutation = useMutation({
+    mutationFn: (data) => base44.entities.ProgrammeBadgeCriteria.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['programme-criteria'] });
+      setShowDialog(false);
+      setSelectedBadge(null);
+      setSelectedReqs([]);
+      toast.success('Badge criteria added');
+    },
+  });
+
+  const removeCriteriaMutation = useMutation({
+    mutationFn: (id) => base44.entities.ProgrammeBadgeCriteria.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['programme-criteria'] });
+      toast.success('Criteria removed');
+    },
+  });
+
+  const handleAddCriteria = () => {
+    if (!selectedBadge || selectedReqs.length === 0) return;
+    
+    addCriteriaMutation.mutate({
+      programme_id: programmeId,
+      badge_id: selectedBadge,
+      requirement_ids: selectedReqs,
+    });
+  };
+
+  const filteredBadges = badges.filter(b => 
+    b.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const getBadgeModules = (badgeId) => {
+    return allModules.filter(m => m.badge_id === badgeId).sort((a, b) => a.order - b.order);
+  };
+
+  const getModuleRequirements = (moduleId) => {
+    return allRequirements.filter(r => r.module_id === moduleId).sort((a, b) => a.order - b.order);
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Award className="w-5 h-5" />
+              Badge Criteria
+            </CardTitle>
+            <Button onClick={() => setShowDialog(true)} size="sm">
+              <Plus className="w-4 h-4 mr-1" />
+              Link Badge
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {linkedCriteria.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-4">
+              No badge criteria linked yet
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {linkedCriteria.map(criteria => {
+                const badge = badges.find(b => b.id === criteria.badge_id);
+                const reqCount = criteria.requirement_ids?.length || 0;
+                
+                return (
+                  <div key={criteria.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      {badge?.image_url && (
+                        <img src={badge.image_url} alt={badge.name} className="w-10 h-10 rounded" />
+                      )}
+                      <div>
+                        <p className="font-medium">{badge?.name}</p>
+                        <p className="text-sm text-gray-500">{reqCount} requirement{reqCount !== 1 ? 's' : ''}</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeCriteriaMutation.mutate(criteria.id)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Link Badge Criteria to Meeting</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search badges..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {!selectedBadge ? (
+              <div className="grid gap-2">
+                {filteredBadges.map(badge => (
+                  <div
+                    key={badge.id}
+                    onClick={() => setSelectedBadge(badge.id)}
+                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
+                  >
+                    <img src={badge.image_url} alt={badge.name} className="w-12 h-12 rounded" />
+                    <div className="flex-1">
+                      <p className="font-medium">{badge.name}</p>
+                      <p className="text-sm text-gray-500">{badge.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <img 
+                      src={badges.find(b => b.id === selectedBadge)?.image_url} 
+                      alt="" 
+                      className="w-12 h-12 rounded" 
+                    />
+                    <p className="font-medium">{badges.find(b => b.id === selectedBadge)?.name}</p>
+                  </div>
+                  <Button variant="ghost" onClick={() => {
+                    setSelectedBadge(null);
+                    setSelectedReqs([]);
+                  }}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  {getBadgeModules(selectedBadge).map(module => {
+                    const moduleReqs = getModuleRequirements(module.id);
+                    return (
+                      <div key={module.id} className="border rounded-lg p-4">
+                        <h4 className="font-medium mb-3">{module.name}</h4>
+                        <div className="space-y-2">
+                          {moduleReqs.map((req, idx) => (
+                            <div key={req.id} className="flex items-start gap-2">
+                              <Checkbox
+                                id={req.id}
+                                checked={selectedReqs.includes(req.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedReqs([...selectedReqs, req.id]);
+                                  } else {
+                                    setSelectedReqs(selectedReqs.filter(id => id !== req.id));
+                                  }
+                                }}
+                              />
+                              <label htmlFor={req.id} className="text-sm cursor-pointer flex-1">
+                                <span className="font-medium">{idx + 1}.</span> {req.text}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex justify-end gap-2 mt-6">
+                  <Button variant="outline" onClick={() => setShowDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleAddCriteria}
+                    disabled={selectedReqs.length === 0}
+                  >
+                    Add {selectedReqs.length} Requirement{selectedReqs.length !== 1 ? 's' : ''}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

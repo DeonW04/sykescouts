@@ -15,6 +15,11 @@ import ParentDashboard from './pages/ParentDashboard';
 import Parents from './pages/Parents';
 import Sections from './pages/Sections';
 import Volunteer from './pages/Volunteer';
+import LeaderBadges from './pages/LeaderBadges';
+import ManageBadges from './pages/ManageBadges';
+import EditBadgeStructure from './pages/EditBadgeStructure';
+import BadgeDetail from './pages/BadgeDetail';
+import ParentBadges from './pages/ParentBadges';
 import __Layout from './Layout.jsx';
 
 
@@ -36,6 +41,11 @@ export const PAGES = {
     "Parents": Parents,
     "Sections": Sections,
     "Volunteer": Volunteer,
+    "LeaderBadges": LeaderBadges,
+    "ManageBadges": ManageBadges,
+    "EditBadgeStructure": EditBadgeStructure,
+    "BadgeDetail": BadgeDetail,
+    "ParentBadges": ParentBadges,
 }
 
 export const pagesConfig = {

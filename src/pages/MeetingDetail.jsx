@@ -17,6 +17,7 @@ import TodoSection from '../components/meeting/TodoSection';
 import ParentPortalSection from '../components/meeting/ParentPortalSection';
 import RiskAssessmentSection from '../components/meeting/RiskAssessmentSection';
 import BadgesSection from '../components/meeting/BadgesSection';
+import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
 
 export default function MeetingDetail() {
   const navigate = useNavigate();
