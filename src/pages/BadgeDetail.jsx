@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function BadgeDetail() {
   const navigate = useNavigate();
@@ -137,21 +138,41 @@ export default function BadgeDetail() {
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 font-medium sticky left-0 bg-white">Member</th>
-                    <th className="text-center p-3 font-medium w-24">Progress</th>
-                    {modules.sort((a, b) => a.order - b.order).map(module => {
-                      const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
-                      return moduleReqs.map((req, idx) => (
-                        <th key={req.id} className="text-center p-3 font-medium w-12">
-                          <div className="text-xs">{module.name}</div>
-                          <div className="text-xs text-gray-500">{idx + 1}</div>
-                        </th>
-                      ));
-                    })}
-                  </tr>
-                </thead>
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left p-3 font-medium sticky left-0 bg-white">Member</th>
+                  <th className="text-center p-3 font-medium w-24">Progress</th>
+                  {modules.sort((a, b) => a.order - b.order).map((module, moduleIdx) => {
+                    const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
+                    return (
+                      <th key={module.id} colSpan={moduleReqs.length} className="text-center p-3 font-medium border-l-2">
+                        <div className="text-xs font-semibold">{module.name}</div>
+                      </th>
+                    );
+                  })}
+                </tr>
+                <tr className="border-b bg-gray-50">
+                  <th className="sticky left-0 bg-gray-50"></th>
+                  <th></th>
+                  {modules.sort((a, b) => a.order - b.order).map(module => {
+                    const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
+                    return moduleReqs.map((req, idx) => (
+                      <th key={req.id} className="text-center p-2 w-12">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="text-xs text-gray-600 cursor-help">{idx + 1}</div>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <p className="text-sm">{req.text}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </th>
+                    ));
+                  })}
+                </tr>
+              </thead>
                 <tbody>
                   {relevantMembers.map(member => {
                     const memberProgress = getMemberProgress(member.id);
@@ -171,10 +192,10 @@ export default function BadgeDetail() {
                           <div className="text-sm font-medium">{memberProgress.percentage}%</div>
                           <div className="text-xs text-gray-500">{memberProgress.completed}/{memberProgress.total}</div>
                         </td>
-                        {modules.sort((a, b) => a.order - b.order).map(module => {
+                        {modules.sort((a, b) => a.order - b.order).map((module, moduleIdx) => {
                           const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
-                          return moduleReqs.map(req => (
-                            <td key={req.id} className="p-3 text-center">
+                          return moduleReqs.map((req, reqIdx) => (
+                            <td key={req.id} className={`p-3 text-center ${reqIdx === 0 ? 'border-l-2' : ''}`}>
                               <Checkbox
                                 checked={isRequirementCompleted(member.id, req.id)}
                                 onCheckedChange={(checked) => toggleReqMutation.mutate({

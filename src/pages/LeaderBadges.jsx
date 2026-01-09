@@ -217,13 +217,13 @@ export default function LeaderBadges() {
                   onClick={() => navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`)}
                 >
                   <CardHeader>
-                    <div className="flex items-start gap-4">
+                    <div className="flex flex-col">
                       <img
                         src={badge.image_url}
                         alt={badge.name}
-                        className="w-16 h-16 rounded-lg object-cover"
+                        className="w-full h-32 rounded-lg object-cover mb-3"
                       />
-                      <div className="flex-1">
+                      <div>
                         <CardTitle className="text-lg">
                           {badge.name}
                           {badge.category === 'staged' && badge.stage_number && (
