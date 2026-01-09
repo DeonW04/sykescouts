@@ -21,6 +21,7 @@ export default function ManageBadges() {
   const [formData, setFormData] = useState({
     name: '',
     section: 'cubs',
+    badge_type: 'activity',
     image_url: '',
     description: '',
     completion_rule: 'all_modules',
@@ -68,6 +69,7 @@ export default function ManageBadges() {
     setFormData({
       name: '',
       section: 'cubs',
+      badge_type: 'activity',
       image_url: '',
       description: '',
       completion_rule: 'all_modules',
@@ -80,6 +82,7 @@ export default function ManageBadges() {
     setFormData({
       name: badge.name,
       section: badge.section,
+      badge_type: badge.badge_type || 'activity',
       image_url: badge.image_url,
       description: badge.description || '',
       completion_rule: badge.completion_rule,
@@ -211,6 +214,23 @@ export default function ManageBadges() {
                       {section.display_name}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Badge Type</Label>
+              <Select
+                value={formData.badge_type}
+                onValueChange={(value) => setFormData({ ...formData, badge_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="challenge">Challenge Badge</SelectItem>
+                  <SelectItem value="activity">Activity Badge</SelectItem>
+                  <SelectItem value="staged">Staged Badge</SelectItem>
+                  <SelectItem value="core">Core Badge</SelectItem>
                 </SelectContent>
               </Select>
             </div>
