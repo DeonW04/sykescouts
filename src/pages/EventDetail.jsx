@@ -15,16 +15,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import NewEventDialog from '../components/events/NewEventDialog';
 import TodoSection from '../components/meeting/TodoSection';
+import EventParentPortalSection from '../components/events/EventParentPortalSection';
+import RiskAssessmentSection from '../components/meeting/RiskAssessmentSection';
+import BadgesSection from '../components/meeting/BadgesSection';
 
 export default function EventDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const urlParams = new URLSearchParams(window.location.search);
   const eventId = urlParams.get('id');
-  const [uploadingDoc, setUploadingDoc] = useState(false);
-  const [docName, setDocName] = useState('');
-  const [docFile, setDocFile] = useState(null);
-  const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -114,36 +113,6 @@ export default function EventDetail() {
     setFormData({ ...formData, schedule_by_day: newSchedule });
   };
 
-  const handleUploadDocument = async () => {
-    if (!docFile || !docName) {
-      toast.error('Please provide a name and select a file');
-      return;
-    }
-
-    setUploadingDoc(true);
-    try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: docFile });
-      
-      const updatedDocs = [...documents, { name: docName, url: file_url }];
-      await updateEventMutation.mutateAsync({ documents: updatedDocs });
-      
-      setShowUploadDialog(false);
-      setDocName('');
-      setDocFile(null);
-      toast.success('Document uploaded');
-    } catch (error) {
-      toast.error('Error uploading document: ' + error.message);
-    } finally {
-      setUploadingDoc(false);
-    }
-  };
-
-  const handleDeleteDocument = async (docUrl) => {
-    const updatedDocs = documents.filter(d => d.url !== docUrl);
-    await updateEventMutation.mutateAsync({ documents: updatedDocs });
-    toast.success('Document removed');
-  };
-
   const togglePublished = async () => {
     await updateEventMutation.mutateAsync({ published: !event.published });
   };
@@ -221,12 +190,14 @@ export default function EventDetail() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="details" className="space-y-6">
-          <TabsList className="bg-white border">
+          <TabsList className="bg-white border grid grid-cols-7">
             <TabsTrigger value="details">Overview</TabsTrigger>
             <TabsTrigger value="schedule">Schedule</TabsTrigger>
             <TabsTrigger value="todo">To Do</TabsTrigger>
-            <TabsTrigger value="equipment">Equipment & Instructions</TabsTrigger>
-            <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="parent">Parent Portal</TabsTrigger>
+            <TabsTrigger value="risk">Risk</TabsTrigger>
+            <TabsTrigger value="badges">Badges</TabsTrigger>
+            <TabsTrigger value="equipment">Equipment</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="space-y-6">
@@ -360,6 +331,18 @@ export default function EventDetail() {
             <TodoSection programmeId={eventId} entityType="event" />
           </TabsContent>
 
+          <TabsContent value="parent">
+            <EventParentPortalSection eventId={eventId} event={event} />
+          </TabsContent>
+
+          <TabsContent value="risk">
+            <RiskAssessmentSection programmeId={eventId} entityType="event" />
+          </TabsContent>
+
+          <TabsContent value="badges">
+            <BadgesSection programmeId={eventId} entityType="event" />
+          </TabsContent>
+
           <TabsContent value="equipment" className="space-y-6">
             <Card>
               <CardHeader>
@@ -390,86 +373,9 @@ export default function EventDetail() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="documents">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Documents & Kit Lists</CardTitle>
-                  <Button onClick={() => setShowUploadDialog(true)} size="sm">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Document
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {documents.length === 0 ? (
-                  <p className="text-gray-500 text-sm text-center py-8">No documents uploaded yet</p>
-                ) : (
-                  <div className="space-y-2">
-                    {documents.map((doc, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <FileText className="w-5 h-5 text-gray-400" />
-                          <span className="font-medium">{doc.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="sm">
-                              <Download className="w-4 h-4" />
-                            </Button>
-                          </a>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteDocument(doc.url)}
-                          >
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+
         </Tabs>
       </div>
-
-      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Upload Document</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="docName">Document Name</Label>
-              <Input
-                id="docName"
-                value={docName}
-                onChange={(e) => setDocName(e.target.value)}
-                placeholder="e.g., Kit List, Information Sheet"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="docFile">File</Label>
-              <Input
-                id="docFile"
-                type="file"
-                onChange={(e) => setDocFile(e.target.files[0])}
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 mt-4">
-            <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUploadDocument} disabled={uploadingDoc}>
-              {uploadingDoc ? 'Uploading...' : 'Upload'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <NewEventDialog
         open={showEditDialog}

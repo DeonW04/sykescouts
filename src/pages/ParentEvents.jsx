@@ -2,14 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, MapPin, Download, FileText } from 'lucide-react';
-import { format } from 'date-fns';
+import { Calendar as CalendarIcon, MapPin, List, Calendar as CalendarViewIcon } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 
 export default function ParentEvents() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [children, setChildren] = useState([]);
+  const [viewMode, setViewMode] = useState('list');
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   useEffect(() => {
     loadUser();
@@ -59,12 +64,42 @@ export default function ParentEvents() {
   const upcomingEvents = events.filter(e => new Date(e.start_date) >= now);
   const pastEvents = events.filter(e => new Date(e.start_date) < now);
 
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+  const getEventsForDay = (day) => {
+    return events.filter(event => isSameDay(new Date(event.start_date), day));
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-[#7413dc] text-white py-8">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold">Events & Camps</h1>
-          <p className="mt-2 text-white/80">View upcoming and past events</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">Events & Camps</h1>
+              <p className="mt-2 text-white/80">View upcoming and past events</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'list' ? 'secondary' : 'outline'}
+                onClick={() => setViewMode('list')}
+                className={viewMode === 'list' ? 'bg-white text-[#7413dc]' : 'bg-white/10 text-white border-white hover:bg-white/20'}
+              >
+                <List className="w-4 h-4 mr-2" />
+                List
+              </Button>
+              <Button
+                variant={viewMode === 'calendar' ? 'secondary' : 'outline'}
+                onClick={() => setViewMode('calendar')}
+                className={viewMode === 'calendar' ? 'bg-white text-[#7413dc]' : 'bg-white/10 text-white border-white hover:bg-white/20'}
+              >
+                <CalendarViewIcon className="w-4 h-4 mr-2" />
+                Calendar
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -72,8 +107,64 @@ export default function ParentEvents() {
         {events.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
-              <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-600">No events planned at the moment</p>
+            </CardContent>
+          </Card>
+        ) : viewMode === 'calendar' ? (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}
+                >
+                  Previous
+                </Button>
+                <CardTitle>{format(currentMonth, 'MMMM yyyy')}</CardTitle>
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}
+                >
+                  Next
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-7 gap-2">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                  <div key={day} className="text-center font-semibold text-sm text-gray-600 py-2">
+                    {day}
+                  </div>
+                ))}
+                {Array.from({ length: monthStart.getDay() }).map((_, i) => (
+                  <div key={`empty-${i}`} className="min-h-[100px]" />
+                ))}
+                {daysInMonth.map(day => {
+                  const dayEvents = getEventsForDay(day);
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      className={`min-h-[100px] p-2 border rounded-lg ${
+                        !isSameMonth(day, currentMonth) ? 'bg-gray-50' : 'bg-white'
+                      }`}
+                    >
+                      <div className="text-sm font-medium mb-1">{format(day, 'd')}</div>
+                      <div className="space-y-1">
+                        {dayEvents.map(event => (
+                          <div
+                            key={event.id}
+                            onClick={() => navigate(createPageUrl('ParentEventDetail') + `?id=${event.id}`)}
+                            className="text-xs p-1 bg-[#7413dc] text-white rounded cursor-pointer hover:bg-[#5c0fb0] truncate"
+                          >
+                            {event.title}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -84,17 +175,20 @@ export default function ParentEvents() {
                 <div className="grid gap-4">
                   {upcomingEvents.map(event => {
                     const eventSections = sections.filter(s => event.section_ids?.includes(s.id));
-                    const documents = event.documents || [];
                     
                     return (
-                      <Card key={event.id}>
+                      <Card
+                        key={event.id}
+                        className="cursor-pointer hover:shadow-lg transition-shadow"
+                        onClick={() => navigate(createPageUrl('ParentEventDetail') + `?id=${event.id}`)}
+                      >
                         <CardHeader>
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <CardTitle className="text-xl">{event.title}</CardTitle>
                               <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
                                 <span className="flex items-center gap-1">
-                                  <Calendar className="w-4 h-4" />
+                                  <CalendarIcon className="w-4 h-4" />
                                   {format(new Date(event.start_date), 'EEEE, MMMM d, yyyy')}
                                   {event.end_date && event.end_date !== event.start_date && (
                                     <> to {format(new Date(event.end_date), 'EEEE, MMMM d, yyyy')}</>
@@ -113,7 +207,7 @@ export default function ParentEvents() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                           {event.description && (
-                            <p className="text-gray-700 whitespace-pre-wrap">{event.description}</p>
+                            <p className="text-gray-700 line-clamp-2">{event.description}</p>
                           )}
                           
                           <div className="flex flex-wrap gap-2 text-sm">
@@ -123,7 +217,7 @@ export default function ParentEvents() {
                           </div>
 
                           {(event.cost > 0 || event.consent_deadline || event.payment_deadline) && (
-                            <div className="grid md:grid-cols-3 gap-4 pt-4 border-t">
+                            <div className="grid grid-cols-3 gap-4 pt-4 border-t">
                               {event.cost > 0 && (
                                 <div>
                                   <p className="text-xs text-gray-600">Cost</p>
@@ -142,27 +236,6 @@ export default function ParentEvents() {
                                   <p className="font-medium">{format(new Date(event.payment_deadline), 'MMM d, yyyy')}</p>
                                 </div>
                               )}
-                            </div>
-                          )}
-
-                          {documents.length > 0 && (
-                            <div className="pt-4 border-t">
-                              <p className="text-sm font-medium text-gray-700 mb-2">Documents:</p>
-                              <div className="space-y-2">
-                                {documents.map((doc, idx) => (
-                                  <a
-                                    key={idx}
-                                    href={doc.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
-                                  >
-                                    <FileText className="w-4 h-4 text-gray-500" />
-                                    <span className="text-sm flex-1">{doc.name}</span>
-                                    <Download className="w-4 h-4 text-gray-400" />
-                                  </a>
-                                ))}
-                              </div>
                             </div>
                           )}
                         </CardContent>

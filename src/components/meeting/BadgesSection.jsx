@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Plus, Trash2, Award } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function BadgesSection({ programmeId }) {
+export default function BadgesSection({ programmeId, entityType = 'programme' }) {
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState({
@@ -19,13 +19,23 @@ export default function BadgesSection({ programmeId }) {
   });
 
   const { data: badges = [] } = useQuery({
-    queryKey: ['meeting-badges', programmeId],
-    queryFn: () => base44.entities.MeetingBadge.filter({ programme_id: programmeId }),
+    queryKey: ['meeting-badges', programmeId, entityType],
+    queryFn: () => {
+      const filter = entityType === 'event'
+        ? { event_id: programmeId }
+        : { programme_id: programmeId };
+      return base44.entities.MeetingBadge.filter(filter);
+    },
     enabled: !!programmeId,
   });
 
   const createBadgeMutation = useMutation({
-    mutationFn: (data) => base44.entities.MeetingBadge.create({ ...data, programme_id: programmeId }),
+    mutationFn: (data) => {
+      const badgeData = entityType === 'event'
+        ? { event_id: programmeId, ...data }
+        : { programme_id: programmeId, ...data };
+      return base44.entities.MeetingBadge.create(badgeData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meeting-badges'] });
       setShowDialog(false);

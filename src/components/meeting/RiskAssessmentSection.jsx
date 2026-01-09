@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Upload, FileText, Eye, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function RiskAssessmentSection({ programmeId }) {
+export default function RiskAssessmentSection({ programmeId, entityType = 'programme' }) {
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
   const [title, setTitle] = useState('');
@@ -18,13 +18,23 @@ export default function RiskAssessmentSection({ programmeId }) {
   const [viewingPdf, setViewingPdf] = useState(null);
 
   const { data: assessments = [] } = useQuery({
-    queryKey: ['risk-assessments', programmeId],
-    queryFn: () => base44.entities.RiskAssessment.filter({ programme_id: programmeId }),
+    queryKey: ['risk-assessments', programmeId, entityType],
+    queryFn: () => {
+      const filter = entityType === 'event'
+        ? { event_id: programmeId }
+        : { programme_id: programmeId };
+      return base44.entities.RiskAssessment.filter(filter);
+    },
     enabled: !!programmeId,
   });
 
   const createAssessmentMutation = useMutation({
-    mutationFn: (data) => base44.entities.RiskAssessment.create({ ...data, programme_id: programmeId }),
+    mutationFn: (data) => {
+      const assessmentData = entityType === 'event'
+        ? { event_id: programmeId, ...data }
+        : { programme_id: programmeId, ...data };
+      return base44.entities.RiskAssessment.create(assessmentData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['risk-assessments'] });
       setShowDialog(false);
