@@ -25,6 +25,7 @@ import Volunteer from './pages/Volunteer';
 import LeaderEvents from './pages/LeaderEvents';
 import EventDetail from './pages/EventDetail';
 import ParentEvents from './pages/ParentEvents';
+import LeaderAttendance from './pages/LeaderAttendance';
 import __Layout from './Layout.jsx';
 
 
@@ -56,6 +57,7 @@ export const PAGES = {
     "LeaderEvents": LeaderEvents,
     "EventDetail": EventDetail,
     "ParentEvents": ParentEvents,
+    "LeaderAttendance": LeaderAttendance,
 }
 
 export const pagesConfig = {
