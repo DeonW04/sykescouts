@@ -66,6 +66,16 @@ export default function ParentBadges() {
     enabled: children.length > 0,
   });
 
+  const { data: awards = [] } = useQuery({
+    queryKey: ['awards', children],
+    queryFn: async () => {
+      if (children.length === 0) return [];
+      const allAwards = await base44.entities.MemberBadgeAward.filter({});
+      return allAwards.filter(a => children.some(c => c.id === a.member_id));
+    },
+    enabled: children.length > 0,
+  });
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -95,7 +105,20 @@ export default function ParentBadges() {
     );
   }
 
-  const completedBadges = badgeProgress.filter(p => p.member_id === child.id && p.status === 'completed');
+  // Awarded badges (completed AND awarded)
+  const awardedBadges = badgeProgress.filter(p => {
+    if (p.member_id !== child.id || p.status !== 'completed') return false;
+    const award = awards.find(a => a.member_id === child.id && a.badge_id === p.badge_id);
+    return award?.award_status === 'awarded';
+  });
+
+  // Completed but not yet awarded
+  const completedNotAwarded = badgeProgress.filter(p => {
+    if (p.member_id !== child.id || p.status !== 'completed') return false;
+    const award = awards.find(a => a.member_id === child.id && a.badge_id === p.badge_id);
+    return !award || award.award_status === 'pending';
+  });
+
   const inProgressBadges = badgeProgress.filter(p => p.member_id === child.id && p.status === 'in_progress');
 
   // Group staged badges by family
@@ -117,7 +140,12 @@ export default function ParentBadges() {
     family.stages.sort((a, b) => a.stage_number - b.stage_number);
   });
 
-  const completedNonStaged = completedBadges.filter(p => {
+  const awardedNonStaged = awardedBadges.filter(p => {
+    const badge = badges.find(b => b.id === p.badge_id);
+    return badge?.category !== 'staged';
+  });
+
+  const completedNotAwardedNonStaged = completedNotAwarded.filter(p => {
     const badge = badges.find(b => b.id === p.badge_id);
     return badge?.category !== 'staged';
   });
@@ -176,10 +204,10 @@ export default function ParentBadges() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Completed Badges */}
+        {/* Awarded Badges */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">Completed Badges</h2>
-          {completedBadges.length === 0 ? (
+          <h2 className="text-2xl font-bold mb-4">Awarded Badges</h2>
+          {awardedBadges.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
                 <p className="text-gray-600">No badges completed yet. Keep working towards them!</p>
@@ -188,7 +216,7 @@ export default function ParentBadges() {
           ) : (
             <>
               <div className="grid md:grid-cols-3 gap-4 mb-6">
-                {completedNonStaged.map(progress => {
+                {awardedNonStaged.map(progress => {
                   const badge = badges.find(b => b.id === progress.badge_id);
                   if (!badge) return null;
                   
@@ -204,7 +232,9 @@ export default function ParentBadges() {
                         <div className="flex items-center justify-center gap-2 mt-2">
                           <CheckCircle className="w-4 h-4 text-green-600" />
                           <span className="text-sm text-green-700">
-                            Completed {progress.completion_date ? new Date(progress.completion_date).toLocaleDateString() : ''}
+                            Awarded {awards.find(a => a.badge_id === badge.id && a.member_id === child.id)?.awarded_date ? 
+                              new Date(awards.find(a => a.badge_id === badge.id && a.member_id === child.id).awarded_date).toLocaleDateString() : 
+                              ''}
                           </span>
                         </div>
                       </CardContent>
@@ -215,11 +245,11 @@ export default function ParentBadges() {
 
               {/* Staged Badge Families */}
               {Object.entries(stagedBadgeFamilies).map(([familyId, family]) => {
-                const completedStages = family.stages.filter(stage => 
-                  completedBadges.some(p => p.badge_id === stage.id)
+                const awardedStages = family.stages.filter(stage => 
+                  awardedBadges.some(p => p.badge_id === stage.id)
                 );
                 
-                if (completedStages.length === 0) return null;
+                if (awardedStages.length === 0) return null;
 
                 return (
                   <Card key={familyId} className="bg-green-50 border-green-200 mb-4">
@@ -229,14 +259,14 @@ export default function ParentBadges() {
                     <CardContent>
                       <div className="flex gap-4 overflow-x-auto pb-2">
                         {family.stages.map(stage => {
-                          const stageProgress = completedBadges.find(p => p.badge_id === stage.id);
-                          const isCompleted = !!stageProgress;
+                          const stageProgress = awardedBadges.find(p => p.badge_id === stage.id);
+                          const isAwarded = !!stageProgress;
                           
                           return (
                             <div
                               key={stage.id}
                               className={`flex-shrink-0 text-center p-4 rounded-lg ${
-                                isCompleted ? 'bg-white' : 'opacity-40'
+                                isAwarded ? 'bg-white' : 'opacity-40'
                               }`}
                             >
                               <img
@@ -245,10 +275,10 @@ export default function ParentBadges() {
                                 className="w-20 h-20 mx-auto rounded-lg mb-2"
                               />
                               <p className="font-semibold text-sm">Stage {stage.stage_number}</p>
-                              {isCompleted && (
+                              {isAwarded && (
                                 <div className="flex items-center justify-center gap-1 mt-1">
                                   <CheckCircle className="w-3 h-3 text-green-600" />
-                                  <span className="text-xs text-green-700">Completed</span>
+                                  <span className="text-xs text-green-700">Awarded</span>
                                 </div>
                               )}
                             </div>
@@ -262,6 +292,38 @@ export default function ParentBadges() {
             </>
           )}
         </div>
+
+        {/* Completed but Not Yet Awarded */}
+        {completedNotAwarded.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Completed - Awaiting Award</h2>
+            <div className="grid md:grid-cols-3 gap-4">
+              {completedNotAwardedNonStaged.map(progress => {
+                const badge = badges.find(b => b.id === progress.badge_id);
+                if (!badge) return null;
+                
+                return (
+                  <Card key={progress.id} className="bg-yellow-50 border-yellow-200">
+                    <CardContent className="p-6 text-center">
+                      <img
+                        src={badge.image_url}
+                        alt={badge.name}
+                        className="w-24 h-24 mx-auto rounded-lg mb-3"
+                      />
+                      <h3 className="font-semibold">{badge.name}</h3>
+                      <div className="flex items-center justify-center gap-2 mt-2">
+                        <CheckCircle className="w-4 h-4 text-yellow-600" />
+                        <span className="text-sm text-yellow-700">
+                          Completed - badge ceremony soon!
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* In Progress Badges */}
         <div>

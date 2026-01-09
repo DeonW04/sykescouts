@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Award, Plus, Search, Users, TrendingUp } from 'lucide-react';
+import { Award, Plus, Search, Users, TrendingUp, Package, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Badge } from '@/components/ui/badge';
@@ -46,6 +46,16 @@ export default function LeaderBadges() {
     queryFn: () => base44.entities.MemberRequirementProgress.filter({}),
   });
 
+  const { data: awards = [] } = useQuery({
+    queryKey: ['awards'],
+    queryFn: () => base44.entities.MemberBadgeAward.filter({}),
+  });
+
+  const { data: stock = [] } = useQuery({
+    queryKey: ['badge-stock'],
+    queryFn: () => base44.entities.BadgeStock.filter({}),
+  });
+
   const filteredBadges = badges.filter(badge => {
     const matchesSearch = badge.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSection = sectionFilter === 'all' || badge.section === sectionFilter || badge.section === 'all';
@@ -79,7 +89,28 @@ export default function LeaderBadges() {
       ? Math.round((completedCount / relevantMembers.length) * 100) 
       : 0;
 
-    return { completedCount, inProgressCount, closeToCompletion, percentComplete, totalMembers: relevantMembers.length };
+    // Due badges (completed but not awarded)
+    const dueCount = awards.filter(a => 
+      a.badge_id === badgeId && a.award_status === 'pending'
+    ).length;
+
+    // Stock info
+    const stockInfo = stock.find(s => s.badge_id === badgeId);
+    const currentStock = stockInfo?.current_stock || 0;
+    const lowStock = stockInfo && currentStock < stockInfo.minimum_threshold;
+    const outOfStock = currentStock === 0;
+
+    return { 
+      completedCount, 
+      inProgressCount, 
+      closeToCompletion, 
+      percentComplete, 
+      totalMembers: relevantMembers.length,
+      dueCount,
+      currentStock,
+      lowStock,
+      outOfStock
+    };
   };
 
   return (
@@ -94,13 +125,22 @@ export default function LeaderBadges() {
                 <p className="mt-1 text-white/80">Track progress and manage badges</p>
               </div>
             </div>
-            <Button
-              onClick={() => navigate(createPageUrl('ManageBadges'))}
-              className="bg-white text-[#7413dc] hover:bg-gray-100"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Manage Badges
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => navigate(createPageUrl('AwardBadges'))}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Award className="w-4 h-4 mr-2" />
+                Award Badges
+              </Button>
+              <Button
+                onClick={() => navigate(createPageUrl('ManageBadges'))}
+                className="bg-white text-[#7413dc] hover:bg-gray-100"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Manage Badges
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -216,7 +256,7 @@ export default function LeaderBadges() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="grid grid-cols-2 gap-2 text-center mb-3">
                         <div className="bg-green-50 rounded-lg p-2">
                           <div className="text-xl font-bold text-green-700">{stats.completedCount}</div>
                           <div className="text-xs text-green-600">Completed</div>
@@ -225,11 +265,41 @@ export default function LeaderBadges() {
                           <div className="text-xl font-bold text-blue-700">{stats.inProgressCount}</div>
                           <div className="text-xs text-blue-600">In Progress</div>
                         </div>
-                        <div className="bg-orange-50 rounded-lg p-2">
-                          <div className="text-xl font-bold text-orange-700">{stats.closeToCompletion}</div>
-                          <div className="text-xs text-orange-600">Nearly Done</div>
-                        </div>
                       </div>
+
+                      {stats.dueCount > 0 && (
+                        <div className={`p-2 rounded-lg flex items-center justify-between ${
+                          stats.outOfStock ? 'bg-red-50' : stats.lowStock ? 'bg-orange-50' : 'bg-purple-50'
+                        }`}>
+                          <div className="flex items-center gap-2">
+                            <Award className={`w-4 h-4 ${
+                              stats.outOfStock ? 'text-red-600' : stats.lowStock ? 'text-orange-600' : 'text-purple-600'
+                            }`} />
+                            <span className={`text-sm font-medium ${
+                              stats.outOfStock ? 'text-red-700' : stats.lowStock ? 'text-orange-700' : 'text-purple-700'
+                            }`}>
+                              {stats.dueCount} due to award
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Package className={`w-4 h-4 ${
+                              stats.outOfStock ? 'text-red-600' : stats.lowStock ? 'text-orange-600' : 'text-gray-600'
+                            }`} />
+                            <span className={`text-xs ${
+                              stats.outOfStock ? 'text-red-600 font-bold' : stats.lowStock ? 'text-orange-600' : 'text-gray-600'
+                            }`}>
+                              {stats.currentStock}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {stats.outOfStock && stats.dueCount > 0 && (
+                        <div className="flex items-center gap-1 mt-2 text-xs text-red-600">
+                          <AlertTriangle className="w-3 h-3" />
+                          Out of stock!
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

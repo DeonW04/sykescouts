@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Edit, Trash2, Award } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Award, Package } from 'lucide-react';
+import StockManagementDialog from '../components/badges/StockManagementDialog';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
@@ -29,6 +30,7 @@ export default function ManageBadges() {
     stage_number: null,
   });
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [stockDialog, setStockDialog] = useState(null);
 
   const { data: badges = [] } = useQuery({
     queryKey: ['badges'],
@@ -190,29 +192,38 @@ export default function ManageBadges() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 mb-4">{badge.description}</p>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => navigate(createPageUrl('EditBadgeStructure') + `?id=${badge.id}`)}
-                    className="flex-1"
                   >
                     <Edit className="w-3 h-3 mr-1" />
-                    Edit Structure
+                    Structure
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setStockDialog(badge)}
+                  >
+                    <Package className="w-3 h-3 mr-1" />
+                    Stock
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleEdit(badge)}
                   >
-                    <Edit className="w-3 h-3" />
+                    <Edit className="w-3 h-3 mr-1" />
+                    Edit
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => deleteBadgeMutation.mutate(badge.id)}
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-3 h-3 mr-1" />
+                    Delete
                   </Button>
                 </div>
               </CardContent>
@@ -344,6 +355,12 @@ export default function ManageBadges() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <StockManagementDialog
+        badge={stockDialog}
+        open={!!stockDialog}
+        onClose={() => setStockDialog(null)}
+      />
     </div>
   );
 }
