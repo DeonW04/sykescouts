@@ -16,6 +16,7 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [selectedReqs, setSelectedReqs] = useState([]);
+  const [selectedFamily, setSelectedFamily] = useState(null);
 
   const { data: badges = [] } = useQuery({
     queryKey: ['badges'],
@@ -45,6 +46,7 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId }) {
       setShowDialog(false);
       setSelectedBadge(null);
       setSelectedReqs([]);
+      setSelectedFamily(null);
       toast.success('Badge criteria added');
     },
   });
@@ -69,6 +71,21 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId }) {
 
   const filteredBadges = badges.filter(b => 
     b.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const badgeFamilies = badges
+    .filter(b => b.category === 'staged' && b.badge_family_id)
+    .reduce((acc, badge) => {
+      if (!acc[badge.badge_family_id]) {
+        acc[badge.badge_family_id] = [];
+      }
+      acc[badge.badge_family_id].push(badge);
+      return acc;
+    }, {});
+
+  const nonStagedBadges = filteredBadges.filter(b => b.category !== 'staged');
+  const stagedFamilies = Object.entries(badgeFamilies).filter(([familyId, stages]) =>
+    stages.some(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const getBadgeModules = (badgeId) => {
@@ -148,9 +165,9 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId }) {
               />
             </div>
 
-            {!selectedBadge ? (
+            {!selectedBadge && !selectedFamily ? (
               <div className="grid gap-2">
-                {filteredBadges.map(badge => (
+                {nonStagedBadges.map(badge => (
                   <div
                     key={badge.id}
                     onClick={() => setSelectedBadge(badge.id)}
@@ -163,6 +180,53 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId }) {
                     </div>
                   </div>
                 ))}
+                {stagedFamilies.map(([familyId, stages]) => {
+                  const sortedStages = [...stages].sort((a, b) => a.stage_number - b.stage_number);
+                  return (
+                    <div
+                      key={familyId}
+                      onClick={() => setSelectedFamily(familyId)}
+                      className="flex items-center gap-3 p-3 bg-blue-50 border-2 border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100"
+                    >
+                      <img src={sortedStages[0].image_url} alt={sortedStages[0].name} className="w-12 h-12 rounded" />
+                      <div className="flex-1">
+                        <p className="font-medium">{sortedStages[0].name} (Staged)</p>
+                        <p className="text-sm text-gray-500">{sortedStages.length} stages available</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : selectedFamily ? (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <p className="font-medium">Select Stage</p>
+                  <Button variant="ghost" onClick={() => {
+                    setSelectedFamily(null);
+                    setSelectedBadge(null);
+                    setSelectedReqs([]);
+                  }}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {badgeFamilies[selectedFamily].sort((a, b) => a.stage_number - b.stage_number).map(badge => (
+                    <div
+                      key={badge.id}
+                      onClick={() => {
+                        setSelectedBadge(badge.id);
+                        setSelectedFamily(null);
+                      }}
+                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
+                    >
+                      <img src={badge.image_url} alt={badge.name} className="w-12 h-12 rounded" />
+                      <div className="flex-1">
+                        <p className="font-medium">Stage {badge.stage_number}</p>
+                        <p className="text-sm text-gray-500">{badge.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
               <div>
@@ -178,6 +242,7 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId }) {
                   <Button variant="ghost" onClick={() => {
                     setSelectedBadge(null);
                     setSelectedReqs([]);
+                    setSelectedFamily(null);
                   }}>
                     <X className="w-4 h-4" />
                   </Button>

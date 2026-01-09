@@ -98,6 +98,35 @@ export default function ParentBadges() {
   const completedBadges = badgeProgress.filter(p => p.member_id === child.id && p.status === 'completed');
   const inProgressBadges = badgeProgress.filter(p => p.member_id === child.id && p.status === 'in_progress');
 
+  // Group staged badges by family
+  const stagedBadgeFamilies = badges
+    .filter(b => b.category === 'staged' && b.badge_family_id)
+    .reduce((acc, badge) => {
+      if (!acc[badge.badge_family_id]) {
+        acc[badge.badge_family_id] = {
+          name: badge.name,
+          stages: []
+        };
+      }
+      acc[badge.badge_family_id].stages.push(badge);
+      return acc;
+    }, {});
+
+  // Sort stages within families
+  Object.values(stagedBadgeFamilies).forEach(family => {
+    family.stages.sort((a, b) => a.stage_number - b.stage_number);
+  });
+
+  const completedNonStaged = completedBadges.filter(p => {
+    const badge = badges.find(b => b.id === p.badge_id);
+    return badge?.category !== 'staged';
+  });
+
+  const inProgressNonStaged = inProgressBadges.filter(p => {
+    const badge = badges.find(b => b.id === p.badge_id);
+    return badge?.category !== 'staged';
+  });
+
   const getBadgeProgress = (badgeId) => {
     const badgeReqs = requirements.filter(r => r.badge_id === badgeId);
     const completedReqs = reqProgress.filter(p => 
@@ -157,31 +186,80 @@ export default function ParentBadges() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid md:grid-cols-3 gap-4">
-              {completedBadges.map(progress => {
-                const badge = badges.find(b => b.id === progress.badge_id);
-                if (!badge) return null;
+            <>
+              <div className="grid md:grid-cols-3 gap-4 mb-6">
+                {completedNonStaged.map(progress => {
+                  const badge = badges.find(b => b.id === progress.badge_id);
+                  if (!badge) return null;
+                  
+                  return (
+                    <Card key={progress.id} className="bg-green-50 border-green-200">
+                      <CardContent className="p-6 text-center">
+                        <img
+                          src={badge.image_url}
+                          alt={badge.name}
+                          className="w-24 h-24 mx-auto rounded-lg mb-3"
+                        />
+                        <h3 className="font-semibold">{badge.name}</h3>
+                        <div className="flex items-center justify-center gap-2 mt-2">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span className="text-sm text-green-700">
+                            Completed {progress.completion_date ? new Date(progress.completion_date).toLocaleDateString() : ''}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Staged Badge Families */}
+              {Object.entries(stagedBadgeFamilies).map(([familyId, family]) => {
+                const completedStages = family.stages.filter(stage => 
+                  completedBadges.some(p => p.badge_id === stage.id)
+                );
                 
+                if (completedStages.length === 0) return null;
+
                 return (
-                  <Card key={progress.id} className="bg-green-50 border-green-200">
-                    <CardContent className="p-6 text-center">
-                      <img
-                        src={badge.image_url}
-                        alt={badge.name}
-                        className="w-24 h-24 mx-auto rounded-lg mb-3"
-                      />
-                      <h3 className="font-semibold">{badge.name}</h3>
-                      <div className="flex items-center justify-center gap-2 mt-2">
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                        <span className="text-sm text-green-700">
-                          Completed {progress.completion_date ? new Date(progress.completion_date).toLocaleDateString() : ''}
-                        </span>
+                  <Card key={familyId} className="bg-green-50 border-green-200 mb-4">
+                    <CardHeader>
+                      <CardTitle>{family.name} - Staged Badge</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex gap-4 overflow-x-auto pb-2">
+                        {family.stages.map(stage => {
+                          const stageProgress = completedBadges.find(p => p.badge_id === stage.id);
+                          const isCompleted = !!stageProgress;
+                          
+                          return (
+                            <div
+                              key={stage.id}
+                              className={`flex-shrink-0 text-center p-4 rounded-lg ${
+                                isCompleted ? 'bg-white' : 'opacity-40'
+                              }`}
+                            >
+                              <img
+                                src={stage.image_url}
+                                alt={`Stage ${stage.stage_number}`}
+                                className="w-20 h-20 mx-auto rounded-lg mb-2"
+                              />
+                              <p className="font-semibold text-sm">Stage {stage.stage_number}</p>
+                              {isCompleted && (
+                                <div className="flex items-center justify-center gap-1 mt-1">
+                                  <CheckCircle className="w-3 h-3 text-green-600" />
+                                  <span className="text-xs text-green-700">Completed</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>
                 );
               })}
-            </div>
+            </>
           )}
         </div>
 
@@ -196,7 +274,7 @@ export default function ParentBadges() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {inProgressBadges.map(progress => {
+              {inProgressNonStaged.map(progress => {
                 const badge = badges.find(b => b.id === progress.badge_id);
                 if (!badge) return null;
                 
@@ -246,6 +324,107 @@ export default function ParentBadges() {
                       {isExpanded && (
                         <div className="space-y-4 pt-4 border-t">
                           {getBadgeModules(badge.id).map(module => {
+                            const moduleReqs = getModuleRequirements(module.id);
+                            return (
+                              <div key={module.id}>
+                                <h4 className="font-semibold mb-2">{module.name}</h4>
+                                <div className="space-y-2 ml-4">
+                                  {moduleReqs.map((req, idx) => {
+                                    const completed = isRequirementCompleted(req.id);
+                                    return (
+                                      <div key={req.id} className="flex items-start gap-2">
+                                        {completed ? (
+                                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                        ) : (
+                                          <div className="w-5 h-5 border-2 border-gray-300 rounded-full flex-shrink-0 mt-0.5" />
+                                        )}
+                                        <span className={`text-sm ${completed ? 'text-gray-900' : 'text-gray-500'}`}>
+                                          <span className="font-medium">{idx + 1}.</span> {req.text}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+
+              {/* Staged Badge Families In Progress */}
+              {Object.entries(stagedBadgeFamilies).map(([familyId, family]) => {
+                const inProgressStages = family.stages.filter(stage => 
+                  inProgressBadges.some(p => p.badge_id === stage.id)
+                );
+                
+                if (inProgressStages.length === 0) return null;
+
+                const currentStage = inProgressStages[0];
+                const stageProgress = inProgressBadges.find(p => p.badge_id === currentStage.id);
+                const badgeProgress = getBadgeProgress(currentStage.id);
+                const isExpanded = expandedBadges.includes(currentStage.id);
+                
+                // Find next stage
+                const completedStageNums = family.stages
+                  .filter(s => completedBadges.some(p => p.badge_id === s.id))
+                  .map(s => s.stage_number);
+                const nextStage = family.stages.find(s => 
+                  s.stage_number === Math.max(...completedStageNums, 0) + 1
+                );
+
+                return (
+                  <Card key={familyId}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <img
+                            src={currentStage.image_url}
+                            alt={currentStage.name}
+                            className="w-16 h-16 rounded-lg"
+                          />
+                          <div>
+                            <CardTitle>{family.name} - Stage {currentStage.stage_number}</CardTitle>
+                            <p className="text-sm text-gray-500 mt-1">{currentStage.description}</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleExpanded(currentStage.id)}
+                        >
+                          {isExpanded ? <ChevronUp /> : <ChevronDown />}
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-4">
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-gray-600">Progress</span>
+                          <span className="font-medium">
+                            {badgeProgress.completed} / {badgeProgress.total} ({badgeProgress.percentage}%)
+                          </span>
+                        </div>
+                        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#7413dc] transition-all"
+                            style={{ width: `${badgeProgress.percentage}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {nextStage && (
+                        <div className="text-sm text-gray-600 mb-4">
+                          <strong>Next:</strong> Stage {nextStage.stage_number} available after completing this stage
+                        </div>
+                      )}
+
+                      {isExpanded && (
+                        <div className="space-y-4 pt-4 border-t">
+                          {getBadgeModules(currentStage.id).map(module => {
                             const moduleReqs = getModuleRequirements(module.id);
                             return (
                               <div key={module.id}>

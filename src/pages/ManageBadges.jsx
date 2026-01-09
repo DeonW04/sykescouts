@@ -21,10 +21,14 @@ export default function ManageBadges() {
   const [formData, setFormData] = useState({
     name: '',
     section: 'cubs',
+    category: 'activity',
     image_url: '',
     description: '',
     completion_rule: 'all_modules',
+    badge_family_id: '',
+    stage_number: null,
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const { data: badges = [] } = useQuery({
     queryKey: ['badges'],
@@ -68,9 +72,12 @@ export default function ManageBadges() {
     setFormData({
       name: '',
       section: 'cubs',
+      category: 'activity',
       image_url: '',
       description: '',
       completion_rule: 'all_modules',
+      badge_family_id: '',
+      stage_number: null,
     });
     setEditingBadge(null);
   };
@@ -80,11 +87,32 @@ export default function ManageBadges() {
     setFormData({
       name: badge.name,
       section: badge.section,
+      category: badge.category || 'activity',
       image_url: badge.image_url,
       description: badge.description || '',
       completion_rule: badge.completion_rule,
+      badge_family_id: badge.badge_family_id || '',
+      stage_number: badge.stage_number || null,
     });
     setShowDialog(true);
+  };
+
+  const handleImageUpload = async (file) => {
+    if (!file || !file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+    
+    setUploadingImage(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setFormData({ ...formData, image_url: file_url });
+      toast.success('Image uploaded');
+    } catch (error) {
+      toast.error('Error uploading image: ' + error.message);
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleSubmit = () => {
@@ -130,8 +158,15 @@ export default function ManageBadges() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {badges.filter(b => b.active).map(badge => (
+        {['challenge', 'activity', 'staged', 'core'].map(category => {
+          const categoryBadges = badges.filter(b => b.active && b.category === category);
+          if (categoryBadges.length === 0) return null;
+          
+          return (
+            <div key={category} className="mb-8">
+              <h2 className="text-2xl font-bold mb-4 capitalize">{category} Badges</h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {categoryBadges.map(badge => (
             <Card key={badge.id}>
               <CardHeader>
                 <div className="flex items-start gap-4">
@@ -141,7 +176,12 @@ export default function ManageBadges() {
                     className="w-16 h-16 rounded-lg object-cover"
                   />
                   <div className="flex-1">
-                    <CardTitle className="text-lg">{badge.name}</CardTitle>
+                    <CardTitle className="text-lg">
+                      {badge.name}
+                      {badge.category === 'staged' && badge.stage_number && (
+                        <span className="text-sm font-normal text-gray-500"> - Stage {badge.stage_number}</span>
+                      )}
+                    </CardTitle>
                     <p className="text-sm text-gray-500 mt-1">
                       {sections.find(s => s.name === badge.section)?.display_name || badge.section}
                     </p>
@@ -177,8 +217,11 @@ export default function ManageBadges() {
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -215,12 +258,56 @@ export default function ManageBadges() {
               </Select>
             </div>
             <div>
-              <Label>Badge Image URL</Label>
+              <Label>Category</Label>
+              <Select
+                value={formData.category}
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="challenge">Challenge</SelectItem>
+                  <SelectItem value="activity">Activity</SelectItem>
+                  <SelectItem value="staged">Staged</SelectItem>
+                  <SelectItem value="core">Core</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {formData.category === 'staged' && (
+              <>
+                <div>
+                  <Label>Badge Family ID</Label>
+                  <Input
+                    value={formData.badge_family_id}
+                    onChange={(e) => setFormData({ ...formData, badge_family_id: e.target.value })}
+                    placeholder="e.g., hikes-away"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Use same ID for all stages in a family</p>
+                </div>
+                <div>
+                  <Label>Stage Number</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={formData.stage_number || ''}
+                    onChange={(e) => setFormData({ ...formData, stage_number: parseInt(e.target.value) || null })}
+                    placeholder="1, 2, 3..."
+                  />
+                </div>
+              </>
+            )}
+            <div>
+              <Label>Badge Image (JPG/PNG)</Label>
               <Input
-                value={formData.image_url}
-                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                placeholder="https://example.com/badge.png"
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageUpload(e.target.files[0])}
+                disabled={uploadingImage}
               />
+              {formData.image_url && (
+                <img src={formData.image_url} alt="Preview" className="w-20 h-20 mt-2 rounded border" />
+              )}
             </div>
             <div>
               <Label>Description</Label>

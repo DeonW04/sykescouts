@@ -14,6 +14,7 @@ export default function LeaderBadges() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [sectionFilter, setSectionFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
 
   const { data: badges = [], isLoading } = useQuery({
     queryKey: ['badges'],
@@ -48,7 +49,8 @@ export default function LeaderBadges() {
   const filteredBadges = badges.filter(badge => {
     const matchesSearch = badge.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSection = sectionFilter === 'all' || badge.section === sectionFilter || badge.section === 'all';
-    return matchesSearch && matchesSection;
+    const matchesCategory = categoryFilter === 'all' || badge.category === categoryFilter;
+    return matchesSearch && matchesSection && matchesCategory;
   });
 
   const getBadgeStats = (badgeId) => {
@@ -129,6 +131,18 @@ export default function LeaderBadges() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="All categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="challenge">Challenge</SelectItem>
+                  <SelectItem value="activity">Activity</SelectItem>
+                  <SelectItem value="staged">Staged</SelectItem>
+                  <SelectItem value="core">Core</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
@@ -170,10 +184,20 @@ export default function LeaderBadges() {
                         className="w-16 h-16 rounded-lg object-cover"
                       />
                       <div className="flex-1">
-                        <CardTitle className="text-lg">{badge.name}</CardTitle>
-                        <Badge variant="outline" className="mt-1">
-                          {sections.find(s => s.name === badge.section)?.display_name || badge.section}
-                        </Badge>
+                        <CardTitle className="text-lg">
+                          {badge.name}
+                          {badge.category === 'staged' && badge.stage_number && (
+                            <span className="text-sm font-normal text-gray-500"> - Stage {badge.stage_number}</span>
+                          )}
+                        </CardTitle>
+                        <div className="flex gap-2 mt-1">
+                          <Badge variant="outline">
+                            {sections.find(s => s.name === badge.section)?.display_name || badge.section}
+                          </Badge>
+                          <Badge variant="outline" className="capitalize">
+                            {badge.category}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                   </CardHeader>
