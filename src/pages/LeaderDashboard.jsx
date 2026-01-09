@@ -182,7 +182,7 @@ export default function LeaderDashboard() {
   }
 
   const quickActions = [
-    { icon: Users, label: 'Members', count: totalMembers, page: 'LeaderMembers' },
+    { icon: Users, label: 'Members', count: 0, page: 'LeaderMembers' },
     { icon: CheckSquare, label: 'Attendance', count: 0, page: 'LeaderAttendance' },
     { icon: Calendar, label: 'Programme', count: 0, page: 'LeaderProgramme' },
     { icon: Award, label: 'Badges', count: 0, page: 'LeaderBadges' },
