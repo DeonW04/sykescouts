@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, AlertCircle, Clock, Check, X } from 'lucide-react';
+import { Users, Calendar, Award, AlertCircle, Clock, Check, X, Tent } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -149,7 +149,7 @@ export default function ParentDashboard() {
   const quickStats = [
     { icon: Users, label: 'My Child', color: 'bg-blue-500', onClick: () => navigate(createPageUrl('MyChild')) },
     { icon: Calendar, label: 'Programme', color: 'bg-green-500', onClick: () => navigate(createPageUrl('ParentProgramme')) },
-    { icon: Calendar, label: 'Events/Camps', color: 'bg-purple-500', onClick: () => {} },
+    { icon: Tent, label: 'Events/Camps', color: 'bg-purple-500', onClick: () => navigate(createPageUrl('ParentEvents')) },
     { icon: Award, label: 'Badges', color: 'bg-yellow-500', onClick: () => navigate(createPageUrl('ParentBadges')) },
   ];
 
@@ -364,7 +364,8 @@ export default function ParentDashboard() {
                     {upcomingEvents.map((event) => (
                       <div
                         key={event.id}
-                        className="flex items-start justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        className="flex items-start justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                        onClick={() => navigate(createPageUrl('ParentEvents'))}
                       >
                         <div>
                           <p className="font-semibold text-gray-900">{event.title}</p>
@@ -380,9 +381,6 @@ export default function ParentDashboard() {
                             <p className="text-xs text-gray-500 mt-1">{event.location}</p>
                           )}
                         </div>
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
                       </div>
                     ))}
                   </div>
