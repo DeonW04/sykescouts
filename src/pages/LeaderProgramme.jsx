@@ -115,7 +115,15 @@ export default function LeaderProgramme() {
         ) : (
           <div className="space-y-4">
             {terms.map(term => (
-              <TermCard key={term.id} term={term} sections={sections} />
+              <TermCard 
+                key={term.id} 
+                term={term} 
+                sections={sections}
+                onEdit={(term) => {
+                  setEditingTerm(term);
+                  setShowNewTermDialog(true);
+                }}
+              />
             ))}
           </div>
         )}
