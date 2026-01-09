@@ -221,7 +221,7 @@ export default function LeaderBadges() {
                       <img
                         src={badge.image_url}
                         alt={badge.name}
-                        className="w-full h-32 rounded-lg object-cover mb-3"
+                        className="w-full h-28 rounded-lg object-contain mb-3"
                       />
                       <div>
                         <CardTitle className="text-lg">
