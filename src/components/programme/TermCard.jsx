@@ -4,11 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronRight, Calendar, Clock } from 'lucide-react';
+import { ChevronDown, ChevronRight, Calendar, Clock, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 
-export default function TermCard({ term, sections }) {
+export default function TermCard({ term, sections, onEdit }) {
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
   const section = sections.find(s => s.id === term.section_id);
@@ -86,7 +86,20 @@ export default function TermCard({ term, sections }) {
               </div>
             </div>
           </div>
-          <Badge className="bg-[#7413dc]">{section?.display_name}</Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(term);
+              }}
+            >
+              <Edit className="w-4 h-4 mr-1" />
+              Edit
+            </Button>
+            <Badge className="bg-[#7413dc]">{section?.display_name}</Badge>
+          </div>
         </div>
       </CardHeader>
 

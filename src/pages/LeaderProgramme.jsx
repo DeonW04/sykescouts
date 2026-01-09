@@ -123,8 +123,12 @@ export default function LeaderProgramme() {
 
       <NewTermDialog
         open={showNewTermDialog}
-        onOpenChange={setShowNewTermDialog}
+        onOpenChange={(open) => {
+          setShowNewTermDialog(open);
+          if (!open) setEditingTerm(null);
+        }}
         sections={sections}
+        editTerm={editingTerm}
       />
     </div>
   );
