@@ -21,6 +21,7 @@ import Volunteer from './pages/Volunteer';
 import LeaderBadges from './pages/LeaderBadges';
 import ManageBadges from './pages/ManageBadges';
 import AwardBadges from './pages/AwardBadges';
+import ParentProgramme from './pages/ParentProgramme';
 import __Layout from './Layout.jsx';
 
 
@@ -48,6 +49,7 @@ export const PAGES = {
     "LeaderBadges": LeaderBadges,
     "ManageBadges": ManageBadges,
     "AwardBadges": AwardBadges,
+    "ParentProgramme": ParentProgramme,
 }
 
 export const pagesConfig = {
