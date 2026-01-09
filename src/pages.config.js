@@ -1,51 +1,51 @@
 import About from './pages/About';
 import AdminSettings from './pages/AdminSettings';
-import BadgeDetail from './pages/BadgeDetail';
 import CompleteRegistration from './pages/CompleteRegistration';
 import Contact from './pages/Contact';
-import EditBadgeStructure from './pages/EditBadgeStructure';
 import Gallery from './pages/Gallery';
 import Home from './pages/Home';
 import JoinUs from './pages/JoinUs';
-import LeaderBadges from './pages/LeaderBadges';
 import LeaderDashboard from './pages/LeaderDashboard';
 import LeaderMembers from './pages/LeaderMembers';
 import LeaderProgramme from './pages/LeaderProgramme';
-import ManageBadges from './pages/ManageBadges';
 import MeetingDetail from './pages/MeetingDetail';
 import MemberDetail from './pages/MemberDetail';
 import MyChild from './pages/MyChild';
-import ParentBadges from './pages/ParentBadges';
 import ParentDashboard from './pages/ParentDashboard';
 import Parents from './pages/Parents';
 import Sections from './pages/Sections';
 import Volunteer from './pages/Volunteer';
+import LeaderBadges from './pages/LeaderBadges';
+import ManageBadges from './pages/ManageBadges';
+import EditBadgeStructure from './pages/EditBadgeStructure';
+import BadgeDetail from './pages/BadgeDetail';
+import ParentBadges from './pages/ParentBadges';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "About": About,
     "AdminSettings": AdminSettings,
-    "BadgeDetail": BadgeDetail,
     "CompleteRegistration": CompleteRegistration,
     "Contact": Contact,
-    "EditBadgeStructure": EditBadgeStructure,
     "Gallery": Gallery,
     "Home": Home,
     "JoinUs": JoinUs,
-    "LeaderBadges": LeaderBadges,
     "LeaderDashboard": LeaderDashboard,
     "LeaderMembers": LeaderMembers,
     "LeaderProgramme": LeaderProgramme,
-    "ManageBadges": ManageBadges,
     "MeetingDetail": MeetingDetail,
     "MemberDetail": MemberDetail,
     "MyChild": MyChild,
-    "ParentBadges": ParentBadges,
     "ParentDashboard": ParentDashboard,
     "Parents": Parents,
     "Sections": Sections,
     "Volunteer": Volunteer,
+    "LeaderBadges": LeaderBadges,
+    "ManageBadges": ManageBadges,
+    "EditBadgeStructure": EditBadgeStructure,
+    "BadgeDetail": BadgeDetail,
+    "ParentBadges": ParentBadges,
 }
 
 export const pagesConfig = {

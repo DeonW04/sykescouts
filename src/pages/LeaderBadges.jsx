@@ -14,7 +14,6 @@ export default function LeaderBadges() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [sectionFilter, setSectionFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
 
   const { data: badges = [], isLoading } = useQuery({
     queryKey: ['badges'],
@@ -49,16 +48,8 @@ export default function LeaderBadges() {
   const filteredBadges = badges.filter(badge => {
     const matchesSearch = badge.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSection = sectionFilter === 'all' || badge.section === sectionFilter || badge.section === 'all';
-    const matchesType = typeFilter === 'all' || badge.badge_type === typeFilter;
-    return matchesSearch && matchesSection && matchesType;
+    return matchesSearch && matchesSection;
   });
-
-  const badgesByType = {
-    challenge: filteredBadges.filter(b => b.badge_type === 'challenge'),
-    activity: filteredBadges.filter(b => b.badge_type === 'activity'),
-    staged: filteredBadges.filter(b => b.badge_type === 'staged'),
-    core: filteredBadges.filter(b => b.badge_type === 'core'),
-  };
 
   const getBadgeStats = (badgeId) => {
     const badgeReqs = requirements.filter(r => r.badge_id === badgeId);
@@ -138,18 +129,6 @@ export default function LeaderBadges() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="All types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="challenge">Challenge</SelectItem>
-                  <SelectItem value="activity">Activity</SelectItem>
-                  <SelectItem value="staged">Staged</SelectItem>
-                  <SelectItem value="core">Core</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
@@ -174,81 +153,62 @@ export default function LeaderBadges() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-8">
-            {['challenge', 'activity', 'staged', 'core'].map(type => {
-              const typeBadges = badgesByType[type];
-              if (typeBadges.length === 0) return null;
-              
-              const typeLabels = {
-                challenge: 'Challenge Badges',
-                activity: 'Activity Badges',
-                staged: 'Staged Badges',
-                core: 'Core Badges'
-              };
-
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredBadges.map(badge => {
+              const stats = getBadgeStats(badge.id);
               return (
-                <div key={type}>
-                  <h2 className="text-2xl font-bold mb-4 capitalize">{typeLabels[type]}</h2>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {typeBadges.map(badge => {
-                      const stats = getBadgeStats(badge.id);
-                      return (
-                        <Card 
-                          key={badge.id}
-                          className="hover:shadow-lg transition-shadow cursor-pointer"
-                          onClick={() => navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`)}
-                        >
-                          <CardHeader>
-                            <div className="flex items-start gap-4">
-                              <img
-                                src={badge.image_url}
-                                alt={badge.name}
-                                className="w-16 h-16 rounded-lg object-cover"
-                              />
-                              <div className="flex-1">
-                                <CardTitle className="text-lg">{badge.name}</CardTitle>
-                                <Badge variant="outline" className="mt-1">
-                                  {sections.find(s => s.name === badge.section)?.display_name || badge.section}
-                                </Badge>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-3">
-                              <div>
-                                <div className="flex justify-between text-sm mb-1">
-                                  <span className="text-gray-600">Section Completion</span>
-                                  <span className="font-medium">{stats.percentComplete}%</span>
-                                </div>
-                                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full bg-[#7413dc] transition-all"
-                                    style={{ width: `${stats.percentComplete}%` }}
-                                  />
-                                </div>
-                              </div>
+                <Card 
+                  key={badge.id}
+                  className="hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`)}
+                >
+                  <CardHeader>
+                    <div className="flex items-start gap-4">
+                      <img
+                        src={badge.image_url}
+                        alt={badge.name}
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{badge.name}</CardTitle>
+                        <Badge variant="outline" className="mt-1">
+                          {sections.find(s => s.name === badge.section)?.display_name || badge.section}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-gray-600">Section Completion</span>
+                          <span className="font-medium">{stats.percentComplete}%</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#7413dc] transition-all"
+                            style={{ width: `${stats.percentComplete}%` }}
+                          />
+                        </div>
+                      </div>
 
-                              <div className="grid grid-cols-3 gap-2 text-center">
-                                <div className="bg-green-50 rounded-lg p-2">
-                                  <div className="text-xl font-bold text-green-700">{stats.completedCount}</div>
-                                  <div className="text-xs text-green-600">Completed</div>
-                                </div>
-                                <div className="bg-blue-50 rounded-lg p-2">
-                                  <div className="text-xl font-bold text-blue-700">{stats.inProgressCount}</div>
-                                  <div className="text-xs text-blue-600">In Progress</div>
-                                </div>
-                                <div className="bg-orange-50 rounded-lg p-2">
-                                  <div className="text-xl font-bold text-orange-700">{stats.closeToCompletion}</div>
-                                  <div className="text-xs text-orange-600">Nearly Done</div>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </div>
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="bg-green-50 rounded-lg p-2">
+                          <div className="text-xl font-bold text-green-700">{stats.completedCount}</div>
+                          <div className="text-xs text-green-600">Completed</div>
+                        </div>
+                        <div className="bg-blue-50 rounded-lg p-2">
+                          <div className="text-xl font-bold text-blue-700">{stats.inProgressCount}</div>
+                          <div className="text-xs text-blue-600">In Progress</div>
+                        </div>
+                        <div className="bg-orange-50 rounded-lg p-2">
+                          <div className="text-xl font-bold text-orange-700">{stats.closeToCompletion}</div>
+                          <div className="text-xs text-orange-600">Nearly Done</div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>
