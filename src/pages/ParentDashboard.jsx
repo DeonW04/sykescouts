@@ -148,9 +148,9 @@ export default function ParentDashboard() {
 
   const quickStats = [
     { icon: Users, label: 'My Child', color: 'bg-blue-500', onClick: () => navigate(createPageUrl('MyChild')) },
-    { icon: Calendar, label: 'Programme', color: 'bg-green-500', onClick: () => {} },
+    { icon: Calendar, label: 'Programme', color: 'bg-green-500', onClick: () => navigate(createPageUrl('ParentProgramme')) },
     { icon: Calendar, label: 'Events/Camps', color: 'bg-purple-500', onClick: () => {} },
-    { icon: Award, label: 'Badges', color: 'bg-yellow-500', onClick: () => {} },
+    { icon: Award, label: 'Badges', color: 'bg-yellow-500', onClick: () => navigate(createPageUrl('ParentBadges')) },
   ];
 
   return (
