@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import NewEventDialog from '../components/events/NewEventDialog';
+import TodoSection from '../components/meeting/TodoSection';
 
 export default function EventDetail() {
   const navigate = useNavigate();
@@ -27,7 +28,12 @@ export default function EventDetail() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   
   const [formData, setFormData] = useState({
-    schedule: [{ time: '', activity: '', notes: '' }],
+    schedule_by_day: [
+      { 
+        day_name: 'Day 1', 
+        items: [{ time: '', activity: '', notes: '' }] 
+      }
+    ],
     equipment_list: '',
     instructions: '',
   });
@@ -46,7 +52,9 @@ export default function EventDetail() {
   useEffect(() => {
     if (event) {
       setFormData({
-        schedule: event.schedule?.length > 0 ? event.schedule : [{ time: '', activity: '', notes: '' }],
+        schedule_by_day: event.schedule_by_day?.length > 0 
+          ? event.schedule_by_day 
+          : [{ day_name: 'Day 1', items: [{ time: '', activity: '', notes: '' }] }],
         equipment_list: event.equipment_list || '',
         instructions: event.instructions || '',
       });
@@ -67,22 +75,43 @@ export default function EventDetail() {
     updateEventMutation.mutate(formData);
   };
 
-  const handleAddScheduleItem = () => {
+  const handleAddDay = () => {
     setFormData({
       ...formData,
-      schedule: [...formData.schedule, { time: '', activity: '', notes: '' }],
+      schedule_by_day: [
+        ...formData.schedule_by_day,
+        { day_name: `Day ${formData.schedule_by_day.length + 1}`, items: [{ time: '', activity: '', notes: '' }] }
+      ],
     });
   };
 
-  const handleRemoveScheduleItem = (index) => {
-    const newSchedule = formData.schedule.filter((_, i) => i !== index);
-    setFormData({ ...formData, schedule: newSchedule });
+  const handleRemoveDay = (dayIndex) => {
+    const newSchedule = formData.schedule_by_day.filter((_, i) => i !== dayIndex);
+    setFormData({ ...formData, schedule_by_day: newSchedule });
   };
 
-  const handleScheduleChange = (index, field, value) => {
-    const newSchedule = [...formData.schedule];
-    newSchedule[index][field] = value;
-    setFormData({ ...formData, schedule: newSchedule });
+  const handleDayNameChange = (dayIndex, value) => {
+    const newSchedule = [...formData.schedule_by_day];
+    newSchedule[dayIndex].day_name = value;
+    setFormData({ ...formData, schedule_by_day: newSchedule });
+  };
+
+  const handleAddScheduleItem = (dayIndex) => {
+    const newSchedule = [...formData.schedule_by_day];
+    newSchedule[dayIndex].items.push({ time: '', activity: '', notes: '' });
+    setFormData({ ...formData, schedule_by_day: newSchedule });
+  };
+
+  const handleRemoveScheduleItem = (dayIndex, itemIndex) => {
+    const newSchedule = [...formData.schedule_by_day];
+    newSchedule[dayIndex].items = newSchedule[dayIndex].items.filter((_, i) => i !== itemIndex);
+    setFormData({ ...formData, schedule_by_day: newSchedule });
+  };
+
+  const handleScheduleChange = (dayIndex, itemIndex, field, value) => {
+    const newSchedule = [...formData.schedule_by_day];
+    newSchedule[dayIndex].items[itemIndex][field] = value;
+    setFormData({ ...formData, schedule_by_day: newSchedule });
   };
 
   const handleUploadDocument = async () => {
@@ -195,6 +224,7 @@ export default function EventDetail() {
           <TabsList className="bg-white border">
             <TabsTrigger value="details">Overview</TabsTrigger>
             <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            <TabsTrigger value="todo">To Do</TabsTrigger>
             <TabsTrigger value="equipment">Equipment & Instructions</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
           </TabsList>
@@ -240,63 +270,94 @@ export default function EventDetail() {
           </TabsContent>
 
           <TabsContent value="schedule" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Event Schedule</CardTitle>
-                  <Button onClick={handleAddScheduleItem} size="sm" variant="outline">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Item
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {formData.schedule.map((item, index) => (
-                  <div key={index} className="p-4 border rounded-lg space-y-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <Label>Schedule Item {index + 1}</Label>
-                      {formData.schedule.length > 1 && (
+            <div className="flex justify-end mb-4">
+              <Button onClick={handleAddDay} size="sm" variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Day
+              </Button>
+            </div>
+
+            {formData.schedule_by_day.map((day, dayIndex) => (
+              <Card key={dayIndex}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 flex-1">
+                      <Input
+                        value={day.day_name}
+                        onChange={(e) => handleDayNameChange(dayIndex, e.target.value)}
+                        className="max-w-xs font-semibold"
+                        placeholder="Day name"
+                      />
+                      {formData.schedule_by_day.length > 1 && (
                         <Button
-                          onClick={() => handleRemoveScheduleItem(index)}
+                          onClick={() => handleRemoveDay(dayIndex)}
                           size="sm"
                           variant="ghost"
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Remove Day
                         </Button>
                       )}
                     </div>
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label>Time</Label>
-                        <Input
-                          value={item.time}
-                          onChange={(e) => handleScheduleChange(index, 'time', e.target.value)}
-                          placeholder="e.g., 9:00am"
-                        />
-                      </div>
-                      <div className="md:col-span-2 space-y-2">
-                        <Label>Activity</Label>
-                        <Input
-                          value={item.activity}
-                          onChange={(e) => handleScheduleChange(index, 'activity', e.target.value)}
-                          placeholder="e.g., Breakfast"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Notes</Label>
-                      <Textarea
-                        value={item.notes}
-                        onChange={(e) => handleScheduleChange(index, 'notes', e.target.value)}
-                        placeholder="Additional details..."
-                        rows={2}
-                      />
-                    </div>
+                    <Button onClick={() => handleAddScheduleItem(dayIndex)} size="sm" variant="outline">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Item
+                    </Button>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {day.items.map((item, itemIndex) => (
+                    <div key={itemIndex} className="p-4 border rounded-lg space-y-3 bg-gray-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <Label>Item {itemIndex + 1}</Label>
+                        {day.items.length > 1 && (
+                          <Button
+                            onClick={() => handleRemoveScheduleItem(dayIndex, itemIndex)}
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Time</Label>
+                          <Input
+                            value={item.time}
+                            onChange={(e) => handleScheduleChange(dayIndex, itemIndex, 'time', e.target.value)}
+                            placeholder="e.g., 9:00am"
+                          />
+                        </div>
+                        <div className="md:col-span-2 space-y-2">
+                          <Label>Activity</Label>
+                          <Input
+                            value={item.activity}
+                            onChange={(e) => handleScheduleChange(dayIndex, itemIndex, 'activity', e.target.value)}
+                            placeholder="e.g., Breakfast"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Notes</Label>
+                        <Textarea
+                          value={item.notes}
+                          onChange={(e) => handleScheduleChange(dayIndex, itemIndex, 'notes', e.target.value)}
+                          placeholder="Additional details..."
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+
+          <TabsContent value="todo">
+            <TodoSection programmeId={eventId} entityType="event" />
           </TabsContent>
 
           <TabsContent value="equipment" className="space-y-6">

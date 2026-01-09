@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function TodoSection({ programmeId }) {
+export default function TodoSection({ programmeId, entityType = 'programme' }) {
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState({
