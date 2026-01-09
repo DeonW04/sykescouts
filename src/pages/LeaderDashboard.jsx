@@ -1,12 +1,132 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, CheckSquare, Mail, Settings } from 'lucide-react';
+import { Users, Calendar, Award, CheckSquare, Mail, Settings, ArrowRight, Tent } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { format } from 'date-fns';
+
+const UpcomingMeetings = ({ sections }) => {
+  const navigate = useNavigate();
+  const sectionIds = sections.map(s => s.id);
+  
+  const { data: programmes = [] } = useQuery({
+    queryKey: ['upcoming-programmes', sectionIds],
+    queryFn: async () => {
+      if (sectionIds.length === 0) return [];
+      const allProgrammes = await base44.entities.Programme.filter({});
+      return allProgrammes
+        .filter(p => sectionIds.includes(p.section_id) && new Date(p.date) >= new Date())
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .slice(0, 5);
+    },
+    enabled: sectionIds.length > 0,
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>Upcoming Meetings</CardTitle>
+          <Button variant="ghost" size="sm" onClick={() => navigate(createPageUrl('LeaderProgramme'))}>
+            View All <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {programmes.length === 0 ? (
+          <p className="text-gray-500 text-sm">No upcoming meetings scheduled</p>
+        ) : (
+          <div className="space-y-2">
+            {programmes.map(p => {
+              const section = sections.find(s => s.id === p.section_id);
+              return (
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                  onClick={() => navigate(createPageUrl('MeetingDetail') + `?sectionId=${p.section_id}&date=${p.date}`)}
+                >
+                  <div>
+                    <p className="font-medium">{p.title}</p>
+                    <p className="text-sm text-gray-600">
+                      {section?.display_name} • {format(new Date(p.date), 'EEE, MMM d')}
+                    </p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-gray-400" />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+const BadgesDue = ({ sections }) => {
+  const navigate = useNavigate();
+  const sectionIds = sections.map(s => s.id);
+
+  const { data: members = [] } = useQuery({
+    queryKey: ['members'],
+    queryFn: () => base44.entities.Member.filter({ active: true }),
+  });
+
+  const { data: awards = [] } = useQuery({
+    queryKey: ['awards'],
+    queryFn: () => base44.entities.MemberBadgeAward.filter({ award_status: 'pending' }),
+  });
+
+  const { data: badges = [] } = useQuery({
+    queryKey: ['badges'],
+    queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
+  });
+
+  const relevantAwards = awards.filter(a => {
+    const member = members.find(m => m.id === a.member_id);
+    return member && sectionIds.includes(member.section_id);
+  }).slice(0, 5);
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle>Badges Due to Award</CardTitle>
+          <Button variant="ghost" size="sm" onClick={() => navigate(createPageUrl('AwardBadges'))}>
+            Award <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {relevantAwards.length === 0 ? (
+          <p className="text-gray-500 text-sm">No badges due to award</p>
+        ) : (
+          <div className="space-y-2">
+            {relevantAwards.map(award => {
+              const member = members.find(m => m.id === award.member_id);
+              const badge = badges.find(b => b.id === award.badge_id);
+              return (
+                <div
+                  key={award.id}
+                  className="flex items-center justify-between p-3 bg-green-50 rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium">{member?.full_name}</p>
+                    <p className="text-sm text-gray-600">{badge?.name}</p>
+                  </div>
+                  <Award className="w-5 h-5 text-green-600" />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 export default function LeaderDashboard() {
   const [user, setUser] = useState(null);
@@ -63,11 +183,11 @@ export default function LeaderDashboard() {
 
   const quickActions = [
     { icon: Users, label: 'Members', count: totalMembers, page: 'LeaderMembers' },
-    { icon: CheckSquare, label: 'Attendance', count: 0 },
+    { icon: CheckSquare, label: 'Attendance', count: 0, page: 'LeaderAttendance' },
     { icon: Calendar, label: 'Programme', count: 0, page: 'LeaderProgramme' },
     { icon: Award, label: 'Badges', count: 0, page: 'LeaderBadges' },
-    { icon: Calendar, label: 'Events', count: 0 },
-    { icon: Mail, label: 'Communications', count: 0 },
+    { icon: Tent, label: 'Events', count: 0, page: 'LeaderEvents' },
+    { icon: Mail, label: 'Communications', count: 0, page: 'AdminSettings' },
   ];
 
   return (
@@ -136,58 +256,11 @@ export default function LeaderDashboard() {
           ))}
         </div>
 
-        {/* Sections Overview */}
-        <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>My Sections</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {sections.length === 0 ? (
-                <p className="text-gray-500">No sections assigned.</p>
-              ) : (
-                <div className="space-y-3">
-                  {sections.map((section) => (
-                    <div
-                      key={section.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium text-gray-900">{section.display_name}</p>
-                        <p className="text-sm text-gray-500">
-                          {section.meeting_day} {section.meeting_time}
-                        </p>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        View
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-500">No recent activity.</p>
-            </CardContent>
-          </Card>
+        {/* Dashboard Content */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          <UpcomingMeetings sections={sections} />
+          <BadgesDue sections={sections} />
         </div>
-
-        {/* Coming Soon */}
-        <Card className="bg-green-50 border-green-200">
-          <CardContent className="p-6">
-            <h3 className="font-semibold text-green-900 mb-2">Full Management System Coming Soon!</h3>
-            <p className="text-green-700 text-sm">
-              We're building out complete member management, attendance tracking, badge progress, 
-              programme planning, events, and communications. The core database is ready!
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
