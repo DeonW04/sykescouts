@@ -11,6 +11,7 @@ export default function LeaderProgramme() {
   const [user, setUser] = useState(null);
   const [isLeader, setIsLeader] = useState(false);
   const [showNewTermDialog, setShowNewTermDialog] = useState(false);
+  const [editingTerm, setEditingTerm] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
