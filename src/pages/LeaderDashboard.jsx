@@ -232,6 +232,10 @@ export default function LeaderDashboard() {
                       <div className="w-12 h-12 mx-auto bg-[#004851]/10 rounded-full flex items-center justify-center mb-3">
                         <action.icon className="w-6 h-6 text-[#004851]" />
                       </div>
+                      <h3 className="text-sm font-medium text-gray-900">{action.label}</h3>
+                      {action.count > 0 && (
+                        <p className="text-xs text-gray-500 mt-1">{action.count} total</p>
+                      )}
                     </CardContent>
                   </Card>
                 </Link>
