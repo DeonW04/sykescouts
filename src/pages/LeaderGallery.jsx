@@ -287,7 +287,7 @@ export default function LeaderGallery() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-4 gap-2">
-              {selectedFiles.slice(0, 4).map((file, idx) => (
+              {selectedFiles.slice(0, 3).map((file, idx) => (
                 <img
                   key={idx}
                   src={URL.createObjectURL(file)}
