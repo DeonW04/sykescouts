@@ -5,7 +5,8 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, CheckSquare, Mail, Settings, ArrowRight, Tent } from 'lucide-react';
+import { Users, Calendar, Award, CheckSquare, Mail, Settings, ArrowRight, Tent, ChevronDown } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 
@@ -184,9 +185,8 @@ export default function LeaderDashboard() {
   const quickActions = [
     { icon: Users, label: 'Members', count: 0, page: 'LeaderMembers' },
     { icon: CheckSquare, label: 'Attendance', count: 0, page: 'LeaderAttendance' },
-    { icon: Calendar, label: 'Programme', count: 0, page: 'LeaderProgramme' },
+    { icon: Calendar, label: 'Programme', count: 0, dropdown: true },
     { icon: Award, label: 'Badges', count: 0, page: 'LeaderBadges' },
-    { icon: Tent, label: 'Events', count: 0, page: 'LeaderEvents' },
     { icon: Mail, label: 'Communications', count: 0, page: 'AdminSettings' },
   ];
 
@@ -217,7 +217,7 @@ export default function LeaderDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           {quickActions.map((action, index) => (
             <motion.div
               key={action.label}
@@ -225,7 +225,31 @@ export default function LeaderDashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              {action.page ? (
+              {action.dropdown ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+                      <CardContent className="p-4 text-center">
+                        <div className="w-12 h-12 mx-auto bg-[#004851]/10 rounded-full flex items-center justify-center mb-3">
+                          <action.icon className="w-6 h-6 text-[#004851]" />
+                        </div>
+                        <h3 className="text-sm font-medium text-gray-900 flex items-center justify-center gap-1">
+                          {action.label}
+                          <ChevronDown className="w-3 h-3" />
+                        </h3>
+                      </CardContent>
+                    </Card>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => window.location.href = createPageUrl('LeaderProgramme')}>
+                      Weekly Meetings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => window.location.href = createPageUrl('LeaderEvents')}>
+                      Events
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : action.page ? (
                 <Link to={createPageUrl(action.page)}>
                   <Card className="cursor-pointer hover:shadow-lg transition-shadow">
                     <CardContent className="p-4 text-center">
