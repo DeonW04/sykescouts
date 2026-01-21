@@ -18,6 +18,7 @@ import TodoSection from '../components/meeting/TodoSection';
 import EventParentPortalSection from '../components/events/EventParentPortalSection';
 import RiskAssessmentSection from '../components/meeting/RiskAssessmentSection';
 import BadgesSection from '../components/meeting/BadgesSection';
+import PhotoManagementSection from '../components/events/PhotoManagementSection';
 
 export default function EventDetail() {
   const navigate = useNavigate();
@@ -190,13 +191,14 @@ export default function EventDetail() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="details" className="space-y-6">
-          <TabsList className="bg-white border grid grid-cols-7">
+          <TabsList className="bg-white border grid grid-cols-8">
             <TabsTrigger value="details">Overview</TabsTrigger>
             <TabsTrigger value="schedule">Schedule</TabsTrigger>
             <TabsTrigger value="todo">To Do</TabsTrigger>
             <TabsTrigger value="parent">Parent Portal</TabsTrigger>
             <TabsTrigger value="risk">Risk</TabsTrigger>
             <TabsTrigger value="badges">Badges</TabsTrigger>
+            <TabsTrigger value="photos">Photos</TabsTrigger>
             <TabsTrigger value="equipment">Equipment</TabsTrigger>
           </TabsList>
 
@@ -341,6 +343,10 @@ export default function EventDetail() {
 
           <TabsContent value="badges">
             <BadgesSection programmeId={eventId} entityType="event" />
+          </TabsContent>
+
+          <TabsContent value="photos">
+            <PhotoManagementSection eventId={eventId} />
           </TabsContent>
 
           <TabsContent value="equipment" className="space-y-6">

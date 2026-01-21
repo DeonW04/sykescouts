@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import PhotoGallery from '../components/events/PhotoGallery';
 
 export default function ParentEventDetail() {
   const navigate = useNavigate();
@@ -33,6 +34,16 @@ export default function ParentEventDetail() {
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
     queryFn: () => base44.entities.Section.filter({ active: true }),
+  });
+
+  const { data: photos = [] } = useQuery({
+    queryKey: ['event-photos', eventId],
+    queryFn: () => base44.entities.EventPhoto.filter({ event_id: eventId, visible_to: 'parents' }, '-created_date')
+      .then(parentPhotos => 
+        base44.entities.EventPhoto.filter({ event_id: eventId, visible_to: 'public' }, '-created_date')
+          .then(publicPhotos => [...parentPhotos, ...publicPhotos])
+      ),
+    enabled: !!eventId,
   });
 
   if (!event || !user) {
@@ -173,6 +184,17 @@ export default function ParentEventDetail() {
                   </a>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {photos.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Event Photos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PhotoGallery photos={photos} />
             </CardContent>
           </Card>
         )}
