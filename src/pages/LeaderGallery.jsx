@@ -25,7 +25,10 @@ export default function LeaderGallery() {
     visible_to: 'parents',
     is_public: false,
   });
-  const [filterSection, setFilterSection] = useState('all');
+  const [view, setView] = useState('all'); // 'all', 'camps', 'events', 'meetings'
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState([]);
 
   const queryClient = useQueryClient();
 
@@ -62,9 +65,68 @@ export default function LeaderGallery() {
     },
   });
 
-  const filteredPhotos = filterSection === 'all' 
-    ? allPhotos 
-    : allPhotos.filter(p => p.section_id === filterSection);
+  // Get unique camps, events, and meetings
+  const camps = [...new Map(
+    allPhotos
+      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'camp'))
+      .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
+  ).values()].filter(Boolean);
+
+  const regularEvents = [...new Map(
+    allPhotos
+      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'camp'))
+      .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
+  ).values()].filter(Boolean);
+
+  const meetings = [...new Map(
+    allPhotos
+      .filter(p => p.programme_id)
+      .map(p => [p.programme_id, programmes.find(pr => pr.id === p.programme_id)])
+  ).values()].filter(Boolean);
+
+  const getDisplayPhotos = () => {
+    if (selectedItem) {
+      return allPhotos.filter(p => 
+        p.event_id === selectedItem.id || 
+        p.programme_id === selectedItem.id
+      );
+    }
+    return allPhotos;
+  };
+
+  const displayPhotos = getDisplayPhotos();
+
+  const getItemPhoto = (item, type) => {
+    if (type === 'meeting') {
+      return allPhotos.find(p => p.programme_id === item.id)?.file_url;
+    }
+    return allPhotos.find(p => p.event_id === item.id)?.file_url;
+  };
+
+  const getItemPhotoCount = (item, type) => {
+    if (type === 'meeting') {
+      return allPhotos.filter(p => p.programme_id === item.id).length;
+    }
+    return allPhotos.filter(p => p.event_id === item.id).length;
+  };
+
+  const handlePhotoSelect = (photoId) => {
+    setSelectedPhotos(prev => 
+      prev.includes(photoId) 
+        ? prev.filter(id => id !== photoId)
+        : [...prev, photoId]
+    );
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!confirm(`Delete ${selectedPhotos.length} selected photo(s)?`)) return;
+    
+    for (const photoId of selectedPhotos) {
+      await deletePhotoMutation.mutateAsync(photoId);
+    }
+    setSelectedPhotos([]);
+    setSelectMode(false);
+  };
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
@@ -223,58 +285,227 @@ export default function LeaderGallery() {
           </CardHeader>
         </Card>
 
-        <div className="mb-6">
-          <Label>Filter by Section</Label>
-          <Select value={filterSection} onValueChange={setFilterSection}>
-            <SelectTrigger className="w-64">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Sections</SelectItem>
-              {sections.map(section => (
-                <SelectItem key={section.id} value={section.id}>
-                  {section.display_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Category Buttons */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <Button
+            variant={view === 'camps' ? 'default' : 'outline'}
+            className="h-24"
+            onClick={() => {
+              setView('camps');
+              setSelectedItem(null);
+              setSelectMode(false);
+              setSelectedPhotos([]);
+            }}
+          >
+            <div className="flex flex-col items-center">
+              <ImageIcon className="w-8 h-8 mb-2" />
+              <span className="font-semibold">Camps</span>
+              <span className="text-xs opacity-80">{camps.length} albums</span>
+            </div>
+          </Button>
+
+          <Button
+            variant={view === 'events' ? 'default' : 'outline'}
+            className="h-24"
+            onClick={() => {
+              setView('events');
+              setSelectedItem(null);
+              setSelectMode(false);
+              setSelectedPhotos([]);
+            }}
+          >
+            <div className="flex flex-col items-center">
+              <ImageIcon className="w-8 h-8 mb-2" />
+              <span className="font-semibold">Events</span>
+              <span className="text-xs opacity-80">{regularEvents.length} albums</span>
+            </div>
+          </Button>
+
+          <Button
+            variant={view === 'meetings' ? 'default' : 'outline'}
+            className="h-24"
+            onClick={() => {
+              setView('meetings');
+              setSelectedItem(null);
+              setSelectMode(false);
+              setSelectedPhotos([]);
+            }}
+          >
+            <div className="flex flex-col items-center">
+              <ImageIcon className="w-8 h-8 mb-2" />
+              <span className="font-semibold">Meetings</span>
+              <span className="text-xs opacity-80">{meetings.length} albums</span>
+            </div>
+          </Button>
         </div>
+
+        {/* Back/Actions Bar */}
+        {(selectedItem || selectMode) && (
+          <div className="flex items-center justify-between mb-6">
+            {selectedItem ? (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedItem(null);
+                  setSelectMode(false);
+                  setSelectedPhotos([]);
+                }}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Back to {view === 'camps' ? 'Camps' : view === 'events' ? 'Events' : 'Meetings'}
+              </Button>
+            ) : <div />}
+            
+            {selectMode ? (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectMode(false);
+                    setSelectedPhotos([]);
+                  }}
+                >
+                  Cancel
+                </Button>
+                {selectedPhotos.length > 0 && (
+                  <Button
+                    variant="destructive"
+                    onClick={handleDeleteSelected}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete {selectedPhotos.length} Selected
+                  </Button>
+                )}
+              </div>
+            ) : selectedItem && (
+              <Button onClick={() => setSelectMode(true)}>
+                Select Multiple
+              </Button>
+            )}
+          </div>
+        )}
 
         {isLoading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
           </div>
-        ) : filteredPhotos.length === 0 ? (
+        ) : displayPhotos.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center text-gray-500">
               <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-30" />
               <p>No photos uploaded yet</p>
             </CardContent>
           </Card>
-        ) : (
-          <div className="space-y-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {filteredPhotos.map((photo) => (
-                <div key={photo.id} className="relative group">
-                  <img
-                    src={photo.file_url}
-                    alt={photo.caption || ''}
-                    className="w-full aspect-square object-cover rounded-lg"
-                  />
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex flex-col items-center justify-center p-2 text-white text-xs">
-                    <p className="font-medium mb-1">{getPhotoLabel(photo)}</p>
-                    {photo.caption && <p className="text-center mb-2">{photo.caption}</p>}
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => deletePhotoMutation.mutate(photo.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+        ) : view === 'all' || selectedItem ? (
+          /* Show photos grid */
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {displayPhotos.map((photo) => (
+              <div
+                key={photo.id}
+                className={`relative group rounded-lg overflow-hidden ${
+                  selectMode ? 'cursor-pointer' : ''
+                } ${selectedPhotos.includes(photo.id) ? 'ring-4 ring-purple-600' : ''}`}
+                onClick={() => selectMode && handlePhotoSelect(photo.id)}
+              >
+                <img
+                  src={photo.file_url}
+                  alt={photo.caption || ''}
+                  className="w-full aspect-square object-cover"
+                />
+                {selectMode && (
+                  <div className="absolute top-2 right-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedPhotos.includes(photo.id)}
+                      onChange={() => handlePhotoSelect(photo.id)}
+                      className="w-6 h-6 rounded"
+                      onClick={(e) => e.stopPropagation()}
+                    />
                   </div>
+                )}
+                {!selectMode && (
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-white text-xs">
+                    <p className="font-medium mb-1 text-center">{getPhotoLabel(photo)}</p>
+                    {photo.caption && <p className="text-center mb-2">{photo.caption}</p>}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* Show grid of camps/events/meetings */
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {view === 'camps' && camps.map((camp) => (
+              <div
+                key={camp.id}
+                className="relative group aspect-square rounded-lg overflow-hidden cursor-pointer shadow hover:shadow-lg transition"
+                onClick={() => setSelectedItem(camp)}
+              >
+                {getItemPhoto(camp, 'camp') ? (
+                  <img
+                    src={getItemPhoto(camp, 'camp')}
+                    alt={camp.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <ImageIcon className="w-16 h-16 text-gray-400" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white p-4">
+                  <h3 className="font-bold text-lg mb-1 text-center">{camp.title}</h3>
+                  <p className="text-sm">{getItemPhotoCount(camp, 'camp')} photos</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+            
+            {view === 'events' && regularEvents.map((event) => (
+              <div
+                key={event.id}
+                className="relative group aspect-square rounded-lg overflow-hidden cursor-pointer shadow hover:shadow-lg transition"
+                onClick={() => setSelectedItem(event)}
+              >
+                {getItemPhoto(event, 'event') ? (
+                  <img
+                    src={getItemPhoto(event, 'event')}
+                    alt={event.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <ImageIcon className="w-16 h-16 text-gray-400" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white p-4">
+                  <h3 className="font-bold text-lg mb-1 text-center">{event.title}</h3>
+                  <p className="text-sm">{getItemPhotoCount(event, 'event')} photos</p>
+                </div>
+              </div>
+            ))}
+            
+            {view === 'meetings' && meetings.map((meeting) => (
+              <div
+                key={meeting.id}
+                className="relative group aspect-square rounded-lg overflow-hidden cursor-pointer shadow hover:shadow-lg transition"
+                onClick={() => setSelectedItem(meeting)}
+              >
+                {getItemPhoto(meeting, 'meeting') ? (
+                  <img
+                    src={getItemPhoto(meeting, 'meeting')}
+                    alt={meeting.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <ImageIcon className="w-16 h-16 text-gray-400" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white p-4">
+                  <h3 className="font-bold text-lg mb-1 text-center">{meeting.title}</h3>
+                  <p className="text-sm">{getItemPhotoCount(meeting, 'meeting')} photos</p>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
