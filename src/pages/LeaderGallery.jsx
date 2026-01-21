@@ -281,13 +281,13 @@ export default function LeaderGallery() {
       </div>
 
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Upload {selectedFiles.length} Photo{selectedFiles.length > 1 ? 's' : ''}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-4 gap-2">
-              {selectedFiles.map((file, idx) => (
+              {selectedFiles.slice(0, 4).map((file, idx) => (
                 <img
                   key={idx}
                   src={URL.createObjectURL(file)}
@@ -295,6 +295,11 @@ export default function LeaderGallery() {
                   className="w-full aspect-square object-cover rounded border"
                 />
               ))}
+              {selectedFiles.length > 4 && (
+                <div className="w-full aspect-square bg-gray-100 rounded border flex items-center justify-center">
+                  <span className="text-sm font-medium text-gray-600">+ {selectedFiles.length - 4} more</span>
+                </div>
+              )}
             </div>
 
             <div>
