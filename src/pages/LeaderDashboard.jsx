@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, CheckSquare, Mail, Settings, ArrowRight, Tent, ChevronDown } from 'lucide-react';
+import { Users, Calendar, Award, CheckSquare, Mail, Settings, ArrowRight, Tent, ChevronDown, Image } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -187,6 +187,7 @@ export default function LeaderDashboard() {
     { icon: CheckSquare, label: 'Attendance', count: 0, page: 'LeaderAttendance' },
     { icon: Calendar, label: 'Programme', count: 0, dropdown: true },
     { icon: Award, label: 'Badges', count: 0, page: 'LeaderBadges' },
+    { icon: Image, label: 'Gallery', count: 0, page: 'LeaderGallery' },
     { icon: Mail, label: 'Communications', count: 0, page: 'AdminSettings' },
   ];
 
@@ -217,7 +218,7 @@ export default function LeaderDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           {quickActions.map((action, index) => (
             <motion.div
               key={action.label}
