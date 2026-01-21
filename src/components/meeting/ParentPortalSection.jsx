@@ -93,7 +93,6 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
               id="shown_in_portal"
               checked={formData.shown_in_portal}
               onCheckedChange={(checked) => setFormData({ ...formData, shown_in_portal: checked })}
-              onCheckedChange={(checked) => setFormData({ ...formData, published: checked })}
             />
             <Label htmlFor="shown_in_portal" className="cursor-pointer">
               Show in parent portal
