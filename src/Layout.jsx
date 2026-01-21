@@ -44,7 +44,7 @@ export default function Layout({ children, currentPageName }) {
   };
 
   // Define protected pages
-  const leaderPages = ['LeaderDashboard', 'LeaderMembers', 'LeaderProgramme', 'MeetingDetail', 'MemberDetail', 'AdminSettings'];
+  const leaderPages = ['LeaderDashboard', 'LeaderMembers', 'LeaderProgramme', 'MeetingDetail', 'MemberDetail', 'AdminSettings', 'LeaderGallery'];
   const parentPages = ['ParentDashboard', 'MyChild'];
   const protectedPages = [...leaderPages, ...parentPages];
   const publicPages = ['Home', 'About', 'Sections', 'Parents', 'Gallery', 'Contact', 'Join', 'Volunteer'];
