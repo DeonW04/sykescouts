@@ -118,8 +118,9 @@ export default function AdminSettings() {
 
   const handleSaveUser = async () => {
     try {
-      // Update basic user info and role
-      const role = editForm.user_type === 'admin' ? 'admin' : 'user';
+      // Update user info and role
+      const role = (editForm.user_type === 'admin') ? 'admin' : 'user';
+
       const response = await base44.functions.invoke('updateUser', {
         userId: selectedUser.id,
         full_name: editForm.full_name,
@@ -134,29 +135,32 @@ export default function AdminSettings() {
       const leaderRecord = leaders.find(l => l.user_id === selectedUser.id);
 
       if (editForm.user_type === 'leader') {
+        // Handle becoming a leader
         if (currentType !== 'leader') {
-          // Create new leader record
           await base44.entities.Leader.create({
             user_id: selectedUser.id,
             phone: '',
             section_ids: editForm.section_ids,
           });
         } else if (leaderRecord) {
-          // Update existing leader record with section assignments
           await base44.entities.Leader.update(leaderRecord.id, {
             section_ids: editForm.section_ids,
           });
         }
       } else {
-        // If user is not a leader anymore, delete leader record if exists
+        // Handle changing from leader to parent or other role
         if (leaderRecord) {
           await base44.entities.Leader.delete(leaderRecord.id);
         }
       }
 
-      queryClient.invalidateQueries({ queryKey: ['all-users'] });
-      queryClient.invalidateQueries({ queryKey: ['all-leaders'] });
-      queryClient.invalidateQueries({ queryKey: ['all-parents'] });
+      // Refresh data
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['all-users'] }),
+        queryClient.invalidateQueries({ queryKey: ['all-leaders'] }),
+        queryClient.invalidateQueries({ queryKey: ['all-parents'] }),
+      ]);
+
       setShowEditDialog(false);
       toast.success('User updated successfully');
     } catch (error) {
