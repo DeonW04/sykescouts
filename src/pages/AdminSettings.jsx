@@ -130,10 +130,9 @@ export default function AdminSettings() {
         throw new Error(response.data.error);
       }
 
-      // Handle user type changes
       const currentType = getUserType(selectedUser.id).type.toLowerCase();
       const leaderRecord = leaders.find(l => l.user_id === selectedUser.id);
-      
+
       if (editForm.user_type === 'leader') {
         if (currentType !== 'leader') {
           // Create new leader record
@@ -147,6 +146,11 @@ export default function AdminSettings() {
           await base44.entities.Leader.update(leaderRecord.id, {
             section_ids: editForm.section_ids,
           });
+        }
+      } else {
+        // If user is not a leader anymore, delete leader record if exists
+        if (leaderRecord) {
+          await base44.entities.Leader.delete(leaderRecord.id);
         }
       }
 
