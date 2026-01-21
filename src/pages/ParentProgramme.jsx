@@ -62,11 +62,17 @@ export default function ParentProgramme() {
   // Get current term
   const now = new Date();
   const currentTerm = terms.find(term => {
+    console.log("Checking term:", term);
+    console.log("Start date:", new Date(term.start_date));
+    console.log("End date:", new Date(term.end_date));
+    console.log("Section IDs in term:", term.section_ids);
     const relevantSections = childSectionIds.some(sId => term.section_ids?.includes(sId));
     if (!relevantSections) return false;
 
     const start = new Date(term.start_date);
     const end = new Date(term.end_date);
+    console.log("Now:", now);
+    console.log("Between start and end:", now >= start && now <= end);
     return now >= start && now <= end;
   });
 
