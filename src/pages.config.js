@@ -27,6 +27,7 @@ import Parents from './pages/Parents';
 import Sections from './pages/Sections';
 import Volunteer from './pages/Volunteer';
 import Gallery from './pages/Gallery';
+import LeaderGallery from './pages/LeaderGallery';
 import __Layout from './Layout.jsx';
 
 
@@ -60,6 +61,7 @@ export const PAGES = {
     "Sections": Sections,
     "Volunteer": Volunteer,
     "Gallery": Gallery,
+    "LeaderGallery": LeaderGallery,
 }
 
 export const pagesConfig = {
