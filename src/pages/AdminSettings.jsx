@@ -105,6 +105,12 @@ export default function AdminSettings() {
     let typeValue = userType.type.toLowerCase();
     if (user.role === 'admin') {
       typeValue = 'admin';
+    } else if (userType.type === 'Parent') {
+      typeValue = 'parent';
+    } else if (userType.type === 'Leader') {
+      typeValue = 'leader';
+    } else {
+      typeValue = 'user';
     }
     const leaderRecord = leaders.find(l => l.user_id === user.id);
     setEditForm({
