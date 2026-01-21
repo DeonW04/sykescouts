@@ -122,17 +122,24 @@ export default function CompleteRegistration() {
     setSubmitting(true);
     
     try {
+      // Update user profile
       await base44.auth.updateMe({ full_name: userForm.full_name });
       
-      // If user is a leader, complete onboarding immediately
-      if (isLeader) {
+      // Optionally, refetch user data here if your API provides a method
+      const updatedUser = await base44.auth.me();
+      setUser(updatedUser);
+
+      // Check if user is a leader
+      if (updatedUser.role === 'admin') {
+        setIsLeader(true);
         await base44.auth.updateMe({ onboarding_complete: true });
         toast.success('Registration completed successfully!');
         window.location.href = createPageUrl('LeaderDashboard');
         return;
       }
-      
-      setUser({ ...user, full_name: userForm.full_name });
+
+      // Update local user state
+      setUser(updatedUser);
       setStep(2);
     } catch (error) {
       toast.error('Error updating your details: ' + error.message);
