@@ -16,7 +16,7 @@ import { CheckCircle, ArrowRight, Users } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-export default function JoinUs() {
+export default function Join() {
   const [formData, setFormData] = useState({
     child_name: '',
     date_of_birth: '',
