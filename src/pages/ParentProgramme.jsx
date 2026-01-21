@@ -62,6 +62,7 @@ export default function ParentProgramme() {
   // Get current term
   const now = new Date();
   const currentTerm = terms.find(term => {
+    console.log("currentTerm:", currentTerm);
     console.log("Checking term:", term);
     console.log("Start date:", new Date(term.start_date));
     console.log("End date:", new Date(term.end_date));
@@ -115,7 +116,7 @@ export default function ParentProgramme() {
     );
   }
 
-  if (!currentTerm) {
+  if (currentTerm == null) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="bg-[#7413dc] text-white py-8">
