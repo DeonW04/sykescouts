@@ -34,14 +34,14 @@ export default function Gallery() {
   // Filter by event type
   const filteredGroups = selectedType === 'all'
     ? photosByEvent
+    : selectedType === 'events'
+    ? photosByEvent.filter(g => ['trip', 'visit', 'activity', 'other'].includes(g.event.type))
     : photosByEvent.filter(g => g.event.type === selectedType);
 
   const eventTypes = [
-    { value: 'all', label: 'All Events' },
+    { value: 'all', label: 'All' },
     { value: 'camp', label: 'Camps' },
-    { value: 'trip', label: 'Trips' },
-    { value: 'visit', label: 'Visits' },
-    { value: 'activity', label: 'Activities' },
+    { value: 'events', label: 'Events' },
     { value: 'meeting', label: 'Meetings' },
   ];
 
@@ -67,7 +67,7 @@ export default function Gallery() {
         ) : (
           <>
             <Tabs value={selectedType} onValueChange={setSelectedType} className="mb-8">
-              <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
+              <TabsList className="grid w-full grid-cols-4">
                 {eventTypes.map(type => (
                   <TabsTrigger key={type.value} value={type.value}>
                     {type.label}
