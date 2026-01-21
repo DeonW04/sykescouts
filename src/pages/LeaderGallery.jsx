@@ -7,11 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Upload, Trash2, Loader2, ImageIcon, Filter, X, Eye, Calendar, MapPin, ArrowLeft } from 'lucide-react';
+import { Upload, Trash2, Loader2, ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function LeaderGallery() {
   const [uploading, setUploading] = useState(false);
@@ -27,10 +25,7 @@ export default function LeaderGallery() {
     visible_to: 'parents',
     is_public: false,
   });
-  const [view, setView] = useState('all'); // 'all', 'camps', 'events', 'meetings'
-  const [selectedItem, setSelectedItem] = useState(null); // specific event/camp/meeting
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxPhoto, setLightboxPhoto] = useState(null);
+  const [filterSection, setFilterSection] = useState('all');
 
   const queryClient = useQueryClient();
 
@@ -67,54 +62,9 @@ export default function LeaderGallery() {
     },
   });
 
-  // Get unique camps, events, and meetings
-  const camps = [...new Map(
-    allPhotos
-      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'camp'))
-      .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
-  ).values()].filter(Boolean);
-
-  const regularEvents = [...new Map(
-    allPhotos
-      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'camp'))
-      .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
-  ).values()].filter(Boolean);
-
-  const meetings = [...new Map(
-    allPhotos
-      .filter(p => p.programme_id)
-      .map(p => [p.programme_id, programmes.find(pr => pr.id === p.programme_id)])
-  ).values()].filter(Boolean);
-
-  // Get photos for current view
-  const getDisplayPhotos = () => {
-    if (selectedItem) {
-      // Show photos for specific item
-      return allPhotos.filter(p => 
-        p.event_id === selectedItem.id || 
-        p.programme_id === selectedItem.id
-      );
-    }
-    
-    // Default: show all photos in random order
-    return [...allPhotos].sort(() => Math.random() - 0.5);
-  };
-
-  const displayPhotos = getDisplayPhotos();
-
-  const getItemPhoto = (item, type) => {
-    if (type === 'meeting') {
-      return allPhotos.find(p => p.programme_id === item.id)?.file_url;
-    }
-    return allPhotos.find(p => p.event_id === item.id)?.file_url;
-  };
-
-  const getItemPhotoCount = (item, type) => {
-    if (type === 'meeting') {
-      return allPhotos.filter(p => p.programme_id === item.id).length;
-    }
-    return allPhotos.filter(p => p.event_id === item.id).length;
-  };
+  const filteredPhotos = filterSection === 'all' 
+    ? allPhotos 
+    : allPhotos.filter(p => p.section_id === filterSection);
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
@@ -242,21 +192,18 @@ export default function LeaderGallery() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-      {/* Hero Header */}
-      <div className="relative bg-gradient-to-br from-[#7413dc] to-[#004851] text-white py-12 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-72 h-72 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-[#7413dc] text-white py-8">
+        <div className="max-w-7xl mx-auto px-4">
+          <h1 className="text-3xl font-bold">Photo Gallery</h1>
+          <p className="mt-2 text-purple-100">Upload and manage event photos</p>
         </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
-              <h1 className="text-4xl font-bold mb-3">Photo Gallery</h1>
-              <p className="text-purple-100 text-lg">
-                {selectedItem ? getPhotoLabel(allPhotos.find(p => p.event_id === selectedItem.id || p.programme_id === selectedItem.id)) : 'Capture and share your scouting adventures'}
-              </p>
-            </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <Card className="mb-6">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Upload Photos</CardTitle>
             <div>
               <input
                 type="file"
@@ -266,289 +213,72 @@ export default function LeaderGallery() {
                 onChange={handleFileSelect}
                 className="hidden"
               />
-              <Button asChild size="lg" className="bg-white text-[#7413dc] hover:bg-gray-100 shadow-lg">
+              <Button asChild>
                 <label htmlFor="photo-upload" className="cursor-pointer">
-                  <Upload className="h-5 w-5 mr-2" />
+                  <Upload className="h-4 w-4 mr-2" />
                   Upload Photos
                 </label>
               </Button>
             </div>
-          </div>
-        </div>
-      </div>
+          </CardHeader>
+        </Card>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Category Icons */}
-        <div className="grid grid-cols-3 gap-6 mb-10">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setView('camps');
-              setSelectedItem(null);
-            }}
-            className={`relative overflow-hidden rounded-2xl p-8 text-center transition-all ${
-              view === 'camps' 
-                ? 'bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-xl' 
-                : 'bg-white hover:bg-gray-50 text-gray-700 shadow-md'
-            }`}
-          >
-            <div className="flex flex-col items-center">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-                view === 'camps' ? 'bg-white/20' : 'bg-green-100'
-              }`}>
-                <svg className={`w-8 h-8 ${view === 'camps' ? 'text-white' : 'text-green-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-2">Camps</h3>
-              <p className="text-sm opacity-80">{camps.length} camps</p>
-            </div>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setView('events');
-              setSelectedItem(null);
-            }}
-            className={`relative overflow-hidden rounded-2xl p-8 text-center transition-all ${
-              view === 'events' 
-                ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-xl' 
-                : 'bg-white hover:bg-gray-50 text-gray-700 shadow-md'
-            }`}
-          >
-            <div className="flex flex-col items-center">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-                view === 'events' ? 'bg-white/20' : 'bg-blue-100'
-              }`}>
-                <Calendar className={`w-8 h-8 ${view === 'events' ? 'text-white' : 'text-blue-600'}`} />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Events</h3>
-              <p className="text-sm opacity-80">{regularEvents.length} events</p>
-            </div>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setView('meetings');
-              setSelectedItem(null);
-            }}
-            className={`relative overflow-hidden rounded-2xl p-8 text-center transition-all ${
-              view === 'meetings' 
-                ? 'bg-gradient-to-br from-purple-500 to-pink-600 text-white shadow-xl' 
-                : 'bg-white hover:bg-gray-50 text-gray-700 shadow-md'
-            }`}
-          >
-            <div className="flex flex-col items-center">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-                view === 'meetings' ? 'bg-white/20' : 'bg-purple-100'
-              }`}>
-                <svg className={`w-8 h-8 ${view === 'meetings' ? 'text-white' : 'text-purple-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-2">Meetings</h3>
-              <p className="text-sm opacity-80">{meetings.length} meetings</p>
-            </div>
-          </motion.button>
+        <div className="mb-6">
+          <Label>Filter by Section</Label>
+          <Select value={filterSection} onValueChange={setFilterSection}>
+            <SelectTrigger className="w-64">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sections</SelectItem>
+              {sections.map(section => (
+                <SelectItem key={section.id} value={section.id}>
+                  {section.display_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Back Button when viewing specific item */}
-        {selectedItem && (
-          <Button
-            variant="outline"
-            className="mb-6"
-            onClick={() => setSelectedItem(null)}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to {view === 'camps' ? 'Camps' : view === 'events' ? 'Events' : 'Meetings'}
-          </Button>
-        )}
-
-        {/* Gallery Content */}
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="h-12 w-12 animate-spin text-purple-600 mb-4" />
-            <p className="text-gray-500">Loading your photos...</p>
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
           </div>
-        ) : displayPhotos.length === 0 ? (
-          <Card className="shadow-sm">
-            <CardContent className="py-20 text-center">
-              <div className="w-20 h-20 mx-auto mb-6 bg-purple-100 rounded-full flex items-center justify-center">
-                <ImageIcon className="h-10 w-10 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No photos found</h3>
-              <p className="text-gray-500 mb-6">Start by uploading some photos</p>
+        ) : filteredPhotos.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center text-gray-500">
+              <ImageIcon className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p>No photos uploaded yet</p>
             </CardContent>
           </Card>
-        ) : view === 'all' || selectedItem ? (
-          /* Show photos grid */
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <AnimatePresence>
-              {displayPhotos.map((photo, index) => (
-                <motion.div
-                  key={photo.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: index * 0.02 }}
-                  className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer"
-                  onClick={() => {
-                    setLightboxPhoto(photo);
-                    setLightboxOpen(true);
-                  }}
-                >
+        ) : (
+          <div className="space-y-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {filteredPhotos.map((photo) => (
+                <div key={photo.id} className="relative group">
                   <img
                     src={photo.file_url}
                     alt={photo.caption || ''}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full aspect-square object-cover rounded-lg"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="w-full"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm('Delete this photo?')) {
-                            deletePhotoMutation.mutate(photo.id);
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        Delete
-                      </Button>
-                    </div>
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex flex-col items-center justify-center p-2 text-white text-xs">
+                    <p className="font-medium mb-1">{getPhotoLabel(photo)}</p>
+                    {photo.caption && <p className="text-center mb-2">{photo.caption}</p>}
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => deletePhotoMutation.mutate(photo.id)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
                   </div>
-                </motion.div>
+                </div>
               ))}
-            </AnimatePresence>
-          </div>
-        ) : (
-          /* Show grid of camps/events/meetings */
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-            {view === 'camps' && camps.map((camp) => (
-              <motion.div
-                key={camp.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer"
-                onClick={() => setSelectedItem(camp)}
-              >
-                {getItemPhoto(camp, 'camp') ? (
-                  <img
-                    src={getItemPhoto(camp, 'camp')}
-                    alt={camp.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
-                    <ImageIcon className="w-16 h-16 text-white opacity-50" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                    <h3 className="font-bold text-lg mb-1 line-clamp-2">{camp.title}</h3>
-                    <p className="text-sm opacity-90">{getItemPhotoCount(camp, 'camp')} photos</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-            
-            {view === 'events' && regularEvents.map((event) => (
-              <motion.div
-                key={event.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer"
-                onClick={() => setSelectedItem(event)}
-              >
-                {getItemPhoto(event, 'event') ? (
-                  <img
-                    src={getItemPhoto(event, 'event')}
-                    alt={event.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
-                    <ImageIcon className="w-16 h-16 text-white opacity-50" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                    <h3 className="font-bold text-lg mb-1 line-clamp-2">{event.title}</h3>
-                    <p className="text-sm opacity-90">{getItemPhotoCount(event, 'event')} photos</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-            
-            {view === 'meetings' && meetings.map((meeting) => (
-              <motion.div
-                key={meeting.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer"
-                onClick={() => setSelectedItem(meeting)}
-              >
-                {getItemPhoto(meeting, 'meeting') ? (
-                  <img
-                    src={getItemPhoto(meeting, 'meeting')}
-                    alt={meeting.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
-                    <ImageIcon className="w-16 h-16 text-white opacity-50" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                    <h3 className="font-bold text-lg mb-1 line-clamp-2">{meeting.title}</h3>
-                    <p className="text-sm opacity-90">{getItemPhotoCount(meeting, 'meeting')} photos</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Lightbox */}
-      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-4xl p-0">
-          {lightboxPhoto && (
-            <div className="relative">
-              <img
-                src={lightboxPhoto.file_url}
-                alt={lightboxPhoto.caption || ''}
-                className="w-full max-h-[80vh] object-contain"
-              />
-              {lightboxPhoto.caption && (
-                <div className="p-6 bg-white">
-                  <p className="text-gray-900 font-medium">{lightboxPhoto.caption}</p>
-                  <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-                    <span>{getPhotoLabel(lightboxPhoto)}</span>
-                    {sections.find(s => s.id === lightboxPhoto.section_id) && (
-                      <>
-                        <span>•</span>
-                        <span>{sections.find(s => s.id === lightboxPhoto.section_id)?.display_name}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
