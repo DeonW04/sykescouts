@@ -6,7 +6,6 @@ import CompleteRegistration from './pages/CompleteRegistration';
 import Contact from './pages/Contact';
 import EditBadgeStructure from './pages/EditBadgeStructure';
 import EventDetail from './pages/EventDetail';
-import Gallery from './pages/Gallery';
 import Home from './pages/Home';
 import Join from './pages/Join';
 import LeaderAttendance from './pages/LeaderAttendance';
@@ -27,6 +26,7 @@ import ParentProgramme from './pages/ParentProgramme';
 import Parents from './pages/Parents';
 import Sections from './pages/Sections';
 import Volunteer from './pages/Volunteer';
+import Gallery from './pages/Gallery';
 import __Layout from './Layout.jsx';
 
 
@@ -39,7 +39,6 @@ export const PAGES = {
     "Contact": Contact,
     "EditBadgeStructure": EditBadgeStructure,
     "EventDetail": EventDetail,
-    "Gallery": Gallery,
     "Home": Home,
     "Join": Join,
     "LeaderAttendance": LeaderAttendance,
@@ -60,6 +59,7 @@ export const PAGES = {
     "Parents": Parents,
     "Sections": Sections,
     "Volunteer": Volunteer,
+    "Gallery": Gallery,
 }
 
 export const pagesConfig = {
