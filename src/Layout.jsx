@@ -47,7 +47,7 @@ export default function Layout({ children, currentPageName }) {
   const leaderPages = ['LeaderDashboard', 'LeaderMembers', 'LeaderProgramme', 'MeetingDetail', 'MemberDetail', 'AdminSettings'];
   const parentPages = ['ParentDashboard', 'MyChild'];
   const protectedPages = [...leaderPages, ...parentPages];
-  const publicPages = ['Home', 'About', 'Sections', 'Parents', 'Gallery', 'Contact', 'JoinUs', 'Volunteer'];
+  const publicPages = ['Home', 'About', 'Sections', 'Parents', 'Gallery', 'Contact', 'Join', 'Volunteer'];
 
   // Access control - check after auth is loaded
   useEffect(() => {
@@ -121,7 +121,7 @@ export default function Layout({ children, currentPageName }) {
             <div className="hidden lg:flex items-center gap-3">
               {!user ? (
                 <>
-                  <Link to={createPageUrl('JoinUs')}>
+                  <Link to={createPageUrl('Join')}>
                     <Button variant="outline" className="border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white">
                       Join Scouts
                     </Button>
@@ -180,7 +180,7 @@ export default function Layout({ children, currentPageName }) {
               <div className="flex flex-col gap-3 pt-4 border-t border-gray-100">
                 {!user ? (
                   <>
-                    <Link to={createPageUrl('JoinUs')} onClick={() => setMobileMenuOpen(false)}>
+                    <Link to={createPageUrl('Join')} onClick={() => setMobileMenuOpen(false)}>
                       <Button variant="outline" className="w-full border-[#7413dc] text-[#7413dc]">
                         Join Scouts
                       </Button>
@@ -244,7 +244,7 @@ export default function Layout({ children, currentPageName }) {
                 <li><Link to={createPageUrl('About')} className="hover:text-white transition-colors">About Us</Link></li>
                 <li><Link to={createPageUrl('Sections')} className="hover:text-white transition-colors">Our Sections</Link></li>
                 <li><Link to={createPageUrl('Parents')} className="hover:text-white transition-colors">Parent Info</Link></li>
-                <li><Link to={createPageUrl('JoinUs')} className="hover:text-white transition-colors">Join Scouts</Link></li>
+                <li><Link to={createPageUrl('Join')} className="hover:text-white transition-colors">Join Scouts</Link></li>
               </ul>
             </div>
 
