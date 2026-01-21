@@ -7,7 +7,7 @@ import Contact from './pages/Contact';
 import EditBadgeStructure from './pages/EditBadgeStructure';
 import Gallery from './pages/Gallery';
 import Home from './pages/Home';
-import JoinUs from './pages/JoinUs';
+import Join from './pages/JoinUs';
 import LeaderBadges from './pages/LeaderBadges';
 import LeaderDashboard from './pages/LeaderDashboard';
 import LeaderMembers from './pages/LeaderMembers';
@@ -40,7 +40,7 @@ export const PAGES = {
     "EditBadgeStructure": EditBadgeStructure,
     "Gallery": Gallery,
     "Home": Home,
-    "JoinUs": JoinUs,
+    "Join": Join,
     "LeaderBadges": LeaderBadges,
     "LeaderDashboard": LeaderDashboard,
     "LeaderMembers": LeaderMembers,
