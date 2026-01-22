@@ -327,8 +327,14 @@ export default function MemberDetail() {
           <TabsContent value="parents" className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <CardTitle>Parent One</CardTitle>
+                  {member.parent_one_email && parentUsers.some(u => u.email === member.parent_one_email) && (
+                    <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                      <CheckCircle className="w-3 h-3" />
+                      Registered
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div>
@@ -347,8 +353,14 @@ export default function MemberDetail() {
               </Card>
 
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <CardTitle>Parent Two</CardTitle>
+                  {member.parent_two_email && parentUsers.some(u => u.email === member.parent_two_email) && (
+                    <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                      <CheckCircle className="w-3 h-3" />
+                      Registered
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div>
