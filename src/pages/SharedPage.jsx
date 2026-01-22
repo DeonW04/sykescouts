@@ -106,9 +106,11 @@ export default function SharedPage() {
                 return (
                   <div key={block.id || index} className="bg-white rounded-lg shadow-sm p-6">
                     <BlockComponent
-                      block={block}
+                      data={block.data}
                       pageId={page.page_id}
-                      isPreview={true}
+                      isEditing={false}
+                      setIsEditing={() => {}}
+                      onUpdate={() => {}}
                     />
                   </div>
                 );
