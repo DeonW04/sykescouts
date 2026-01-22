@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { base44 } from '@/api/base44Client';
+import LeaderNav from '../components/leader/LeaderNav';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -207,6 +208,7 @@ Focus on practical, specific risks following Scouts UK safety standards. Conside
             </Card>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -26,11 +26,11 @@ import ParentEventDetail from './pages/ParentEventDetail';
 import ParentEvents from './pages/ParentEvents';
 import ParentProgramme from './pages/ParentProgramme';
 import Parents from './pages/Parents';
+import RiskAssessmentDetail from './pages/RiskAssessmentDetail';
+import RiskAssessmentHistory from './pages/RiskAssessmentHistory';
+import RiskAssessments from './pages/RiskAssessments';
 import Sections from './pages/Sections';
 import Volunteer from './pages/Volunteer';
-import RiskAssessments from './pages/RiskAssessments';
-import RiskAssessmentHistory from './pages/RiskAssessmentHistory';
-import RiskAssessmentDetail from './pages/RiskAssessmentDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -63,11 +63,11 @@ export const PAGES = {
     "ParentEvents": ParentEvents,
     "ParentProgramme": ParentProgramme,
     "Parents": Parents,
+    "RiskAssessmentDetail": RiskAssessmentDetail,
+    "RiskAssessmentHistory": RiskAssessmentHistory,
+    "RiskAssessments": RiskAssessments,
     "Sections": Sections,
     "Volunteer": Volunteer,
-    "RiskAssessments": RiskAssessments,
-    "RiskAssessmentHistory": RiskAssessmentHistory,
-    "RiskAssessmentDetail": RiskAssessmentDetail,
 }
 
 export const pagesConfig = {

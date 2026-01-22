@@ -183,42 +183,102 @@ export default function LeaderDashboard() {
   }
 
   const quickActions = [
-    { icon: Users, label: 'Members', count: 0, dropdown: true, dropdownItems: [
-      { label: 'Member Info', page: 'LeaderMembers' },
-      { label: 'Attendance', page: 'LeaderAttendance' }
-    ]},
-    { icon: Calendar, label: 'Programme', count: 0, dropdown: true, dropdownItems: [
-      { label: 'Weekly Meetings', page: 'LeaderProgramme' },
-      { label: 'Events', page: 'LeaderEvents' }
-    ]},
-    { icon: ShieldAlert, label: 'Risk Assessments', count: 0, page: 'RiskAssessments' },
-    { icon: Award, label: 'Badges', count: 0, page: 'LeaderBadges' },
-    { icon: Image, label: 'Gallery', count: 0, page: 'LeaderGallery' },
-    { icon: Mail, label: 'Communications', count: 0, page: 'AdminSettings' },
+    { 
+      icon: Users, 
+      label: 'Members', 
+      page: 'LeaderMembers',
+      gradient: 'from-blue-500 to-blue-600',
+      iconBg: 'bg-blue-100',
+      iconColor: 'text-blue-600'
+    },
+    { 
+      icon: Calendar, 
+      label: 'Programme', 
+      page: 'LeaderProgramme',
+      gradient: 'from-purple-500 to-purple-600',
+      iconBg: 'bg-purple-100',
+      iconColor: 'text-purple-600'
+    },
+    { 
+      icon: Tent, 
+      label: 'Events', 
+      page: 'LeaderEvents',
+      gradient: 'from-indigo-500 to-indigo-600',
+      iconBg: 'bg-indigo-100',
+      iconColor: 'text-indigo-600'
+    },
+    { 
+      icon: ShieldAlert, 
+      label: 'Risk', 
+      page: 'RiskAssessments',
+      gradient: 'from-orange-500 to-orange-600',
+      iconBg: 'bg-orange-100',
+      iconColor: 'text-orange-600'
+    },
+    { 
+      icon: Award, 
+      label: 'Badges', 
+      page: 'LeaderBadges',
+      gradient: 'from-green-500 to-green-600',
+      iconBg: 'bg-green-100',
+      iconColor: 'text-green-600'
+    },
+    { 
+      icon: Image, 
+      label: 'Gallery', 
+      page: 'LeaderGallery',
+      gradient: 'from-pink-500 to-pink-600',
+      iconBg: 'bg-pink-100',
+      iconColor: 'text-pink-600'
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
       {/* Header */}
-      <div className="bg-[#004851] text-white py-8">
+      <div className="bg-gradient-to-r from-[#004851] to-[#006b7a] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-between items-center"
+          >
             <div>
-              <h1 className="text-3xl font-bold">Leader Portal</h1>
-              <p className="mt-2 text-white/80">
+              <motion.h1 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-4xl font-bold mb-2"
+              >
+                Leader Portal
+              </motion.h1>
+              <motion.p 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-xl text-white/90"
+              >
                 Welcome back, {user.full_name}
-                {user.role === 'admin' && ' (Administrator)'}
-              </p>
+                {user.role === 'admin' && (
+                  <span className="ml-2 px-3 py-1 bg-white/20 rounded-full text-sm">Administrator</span>
+                )}
+              </motion.p>
             </div>
             {user.role === 'admin' && (
-              <Link to={createPageUrl('AdminSettings')}>
-                <Button className="bg-white text-[#004851] hover:bg-gray-100">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Admin Settings
-                </Button>
-              </Link>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Link to={createPageUrl('AdminSettings')}>
+                  <Button className="bg-white text-[#004851] hover:bg-gray-100">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Admin Settings
+                  </Button>
+                </Link>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
         </div>
       </div>
 
@@ -228,69 +288,46 @@ export default function LeaderDashboard() {
           {quickActions.map((action, index) => (
             <motion.div
               key={action.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ 
+                delay: index * 0.1,
+                type: "spring",
+                stiffness: 260,
+                damping: 20
+              }}
+              whileHover={{ scale: 1.05, y: -5 }}
+              whileTap={{ scale: 0.95 }}
             >
-              {action.dropdown ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-                      <CardContent className="p-4 text-center">
-                        <div className="w-12 h-12 mx-auto bg-[#004851]/10 rounded-full flex items-center justify-center mb-3">
-                          <action.icon className="w-6 h-6 text-[#004851]" />
-                        </div>
-                        <h3 className="text-sm font-medium text-gray-900 flex items-center justify-center gap-1">
-                          {action.label}
-                          <ChevronDown className="w-3 h-3" />
-                        </h3>
-                      </CardContent>
-                    </Card>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    {action.dropdownItems.map(item => (
-                      <DropdownMenuItem key={item.page} onClick={() => window.location.href = createPageUrl(item.page)}>
-                        {item.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : action.page ? (
-                <Link to={createPageUrl(action.page)}>
-                  <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-                    <CardContent className="p-4 text-center">
-                      <div className="w-12 h-12 mx-auto bg-[#004851]/10 rounded-full flex items-center justify-center mb-3">
-                        <action.icon className="w-6 h-6 text-[#004851]" />
-                      </div>
-                      <h3 className="text-sm font-medium text-gray-900">{action.label}</h3>
-                      {action.count > 0 && (
-                        <p className="text-xs text-gray-500 mt-1">{action.count} total</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Link>
-              ) : (
-                <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-                  <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 mx-auto bg-[#004851]/10 rounded-full flex items-center justify-center mb-3">
-                    <action.icon className="w-6 h-6 text-[#004851]" />
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-900">{action.label}</h3>
-                  {action.count > 0 && (
-                    <p className="text-xs text-gray-500 mt-1">{action.count} total</p>
-                  )}
-                </CardContent>
-              </Card>
-              )}
+              <Link to={createPageUrl(action.page)}>
+                <Card className={`cursor-pointer bg-gradient-to-br ${action.gradient} border-0 shadow-lg hover:shadow-xl transition-all overflow-hidden relative group`}>
+                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
+                  <CardContent className="p-6 text-center relative z-10">
+                    <motion.div 
+                      className={`w-14 h-14 mx-auto ${action.iconBg} rounded-2xl flex items-center justify-center mb-3 shadow-md`}
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <action.icon className={`w-7 h-7 ${action.iconColor}`} />
+                    </motion.div>
+                    <h3 className="text-sm font-semibold text-white">{action.label}</h3>
+                  </CardContent>
+                </Card>
+              </Link>
             </motion.div>
           ))}
         </div>
 
         {/* Dashboard Content */}
-        <div className="grid lg:grid-cols-2 gap-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="grid lg:grid-cols-2 gap-6"
+        >
           <UpcomingMeetings sections={sections} />
           <BadgesDue sections={sections} />
-        </div>
+        </motion.div>
       </div>
     </div>
   );
