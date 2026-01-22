@@ -4,13 +4,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Package, ShoppingCart, Plus, Minus, Download, Check, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Package, ShoppingCart, Plus, Minus, Download, Check, AlertTriangle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import LeaderNav from '../components/leader/LeaderNav';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import jsPDF from 'jspdf';
 
 export default function BadgeStockManagement() {
@@ -19,6 +21,9 @@ export default function BadgeStockManagement() {
   const [editingStock, setEditingStock] = useState({});
   const [bulkAddDialog, setBulkAddDialog] = useState(false);
   const [bulkAddQuantities, setBulkAddQuantities] = useState({});
+  const [additionalBadges, setAdditionalBadges] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
 
   const { data: badges = [] } = useQuery({
     queryKey: ['badges'],
@@ -125,6 +130,7 @@ export default function BadgeStockManagement() {
       toast.success('Stock added successfully');
       setBulkAddDialog(false);
       setBulkAddQuantities({});
+      setAdditionalBadges([]);
     },
   });
 
@@ -251,7 +257,26 @@ export default function BadgeStockManagement() {
     setBulkAddQuantities({ ...bulkAddQuantities, [badgeId]: parseInt(value) || 0 });
   };
 
+  const handleAddBadge = (badgeId) => {
+    if (!additionalBadges.includes(badgeId)) {
+      setAdditionalBadges([...additionalBadges, badgeId]);
+    }
+    setShowSearch(false);
+    setSearchQuery('');
+  };
+
+  const handleRemoveAdditional = (badgeId) => {
+    setAdditionalBadges(additionalBadges.filter(id => id !== badgeId));
+    const newQuantities = { ...bulkAddQuantities };
+    delete newQuantities[badgeId];
+    setBulkAddQuantities(newQuantities);
+  };
+
   const orderList = getOrderList();
+  const availableBadges = badges.filter(b => 
+    !orderList.some(item => item.badge.id === b.id) &&
+    !additionalBadges.includes(b.id)
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -472,7 +497,91 @@ export default function BadgeStockManagement() {
                 </div>
               </div>
             ))}
+            
+            {additionalBadges.map(badgeId => {
+              const badge = badges.find(b => b.id === badgeId);
+              if (!badge) return null;
+              return (
+                <div key={badgeId} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border-2 border-blue-200">
+                  <div className="flex items-center gap-3">
+                    <img src={badge.image_url} alt={badge.name} className="w-10 h-10 object-contain" />
+                    <div>
+                      <div className="font-semibold text-gray-900">{badge.name}</div>
+                      <div className="text-sm text-blue-600">Additional badge</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleRemoveAdditional(badgeId)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleBulkAddChange(badgeId, (bulkAddQuantities[badgeId] || 0) - 1)}
+                    >
+                      <Minus className="w-4 h-4" />
+                    </Button>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={bulkAddQuantities[badgeId] || 0}
+                      onChange={(e) => handleBulkAddChange(badgeId, e.target.value)}
+                      className="w-20 text-center"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleBulkAddChange(badgeId, (bulkAddQuantities[badgeId] || 0) + 1)}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
+          
+          <div className="mt-4 pt-4 border-t">
+            <Popover open={showSearch} onOpenChange={setShowSearch}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Another Badge
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Search badges..." />
+                  <CommandList>
+                    <CommandEmpty>No badges found.</CommandEmpty>
+                    <CommandGroup>
+                      {availableBadges.map(badge => (
+                        <CommandItem
+                          key={badge.id}
+                          onSelect={() => handleAddBadge(badge.id)}
+                          className="flex items-center gap-3 cursor-pointer"
+                        >
+                          <img src={badge.image_url} alt={badge.name} className="w-8 h-8 object-contain" />
+                          <div>
+                            <div className="font-medium">{badge.name}</div>
+                            <div className="text-xs text-gray-500">
+                              {sections.find(s => s.name === badge.section)?.display_name || 'All Sections'}
+                            </div>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+          
           <div className="flex justify-end gap-3 mt-6">
             <Button variant="outline" onClick={() => setBulkAddDialog(false)}>
               Cancel
