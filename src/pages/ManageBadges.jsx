@@ -44,11 +44,16 @@ export default function ManageBadges() {
 
   const createBadgeMutation = useMutation({
     mutationFn: (data) => base44.entities.BadgeDefinition.create(data),
-    onSuccess: () => {
+    onSuccess: (newBadge) => {
       queryClient.invalidateQueries({ queryKey: ['badges'] });
       setShowDialog(false);
       resetForm();
       toast.success('Badge created successfully');
+      
+      // If staged badge, redirect to manage page
+      if (newBadge.category === 'staged') {
+        navigate(createPageUrl('ManageStagedBadge') + `?familyId=${newBadge.badge_family_id}`);
+      }
     },
   });
 
@@ -118,10 +123,18 @@ export default function ManageBadges() {
   };
 
   const handleSubmit = () => {
+    const submitData = { ...formData };
+    
+    // For staged badges, set section to 'all' and remove stage_number
+    if (submitData.category === 'staged') {
+      submitData.section = 'all';
+      submitData.stage_number = null;
+    }
+    
     if (editingBadge) {
-      updateBadgeMutation.mutate({ id: editingBadge.id, data: formData });
+      updateBadgeMutation.mutate({ id: editingBadge.id, data: submitData });
     } else {
-      createBadgeMutation.mutate(formData);
+      createBadgeMutation.mutate(submitData);
     }
   };
 
@@ -164,11 +177,26 @@ export default function ManageBadges() {
           const categoryBadges = badges.filter(b => b.active && b.category === category);
           if (categoryBadges.length === 0) return null;
           
+          // For staged badges, group by family
+          const displayBadges = category === 'staged' 
+            ? Object.values(categoryBadges.reduce((acc, badge) => {
+                const familyId = badge.badge_family_id || badge.id;
+                if (!acc[familyId]) {
+                  acc[familyId] = badge;
+                }
+                return acc;
+              }, {}))
+            : categoryBadges;
+          
           return (
             <div key={category} className="mb-8">
               <h2 className="text-2xl font-bold mb-4 capitalize">{category} Badges</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {categoryBadges.map(badge => (
+                {displayBadges.map(badge => {
+                  const isStaged = badge.category === 'staged';
+                  const familyBadges = isStaged ? categoryBadges.filter(b => b.badge_family_id === badge.badge_family_id) : [badge];
+                  
+                  return (
             <Card key={badge.id}>
               <CardHeader>
                 <div className="flex items-start gap-4">
@@ -180,55 +208,67 @@ export default function ManageBadges() {
                   <div className="flex-1">
                     <CardTitle className="text-lg">
                       {badge.name}
-                      {badge.category === 'staged' && badge.stage_number && (
-                        <span className="text-sm font-normal text-gray-500"> - Stage {badge.stage_number}</span>
+                      {isStaged && (
+                        <span className="text-sm font-normal text-gray-500"> ({familyBadges.length} stages)</span>
                       )}
                     </CardTitle>
                     <p className="text-sm text-gray-500 mt-1">
-                      {sections.find(s => s.name === badge.section)?.display_name || badge.section}
+                      {isStaged ? 'All Sections' : (sections.find(s => s.name === badge.section)?.display_name || badge.section)}
                     </p>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 mb-4">{badge.description}</p>
-                <div className="grid grid-cols-2 gap-2">
+                {isStaged ? (
                   <Button
                     variant="outline"
-                    size="sm"
-                    onClick={() => navigate(createPageUrl('EditBadgeStructure') + `?id=${badge.id}`)}
+                    className="w-full"
+                    onClick={() => navigate(createPageUrl('ManageStagedBadge') + `?familyId=${badge.badge_family_id}`)}
                   >
-                    <Edit className="w-3 h-3 mr-1" />
-                    Structure
+                    <Edit className="w-4 h-4 mr-2" />
+                    Manage Stages
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setStockDialog(badge)}
-                  >
-                    <Package className="w-3 h-3 mr-1" />
-                    Stock
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(badge)}
-                  >
-                    <Edit className="w-3 h-3 mr-1" />
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => deleteBadgeMutation.mutate(badge.id)}
-                  >
-                    <Trash2 className="w-3 h-3 mr-1" />
-                    Delete
-                  </Button>
-                </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(createPageUrl('EditBadgeStructure') + `?id=${badge.id}`)}
+                    >
+                      <Edit className="w-3 h-3 mr-1" />
+                      Structure
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStockDialog(badge)}
+                    >
+                      <Package className="w-3 h-3 mr-1" />
+                      Stock
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(badge)}
+                    >
+                      <Edit className="w-3 h-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteBadgeMutation.mutate(badge.id)}
+                    >
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Delete
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );
@@ -286,27 +326,15 @@ export default function ManageBadges() {
               </Select>
             </div>
             {formData.category === 'staged' && (
-              <>
-                <div>
-                  <Label>Badge Family ID</Label>
-                  <Input
-                    value={formData.badge_family_id}
-                    onChange={(e) => setFormData({ ...formData, badge_family_id: e.target.value })}
-                    placeholder="e.g., hikes-away"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Use same ID for all stages in a family</p>
-                </div>
-                <div>
-                  <Label>Stage Number</Label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={formData.stage_number || ''}
-                    onChange={(e) => setFormData({ ...formData, stage_number: parseInt(e.target.value) || null })}
-                    placeholder="1, 2, 3..."
-                  />
-                </div>
-              </>
+              <div>
+                <Label>Badge Family ID</Label>
+                <Input
+                  value={formData.badge_family_id}
+                  onChange={(e) => setFormData({ ...formData, badge_family_id: e.target.value })}
+                  placeholder="e.g., hikes-away"
+                />
+                <p className="text-xs text-gray-500 mt-1">Unique ID for this staged badge family. You'll add individual stages on the next page.</p>
+              </div>
             )}
             <div>
               <Label>Badge Image (JPG/PNG)</Label>
