@@ -47,7 +47,7 @@ export default function Layout({ children, currentPageName }) {
   const leaderPages = ['LeaderDashboard', 'LeaderMembers', 'LeaderProgramme', 'MeetingDetail', 'MemberDetail', 'AdminSettings', 'LeaderGallery'];
   const parentPages = ['ParentDashboard', 'MyChild'];
   const protectedPages = [...leaderPages, ...parentPages];
-  const publicPages = ['Home', 'About', 'Sections', 'Parents', 'Gallery', 'Contact', 'Join', 'Volunteer'];
+  const publicPages = ['Home', 'About', 'Sections', 'Parents', 'Gallery', 'Contact', 'Join', 'Volunteer', 'SharedPage'];
 
   // Access control - check after auth is loaded
   useEffect(() => {
