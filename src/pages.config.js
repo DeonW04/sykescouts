@@ -18,6 +18,7 @@ import LeaderGallery from './pages/LeaderGallery';
 import LeaderMembers from './pages/LeaderMembers';
 import LeaderProgramme from './pages/LeaderProgramme';
 import ManageBadges from './pages/ManageBadges';
+import ManageStagedBadge from './pages/ManageStagedBadge';
 import MeetingDetail from './pages/MeetingDetail';
 import MemberDetail from './pages/MemberDetail';
 import MyChild from './pages/MyChild';
@@ -32,7 +33,6 @@ import RiskAssessmentHistory from './pages/RiskAssessmentHistory';
 import RiskAssessments from './pages/RiskAssessments';
 import Sections from './pages/Sections';
 import Volunteer from './pages/Volunteer';
-import ManageStagedBadge from './pages/ManageStagedBadge';
 import __Layout from './Layout.jsx';
 
 
@@ -57,6 +57,7 @@ export const PAGES = {
     "LeaderMembers": LeaderMembers,
     "LeaderProgramme": LeaderProgramme,
     "ManageBadges": ManageBadges,
+    "ManageStagedBadge": ManageStagedBadge,
     "MeetingDetail": MeetingDetail,
     "MemberDetail": MemberDetail,
     "MyChild": MyChild,
@@ -71,7 +72,6 @@ export const PAGES = {
     "RiskAssessments": RiskAssessments,
     "Sections": Sections,
     "Volunteer": Volunteer,
-    "ManageStagedBadge": ManageStagedBadge,
 }
 
 export const pagesConfig = {

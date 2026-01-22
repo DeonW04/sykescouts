@@ -17,10 +17,13 @@ export default function LeaderBadges() {
   const [sectionFilter, setSectionFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
 
-  const { data: badges = [], isLoading } = useQuery({
+  const { data: allBadges = [], isLoading } = useQuery({
     queryKey: ['badges'],
     queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
   });
+
+  // Filter out family badges (staged badges with no stage_number)
+  const badges = allBadges.filter(b => !(b.category === 'staged' && b.stage_number === null));
 
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],

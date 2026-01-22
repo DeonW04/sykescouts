@@ -176,16 +176,10 @@ export default function ManageBadges() {
         {['challenge', 'activity', 'staged', 'core'].map(category => {
           const categoryBadges = badges.filter(b => b.active && b.category === category);
           if (categoryBadges.length === 0) return null;
-          
-          // For staged badges, group by family
+
+          // For staged badges, only show family badges (stage_number = null)
           const displayBadges = category === 'staged' 
-            ? Object.values(categoryBadges.reduce((acc, badge) => {
-                const familyId = badge.badge_family_id || badge.id;
-                if (!acc[familyId]) {
-                  acc[familyId] = badge;
-                }
-                return acc;
-              }, {}))
+            ? categoryBadges.filter(b => b.stage_number === null)
             : categoryBadges;
           
           return (
@@ -193,31 +187,32 @@ export default function ManageBadges() {
               <h2 className="text-2xl font-bold mb-4 capitalize">{category} Badges</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayBadges.map(badge => {
-                  const isStaged = badge.category === 'staged';
-                  const familyBadges = isStaged ? categoryBadges.filter(b => b.badge_family_id === badge.badge_family_id) : [badge];
                   
+                  const isStaged = badge.category === 'staged';
+                  const familyBadges = isStaged ? categoryBadges.filter(b => b.badge_family_id === badge.badge_family_id && b.stage_number !== null) : [badge];
+
                   return (
-            <Card key={badge.id}>
-              <CardHeader>
-                <div className="flex items-start gap-4">
-                  <img
-                    src={badge.image_url}
-                    alt={badge.name}
-                    className="w-16 h-16 rounded-lg object-cover"
-                  />
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">
-                      {badge.name}
-                      {isStaged && (
-                        <span className="text-sm font-normal text-gray-500"> ({familyBadges.length} stages)</span>
-                      )}
-                    </CardTitle>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {isStaged ? 'All Sections' : (sections.find(s => s.name === badge.section)?.display_name || badge.section)}
-                    </p>
-                  </div>
-                </div>
-              </CardHeader>
+                            <Card key={badge.id}>
+                              <CardHeader>
+                                <div className="flex items-start gap-4">
+                                  <img
+                                    src={badge.image_url}
+                                    alt={badge.name}
+                                    className="w-16 h-16 rounded-lg object-cover"
+                                  />
+                                  <div className="flex-1">
+                                    <CardTitle className="text-lg">
+                                      {badge.name}
+                                      {isStaged && (
+                                        <span className="text-sm font-normal text-gray-500"> ({familyBadges.length} stages)</span>
+                                      )}
+                                    </CardTitle>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                      {isStaged ? 'All Sections' : (sections.find(s => s.name === badge.section)?.display_name || badge.section)}
+                                    </p>
+                                  </div>
+                                </div>
+                              </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 mb-4">{badge.description}</p>
                 {isStaged ? (
