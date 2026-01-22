@@ -4,10 +4,9 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // Extract page ID from URL path
-    const url = new URL(req.url);
-    const pathParts = url.pathname.split('/');
-    const pageId = pathParts[pathParts.length - 1];
+    // Get page ID from request body
+    const body = await req.json();
+    const pageId = body.pageId;
 
     if (!pageId) {
       return Response.json({ error: 'Page ID required' }, { status: 400 });
