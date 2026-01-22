@@ -23,7 +23,7 @@ export default function SharedPage() {
     queryKey: ['shared-page', pageId],
     queryFn: async () => {
       if (!pageId) return null;
-      const response = await base44.functions.invoke('getSharedPage');
+      const response = await base44.functions.invoke('getSharedPage', { pageId });
       return response.data;
     },
     enabled: !!pageId,
