@@ -145,29 +145,33 @@ export default function MyChild() {
   const section = sections.find(s => s.id === child.section_id);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
-      <div className="bg-[#7413dc] text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative bg-gradient-to-br from-blue-600 to-[#7413dc] text-white py-16 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <Button
             variant="ghost"
             onClick={() => navigate(createPageUrl('ParentDashboard'))}
-            className="text-white hover:bg-white/10 mb-4"
+            className="text-white hover:bg-white/20 mb-6 -ml-2"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
+            Back
           </Button>
           
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-6">
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-[#7413dc] font-bold text-3xl">
+              <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center text-[#7413dc] font-bold text-4xl shadow-2xl">
                 {child.full_name.charAt(0)}
               </div>
               <div>
-                <h1 className="text-3xl font-bold">{child.full_name}</h1>
-                <div className="flex items-center gap-4 mt-2">
-                  <p className="text-white/80">{section?.display_name}</p>
-                  <Badge variant="secondary" className="bg-white/20 text-white">
+                <h1 className="text-4xl font-bold mb-2">{child.full_name}</h1>
+                <div className="flex items-center gap-4">
+                  <p className="text-blue-100 text-lg font-medium">{section?.display_name}</p>
+                  <Badge variant="secondary" className="bg-white/20 text-white text-sm">
                     {age.years} years {age.months} months
                   </Badge>
                 </div>
@@ -176,27 +180,30 @@ export default function MyChild() {
             {!editMode ? (
               <Button 
                 onClick={() => handleEdit(child)}
-                className="bg-white text-[#7413dc] hover:bg-gray-100"
+                size="lg"
+                className="bg-white text-[#7413dc] hover:bg-blue-50 font-semibold shadow-xl"
               >
-                <Edit className="w-4 h-4 mr-2" />
+                <Edit className="w-5 h-5 mr-2" />
                 Edit Details
               </Button>
             ) : (
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <Button 
                   onClick={handleSave}
                   disabled={updateMemberMutation.isPending}
-                  className="bg-white text-[#7413dc] hover:bg-gray-100"
+                  size="lg"
+                  className="bg-white text-[#7413dc] hover:bg-blue-50 font-semibold shadow-xl"
                 >
-                  <Save className="w-4 h-4 mr-2" />
+                  <Save className="w-5 h-5 mr-2" />
                   Save
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={() => setEditMode(false)}
-                  className="bg-white/10 text-white border-white hover:bg-white/20"
+                  size="lg"
+                  className="bg-white/10 text-white border-white/30 hover:bg-white/20"
                 >
-                  <X className="w-4 h-4 mr-2" />
+                  <X className="w-5 h-5 mr-2" />
                   Cancel
                 </Button>
               </div>
@@ -206,32 +213,32 @@ export default function MyChild() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="personal" className="space-y-6">
-          <TabsList className="bg-white border">
-            <TabsTrigger value="personal">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <Tabs defaultValue="personal" className="space-y-8">
+          <TabsList className="bg-white/80 backdrop-blur-sm border shadow-lg p-1">
+            <TabsTrigger value="personal" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white">
               <User className="w-4 h-4 mr-2" />
-              Personal Info
+              Personal
             </TabsTrigger>
-            <TabsTrigger value="parent">
+            <TabsTrigger value="parent" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white">
               <UserCircle className="w-4 h-4 mr-2" />
-              Parent Details
+              Parents
             </TabsTrigger>
-            <TabsTrigger value="medical">
+            <TabsTrigger value="medical" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white">
               <Heart className="w-4 h-4 mr-2" />
-              Medical Info
+              Medical
             </TabsTrigger>
-            <TabsTrigger value="emergency">
+            <TabsTrigger value="emergency" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white">
               <Phone className="w-4 h-4 mr-2" />
-              Emergency Contact
+              Emergency
             </TabsTrigger>
           </TabsList>
 
           {/* Personal Info Tab */}
           <TabsContent value="personal">
-            <Card>
+            <Card className="shadow-xl bg-white/90 backdrop-blur-sm">
               <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
+                <CardTitle className="text-2xl">Personal Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">

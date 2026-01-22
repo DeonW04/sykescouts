@@ -134,32 +134,36 @@ export default function ParentProgramme() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#7413dc] text-white py-8">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold">Term Programme</h1>
-          <p className="mt-2 text-white/80">
-            {currentTerm.name} • {format(new Date(currentTerm.start_date), 'MMM d')} - {format(new Date(currentTerm.end_date), 'MMM d, yyyy')}
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
+      <div className="relative bg-gradient-to-br from-green-600 to-[#004851] text-white py-16 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+        </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <h1 className="text-4xl font-bold mb-2">Weekly Programme</h1>
+          <p className="text-green-100 text-lg">
+            {currentTerm.title} • {format(new Date(currentTerm.start_date), 'MMM d')} - {format(new Date(currentTerm.end_date), 'MMM d, yyyy')}
           </p>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {Object.keys(programmeBadges).length > 0 && (
-          <Card className="mb-6">
+          <Card className="mb-8 shadow-xl bg-gradient-to-br from-yellow-50/50 to-white border-l-4 border-l-yellow-500">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="w-5 h-5" />
-                Badges We're Working Towards
+              <CardTitle className="flex items-center gap-3 text-2xl">
+                <Award className="w-7 h-7 text-yellow-600" />
+                Badges This Term
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
                 {Object.values(programmeBadges).map(({ badge, requirements: reqs }) => (
-                  <div key={badge.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <img src={badge.image_url} alt={badge.name} className="w-16 h-16 rounded object-contain" />
+                  <div key={badge.id} className="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-yellow-100 hover:shadow-md transition-shadow">
+                    <img src={badge.image_url} alt={badge.name} className="w-20 h-20 rounded-lg object-contain" />
                     <div className="flex-1">
-                      <h4 className="font-medium">{badge.name}</h4>
+                      <h4 className="font-bold text-lg">{badge.name}</h4>
                       <p className="text-sm text-gray-600 mt-1">{reqs.length} requirement{reqs.length !== 1 ? 's' : ''}</p>
                     </div>
                   </div>
@@ -171,14 +175,16 @@ export default function ParentProgramme() {
 
         <div className="space-y-4">
           {termProgrammes.length === 0 ? (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600">No meetings planned yet</p>
+            <Card className="bg-white/80 backdrop-blur-sm shadow-xl">
+              <CardContent className="p-16 text-center">
+                <div className="w-20 h-20 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Calendar className="w-10 h-10 text-green-600" />
+                </div>
+                <p className="text-gray-600 text-lg">No meetings planned yet</p>
               </CardContent>
             </Card>
           ) : (
-            termProgrammes.map(prog => {
+            termProgrammes.map((prog, index) => {
               const section = sections.find(s => s.id === prog.section_id);
               const isPast = new Date(prog.date) < now;
               const isToday = format(new Date(prog.date), 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
@@ -188,35 +194,39 @@ export default function ParentProgramme() {
                 .filter(Boolean);
 
               return (
-                <Card key={prog.id} className={isToday ? 'border-2 border-[#7413dc]' : ''}>
+                <motion.div
+                  key={prog.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                <Card className={`shadow-xl ${isToday ? 'border-l-4 border-l-green-600 bg-gradient-to-r from-green-50 to-white' : 'bg-white/80 backdrop-blur-sm'}`}>
                   <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="flex items-center gap-2">
-                          {prog.title}
-                          {isToday && (
-                            <span className="text-xs font-normal bg-[#7413dc] text-white px-2 py-1 rounded">Today</span>
-                          )}
-                        </CardTitle>
-                        <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                          <span>{format(new Date(prog.date), 'EEEE, MMMM d, yyyy')}</span>
-                          {section && <span>{section.display_name}</span>}
-                        </div>
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        {isToday && (
+                          <Badge className="bg-green-600">Today</Badge>
+                        )}
+                      </div>
+                      <CardTitle className="text-2xl">{prog.title}</CardTitle>
+                      <div className="flex items-center gap-2 mt-2 text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <span className="font-medium">{format(new Date(prog.date), 'EEEE, MMMM d')}</span>
                       </div>
                     </div>
                   </CardHeader>
                   {(prog.shown_in_portal && prog.description) && (
                     <CardContent>
-                      <p className="text-gray-700 whitespace-pre-wrap">{prog.description}</p>
+                      <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">{prog.description}</p>
                       
                       {progBadges.length > 0 && (
-                        <div className="mt-4 pt-4 border-t">
-                          <p className="text-sm font-medium text-gray-700 mb-2">Badge Progress:</p>
-                          <div className="flex flex-wrap gap-2">
+                        <div className="mt-5 pt-5 border-t">
+                          <p className="text-sm font-semibold text-gray-700 mb-3">Badge Work:</p>
+                          <div className="flex flex-wrap gap-3">
                             {progBadges.map(badge => (
-                              <div key={badge.id} className="flex items-center gap-2 bg-purple-50 px-3 py-1 rounded-full">
-                                <img src={badge.image_url} alt={badge.name} className="w-5 h-5 rounded" />
-                                <span className="text-sm text-gray-700">{badge.name}</span>
+                              <div key={badge.id} className="flex items-center gap-2 bg-purple-100 px-4 py-2 rounded-full">
+                                <img src={badge.image_url} alt={badge.name} className="w-6 h-6 rounded" />
+                                <span className="text-sm font-medium text-gray-800">{badge.name}</span>
                               </div>
                             ))}
                           </div>
@@ -225,6 +235,7 @@ export default function ParentProgramme() {
                     </CardContent>
                   )}
                 </Card>
+                </motion.div>
               );
             })
           )}

@@ -190,27 +190,39 @@ export default function ParentBadges() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#7413dc] text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Award className="w-8 h-8" />
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-purple-50">
+      <div className="relative bg-gradient-to-br from-yellow-600 to-[#7413dc] text-white py-16 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+              <Award className="w-8 h-8" />
+            </div>
             <div>
-              <h1 className="text-3xl font-bold">Badges & Awards</h1>
-              <p className="mt-1 text-white/80">{child.full_name}'s progress</p>
+              <h1 className="text-4xl font-bold">Badges & Awards</h1>
+              <p className="text-yellow-100 text-lg">{child.full_name}'s progress</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
         {/* Awarded Badges */}
         <div>
-          <h2 className="text-2xl font-bold mb-4">Awarded Badges</h2>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-1 w-12 bg-gradient-to-r from-yellow-600 to-transparent rounded-full"></div>
+            <h2 className="text-3xl font-bold">Earned Badges</h2>
+          </div>
           {awardedBadges.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <p className="text-gray-600">No badges completed yet. Keep working towards them!</p>
+            <Card className="bg-white/80 backdrop-blur-sm shadow-xl">
+              <CardContent className="p-12 text-center">
+                <div className="w-20 h-20 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Award className="w-10 h-10 text-yellow-600" />
+                </div>
+                <p className="text-gray-600 text-lg">Keep working towards your first badge!</p>
               </CardContent>
             </Card>
           ) : (
