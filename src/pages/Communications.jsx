@@ -128,7 +128,7 @@ export default function Communications() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Quick Action Boxes */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="border-t-4 border-t-blue-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('WeeklyMessageList'))}>
+          <Card className="border-t-4 border-t-blue-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => createPage('weekly_message')}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -139,12 +139,12 @@ export default function Communications() {
               </div>
               <Button className="w-full mt-4 bg-blue-500 hover:bg-blue-600" size="sm">
                 <Plus className="w-4 h-4 mr-2" />
-                View All
+                Create
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="border-t-4 border-t-purple-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('MonthlyNewsletterList'))}>
+          <Card className="border-t-4 border-t-purple-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => createPage('monthly_newsletter')}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -155,12 +155,12 @@ export default function Communications() {
               </div>
               <Button className="w-full mt-4 bg-purple-500 hover:bg-purple-600" size="sm">
                 <Plus className="w-4 h-4 mr-2" />
-                View All
+                Create
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="border-t-4 border-t-orange-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('EventUpdateList'))}>
+          <Card className="border-t-4 border-t-orange-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => createPage('event_update')}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -171,7 +171,7 @@ export default function Communications() {
               </div>
               <Button className="w-full mt-4 bg-orange-500 hover:bg-orange-600" size="sm">
                 <Plus className="w-4 h-4 mr-2" />
-                View All
+                Create
               </Button>
             </CardContent>
           </Card>
