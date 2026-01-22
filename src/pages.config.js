@@ -3,6 +3,7 @@ import AdminSettings from './pages/AdminSettings';
 import AwardBadges from './pages/AwardBadges';
 import BadgeDetail from './pages/BadgeDetail';
 import BadgeStockManagement from './pages/BadgeStockManagement';
+import Communications from './pages/Communications';
 import CompleteRegistration from './pages/CompleteRegistration';
 import Contact from './pages/Contact';
 import EditBadgeStructure from './pages/EditBadgeStructure';
@@ -32,9 +33,8 @@ import RiskAssessmentDetail from './pages/RiskAssessmentDetail';
 import RiskAssessmentHistory from './pages/RiskAssessmentHistory';
 import RiskAssessments from './pages/RiskAssessments';
 import Sections from './pages/Sections';
-import Volunteer from './pages/Volunteer';
-import Communications from './pages/Communications';
 import StagedBadgeDetail from './pages/StagedBadgeDetail';
+import Volunteer from './pages/Volunteer';
 import __Layout from './Layout.jsx';
 
 
@@ -44,6 +44,7 @@ export const PAGES = {
     "AwardBadges": AwardBadges,
     "BadgeDetail": BadgeDetail,
     "BadgeStockManagement": BadgeStockManagement,
+    "Communications": Communications,
     "CompleteRegistration": CompleteRegistration,
     "Contact": Contact,
     "EditBadgeStructure": EditBadgeStructure,
@@ -73,9 +74,8 @@ export const PAGES = {
     "RiskAssessmentHistory": RiskAssessmentHistory,
     "RiskAssessments": RiskAssessments,
     "Sections": Sections,
-    "Volunteer": Volunteer,
-    "Communications": Communications,
     "StagedBadgeDetail": StagedBadgeDetail,
+    "Volunteer": Volunteer,
 }
 
 export const pagesConfig = {
