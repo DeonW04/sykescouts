@@ -101,29 +101,39 @@ export default function BadgeDetail() {
     return progress.some(p => p.member_id === memberId && p.requirement_id === reqId && p.completed);
   };
 
+  const isModuleComplete = (memberId, module) => {
+    const moduleReqs = requirements.filter(r => r.module_id === module.id);
+    const completedReqs = progress.filter(
+      p => p.member_id === memberId && 
+           p.module_id === module.id && 
+           p.completed
+    );
+
+    if (module.completion_rule === 'x_of_n_required') {
+      return completedReqs.length >= (module.required_count || moduleReqs.length);
+    }
+    // Default: all_required
+    return completedReqs.length === moduleReqs.length;
+  };
+
   const getMemberProgress = (memberId) => {
-    const memberReqs = progress.filter(p => p.member_id === memberId && p.badge_id === badgeId && p.completed);
+    const completedModules = modules.filter(m => isModuleComplete(memberId, m)).length;
+    const totalModules = modules.length;
+    
     return {
-      completed: memberReqs.length,
-      total: requirements.length,
-      percentage: Math.round((memberReqs.length / requirements.length) * 100) || 0,
+      completed: completedModules,
+      total: totalModules,
+      percentage: Math.round((completedModules / totalModules) * 100) || 0,
+      isComplete: completedModules === totalModules,
     };
   };
 
-  const completedCount = relevantMembers.filter(m => {
-    const prog = getMemberProgress(m.id);
-    return prog.completed === prog.total;
-  }).length;
-
+  const completedCount = relevantMembers.filter(m => getMemberProgress(m.id).isComplete).length;
   const inProgressCount = relevantMembers.filter(m => {
     const prog = getMemberProgress(m.id);
-    return prog.completed > 0 && prog.completed < prog.total;
+    return prog.completed > 0 && !prog.isComplete;
   }).length;
-
-  const notStartedCount = relevantMembers.filter(m => {
-    const prog = getMemberProgress(m.id);
-    return prog.completed === 0;
-  }).length;
+  const notStartedCount = relevantMembers.filter(m => getMemberProgress(m.id).completed === 0).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
@@ -264,7 +274,15 @@ export default function BadgeDetail() {
                           {moduleIdx + 1}
                         </div>
                         <h3 className="text-lg font-bold text-gray-900">{module.name}</h3>
-                        <Badge variant="outline" className="text-xs">{moduleReqs.length} requirements</Badge>
+                        {module.completion_rule === 'x_of_n_required' ? (
+                          <Badge className="text-xs bg-orange-500 text-white">
+                            Complete {module.required_count} of {moduleReqs.length}
+                          </Badge>
+                        ) : (
+                          <Badge className="text-xs bg-blue-500 text-white">
+                            Complete all {moduleReqs.length}
+                          </Badge>
+                        )}
                       </div>
                       <div className="space-y-3 ml-10">
                         {moduleReqs.map((req, reqIdx) => (
@@ -309,11 +327,22 @@ export default function BadgeDetail() {
                     const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
                     return (
                       <th key={module.id} colSpan={moduleReqs.length} className="text-center p-4 font-semibold border-l-4 border-green-300">
-                        <div className="text-xs font-bold text-gray-700 flex items-center justify-center gap-2">
-                          <span className="w-6 h-6 bg-green-500 text-white rounded-lg flex items-center justify-center text-[10px]">
-                            {moduleIdx + 1}
-                          </span>
-                          {module.name}
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="text-xs font-bold text-gray-700 flex items-center justify-center gap-2">
+                            <span className="w-6 h-6 bg-green-500 text-white rounded-lg flex items-center justify-center text-[10px]">
+                              {moduleIdx + 1}
+                            </span>
+                            {module.name}
+                          </div>
+                          {module.completion_rule === 'x_of_n_required' ? (
+                            <span className="text-[10px] font-semibold text-orange-600 bg-orange-50 px-2 py-0.5 rounded">
+                              {module.required_count} of {moduleReqs.length} needed
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                              All {moduleReqs.length} required
+                            </span>
+                          )}
                         </div>
                       </th>
                     );
@@ -346,7 +375,7 @@ export default function BadgeDetail() {
                 <tbody>
                   {relevantMembers.map((member, memberIdx) => {
                     const memberProgress = getMemberProgress(member.id);
-                    const isComplete = memberProgress.completed === memberProgress.total;
+                    const isComplete = memberProgress.isComplete;
                     const isNearlyDone = memberProgress.completed >= memberProgress.total - 1 && !isComplete;
 
                     return (
@@ -390,20 +419,27 @@ export default function BadgeDetail() {
                               />
                             </div>
                             <div className="text-xs text-gray-500 font-medium">
-                              {memberProgress.completed} / {memberProgress.total}
+                              {memberProgress.completed} / {memberProgress.total} modules
                             </div>
                           </div>
                         </td>
                         {modules.sort((a, b) => a.order - b.order).map((module, moduleIdx) => {
                           const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
+                          const moduleComplete = isModuleComplete(member.id, module);
+                          const moduleCompletedCount = progress.filter(
+                            p => p.member_id === member.id && p.module_id === module.id && p.completed
+                          ).length;
+                          
                           return moduleReqs.map((req, reqIdx) => {
                             const isChecked = isRequirementCompleted(member.id, req.id);
                             return (
                               <td 
                                 key={req.id} 
-                                className={`p-3 text-center ${reqIdx === 0 ? 'border-l-4 border-green-300' : 'border-l border-gray-200'}`}
+                                className={`p-3 text-center ${
+                                  reqIdx === 0 ? 'border-l-4 border-green-300' : 'border-l border-gray-200'
+                                } ${moduleComplete ? 'bg-green-50' : ''}`}
                               >
-                                <div className="flex justify-center">
+                                <div className="flex justify-center relative">
                                   <Checkbox
                                     checked={isChecked}
                                     onCheckedChange={(checked) => toggleReqMutation.mutate({
@@ -413,6 +449,9 @@ export default function BadgeDetail() {
                                     })}
                                     className={isChecked ? 'border-green-500 data-[state=checked]:bg-green-500' : ''}
                                   />
+                                  {reqIdx === 0 && moduleComplete && (
+                                    <CheckCircle className="w-4 h-4 text-green-600 absolute -top-1 -right-1" />
+                                  )}
                                 </div>
                               </td>
                             );
