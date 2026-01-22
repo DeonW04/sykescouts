@@ -4,12 +4,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Plus, Copy, Eye } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { ArrowLeft, Plus, Copy, Eye, Trash2, Settings } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
-import BlockEditor from '../components/communications/BlockEditor';
 
 export default function WeeklyMessage() {
   const navigate = useNavigate();
@@ -192,11 +193,14 @@ export default function WeeklyMessage() {
           <CardHeader>
             <CardTitle>Page Builder</CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <BlockEditor
-              blocks={page.blocks || []}
-              onBlocksChange={(blocks) => updatePageMutation.mutate({ blocks })}
-            />
+          <CardContent>
+            <div className="space-y-4 p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 text-center">
+              <p className="text-gray-600 mb-4">Available blocks: Heading, Text, Image, Gallery, Action Required</p>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Block
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
