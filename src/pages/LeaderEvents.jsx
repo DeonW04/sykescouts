@@ -3,12 +3,13 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Plus } from 'lucide-react';
+import { Calendar, Plus, MapPin, Users, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import NewEventDialog from '../components/events/NewEventDialog';
+import { motion } from 'framer-motion';
 
 export default function LeaderEvents() {
   const navigate = useNavigate();
@@ -79,89 +80,132 @@ export default function LeaderEvents() {
   const pastEvents = events.filter(e => new Date(e.start_date) < new Date());
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#004851] text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Calendar className="w-8 h-8" />
-              <div>
-                <h1 className="text-3xl font-bold">Events & Camps</h1>
-                <p className="mt-1 text-white/80">Plan and manage events, camps, and trips</p>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+      <div className="relative bg-gradient-to-br from-[#7413dc] to-[#004851] text-white py-16 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                  <Calendar className="w-6 h-6" />
+                </div>
+                <h1 className="text-4xl font-bold">Events & Camps</h1>
               </div>
+              <p className="text-purple-100 text-lg">Plan and manage your upcoming adventures</p>
             </div>
             <Button
               onClick={() => {
                 setEditingEvent(null);
                 setShowNewDialog(true);
               }}
-              className="bg-[#7413dc] hover:bg-[#5c0fb0]"
+              size="lg"
+              className="bg-white text-[#7413dc] hover:bg-purple-50 font-semibold shadow-xl"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              New Event
+              <Plus className="w-5 h-5 mr-2" />
+              Create Event
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {isLoading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin w-8 h-8 border-4 border-[#004851] border-t-transparent rounded-full mx-auto mb-4" />
-            <p className="text-gray-600">Loading events...</p>
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="animate-spin w-12 h-12 border-4 border-[#7413dc] border-t-transparent rounded-full mb-4" />
+            <p className="text-gray-600 font-medium">Loading events...</p>
           </div>
         ) : events.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Events Yet</h3>
-              <p className="text-gray-600 mb-6">Create your first event to get started.</p>
-              <Button onClick={() => setShowNewDialog(true)} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
-                <Plus className="w-4 h-4 mr-2" />
-                Create First Event
-              </Button>
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Card className="border-dashed border-2 border-gray-300 bg-white/50 backdrop-blur-sm">
+              <CardContent className="p-16 text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Calendar className="w-10 h-10 text-[#7413dc]" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">No Events Yet</h3>
+                <p className="text-gray-600 mb-8 max-w-md mx-auto">Start planning your next adventure by creating your first event or camp.</p>
+                <Button 
+                  onClick={() => setShowNewDialog(true)} 
+                  size="lg"
+                  className="bg-gradient-to-r from-[#7413dc] to-[#5c0fb0] hover:from-[#5c0fb0] hover:to-[#7413dc] shadow-lg"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  Create First Event
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
         ) : (
           <>
             {upcomingEvents.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4">Upcoming Events</h2>
-                <div className="grid gap-4">
-                  {upcomingEvents.map(event => (
-                    <Card 
-                      key={event.id} 
-                      className="hover:shadow-lg transition-shadow cursor-pointer"
-                      onClick={() => navigate(createPageUrl('EventDetail') + `?id=${event.id}`)}
+              <div className="mb-10">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-1 w-12 bg-gradient-to-r from-[#7413dc] to-transparent rounded-full"></div>
+                  <h2 className="text-2xl font-bold text-gray-900">Upcoming</h2>
+                  <Badge className="bg-[#7413dc]">{upcomingEvents.length}</Badge>
+                </div>
+                <div className="grid gap-5">
+                  {upcomingEvents.map((event, index) => (
+                    <motion.div
+                      key={event.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
                     >
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <CardTitle className="text-xl">{event.title}</CardTitle>
-                            <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                              <span>{format(new Date(event.start_date), 'EEE, MMM d, yyyy')}</span>
-                              {event.end_date && event.end_date !== event.start_date && (
-                                <span>to {format(new Date(event.end_date), 'EEE, MMM d, yyyy')}</span>
+                      <Card 
+                        className="group hover:shadow-2xl transition-all duration-300 cursor-pointer border-l-4 border-l-[#7413dc] bg-white/80 backdrop-blur-sm overflow-hidden"
+                        onClick={() => navigate(createPageUrl('EventDetail') + `?id=${event.id}`)}
+                      >
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/5 to-transparent rounded-bl-full"></div>
+                        <CardHeader className="relative">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3 mb-3">
+                                <Badge className={event.type === 'Camp' ? 'bg-green-600' : event.type === 'Day Event' ? 'bg-blue-600' : 'bg-gray-600'}>
+                                  {event.type}
+                                </Badge>
+                                {event.published ? (
+                                  <Badge className="bg-emerald-600 gap-1">
+                                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                                    Published
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="border-orange-300 text-orange-700 bg-orange-50">
+                                    Draft
+                                  </Badge>
+                                )}
+                              </div>
+                              <CardTitle className="text-2xl mb-3 group-hover:text-[#7413dc] transition-colors">{event.title}</CardTitle>
+                              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-gray-600">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="w-4 h-4 text-[#7413dc]" />
+                                  <span className="font-medium">{format(new Date(event.start_date), 'EEE, MMM d, yyyy')}</span>
+                                  {event.end_date && event.end_date !== event.start_date && (
+                                    <span className="text-gray-400">→ {format(new Date(event.end_date), 'MMM d')}</span>
+                                  )}
+                                </div>
+                                {event.location && (
+                                  <div className="flex items-center gap-2">
+                                    <MapPin className="w-4 h-4 text-gray-400" />
+                                    <span>{event.location}</span>
+                                  </div>
+                                )}
+                              </div>
+                              {event.description && (
+                                <p className="text-gray-600 text-sm mt-3 line-clamp-2">{event.description}</p>
                               )}
-                              {event.location && <span>• {event.location}</span>}
                             </div>
+                            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-[#7413dc] group-hover:translate-x-1 transition-all flex-shrink-0 mt-2" />
                           </div>
-                          <div className="flex items-center gap-2">
-                            {event.published ? (
-                              <Badge className="bg-green-600">Published</Badge>
-                            ) : (
-                              <Badge variant="outline">Draft</Badge>
-                            )}
-                            <Badge variant="outline" className="capitalize">{event.type}</Badge>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      {event.description && (
-                        <CardContent>
-                          <p className="text-gray-600 text-sm">{event.description}</p>
-                        </CardContent>
-                      )}
-                    </Card>
+                        </CardHeader>
+                      </Card>
+                    </motion.div>
                   ))}
                 </div>
               </div>
@@ -169,30 +213,48 @@ export default function LeaderEvents() {
 
             {pastEvents.length > 0 && (
               <div>
-                <h2 className="text-2xl font-bold mb-4">Past Events</h2>
-                <div className="grid gap-4">
-                  {pastEvents.map(event => (
-                    <Card 
-                      key={event.id} 
-                      className="opacity-75 hover:opacity-100 hover:shadow-lg transition-all cursor-pointer"
-                      onClick={() => navigate(createPageUrl('EventDetail') + `?id=${event.id}`)}
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-1 w-12 bg-gradient-to-r from-gray-400 to-transparent rounded-full"></div>
+                  <h2 className="text-2xl font-bold text-gray-900">Past Events</h2>
+                  <Badge variant="outline">{pastEvents.length}</Badge>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {pastEvents.map((event, index) => (
+                    <motion.div
+                      key={event.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
                     >
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <CardTitle className="text-xl">{event.title}</CardTitle>
-                            <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                              <span>{format(new Date(event.start_date), 'EEE, MMM d, yyyy')}</span>
-                              {event.end_date && event.end_date !== event.start_date && (
-                                <span>to {format(new Date(event.end_date), 'EEE, MMM d, yyyy')}</span>
-                              )}
-                              {event.location && <span>• {event.location}</span>}
+                      <Card 
+                        className="group h-full hover:shadow-lg transition-all cursor-pointer bg-white/60 backdrop-blur-sm"
+                        onClick={() => navigate(createPageUrl('EventDetail') + `?id=${event.id}`)}
+                      >
+                        <CardHeader>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <Badge variant="outline" className="mb-2 capitalize">{event.type}</Badge>
+                              <CardTitle className="text-lg mb-2 group-hover:text-[#7413dc] transition-colors line-clamp-1">
+                                {event.title}
+                              </CardTitle>
+                              <div className="flex flex-col gap-1.5 text-sm text-gray-500">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="w-3.5 h-3.5" />
+                                  <span>{format(new Date(event.start_date), 'MMM d, yyyy')}</span>
+                                </div>
+                                {event.location && (
+                                  <div className="flex items-center gap-2">
+                                    <MapPin className="w-3.5 h-3.5" />
+                                    <span className="truncate">{event.location}</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
+                            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#7413dc] group-hover:translate-x-1 transition-all flex-shrink-0" />
                           </div>
-                          <Badge variant="outline" className="capitalize">{event.type}</Badge>
-                        </div>
-                      </CardHeader>
-                    </Card>
+                        </CardHeader>
+                      </Card>
+                    </motion.div>
                   ))}
                 </div>
               </div>
