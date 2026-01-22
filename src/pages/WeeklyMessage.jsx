@@ -20,6 +20,7 @@ export default function WeeklyMessage() {
   const [pageId, setPageId] = useState(null);
   const [editTitle, setEditTitle] = useState(false);
   const [newTitle, setNewTitle] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -150,14 +151,16 @@ export default function WeeklyMessage() {
               )}
               <Button
                 variant="outline"
-                className="text-white border-white hover:bg-white/20"
+                className={`text-white border-white transition-all ${copied ? 'bg-green-600 hover:bg-green-700' : 'hover:bg-white/20'}`}
                 onClick={() => {
                   navigator.clipboard.writeText(shareUrl);
-                  toast.success('Share link copied!');
+                  setCopied(true);
+                  toast.success('Link copied!');
+                  setTimeout(() => setCopied(false), 2000);
                 }}
               >
                 <Copy className="w-4 h-4 mr-2" />
-                Copy Link
+                {copied ? 'Copied!' : 'Copy Link'}
               </Button>
             </div>
           </div>
