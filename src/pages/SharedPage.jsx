@@ -74,54 +74,54 @@ export default function SharedPage() {
       <div className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">{page.title}</h1>
-          {page.description && (
-            <p className="text-lg text-gray-600">{page.description}</p>
-          )}
-        </div>
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">{page.title}</h1>
+            {page.description && (
+              <p className="text-lg text-gray-600">{page.description}</p>
+            )}
+          </div>
 
-        {/* Content Blocks */}
-        <div className="space-y-6">
-          {(!page.blocks || page.blocks.length === 0) ? (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <p className="text-gray-500">No content available</p>
-              </CardContent>
-            </Card>
-          ) : (
-            page.blocks.map((block, index) => {
-              const BlockComponent = blockComponents[block.type];
-              
-              if (!BlockComponent) {
+          {/* Content Blocks */}
+          <div className="space-y-6">
+            {(!page.blocks || page.blocks.length === 0) ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <p className="text-gray-500">No content available</p>
+                </CardContent>
+              </Card>
+            ) : (
+              page.blocks.map((block, index) => {
+                const BlockComponent = blockComponents[block.type];
+
+                if (!BlockComponent) {
+                  return (
+                    <Card key={block.id || index}>
+                      <CardContent className="p-6 text-center text-gray-500">
+                        Unknown block type: {block.type}
+                      </CardContent>
+                    </Card>
+                  );
+                }
+
                 return (
-                  <Card key={block.id || index}>
-                    <CardContent className="p-6 text-center text-gray-500">
-                      Unknown block type: {block.type}
-                    </CardContent>
-                  </Card>
+                  <div key={block.id || index} className="bg-white rounded-lg shadow-sm p-6">
+                    <BlockComponent
+                      block={block}
+                      pageId={page.page_id}
+                      isPreview={true}
+                    />
+                  </div>
                 );
-              }
+              })
+            )}
+          </div>
 
-              return (
-                <div key={block.id || index} className="bg-white rounded-lg shadow-sm p-6">
-                  <BlockComponent
-                    block={block}
-                    pageId={page.page_id}
-                    isPreview={true}
-                  />
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-12 text-center text-sm text-gray-500">
-          <p>Published on {new Date(page.published_date).toLocaleDateString()}</p>
-        </div>
-        </div>
-      </div>
+          {/* Footer */}
+          <div className="mt-12 text-center text-sm text-gray-500">
+            <p>Published on {new Date(page.published_date).toLocaleDateString()}</p>
+          </div>
+          </div>
+          </div>
     </div>
   );
 }
