@@ -174,7 +174,7 @@ export default function EventUpdate() {
               )}
               <Button
                 variant="outline"
-                className={`text-white border-white transition-all ${copied ? 'bg-green-600 hover:bg-green-700' : 'hover:bg-white/20'}`}
+                className={`text-black border-white transition-all ${copied ? 'bg-green-600 hover:bg-green-700' : 'hover:bg-white/20'}`}
                 onClick={() => {
                   navigator.clipboard.writeText(shareUrl);
                   setCopied(true);
