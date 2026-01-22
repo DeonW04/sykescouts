@@ -12,16 +12,15 @@ import InteractiveBlock from '../components/pageBuilder/blocks/InteractiveBlock'
 
 export default function SharedPage() {
   const location = useLocation();
-  const params = useParams();
   const [pageId, setPageId] = useState(null);
 
   useEffect(() => {
-    // Try to get from URL params first, then fallback to pathname
-    const id = params.pageId || location.pathname.split('/').filter(Boolean).pop();
-    if (id && id !== 'sharedpage') {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    if (id) {
       setPageId(id);
     }
-  }, [location, params]);
+  }, [location]);
 
   const { data: page, isLoading, error } = useQuery({
     queryKey: ['shared-page', pageId],
