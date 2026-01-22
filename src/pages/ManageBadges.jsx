@@ -164,10 +164,17 @@ export default function ManageBadges() {
                 setShowDialog(true);
               }}
               className="bg-white text-[#7413dc] hover:bg-gray-100"
-            >
+              >
               <Plus className="w-4 h-4 mr-2" />
               New Badge
-            </Button>
+              </Button>
+              <Button
+              onClick={() => navigate(createPageUrl('BadgeStockManagement'))}
+              className="bg-white text-[#7413dc] hover:bg-gray-100"
+              >
+              <Package className="w-4 h-4 mr-2" />
+              Manage Stock
+              </Button>
           </div>
         </div>
       </div>
