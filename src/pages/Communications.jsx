@@ -40,8 +40,14 @@ export default function Communications() {
     queryFn: () => base44.entities.JoinEnquiry.filter({}),
   });
 
-  // Calculate stats
+  // Calculate stats - members with at least one registered parent
   const membersWithRegisteredParents = members.filter(member => {
+    // Check by email: parent_one_email or parent_two_email
+    const parentEmails = [member.parent_one_email, member.parent_two_email].filter(Boolean);
+    if (parentEmails.length === 0) return false;
+    
+    // Check if any parent email exists in the User entity
+    // For now, we check if there are parents linked to this member
     if (!member.parent_ids?.length) return false;
     return member.parent_ids.some(parentId => 
       parents.some(p => p.id === parentId)
