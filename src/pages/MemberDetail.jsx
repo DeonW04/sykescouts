@@ -193,6 +193,23 @@ export default function MemberDetail() {
                       {member.patrol} Patrol
                     </Badge>
                   )}
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                    parentAccountExists 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-red-500 text-white'
+                  }`}>
+                    {parentAccountExists ? (
+                      <>
+                        <CheckCircle className="w-4 h-4" />
+                        Parent Portal Registered
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="w-4 h-4" />
+                        Not Registered
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
