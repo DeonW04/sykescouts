@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Award, CheckCircle, Circle, Info, Target, Users, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Award, CheckCircle, Circle, Info, Target, Users, TrendingUp, Edit, Trash2, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
@@ -12,10 +12,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { motion } from 'framer-motion';
 import LeaderNav from '../components/leader/LeaderNav';
+import StockManagementDialog from '../components/badges/StockManagementDialog';
 
 export default function BadgeDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [stockDialog, setStockDialog] = useState(null);
   const urlParams = new URLSearchParams(window.location.search);
   const badgeId = urlParams.get('id');
 
@@ -262,6 +264,59 @@ export default function BadgeDetail() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Action Buttons */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+        >
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (badge.category === 'staged') {
+                navigate(createPageUrl('ManageStagedBadge') + `?familyId=${badge.badge_family_id}`);
+              } else {
+                navigate(createPageUrl('EditBadgeStructure') + `?id=${badge.id}`);
+              }
+            }}
+            className="h-auto py-4 flex-col gap-2"
+          >
+            <Edit className="w-5 h-5" />
+            <span>{badge.category === 'staged' ? 'Stages' : 'Structure'}</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setStockDialog(badge)}
+            className="h-auto py-4 flex-col gap-2"
+          >
+            <Package className="w-5 h-5" />
+            <span>Stock</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate(createPageUrl('ManageBadges'))}
+            className="h-auto py-4 flex-col gap-2"
+          >
+            <Edit className="w-5 h-5" />
+            <span>Edit</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (confirm('Delete this badge?')) {
+                base44.entities.BadgeDefinition.update(badge.id, { active: false }).then(() => {
+                  toast.success('Badge deleted');
+                  navigate(createPageUrl('LeaderBadges'));
+                });
+              }
+            }}
+            className="h-auto py-4 flex-col gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+          >
+            <Trash2 className="w-5 h-5" />
+            <span>Delete</span>
+          </Button>
+        </motion.div>
+
         {/* Stats Overview */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -546,6 +601,12 @@ export default function BadgeDetail() {
         </Card>
         </motion.div>
       </div>
+
+      <StockManagementDialog
+        badge={stockDialog}
+        open={!!stockDialog}
+        onClose={() => setStockDialog(null)}
+      />
     </div>
   );
 }
