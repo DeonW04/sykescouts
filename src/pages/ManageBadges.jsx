@@ -297,33 +297,6 @@ export default function ManageBadges() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Badge Name</Label>
-              <Input
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Adventure Challenge"
-              />
-            </div>
-            <div>
-              <Label>Section</Label>
-              <Select
-                value={formData.section}
-                onValueChange={(value) => setFormData({ ...formData, section: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sections</SelectItem>
-                  {sections.map(section => (
-                    <SelectItem key={section.id} value={section.name}>
-                      {section.display_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
               <Label>Category</Label>
               <Select
                 value={formData.category}
@@ -340,6 +313,61 @@ export default function ManageBadges() {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label>Badge Name</Label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="e.g., Adventure Challenge"
+              />
+            </div>
+            {formData.category !== 'staged' && (
+              <>
+                <div>
+                  <Label>Section</Label>
+                  <Select
+                    value={formData.section}
+                    onValueChange={(value) => setFormData({ ...formData, section: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Sections</SelectItem>
+                      {sections.map(section => (
+                        <SelectItem key={section.id} value={section.name}>
+                          {section.display_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Description</Label>
+                  <Textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Badge description..."
+                  />
+                </div>
+                <div>
+                  <Label>Completion Rule</Label>
+                  <Select
+                    value={formData.completion_rule}
+                    onValueChange={(value) => setFormData({ ...formData, completion_rule: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all_modules">Complete All Modules</SelectItem>
+                      <SelectItem value="one_module">Complete One Module</SelectItem>
+                      <SelectItem value="custom">Custom Rule</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
             {formData.category === 'staged' && (
               <div>
                 <Label>Badge Family ID</Label>
@@ -362,30 +390,6 @@ export default function ManageBadges() {
               {formData.image_url && (
                 <img src={formData.image_url} alt="Preview" className="w-20 h-20 mt-2 rounded border" />
               )}
-            </div>
-            <div>
-              <Label>Description</Label>
-              <Textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Badge description..."
-              />
-            </div>
-            <div>
-              <Label>Completion Rule</Label>
-              <Select
-                value={formData.completion_rule}
-                onValueChange={(value) => setFormData({ ...formData, completion_rule: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all_modules">Complete All Modules</SelectItem>
-                  <SelectItem value="one_module">Complete One Module</SelectItem>
-                  <SelectItem value="custom">Custom Rule</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
           <DialogFooter>
