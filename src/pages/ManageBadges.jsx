@@ -220,51 +220,46 @@ export default function ManageBadges() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 mb-4">{badge.description}</p>
-                {isStaged ? (
+                <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
-                    className="w-full"
-                    onClick={() => navigate(createPageUrl('ManageStagedBadge') + `?familyId=${badge.badge_family_id}`)}
+                    size="sm"
+                    onClick={() => {
+                      if (isStaged) {
+                        navigate(createPageUrl('ManageStagedBadge') + `?familyId=${badge.badge_family_id}`);
+                      } else {
+                        navigate(createPageUrl('EditBadgeStructure') + `?id=${badge.id}`);
+                      }
+                    }}
                   >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Manage Stages
+                    <Edit className="w-3 h-3 mr-1" />
+                    {isStaged ? 'Stages' : 'Structure'}
                   </Button>
-                ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(createPageUrl('EditBadgeStructure') + `?id=${badge.id}`)}
-                    >
-                      <Edit className="w-3 h-3 mr-1" />
-                      Structure
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setStockDialog(badge)}
-                    >
-                      <Package className="w-3 h-3 mr-1" />
-                      Stock
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(badge)}
-                    >
-                      <Edit className="w-3 h-3 mr-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteBadgeMutation.mutate(badge.id)}
-                    >
-                      <Trash2 className="w-3 h-3 mr-1" />
-                      Delete
-                    </Button>
-                  </div>
-                )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setStockDialog(badge)}
+                  >
+                    <Package className="w-3 h-3 mr-1" />
+                    Stock
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(badge)}
+                  >
+                    <Edit className="w-3 h-3 mr-1" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => deleteBadgeMutation.mutate(badge.id)}
+                  >
+                    <Trash2 className="w-3 h-3 mr-1" />
+                    Delete
+                  </Button>
+                </div>
               </CardContent>
             </Card>
                   );
