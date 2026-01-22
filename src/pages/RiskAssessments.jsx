@@ -159,15 +159,15 @@ Focus on practical, specific risks following Scouts UK safety standards. Conside
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">View Previous Assessments</h3>
-                  <p className="text-sm text-gray-600">Access and manage your risk assessment history</p>
+                  <h3 className="font-semibold text-gray-900 mb-1">Current Risk Assessments</h3>
+                  <p className="text-sm text-gray-600">Access and manage your risk assessments</p>
                 </div>
                 <Button
                   variant="outline"
                   onClick={() => navigate(createPageUrl('RiskAssessmentHistory'))}
                   className="border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white"
                 >
-                  View History
+                  View Current
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
