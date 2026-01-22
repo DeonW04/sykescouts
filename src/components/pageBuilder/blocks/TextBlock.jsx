@@ -3,33 +3,35 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Edit2, Check, Bold, Italic } from 'lucide-react';
 
-export default function TextBlock({ data, onUpdate, isEditing, setIsEditing }) {
-  const [text, setText] = useState(data.text || '');
+export default function TextBlock({ data, onUpdate, isEditing, setIsEditing, isPreview }) {
+   const [text, setText] = useState(data.text || '');
 
-  const handleSave = () => {
-    onUpdate({ text });
-    setIsEditing(false);
-  };
+   const handleSave = () => {
+     onUpdate({ text });
+     setIsEditing(false);
+   };
 
-  const applyFormatting = (format) => {
-    let formatted = text;
-    if (format === 'bold') formatted = `**${text}**`;
-    if (format === 'italic') formatted = `*${text}*`;
-    setText(formatted);
-  };
+   const applyFormatting = (format) => {
+     let formatted = text;
+     if (format === 'bold') formatted = `**${text}**`;
+     if (format === 'italic') formatted = `*${text}*`;
+     setText(formatted);
+   };
 
-  if (!isEditing) {
-    return (
-      <div className="flex items-start justify-between gap-2">
-        <div className="prose prose-sm max-w-none">
-          <p className="text-gray-700">{text || 'Text content'}</p>
-        </div>
-        <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
-          <Edit2 className="w-4 h-4" />
-        </Button>
-      </div>
-    );
-  }
+   if (!isEditing) {
+     return (
+       <div className="mb-4">
+         <div className="prose prose-sm max-w-none">
+           <p className="text-gray-700">{text || 'Text content'}</p>
+         </div>
+         {!isPreview && (
+           <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="mt-2">
+             <Edit2 className="w-4 h-4" />
+           </Button>
+         )}
+       </div>
+     );
+   }
 
   return (
     <div className="space-y-3 w-full">

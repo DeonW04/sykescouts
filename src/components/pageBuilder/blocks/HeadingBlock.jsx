@@ -4,27 +4,27 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Edit2, Check } from 'lucide-react';
 
-export default function HeadingBlock({ data, onUpdate, isEditing, setIsEditing }) {
-  const [text, setText] = useState(data.text || '');
-  const [size, setSize] = useState(data.size || 'h1');
+export default function HeadingBlock({ data, onUpdate, isEditing, setIsEditing, isPreview }) {
+   const [text, setText] = useState(data.text || '');
+   const [size, setSize] = useState(data.size || 'h1');
 
-  const handleSave = () => {
-    onUpdate({ text, size });
-    setIsEditing(false);
-  };
+   const handleSave = () => {
+     onUpdate({ text, size });
+     setIsEditing(false);
+   };
 
-  if (!isEditing) {
-    return (
-      <div className="flex items-start justify-between">
-        <div className={`${size === 'h1' ? 'text-3xl' : size === 'h2' ? 'text-2xl' : 'text-xl'} font-bold`}>
-          {text || 'Heading'}
-        </div>
-        <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
-          <Edit2 className="w-4 h-4" />
-        </Button>
-      </div>
-    );
-  }
+   if (!isEditing) {
+     return (
+       <div className={`${size === 'h1' ? 'text-3xl' : size === 'h2' ? 'text-2xl' : 'text-xl'} font-bold mb-4`}>
+         {text || 'Heading'}
+         {!isPreview && (
+           <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="ml-2">
+             <Edit2 className="w-4 h-4" />
+           </Button>
+         )}
+       </div>
+     );
+   }
 
   return (
     <div className="space-y-3 w-full">
