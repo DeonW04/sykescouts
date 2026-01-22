@@ -31,6 +31,7 @@ import RiskAssessmentHistory from './pages/RiskAssessmentHistory';
 import RiskAssessments from './pages/RiskAssessments';
 import Sections from './pages/Sections';
 import Volunteer from './pages/Volunteer';
+import BadgeStockManagement from './pages/BadgeStockManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -68,6 +69,7 @@ export const PAGES = {
     "RiskAssessments": RiskAssessments,
     "Sections": Sections,
     "Volunteer": Volunteer,
+    "BadgeStockManagement": BadgeStockManagement,
 }
 
 export const pagesConfig = {
