@@ -16,15 +16,19 @@ export default function TodoSection({ programmeId, entityType = 'programme' }) {
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
   const [formData, setFormData] = useState({
-    task_name: '',
-    description: '',
-    leader_responsible: '',
-    completion_date: '',
+    task: '',
+    assigned_to: '',
+    due_date: '',
   });
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['todo-tasks', programmeId],
-    queryFn: () => base44.entities.TodoTask.filter({ programme_id: programmeId }),
+    queryKey: ['todo-tasks', programmeId, entityType],
+    queryFn: async () => {
+      const all = await base44.entities.TodoTask.list();
+      return all.filter(task => 
+        entityType === 'event' ? task.event_id === programmeId : task.programme_id === programmeId
+      );
+    },
     enabled: !!programmeId,
   });
 
@@ -39,11 +43,16 @@ export default function TodoSection({ programmeId, entityType = 'programme' }) {
   });
 
   const createTaskMutation = useMutation({
-    mutationFn: (data) => base44.entities.TodoTask.create({ ...data, programme_id: programmeId }),
+    mutationFn: (data) => {
+      const taskData = entityType === 'event' 
+        ? { ...data, event_id: programmeId }
+        : { ...data, programme_id: programmeId };
+      return base44.entities.TodoTask.create(taskData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todo-tasks'] });
       setShowDialog(false);
-      setFormData({ task_name: '', description: '', leader_responsible: '', completion_date: '' });
+      setFormData({ task: '', assigned_to: '', due_date: '' });
       toast.success('Task added');
     },
   });
@@ -94,17 +103,14 @@ export default function TodoSection({ programmeId, entityType = 'programme' }) {
                   />
                   <div className="flex-1">
                     <p className={`font-medium ${task.completed ? 'line-through text-gray-500' : ''}`}>
-                      {task.task_name}
+                      {task.task}
                     </p>
-                    {task.description && (
-                      <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                    )}
                     <div className="flex gap-4 mt-2 text-sm text-gray-500">
-                      {task.leader_responsible && (
-                        <span>👤 {getLeaderName(task.leader_responsible)}</span>
+                      {task.assigned_to && (
+                        <span>👤 {getLeaderName(task.assigned_to)}</span>
                       )}
-                      {task.completion_date && (
-                        <span>📅 {new Date(task.completion_date).toLocaleDateString()}</span>
+                      {task.due_date && (
+                        <span>📅 {new Date(task.due_date).toLocaleDateString()}</span>
                       )}
                     </div>
                   </div>
@@ -130,26 +136,19 @@ export default function TodoSection({ programmeId, entityType = 'programme' }) {
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label>Task Name *</Label>
-              <Input
-                value={formData.task_name}
-                onChange={(e) => setFormData({ ...formData, task_name: e.target.value })}
-                placeholder="Task name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
+              <Label>Task *</Label>
               <Textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Optional description"
+                value={formData.task}
+                onChange={(e) => setFormData({ ...formData, task: e.target.value })}
+                placeholder="Task description"
+                rows={3}
               />
             </div>
             <div className="space-y-2">
-              <Label>Leader Responsible</Label>
+              <Label>Assigned To</Label>
               <Select
-                value={formData.leader_responsible}
-                onValueChange={(value) => setFormData({ ...formData, leader_responsible: value })}
+                value={formData.assigned_to}
+                onValueChange={(value) => setFormData({ ...formData, assigned_to: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select leader" />
@@ -167,16 +166,16 @@ export default function TodoSection({ programmeId, entityType = 'programme' }) {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Planned Completion Date</Label>
+              <Label>Due Date</Label>
               <Input
                 type="date"
-                value={formData.completion_date}
-                onChange={(e) => setFormData({ ...formData, completion_date: e.target.value })}
+                value={formData.due_date}
+                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
               />
             </div>
             <Button
               onClick={() => createTaskMutation.mutate(formData)}
-              disabled={!formData.task_name || createTaskMutation.isPending}
+              disabled={!formData.task || createTaskMutation.isPending}
               className="w-full"
             >
               Add Task
