@@ -48,7 +48,7 @@ export default function RiskAssessmentHistory() {
             <div className="flex items-center gap-4">
               <ShieldAlert className="w-12 h-12" />
               <div>
-                <h1 className="text-4xl font-bold">Risk Assessment History</h1>
+                <h1 className="text-4xl font-bold">Current Risk Assessments</h1>
                 <p className="text-purple-100 mt-1">{assessments.length} assessment(s) on file</p>
               </div>
             </div>

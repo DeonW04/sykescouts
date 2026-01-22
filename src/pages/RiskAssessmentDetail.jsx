@@ -109,7 +109,7 @@ export default function RiskAssessmentDetail() {
             className="text-white hover:bg-white/20 mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to History
+            Back to Current
           </Button>
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">Edit Risk Assessment</h1>
