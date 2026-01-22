@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Plus, GripVertical, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import HeadingBlock from './blocks/HeadingBlock';
 import TextBlock from './blocks/TextBlock';
 import ImageBlock from './blocks/ImageBlock';
@@ -50,6 +51,17 @@ export default function PageBuilder({ blocks = [], onBlocksChange, pageType }) {
 
   const deleteBlock = (blockId) => {
     onBlocksChange(blocks.filter(b => b.id !== blockId));
+  };
+
+  const handleDragEnd = (result) => {
+    const { source, destination } = result;
+    if (!destination) return;
+    if (source.index === destination.index) return;
+
+    const reorderedBlocks = Array.from(blocks);
+    const [movedBlock] = reorderedBlocks.splice(source.index, 1);
+    reorderedBlocks.splice(destination.index, 0, movedBlock);
+    onBlocksChange(reorderedBlocks);
   };
 
   const renderBlock = (block) => {
@@ -112,15 +124,40 @@ export default function PageBuilder({ blocks = [], onBlocksChange, pageType }) {
       </Dialog>
 
       {/* Blocks */}
-      <div className="space-y-3">
-        {blocks.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            <p>No blocks yet. Add one to get started.</p>
-          </div>
-        ) : (
-          blocks.map(block => renderBlock(block))
-        )}
-      </div>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="blocks">
+          {(provided, snapshot) => (
+            <div
+              className={`space-y-3 ${snapshot.isDraggingOver ? 'bg-blue-50 p-3 rounded' : ''}`}
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+            >
+              {blocks.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <p>No blocks yet. Add one to get started.</p>
+                </div>
+              ) : (
+                blocks.map((block, index) => (
+                  <Draggable key={block.id} draggableId={block.id} index={index}>
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className={snapshot.isDragging ? 'opacity-50' : ''}
+                      >
+                        <div {...provided.dragHandleProps} className="flex items-start gap-3">
+                          <div className="flex-1">{renderBlock(block)}</div>
+                        </div>
+                      </div>
+                    )}
+                  </Draggable>
+                ))
+              )}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
     </div>
   );
 }
