@@ -22,8 +22,9 @@ export default function LeaderBadges() {
     queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
   });
 
-  // Filter out family badges (staged badges with no stage_number)
-  const badges = allBadges.filter(b => !(b.category === 'staged' && b.stage_number === null));
+  // For display: show individual stage badges and all non-staged badges
+  // But also include family badges for the staged category view
+  const badges = allBadges;
 
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
