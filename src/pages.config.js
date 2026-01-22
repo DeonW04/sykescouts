@@ -42,7 +42,6 @@ import WeeklyMessageList from './pages/WeeklyMessageList';
 import MonthlyNewsletterList from './pages/MonthlyNewsletterList';
 import EventUpdateList from './pages/EventUpdateList';
 import WeeklyMessage from './pages/WeeklyMessage';
-import SharedPage from './pages/SharedPage';
 import __Layout from './Layout.jsx';
 
 
@@ -91,7 +90,6 @@ export const PAGES = {
     "MonthlyNewsletterList": MonthlyNewsletterList,
     "EventUpdateList": EventUpdateList,
     "WeeklyMessage": WeeklyMessage,
-    "SharedPage": SharedPage,
 }
 
 export const pagesConfig = {
