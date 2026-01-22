@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import NewEventDialog from '../components/events/NewEventDialog';
 import { motion } from 'framer-motion';
+import LeaderNav from '../components/leader/LeaderNav';
 
 export default function LeaderEvents() {
   const navigate = useNavigate();
@@ -81,6 +82,7 @@ export default function LeaderEvents() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+      <LeaderNav />
       <div className="relative bg-gradient-to-br from-[#7413dc] to-[#004851] text-white py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
