@@ -14,27 +14,49 @@ export default function RiskAssessmentList({ programmeId, eventId }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: assessments = [] } = useQuery({
-    queryKey: ['risk-assessments', programmeId, eventId],
+  const { data: currentEntity } = useQuery({
+    queryKey: ['entity-for-risk', programmeId, eventId],
     queryFn: async () => {
-      const all = await base44.entities.RiskAssessment.list();
-      return all.filter(a => 
-        (programmeId && a.programme_id === programmeId) ||
-        (eventId && a.event_id === eventId)
-      );
+      if (programmeId) {
+        return base44.entities.Programme.filter({ id: programmeId }).then(r => r[0]);
+      } else if (eventId) {
+        return base44.entities.Event.filter({ id: eventId }).then(r => r[0]);
+      }
+      return null;
     },
+    enabled: !!(programmeId || eventId),
+  });
+
+  const linkedIds = currentEntity?.risk_assessment_ids || [];
+
+  const { data: assessments = [] } = useQuery({
+    queryKey: ['risk-assessments', linkedIds],
+    queryFn: async () => {
+      if (linkedIds.length === 0) return [];
+      const all = await base44.entities.RiskAssessment.list();
+      return all.filter(a => linkedIds.includes(a.id));
+    },
+    enabled: linkedIds.length > 0,
   });
 
   const removeMutation = useMutation({
     mutationFn: async (assessmentId) => {
-      const updateData = programmeId 
-        ? { programme_id: null }
-        : { event_id: null };
+      const currentIds = currentEntity?.risk_assessment_ids || [];
+      const updatedIds = currentIds.filter(id => id !== assessmentId);
       
-      return base44.entities.RiskAssessment.update(assessmentId, updateData);
+      const updateData = {
+        risk_assessment_ids: updatedIds
+      };
+      
+      if (programmeId) {
+        return base44.entities.Programme.update(programmeId, updateData);
+      } else {
+        return base44.entities.Event.update(eventId, updateData);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['risk-assessments'] });
+      queryClient.invalidateQueries({ queryKey: ['entity-for-risk'] });
       toast.success('Risk assessment removed');
     },
   });

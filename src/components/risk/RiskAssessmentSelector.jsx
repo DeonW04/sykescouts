@@ -21,16 +21,39 @@ export default function RiskAssessmentSelector({ programmeId, eventId, onAdded }
     queryFn: () => base44.entities.RiskAssessment.list('-updated_date'),
   });
 
+  const { data: currentEntity } = useQuery({
+    queryKey: ['entity-for-risk', programmeId, eventId],
+    queryFn: async () => {
+      if (programmeId) {
+        return base44.entities.Programme.filter({ id: programmeId }).then(r => r[0]);
+      } else if (eventId) {
+        return base44.entities.Event.filter({ id: eventId }).then(r => r[0]);
+      }
+      return null;
+    },
+    enabled: !!(programmeId || eventId),
+  });
+
   const addMutation = useMutation({
     mutationFn: async (assessmentId) => {
-      const updateData = programmeId 
-        ? { programme_id: programmeId }
-        : { event_id: eventId };
+      const currentIds = currentEntity?.risk_assessment_ids || [];
+      if (currentIds.includes(assessmentId)) {
+        throw new Error('Already linked');
+      }
       
-      return base44.entities.RiskAssessment.update(assessmentId, updateData);
+      const updateData = {
+        risk_assessment_ids: [...currentIds, assessmentId]
+      };
+      
+      if (programmeId) {
+        return base44.entities.Programme.update(programmeId, updateData);
+      } else {
+        return base44.entities.Event.update(eventId, updateData);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['risk-assessments'] });
+      queryClient.invalidateQueries({ queryKey: ['entity-for-risk'] });
       setSearchTerm('');
       setShowResults(false);
       toast.success('Risk assessment linked');
@@ -43,14 +66,10 @@ export default function RiskAssessmentSelector({ programmeId, eventId, onAdded }
     return isPast(parseISO(assessment.next_review_date));
   };
 
+  const linkedIds = currentEntity?.risk_assessment_ids || [];
+  
   const filteredAssessments = allAssessments
-    .filter(a => {
-      // Don't show if already linked to this specific programme or event
-      if (programmeId && a.programme_id === programmeId) return false;
-      if (eventId && a.event_id === eventId) return false;
-      // Show if not linked to anything, or linked to something else
-      return true;
-    })
+    .filter(a => !linkedIds.includes(a.id))
     .filter(a => 
       searchTerm.length === 0 || 
       a.activity_name.toLowerCase().includes(searchTerm.toLowerCase())
