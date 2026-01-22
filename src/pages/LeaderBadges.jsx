@@ -77,8 +77,8 @@ export default function LeaderBadges() {
       relevantMembers.some(m => m.id === p.member_id)
     );
 
-    const completedCount = memberProgress.filter(p => p.completed_date != null).length;
-    const inProgressCount = memberProgress.filter(p => p.started_date != null && p.completed_date == null).length;
+    const completedCount = memberProgress.filter(p => p.status === 'completed').length;
+    const inProgressCount = memberProgress.filter(p => p.status === 'in_progress').length;
 
     const percentComplete = relevantMembers.length > 0 
       ? Math.round((completedCount / relevantMembers.length) * 100) 
