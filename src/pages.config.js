@@ -36,6 +36,7 @@ import Sections from './pages/Sections';
 import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
 import JoinEnquiries from './pages/JoinEnquiries';
+import WeeklyMessage from './pages/WeeklyMessage';
 import __Layout from './Layout.jsx';
 
 
@@ -78,6 +79,7 @@ export const PAGES = {
     "StagedBadgeDetail": StagedBadgeDetail,
     "Volunteer": Volunteer,
     "JoinEnquiries": JoinEnquiries,
+    "WeeklyMessage": WeeklyMessage,
 }
 
 export const pagesConfig = {
