@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Award } from 'lucide-react';
 import { format } from 'date-fns';
+import { motion } from 'framer-motion';
 
 export default function ParentProgramme() {
   const [user, setUser] = useState(null);
