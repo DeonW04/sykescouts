@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import { motion } from 'framer-motion';
 
 export default function ParentEvents() {
   const navigate = useNavigate();
@@ -262,26 +263,35 @@ export default function ParentEvents() {
 
             {pastEvents.length > 0 && (
               <div>
-                <h2 className="text-2xl font-bold mb-4">Past Events</h2>
-                <div className="grid gap-4">
-                  {pastEvents.map(event => {
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-1 w-12 bg-gradient-to-r from-gray-400 to-transparent rounded-full"></div>
+                  <h2 className="text-2xl font-bold text-gray-700">Past Events</h2>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {pastEvents.map((event, index) => {
                     const eventSections = sections.filter(s => event.section_ids?.includes(s.id));
                     
                     return (
-                      <Card key={event.id} className="opacity-75">
-                        <CardHeader>
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1">
-                              <Badge variant="outline" className="mb-2">{event.type}</Badge>
-                              <CardTitle className="text-lg text-gray-700">{event.title}</CardTitle>
-                              <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-                                <CalendarIcon className="w-3.5 h-3.5" />
-                                <span>{format(new Date(event.start_date), 'MMM d, yyyy')}</span>
+                      <motion.div
+                        key={event.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        <Card className="bg-white/60 backdrop-blur-sm hover:shadow-lg transition-all">
+                          <CardHeader>
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1">
+                                <Badge variant="outline" className="mb-2">{event.type}</Badge>
+                                <CardTitle className="text-lg text-gray-700">{event.title}</CardTitle>
+                                <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                                  <CalendarIcon className="w-3.5 h-3.5" />
+                                  <span>{format(new Date(event.start_date), 'MMM d, yyyy')}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </CardHeader>
-                      </Card>
+                          </CardHeader>
+                        </Card>
                       </motion.div>
                     );
                   })}
