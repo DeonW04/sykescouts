@@ -26,27 +26,15 @@ export default function SharedPage() {
     queryKey: ['shared-page', pageId],
     queryFn: async () => {
       if (!pageId) return null;
-      const response = await base44.functions.invoke('getSharedPage', { pageId });
-      return response.data;
+      try {
+        const response = await base44.functions.invoke('getSharedPage', { pageId });
+        return response.data;
+      } catch (err) {
+        throw err;
+      }
     },
     enabled: !!pageId,
   });
-
-  // Record page view
-  useEffect(() => {
-    if (page?.page_id) {
-      base44.entities.PageView.create({
-        page_id: page.page_id,
-        viewed_date: new Date().toISOString(),
-        session_id: sessionId,
-      });
-
-      // Increment view count
-      base44.entities.CommunicationPage.update(page.id, {
-        view_count: (page.view_count || 0) + 1,
-      });
-    }
-  }, [page?.id, page?.page_id]);
 
   const blockComponents = {
     heading: HeadingBlock,
