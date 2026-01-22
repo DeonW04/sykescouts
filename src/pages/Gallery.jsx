@@ -44,13 +44,13 @@ export default function Gallery() {
   // Get unique camps, events, and meetings
   const camps = [...new Map(
     allPhotos
-      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'camp'))
+      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp'))
       .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
   ).values()].filter(Boolean);
 
   const regularEvents = [...new Map(
     allPhotos
-      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'camp'))
+      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'Camp'))
       .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
   ).values()].filter(Boolean);
 
