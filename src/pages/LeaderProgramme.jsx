@@ -3,17 +3,22 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Plus, ChevronRight, Sparkles } from 'lucide-react';
+import { Calendar, Plus, ChevronRight, Sparkles, Clock, List } from 'lucide-react';
 import NewTermDialog from '../components/programme/NewTermDialog';
-import TermCard from '../components/programme/TermCard';
+import AllTermsDialog from '../components/programme/AllTermsDialog';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 
 export default function LeaderProgramme() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [isLeader, setIsLeader] = useState(false);
   const [showNewTermDialog, setShowNewTermDialog] = useState(false);
+  const [showAllTermsDialog, setShowAllTermsDialog] = useState(false);
   const [editingTerm, setEditingTerm] = useState(null);
+  const [selectedTerm, setSelectedTerm] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -64,6 +69,64 @@ export default function LeaderProgramme() {
     enabled: sections.length > 0,
   });
 
+  // Determine current term
+  const currentTerm = selectedTerm || terms.find(t => {
+    const today = new Date();
+    const start = new Date(t.start_date);
+    const end = new Date(t.end_date);
+    return today >= start && today <= end;
+  }) || terms[0];
+
+  const currentSection = sections.find(s => s.id === currentTerm?.section_id);
+
+  // Get meetings for current term
+  const { data: meetings = [] } = useQuery({
+    queryKey: ['term-meetings', currentTerm?.id],
+    queryFn: () => {
+      if (!currentTerm) return [];
+      const allMeetings = [];
+      const start = new Date(currentTerm.start_date);
+      const end = new Date(currentTerm.end_date);
+      const halfTermStart = new Date(currentTerm.half_term_start);
+      const halfTermEnd = new Date(currentTerm.half_term_end);
+
+      const dayOfWeekMap = {
+        'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+        'Thursday': 4, 'Friday': 5, 'Saturday': 6
+      };
+      const targetDay = dayOfWeekMap[currentTerm.meeting_day];
+
+      let current = new Date(start);
+      while (current.getDay() !== targetDay) {
+        current.setDate(current.getDate() + 1);
+      }
+
+      while (current <= end) {
+        const isHalfTerm = current >= halfTermStart && current <= halfTermEnd;
+        allMeetings.push({
+          date: new Date(current),
+          isHalfTerm,
+        });
+        current.setDate(current.getDate() + 7);
+      }
+
+      return allMeetings;
+    },
+    enabled: !!currentTerm,
+  });
+
+  const { data: programmes = [] } = useQuery({
+    queryKey: ['programmes', currentTerm?.section_id],
+    queryFn: () => base44.entities.Programme.filter({ section_id: currentTerm.section_id }),
+    enabled: !!currentTerm,
+  });
+
+  const handleMeetingClick = (meeting) => {
+    if (meeting.isHalfTerm) return;
+    const dateStr = meeting.date.toISOString().split('T')[0];
+    navigate(createPageUrl('MeetingDetail') + `?section_id=${currentTerm.section_id}&date=${dateStr}&term_id=${currentTerm.id}`);
+  };
+
   if (!user || !isLeader) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -93,12 +156,13 @@ export default function LeaderProgramme() {
               <p className="text-blue-100 text-lg">Plan weekly meetings and track your section's progress</p>
             </div>
             <Button
-              onClick={() => setShowNewTermDialog(true)}
+              onClick={() => setShowAllTermsDialog(true)}
               size="lg"
-              className="bg-white text-[#004851] hover:bg-blue-50 font-semibold shadow-xl"
+              variant="outline"
+              className="bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20 font-semibold"
             >
-              <Plus className="w-5 h-5 mr-2" />
-              Create Term
+              <List className="w-5 h-5 mr-2" />
+              Past & Future Terms
             </Button>
           </div>
         </div>
@@ -133,33 +197,127 @@ export default function LeaderProgramme() {
               </CardContent>
             </Card>
           </motion.div>
-        ) : (
-          <div>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-1 w-12 bg-gradient-to-r from-[#004851] to-transparent rounded-full"></div>
-              <h2 className="text-2xl font-bold text-gray-900">Your Terms</h2>
-              <Badge className="bg-[#004851]">{terms.length}</Badge>
-            </div>
-            <div className="space-y-5">
-              {terms.map((term, index) => (
-                <motion.div
-                  key={term.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <TermCard 
-                    term={term} 
-                    sections={sections}
-                    onEdit={(term) => {
-                      setEditingTerm(term);
-                      setShowNewTermDialog(true);
-                    }}
-                  />
-                </motion.div>
-              ))}
-            </div>
+        ) : !currentTerm ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600">No term selected</p>
           </div>
+        ) : (
+          <motion.div
+            key={currentTerm.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            {/* Term Header Card */}
+            <Card className="mb-8 border-l-4 border-l-[#004851] bg-gradient-to-br from-white to-blue-50/30 shadow-xl">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-3 mb-3">
+                      <Badge className="bg-[#004851] text-white">
+                        {currentSection?.display_name}
+                      </Badge>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Clock className="w-4 h-4" />
+                        <span>{currentTerm.meeting_day}s</span>
+                        <span className="text-gray-400">•</span>
+                        <span>{currentTerm.meeting_start_time} - {currentTerm.meeting_end_time}</span>
+                      </div>
+                    </div>
+                    <CardTitle className="text-3xl mb-3">{currentTerm.title}</CardTitle>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Calendar className="w-4 h-4" />
+                      <span className="font-medium">
+                        {new Date(currentTerm.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} - {' '}
+                        {new Date(currentTerm.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+
+            {/* Meetings List */}
+            <div className="space-y-3">
+              {meetings.map((meeting, index) => {
+                const programme = programmes.find(p => p.date === meeting.date.toISOString().split('T')[0]);
+                
+                if (meeting.isHalfTerm) {
+                  return (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.03 }}
+                      className="relative overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-orange-400/20"></div>
+                      <Card className="border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 relative">
+                        <CardContent className="p-5">
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                            <p className="font-bold text-amber-900">
+                              Half Term - {meeting.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                }
+
+                const isPast = meeting.date < new Date();
+
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.03 }}
+                  >
+                    <Card 
+                      onClick={() => handleMeetingClick(meeting)}
+                      className={`group cursor-pointer hover:shadow-xl transition-all duration-300 border-l-4 ${
+                        programme?.published 
+                          ? 'border-l-green-500 bg-gradient-to-r from-green-50/50 to-white' 
+                          : isPast 
+                          ? 'border-l-gray-300 bg-white/50'
+                          : 'border-l-[#7413dc] bg-white hover:bg-purple-50/30'
+                      }`}
+                    >
+                      <CardContent className="p-5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <p className={`font-bold text-lg ${isPast ? 'text-gray-600' : 'text-gray-900'} group-hover:text-[#7413dc] transition-colors`}>
+                                {meeting.date.toLocaleDateString('en-GB', { 
+                                  weekday: 'long', 
+                                  day: 'numeric', 
+                                  month: 'long',
+                                  year: 'numeric'
+                                })}
+                              </p>
+                              {programme?.published && (
+                                <Badge className="bg-green-600 gap-1">
+                                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                                  Published
+                                </Badge>
+                              )}
+                            </div>
+                            {programme ? (
+                              <p className="text-gray-700 font-medium">{programme.title}</p>
+                            ) : (
+                              <p className="text-gray-400 italic">Not planned yet - click to add</p>
+                            )}
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-[#7413dc] group-hover:translate-x-1 transition-all" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
         )}
       </div>
 
@@ -171,6 +329,18 @@ export default function LeaderProgramme() {
         }}
         sections={sections}
         editTerm={editingTerm}
+      />
+
+      <AllTermsDialog
+        open={showAllTermsDialog}
+        onOpenChange={setShowAllTermsDialog}
+        terms={terms}
+        sections={sections}
+        onSelectTerm={setSelectedTerm}
+        onCreateNew={() => {
+          setEditingTerm(null);
+          setShowNewTermDialog(true);
+        }}
       />
     </div>
   );
