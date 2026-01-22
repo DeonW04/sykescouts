@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Settings, Users, Shield, Mail, Edit } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
+import LeaderNav from '../components/leader/LeaderNav';
 
 export default function AdminSettings() {
   const [selectedUser, setSelectedUser] = useState(null);
@@ -177,6 +178,7 @@ export default function AdminSettings() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <LeaderNav />
       <div className="bg-[#004851] text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
