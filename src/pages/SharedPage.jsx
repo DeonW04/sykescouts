@@ -120,6 +120,7 @@ export default function SharedPage() {
         <div className="mt-12 text-center text-sm text-gray-500">
           <p>Published on {new Date(page.published_date).toLocaleDateString()}</p>
         </div>
+        </div>
       </div>
     </div>
   );
