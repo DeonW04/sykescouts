@@ -139,7 +139,7 @@ export default function EventUpdate() {
                       }
                     }}
                     autoFocus
-                    className="text-white bg-white/20 border-white/40"
+                    className="text-black bg-white/20 border-white/40"
                   />
                 ) : (
                   <h1 
@@ -158,7 +158,7 @@ export default function EventUpdate() {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="text-white border-white hover:bg-white/20"
+                className="text-black border-white hover:bg-white/20"
                 onClick={() => setShowStats(true)}
               >
                 <BarChart3 className="w-4 h-4 mr-2" />
