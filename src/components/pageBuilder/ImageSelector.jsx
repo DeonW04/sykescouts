@@ -78,25 +78,30 @@ export default function ImageSelector({ onSelect, isMultiple = false }) {
           </TabsList>
 
           <TabsContent value="upload" className="space-y-4">
-            <label className="block">
-              <Button
-                as="span"
-                variant="outline"
-                className="w-full cursor-pointer"
-                disabled={uploading}
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                {uploading ? 'Uploading...' : `Choose ${isMultiple ? 'Images' : 'Image'}`}
-              </Button>
+            <div className="relative">
               <input
                 type="file"
+                id="file-upload"
                 multiple={isMultiple}
                 accept="image/*"
                 onChange={handleFileUpload}
                 className="hidden"
                 disabled={uploading}
               />
-            </label>
+              <label htmlFor="file-upload">
+                <Button
+                  variant="outline"
+                  className="w-full cursor-pointer"
+                  disabled={uploading}
+                  asChild
+                >
+                  <span>
+                    <Upload className="w-4 h-4 mr-2" />
+                    {uploading ? 'Uploading...' : `Choose ${isMultiple ? 'Images' : 'Image'}`}
+                  </span>
+                </Button>
+              </label>
+            </div>
             {isMultiple && selectedImages.length > 0 && (
               <>
                 <div className="grid grid-cols-4 gap-2">
@@ -112,29 +117,33 @@ export default function ImageSelector({ onSelect, isMultiple = false }) {
           </TabsContent>
 
           <TabsContent value="gallery" className="space-y-4">
-            {photos.length === 0 ? (
+            {!photos || photos.length === 0 ? (
               <p className="text-center text-gray-500 py-8">No photos in gallery yet</p>
             ) : (
               <>
                 <div className="grid grid-cols-4 gap-2 max-h-96 overflow-y-auto">
-                  {photos.map((photo) => (
-                    <div
-                      key={photo.id}
-                      onClick={() => handleSelectFromGallery(photo.photo_url)}
-                      className="relative cursor-pointer group"
-                    >
-                      <img
-                        src={photo.photo_url}
-                        alt="Gallery"
-                        className="w-full h-24 object-cover rounded group-hover:opacity-75 transition"
-                      />
-                      {isMultiple && selectedImages.includes(photo.photo_url) && (
-                        <div className="absolute inset-0 bg-blue-500/50 rounded flex items-center justify-center">
-                          <span className="text-white font-bold">✓</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {photos.map((photo) => {
+                    const photoUrl = photo.photo_url || photo.file_url || photo.url;
+                    return (
+                      <div
+                        key={photo.id}
+                        onClick={() => handleSelectFromGallery(photoUrl)}
+                        className="relative cursor-pointer group"
+                      >
+                        <img
+                          src={photoUrl}
+                          alt="Gallery"
+                          className="w-full h-24 object-cover rounded group-hover:opacity-75 transition"
+                          onError={(e) => e.target.style.display = 'none'}
+                        />
+                        {isMultiple && selectedImages.includes(photoUrl) && (
+                          <div className="absolute inset-0 bg-blue-500/50 rounded flex items-center justify-center">
+                            <span className="text-white font-bold">✓</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
                 {isMultiple && selectedImages.length > 0 && (
                   <Button onClick={handleConfirmMultiple} className="w-full bg-green-600">
