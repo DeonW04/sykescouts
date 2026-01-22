@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, User, Heart, Phone, Edit, Save, X, UserCircle } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { ArrowLeft, User, Heart, Phone, Edit, Save, X, UserCircle, Camera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
@@ -78,6 +79,7 @@ export default function MyChild() {
       parent_two_name: child.parent_two_name || '',
       parent_two_email: child.parent_two_email || '',
       parent_two_phone: child.parent_two_phone || '',
+      photo_consent: child.photo_consent || false,
     });
     setEditMode(true);
   };
@@ -231,6 +233,10 @@ export default function MyChild() {
             <TabsTrigger value="emergency" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white">
               <Phone className="w-4 h-4 mr-2" />
               Emergency
+            </TabsTrigger>
+            <TabsTrigger value="consent" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white">
+              <Camera className="w-4 h-4 mr-2" />
+              Consent
             </TabsTrigger>
           </TabsList>
 
@@ -488,6 +494,37 @@ export default function MyChild() {
                   ) : (
                     <p className="mt-1 font-medium">{child.emergency_contact_relationship || 'Not provided'}</p>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Consent Tab */}
+          <TabsContent value="consent">
+            <Card>
+              <CardHeader>
+                <CardTitle>Photo & Media Consent</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-start justify-between p-4 bg-blue-50 rounded-lg">
+                  <div className="flex-1">
+                    <Label className="text-base font-semibold">Photo Consent</Label>
+                    <p className="text-sm text-gray-600 mt-2">
+                      I give permission for photos and videos of my child to be taken during scout activities and used for promotional purposes.
+                    </p>
+                  </div>
+                  <div className="ml-4">
+                    {editMode ? (
+                      <Switch
+                        checked={editForm.photo_consent}
+                        onCheckedChange={(checked) => setEditForm({ ...editForm, photo_consent: checked })}
+                      />
+                    ) : (
+                      <Badge variant={child.photo_consent ? "default" : "secondary"} className={child.photo_consent ? "bg-green-600" : ""}>
+                        {child.photo_consent ? 'Granted' : 'Not Granted'}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
