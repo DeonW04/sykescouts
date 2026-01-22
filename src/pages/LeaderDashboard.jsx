@@ -224,7 +224,7 @@ export default function LeaderDashboard() {
     { 
       icon: Mail, 
       label: 'Communications', 
-      page: 'AdminSettings',
+      page: 'Communications',
       gradient: 'from-teal-500 to-teal-600',
       iconBg: 'bg-teal-100',
       iconColor: 'text-teal-600'
