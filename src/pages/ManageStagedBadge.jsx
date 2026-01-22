@@ -30,7 +30,7 @@ export default function ManageStagedBadge() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [stockDialog, setStockDialog] = useState(null);
 
-  const { data: stages = [], isLoading } = useQuery({
+  const { data: allBadges = [], isLoading } = useQuery({
     queryKey: ['staged-badges', familyId],
     queryFn: () => base44.entities.BadgeDefinition.filter({ 
       badge_family_id: familyId,
@@ -39,7 +39,9 @@ export default function ManageStagedBadge() {
     enabled: !!familyId,
   });
 
-  const familyBadge = stages[0];
+  // Separate family badge from actual stages
+  const familyBadge = allBadges.find(b => b.stage_number === null);
+  const stages = allBadges.filter(b => b.stage_number !== null);
 
   const createStageMutation = useMutation({
     mutationFn: (data) => base44.entities.BadgeDefinition.create({
