@@ -35,6 +35,7 @@ import RiskAssessments from './pages/RiskAssessments';
 import Sections from './pages/Sections';
 import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
+import JoinEnquiries from './pages/JoinEnquiries';
 import __Layout from './Layout.jsx';
 
 
@@ -76,6 +77,7 @@ export const PAGES = {
     "Sections": Sections,
     "StagedBadgeDetail": StagedBadgeDetail,
     "Volunteer": Volunteer,
+    "JoinEnquiries": JoinEnquiries,
 }
 
 export const pagesConfig = {
