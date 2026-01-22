@@ -121,12 +121,9 @@ export default function NewEventDialog({ open, onOpenChange, sections, editEvent
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="camp">Camp</SelectItem>
-                  <SelectItem value="trip">Trip</SelectItem>
-                  <SelectItem value="visit">Visit</SelectItem>
-                  <SelectItem value="meeting">Special Meeting</SelectItem>
-                  <SelectItem value="activity">Activity</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="Camp">Camp</SelectItem>
+                  <SelectItem value="Day Event">Day Event</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
