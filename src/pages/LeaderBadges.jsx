@@ -196,125 +196,149 @@ export default function LeaderBadges() {
         </Card>
 
         {isLoading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full mx-auto mb-4" />
-            <p className="text-gray-600">Loading badges...</p>
-          </div>
-        ) : filteredBadges.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600">No badges found</p>
-              <Button
-                onClick={() => navigate(createPageUrl('ManageBadges'))}
-                className="mt-4 bg-[#7413dc] hover:bg-[#5c0fb0]"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create First Badge
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredBadges.map(badge => {
-              const stats = getBadgeStats(badge.id);
-              return (
-                <Card 
-                  key={badge.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`)}
-                >
-                  <CardHeader>
-                    <div className="flex flex-col">
-                      <img
-                        src={badge.image_url}
-                        alt={badge.name}
-                        className="w-full h-28 rounded-lg object-contain mb-3"
-                      />
-                      <div>
-                        <CardTitle className="text-lg">
-                          {badge.name}
-                          {badge.category === 'staged' && badge.stage_number && (
-                            <span className="text-sm font-normal text-gray-500"> - Stage {badge.stage_number}</span>
-                          )}
-                        </CardTitle>
-                        <div className="flex gap-2 mt-1">
-                          <Badge variant="outline">
-                            {sections.find(s => s.name === badge.section)?.display_name || badge.section}
-                          </Badge>
-                          <Badge variant="outline" className="capitalize">
-                            {badge.category}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-gray-600">Section Completion</span>
-                          <span className="font-medium">{stats.percentComplete}%</span>
-                        </div>
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-[#7413dc] transition-all"
-                            style={{ width: `${stats.percentComplete}%` }}
-                          />
-                        </div>
-                      </div>
+                  <div className="text-center py-12">
+                    <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full mx-auto mb-4" />
+                    <p className="text-gray-600">Loading badges...</p>
+                  </div>
+                ) : filteredBadges.length === 0 ? (
+                  <Card>
+                    <CardContent className="p-12 text-center">
+                      <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-600">No badges found</p>
+                      <Button
+                        onClick={() => navigate(createPageUrl('ManageBadges'))}
+                        className="mt-4 bg-[#7413dc] hover:bg-[#5c0fb0]"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create First Badge
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div>
+                    {['challenge', 'activity', 'staged', 'core'].map(category => {
+                      const categoryBadges = filteredBadges.filter(b => b.category === category);
+                      if (categoryBadges.length === 0) return null;
 
-                      <div className="grid grid-cols-2 gap-2 text-center mb-3">
-                        <div className="bg-green-50 rounded-lg p-2">
-                          <div className="text-xl font-bold text-green-700">{stats.completedCount}</div>
-                          <div className="text-xs text-green-600">Completed</div>
-                        </div>
-                        <div className="bg-blue-50 rounded-lg p-2">
-                          <div className="text-xl font-bold text-blue-700">{stats.inProgressCount}</div>
-                          <div className="text-xs text-blue-600">In Progress</div>
-                        </div>
-                      </div>
+                      // For staged badges, only show family badges (stage_number = null)
+                      const displayBadges = category === 'staged' 
+                        ? categoryBadges.filter(b => b.stage_number === null)
+                        : categoryBadges;
 
-                      {stats.dueCount > 0 && (
-                        <div className={`p-2 rounded-lg flex items-center justify-between ${
-                          stats.outOfStock ? 'bg-red-50' : stats.lowStock ? 'bg-orange-50' : 'bg-purple-50'
-                        }`}>
-                          <div className="flex items-center gap-2">
-                            <Award className={`w-4 h-4 ${
-                              stats.outOfStock ? 'text-red-600' : stats.lowStock ? 'text-orange-600' : 'text-purple-600'
-                            }`} />
-                            <span className={`text-sm font-medium ${
-                              stats.outOfStock ? 'text-red-700' : stats.lowStock ? 'text-orange-700' : 'text-purple-700'
-                            }`}>
-                              {stats.dueCount} due to award
-                            </span>
+                      return (
+                        <div key={category} className="mb-8">
+                          <h2 className="text-2xl font-bold mb-4 capitalize">{category} Badges</h2>
+                          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {displayBadges.map(badge => {
+                              const isStaged = badge.category === 'staged';
+                              const stats = getBadgeStats(badge.id);
+
+                              return (
+                                <Card key={badge.id} className="hover:shadow-lg transition-shadow">
+                                  <CardHeader>
+                                    <div className="flex flex-col">
+                                      <img
+                                        src={badge.image_url}
+                                        alt={badge.name}
+                                        className="w-full h-28 rounded-lg object-contain mb-3"
+                                      />
+                                      <div>
+                                        <CardTitle className="text-lg">{badge.name}</CardTitle>
+                                        <div className="flex gap-2 mt-1">
+                                          <Badge variant="outline">
+                                            {isStaged ? 'All Sections' : (sections.find(s => s.name === badge.section)?.display_name || badge.section)}
+                                          </Badge>
+                                          <Badge variant="outline" className="capitalize">
+                                            {badge.category}
+                                          </Badge>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </CardHeader>
+                                  <CardContent>
+                                    {isStaged ? (
+                                      <Button
+                                        variant="outline"
+                                        className="w-full"
+                                        onClick={() => navigate(createPageUrl('ManageStagedBadge') + `?familyId=${badge.badge_family_id}`)}
+                                      >
+                                        <Award className="w-4 h-4 mr-2" />
+                                        View Stages
+                                      </Button>
+                                    ) : (
+                                      <div 
+                                        className="space-y-3 cursor-pointer"
+                                        onClick={() => navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`)}
+                                      >
+                                        <div>
+                                          <div className="flex justify-between text-sm mb-1">
+                                            <span className="text-gray-600">Section Completion</span>
+                                            <span className="font-medium">{stats.percentComplete}%</span>
+                                          </div>
+                                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                            <div
+                                              className="h-full bg-[#7413dc] transition-all"
+                                              style={{ width: `${stats.percentComplete}%` }}
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-2 text-center mb-3">
+                                          <div className="bg-green-50 rounded-lg p-2">
+                                            <div className="text-xl font-bold text-green-700">{stats.completedCount}</div>
+                                            <div className="text-xs text-green-600">Completed</div>
+                                          </div>
+                                          <div className="bg-blue-50 rounded-lg p-2">
+                                            <div className="text-xl font-bold text-blue-700">{stats.inProgressCount}</div>
+                                            <div className="text-xs text-blue-600">In Progress</div>
+                                          </div>
+                                        </div>
+
+                                        {stats.dueCount > 0 && (
+                                          <div className={`p-2 rounded-lg flex items-center justify-between ${
+                                            stats.outOfStock ? 'bg-red-50' : stats.lowStock ? 'bg-orange-50' : 'bg-purple-50'
+                                          }`}>
+                                            <div className="flex items-center gap-2">
+                                              <Award className={`w-4 h-4 ${
+                                                stats.outOfStock ? 'text-red-600' : stats.lowStock ? 'text-orange-600' : 'text-purple-600'
+                                              }`} />
+                                              <span className={`text-sm font-medium ${
+                                                stats.outOfStock ? 'text-red-700' : stats.lowStock ? 'text-orange-700' : 'text-purple-700'
+                                              }`}>
+                                                {stats.dueCount} due to award
+                                              </span>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                              <Package className={`w-4 h-4 ${
+                                                stats.outOfStock ? 'text-red-600' : stats.lowStock ? 'text-orange-600' : 'text-gray-600'
+                                              }`} />
+                                              <span className={`text-xs ${
+                                                stats.outOfStock ? 'text-red-600 font-bold' : stats.lowStock ? 'text-orange-600' : 'text-gray-600'
+                                              }`}>
+                                                {stats.currentStock}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {stats.outOfStock && stats.dueCount > 0 && (
+                                          <div className="flex items-center gap-1 mt-2 text-xs text-red-600">
+                                            <AlertTriangle className="w-3 h-3" />
+                                            Out of stock!
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </CardContent>
+                                </Card>
+                              );
+                            })}
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Package className={`w-4 h-4 ${
-                              stats.outOfStock ? 'text-red-600' : stats.lowStock ? 'text-orange-600' : 'text-gray-600'
-                            }`} />
-                            <span className={`text-xs ${
-                              stats.outOfStock ? 'text-red-600 font-bold' : stats.lowStock ? 'text-orange-600' : 'text-gray-600'
-                            }`}>
-                              {stats.currentStock}
-                            </span>
-                          </div>
                         </div>
-                      )}
-
-                      {stats.outOfStock && stats.dueCount > 0 && (
-                        <div className="flex items-center gap-1 mt-2 text-xs text-red-600">
-                          <AlertTriangle className="w-3 h-3" />
-                          Out of stock!
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+                      );
+                    })}
+                  </div>
+                )}
       </div>
     </div>
   );
