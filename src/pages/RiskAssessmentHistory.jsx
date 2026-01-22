@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { base44 } from '@/api/base44Client';
@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ShieldAlert, ArrowLeft, Plus, Calendar, User, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
+import { format, isPast, parseISO } from 'date-fns';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function RiskAssessmentHistory() {
   const navigate = useNavigate();
+  const [filter, setFilter] = useState('all');
 
   const { data: assessments = [], isLoading } = useQuery({
     queryKey: ['risk-assessments'],
@@ -18,6 +20,16 @@ export default function RiskAssessmentHistory() {
       const all = await base44.entities.RiskAssessment.list('-updated_date');
       return all;
     }
+  });
+
+  const isOverdue = (assessment) => {
+    if (!assessment.next_review_date) return false;
+    return isPast(parseISO(assessment.next_review_date));
+  };
+
+  const filteredAssessments = assessments.filter(assessment => {
+    if (filter === 'overdue') return isOverdue(assessment);
+    return true;
   });
 
   if (isLoading) {
@@ -65,7 +77,31 @@ export default function RiskAssessmentHistory() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {assessments.length === 0 ? (
+        {assessments.length > 0 && (
+          <div className="mb-6">
+            <Tabs value={filter} onValueChange={setFilter}>
+              <TabsList>
+                <TabsTrigger value="all">
+                  All Assessments ({assessments.length})
+                </TabsTrigger>
+                <TabsTrigger value="overdue" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white">
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  Overdue ({assessments.filter(isOverdue).length})
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
+
+        {filteredAssessments.length === 0 && filter === 'overdue' ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <ShieldAlert className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">All Up to Date!</h3>
+              <p className="text-gray-600">No overdue risk assessments</p>
+            </CardContent>
+          </Card>
+        ) : assessments.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
               <ShieldAlert className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -82,7 +118,9 @@ export default function RiskAssessmentHistory() {
           </Card>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {assessments.map((assessment, index) => (
+            {filteredAssessments.map((assessment, index) => {
+              const overdue = isOverdue(assessment);
+              return (
               <motion.div
                 key={assessment.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -90,7 +128,9 @@ export default function RiskAssessmentHistory() {
                 transition={{ delay: index * 0.05 }}
               >
                 <Card
-                  className="cursor-pointer hover:shadow-xl transition-all hover:scale-105 border-l-4 border-l-[#7413dc]"
+                  className={`cursor-pointer hover:shadow-xl transition-all hover:scale-105 border-l-4 ${
+                    overdue ? 'border-l-yellow-500 bg-yellow-50' : 'border-l-[#7413dc]'
+                  }`}
                   onClick={() => navigate(createPageUrl('RiskAssessmentDetail') + `?id=${assessment.id}`)}
                 >
                   <CardContent className="p-6">
@@ -107,9 +147,9 @@ export default function RiskAssessmentHistory() {
                       </div>
                       
                       {assessment.next_review_date && (
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <AlertCircle className="w-4 h-4" />
-                          <span>Review: {format(new Date(assessment.next_review_date), 'dd MMM yyyy')}</span>
+                        <div className={`flex items-center gap-2 ${overdue ? 'text-yellow-700 font-semibold' : 'text-gray-600'}`}>
+                          <AlertCircle className={`w-4 h-4 ${overdue ? 'text-yellow-600' : ''}`} />
+                          <span>{overdue ? 'Overdue: ' : 'Review: '}{format(parseISO(assessment.next_review_date), 'dd MMM yyyy')}</span>
                         </div>
                       )}
                       
@@ -129,7 +169,8 @@ export default function RiskAssessmentHistory() {
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
