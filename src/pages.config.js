@@ -39,6 +39,9 @@ import MonthlyNewsletter from './pages/MonthlyNewsletter';
 import EventUpdate from './pages/EventUpdate';
 import Communications from './pages/Communications';
 import JoinEnquiries from './pages/JoinEnquiries';
+import WeeklyMessageList from './pages/WeeklyMessageList';
+import MonthlyNewsletterList from './pages/MonthlyNewsletterList';
+import EventUpdateList from './pages/EventUpdateList';
 import __Layout from './Layout.jsx';
 
 
@@ -84,6 +87,9 @@ export const PAGES = {
     "EventUpdate": EventUpdate,
     "Communications": Communications,
     "JoinEnquiries": JoinEnquiries,
+    "WeeklyMessageList": WeeklyMessageList,
+    "MonthlyNewsletterList": MonthlyNewsletterList,
+    "EventUpdateList": EventUpdateList,
 }
 
 export const pagesConfig = {
