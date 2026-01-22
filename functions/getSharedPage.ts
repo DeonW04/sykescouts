@@ -5,8 +5,13 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     
     // Get page ID from request body
-    const body = await req.json();
-    const pageId = body.pageId;
+    let pageId;
+    try {
+      const body = await req.json();
+      pageId = body.pageId;
+    } catch (e) {
+      pageId = null;
+    }
 
     if (!pageId) {
       return Response.json({ error: 'Page ID required' }, { status: 400 });
