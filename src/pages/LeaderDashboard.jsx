@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, CheckSquare, Mail, Settings, ArrowRight, Tent, ChevronDown, Image } from 'lucide-react';
+import { Users, Calendar, Award, CheckSquare, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -183,9 +183,15 @@ export default function LeaderDashboard() {
   }
 
   const quickActions = [
-    { icon: Users, label: 'Members', count: 0, page: 'LeaderMembers' },
-    { icon: CheckSquare, label: 'Attendance', count: 0, page: 'LeaderAttendance' },
-    { icon: Calendar, label: 'Programme', count: 0, dropdown: true },
+    { icon: Users, label: 'Members', count: 0, dropdown: true, dropdownItems: [
+      { label: 'Member Info', page: 'LeaderMembers' },
+      { label: 'Attendance', page: 'LeaderAttendance' }
+    ]},
+    { icon: Calendar, label: 'Programme', count: 0, dropdown: true, dropdownItems: [
+      { label: 'Weekly Meetings', page: 'LeaderProgramme' },
+      { label: 'Events', page: 'LeaderEvents' }
+    ]},
+    { icon: ShieldAlert, label: 'Risk Assessments', count: 0, page: 'RiskAssessments' },
     { icon: Award, label: 'Badges', count: 0, page: 'LeaderBadges' },
     { icon: Image, label: 'Gallery', count: 0, page: 'LeaderGallery' },
     { icon: Mail, label: 'Communications', count: 0, page: 'AdminSettings' },
@@ -242,12 +248,11 @@ export default function LeaderDashboard() {
                     </Card>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => window.location.href = createPageUrl('LeaderProgramme')}>
-                      Weekly Meetings
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => window.location.href = createPageUrl('LeaderEvents')}>
-                      Events
-                    </DropdownMenuItem>
+                    {action.dropdownItems.map(item => (
+                      <DropdownMenuItem key={item.page} onClick={() => window.location.href = createPageUrl(item.page)}>
+                        {item.label}
+                      </DropdownMenuItem>
+                    ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : action.page ? (
