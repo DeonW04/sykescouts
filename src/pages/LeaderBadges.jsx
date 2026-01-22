@@ -65,26 +65,20 @@ export default function LeaderBadges() {
   });
 
   const getBadgeStats = (badgeId) => {
-    const badgeReqs = requirements.filter(r => r.badge_id === badgeId);
-    const totalReqs = badgeReqs.length;
+    const badge = badges.find(b => b.id === badgeId);
     
     const relevantMembers = members.filter(m => {
-      const badge = badges.find(b => b.id === badgeId);
       return badge?.section === 'all' || m.section_id === sections.find(s => s.name === badge?.section)?.id;
     });
 
-    const completedCount = allProgress.filter(p => p.badge_id === badgeId && p.status === 'completed').length;
-    const inProgressCount = allProgress.filter(p => p.badge_id === badgeId && p.status === 'in_progress').length;
-    
-    let closeToCompletion = 0;
-    relevantMembers.forEach(member => {
-      const memberReqProgress = requirementProgress.filter(
-        rp => rp.member_id === member.id && rp.badge_id === badgeId && rp.completed
-      );
-      if (memberReqProgress.length >= totalReqs - 1 && memberReqProgress.length < totalReqs) {
-        closeToCompletion++;
-      }
-    });
+    // Count members with progress records
+    const memberProgress = allProgress.filter(p => 
+      p.badge_id === badgeId && 
+      relevantMembers.some(m => m.id === p.member_id)
+    );
+
+    const completedCount = memberProgress.filter(p => p.completed_date != null).length;
+    const inProgressCount = memberProgress.filter(p => p.started_date != null && p.completed_date == null).length;
 
     const percentComplete = relevantMembers.length > 0 
       ? Math.round((completedCount / relevantMembers.length) * 100) 
@@ -92,7 +86,9 @@ export default function LeaderBadges() {
 
     // Due badges (completed but not awarded)
     const dueCount = awards.filter(a => 
-      a.badge_id === badgeId && a.award_status === 'pending'
+      a.badge_id === badgeId && 
+      a.award_status === 'pending' &&
+      relevantMembers.some(m => m.id === a.member_id)
     ).length;
 
     // Stock info
@@ -104,7 +100,6 @@ export default function LeaderBadges() {
     return { 
       completedCount, 
       inProgressCount, 
-      closeToCompletion, 
       percentComplete, 
       totalMembers: relevantMembers.length,
       dueCount,
