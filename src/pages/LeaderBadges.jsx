@@ -261,7 +261,7 @@ export default function LeaderBadges() {
                                       <Button
                                         variant="outline"
                                         className="w-full"
-                                        onClick={() => navigate(createPageUrl('ManageStagedBadge') + `?familyId=${badge.badge_family_id}`)}
+                                        onClick={() => navigate(createPageUrl('StagedBadgeDetail') + `?familyId=${badge.badge_family_id}`)}
                                       >
                                         <Award className="w-4 h-4 mr-2" />
                                         View Stages
