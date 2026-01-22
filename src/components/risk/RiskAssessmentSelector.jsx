@@ -44,7 +44,13 @@ export default function RiskAssessmentSelector({ programmeId, eventId, onAdded }
   };
 
   const filteredAssessments = allAssessments
-    .filter(a => !a.programme_id && !a.event_id)
+    .filter(a => {
+      // Don't show if already linked to this specific programme or event
+      if (programmeId && a.programme_id === programmeId) return false;
+      if (eventId && a.event_id === eventId) return false;
+      // Show if not linked to anything, or linked to something else
+      return true;
+    })
     .filter(a => 
       searchTerm.length === 0 || 
       a.activity_name.toLowerCase().includes(searchTerm.toLowerCase())
