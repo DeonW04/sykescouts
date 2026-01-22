@@ -41,8 +41,15 @@ export default function Communications() {
   });
 
   // Calculate stats
+  const membersWithRegisteredParents = members.filter(member => {
+    if (!member.parent_ids?.length) return false;
+    return member.parent_ids.some(parentId => 
+      parents.some(p => p.id === parentId)
+    );
+  }).length;
+
   const stats = {
-    parentPortalRegistration: parents.length > 0 ? Math.round((parents.length / (members.length || 1)) * 100) : 0,
+    membersWithParentPortal: membersWithRegisteredParents,
     uncontactedEnquiries: enquiries.filter(e => e.status === 'uncontacted').length,
     totalEnquiries6m: enquiries.filter(e => {
       const createdDate = new Date(e.created_date);
@@ -215,8 +222,8 @@ export default function Communications() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold text-blue-600">{stats.parentPortalRegistration}%</p>
-              <p className="text-sm text-gray-600 mt-2">{parents.length} of {members.length} registered</p>
+              <p className="text-3xl font-bold text-blue-600">{stats.membersWithParentPortal}</p>
+              <p className="text-sm text-gray-600 mt-2">Young people with registered parents</p>
             </CardContent>
           </Card>
 
