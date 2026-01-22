@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, CheckSquare, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert } from 'lucide-react';
+import { Users, Calendar, Award, CheckSquare, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -185,27 +185,25 @@ export default function LeaderDashboard() {
   const quickActions = [
     { 
       icon: Users, 
-      label: 'Members', 
-      page: 'LeaderMembers',
+      label: 'Members',
       gradient: 'from-blue-500 to-blue-600',
       iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600'
+      iconColor: 'text-blue-600',
+      dropdown: [
+        { label: 'Member Details', page: 'LeaderMembers', icon: Users },
+        { label: 'Attendance', page: 'LeaderAttendance', icon: UserCheck }
+      ]
     },
     { 
       icon: Calendar, 
-      label: 'Programme', 
-      page: 'LeaderProgramme',
+      label: 'Programme',
       gradient: 'from-purple-500 to-purple-600',
       iconBg: 'bg-purple-100',
-      iconColor: 'text-purple-600'
-    },
-    { 
-      icon: Tent, 
-      label: 'Events', 
-      page: 'LeaderEvents',
-      gradient: 'from-indigo-500 to-indigo-600',
-      iconBg: 'bg-indigo-100',
-      iconColor: 'text-indigo-600'
+      iconColor: 'text-purple-600',
+      dropdown: [
+        { label: 'Weekly Meetings', page: 'LeaderProgramme', icon: Calendar },
+        { label: 'Events', page: 'LeaderEvents', icon: CalendarDays }
+      ]
     },
     { 
       icon: ShieldAlert, 
@@ -222,6 +220,14 @@ export default function LeaderDashboard() {
       gradient: 'from-green-500 to-green-600',
       iconBg: 'bg-green-100',
       iconColor: 'text-green-600'
+    },
+    { 
+      icon: Mail, 
+      label: 'Communications', 
+      page: 'AdminSettings',
+      gradient: 'from-teal-500 to-teal-600',
+      iconBg: 'bg-teal-100',
+      iconColor: 'text-teal-600'
     },
     { 
       icon: Image, 
@@ -299,21 +305,54 @@ export default function LeaderDashboard() {
               whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Link to={createPageUrl(action.page)}>
-                <Card className={`cursor-pointer bg-gradient-to-br ${action.gradient} border-0 shadow-lg hover:shadow-xl transition-all overflow-hidden relative group`}>
-                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
-                  <CardContent className="p-6 text-center relative z-10">
-                    <motion.div 
-                      className={`w-14 h-14 mx-auto ${action.iconBg} rounded-2xl flex items-center justify-center mb-3 shadow-md`}
-                      whileHover={{ rotate: 360 }}
-                      transition={{ duration: 0.6 }}
-                    >
-                      <action.icon className={`w-7 h-7 ${action.iconColor}`} />
-                    </motion.div>
-                    <h3 className="text-sm font-semibold text-white">{action.label}</h3>
-                  </CardContent>
-                </Card>
-              </Link>
+              {action.dropdown ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Card className={`cursor-pointer bg-gradient-to-br ${action.gradient} border-0 shadow-lg hover:shadow-xl transition-all overflow-hidden relative group`}>
+                      <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
+                      <CardContent className="p-6 text-center relative z-10">
+                        <motion.div 
+                          className={`w-14 h-14 mx-auto ${action.iconBg} rounded-2xl flex items-center justify-center mb-3 shadow-md`}
+                          whileHover={{ rotate: 360 }}
+                          transition={{ duration: 0.6 }}
+                        >
+                          <action.icon className={`w-7 h-7 ${action.iconColor}`} />
+                        </motion.div>
+                        <div className="flex items-center justify-center gap-1">
+                          <h3 className="text-sm font-semibold text-white">{action.label}</h3>
+                          <ChevronDown className="w-3 h-3 text-white" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center">
+                    {action.dropdown.map((subItem) => (
+                      <DropdownMenuItem key={subItem.page} asChild>
+                        <Link to={createPageUrl(subItem.page)} className="flex items-center gap-2 cursor-pointer">
+                          <subItem.icon className="w-4 h-4" />
+                          {subItem.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Link to={createPageUrl(action.page)}>
+                  <Card className={`cursor-pointer bg-gradient-to-br ${action.gradient} border-0 shadow-lg hover:shadow-xl transition-all overflow-hidden relative group`}>
+                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
+                    <CardContent className="p-6 text-center relative z-10">
+                      <motion.div 
+                        className={`w-14 h-14 mx-auto ${action.iconBg} rounded-2xl flex items-center justify-center mb-3 shadow-md`}
+                        whileHover={{ rotate: 360 }}
+                        transition={{ duration: 0.6 }}
+                      >
+                        <action.icon className={`w-7 h-7 ${action.iconColor}`} />
+                      </motion.div>
+                      <h3 className="text-sm font-semibold text-white">{action.label}</h3>
+                    </CardContent>
+                  </Card>
+                </Link>
+              )}
             </motion.div>
           ))}
         </div>

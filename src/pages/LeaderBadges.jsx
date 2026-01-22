@@ -9,6 +9,7 @@ import { Award, Plus, Search, Users, TrendingUp, Package, AlertTriangle } from '
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Badge } from '@/components/ui/badge';
+import LeaderNav from '../components/leader/LeaderNav';
 
 export default function LeaderBadges() {
   const navigate = useNavigate();
@@ -115,7 +116,8 @@ export default function LeaderBadges() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#7413dc] text-white py-8">
+      <LeaderNav />
+      <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">

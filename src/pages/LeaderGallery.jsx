@@ -256,7 +256,8 @@ export default function LeaderGallery() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#7413dc] text-white py-8">
+      <LeaderNav />
+      <div className="bg-gradient-to-r from-pink-500 to-rose-600 text-white py-8">
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-3xl font-bold">Photo Gallery</h1>
           <p className="mt-2 text-purple-100">Upload and manage event photos</p>
