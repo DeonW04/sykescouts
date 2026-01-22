@@ -93,7 +93,7 @@ export default function WeeklyMessage() {
     );
   }
 
-  const shareUrl = `${window.location.origin}/view/weekly-message/${page.page_id}`;
+  const shareUrl = `https://testsite.sykescouts.org/sharedpage/${page.page_id}`;
 
   return (
     <div className="min-h-screen bg-gray-50">
