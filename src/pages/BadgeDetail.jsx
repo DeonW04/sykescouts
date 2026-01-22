@@ -2,14 +2,16 @@ import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Award, CheckCircle, Circle } from 'lucide-react';
+import { ArrowLeft, Award, CheckCircle, Circle, Info, Target, Users, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { motion } from 'framer-motion';
+import LeaderNav from '../components/leader/LeaderNav';
 
 export default function BadgeDetail() {
   const navigate = useNavigate();
@@ -108,63 +110,231 @@ export default function BadgeDetail() {
     };
   };
 
+  const completedCount = relevantMembers.filter(m => {
+    const prog = getMemberProgress(m.id);
+    return prog.completed === prog.total;
+  }).length;
+
+  const inProgressCount = relevantMembers.filter(m => {
+    const prog = getMemberProgress(m.id);
+    return prog.completed > 0 && prog.completed < prog.total;
+  }).length;
+
+  const notStartedCount = relevantMembers.filter(m => {
+    const prog = getMemberProgress(m.id);
+    return prog.completed === 0;
+  }).length;
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#7413dc] text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
+      <LeaderNav />
+      
+      {/* Header */}
+      <div className="relative bg-gradient-to-r from-green-500 to-emerald-600 text-white py-12 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <Button
             variant="ghost"
             onClick={() => navigate(createPageUrl('LeaderBadges'))}
-            className="text-white hover:bg-white/10 mb-4"
+            className="text-white hover:bg-white/20 mb-6"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Badges
           </Button>
-          <div className="flex items-start gap-4">
-            <img src={badge.image_url} alt={badge.name} className="w-20 h-20 rounded-lg" />
-            <div>
-              <h1 className="text-3xl font-bold">{badge.name}</h1>
-              <p className="mt-1 text-white/80">{badge.description}</p>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-start gap-6"
+          >
+            <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-2xl p-3 flex items-center justify-center">
+              <img src={badge.image_url} alt={badge.name} className="w-full h-full object-contain" />
             </div>
-          </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-3">
+                <h1 className="text-4xl font-bold">{badge.name}</h1>
+                <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm capitalize">
+                  {badge.category}
+                </Badge>
+                {badge.section !== 'all' && (
+                  <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
+                    {sections.find(s => s.name === badge.section)?.display_name}
+                  </Badge>
+                )}
+              </div>
+              {badge.description && (
+                <p className="text-lg text-white/90 max-w-3xl">{badge.description}</p>
+              )}
+            </div>
+          </motion.div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Member Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
+        {/* Stats Overview */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8"
+        >
+          <Card className="border-l-4 border-l-blue-500">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Total Members</p>
+                  <p className="text-2xl font-bold text-gray-900">{relevantMembers.length}</p>
+                </div>
+                <Users className="w-8 h-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-green-500">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Completed</p>
+                  <p className="text-2xl font-bold text-green-600">{completedCount}</p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-orange-500">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">In Progress</p>
+                  <p className="text-2xl font-bold text-orange-600">{inProgressCount}</p>
+                </div>
+                <TrendingUp className="w-8 h-8 text-orange-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-gray-400">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Not Started</p>
+                  <p className="text-2xl font-bold text-gray-600">{notStartedCount}</p>
+                </div>
+                <Circle className="w-8 h-8 text-gray-400" />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Badge Structure */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="mb-8 border-2 border-green-200 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
+                  <Target className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Badge Structure & Requirements</CardTitle>
+                  <CardDescription>All requirements needed to complete this badge</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-6">
+                {modules.sort((a, b) => a.order - b.order).map((module, moduleIdx) => {
+                  const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
+                  return (
+                    <motion.div 
+                      key={module.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + moduleIdx * 0.1 }}
+                      className="border-l-4 border-green-400 pl-6 py-2"
+                    >
+                      <div className="flex items-center gap-2 mb-4">
+                        <div className="w-8 h-8 bg-green-500 text-white rounded-lg flex items-center justify-center font-bold text-sm">
+                          {moduleIdx + 1}
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900">{module.name}</h3>
+                        <Badge variant="outline" className="text-xs">{moduleReqs.length} requirements</Badge>
+                      </div>
+                      <div className="space-y-3 ml-10">
+                        {moduleReqs.map((req, reqIdx) => (
+                          <div key={req.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                            <div className="w-6 h-6 bg-white border-2 border-gray-300 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <span className="text-xs font-semibold text-gray-600">{reqIdx + 1}</span>
+                            </div>
+                            <p className="text-sm text-gray-700 leading-relaxed">{req.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Member Progress Table */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Card className="shadow-lg">
+            <CardHeader className="bg-gray-50">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-green-600" />
+                Individual Member Progress
+              </CardTitle>
+              <CardDescription>Track each member's progress through the badge requirements</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left p-3 font-medium sticky left-0 bg-white">Member</th>
-                  <th className="text-center p-3 font-medium w-24">Progress</th>
+                <tr className="border-b-2 border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
+                  <th className="text-left p-4 font-semibold text-gray-900 sticky left-0 bg-gradient-to-r from-green-50 to-emerald-50 z-10">Member</th>
+                  <th className="text-center p-4 font-semibold text-gray-900 w-28">Progress</th>
                   {modules.sort((a, b) => a.order - b.order).map((module, moduleIdx) => {
                     const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
                     return (
-                      <th key={module.id} colSpan={moduleReqs.length} className="text-center p-3 font-medium border-l-2">
-                        <div className="text-xs font-semibold">{module.name}</div>
+                      <th key={module.id} colSpan={moduleReqs.length} className="text-center p-4 font-semibold border-l-4 border-green-300">
+                        <div className="text-xs font-bold text-gray-700 flex items-center justify-center gap-2">
+                          <span className="w-6 h-6 bg-green-500 text-white rounded-lg flex items-center justify-center text-[10px]">
+                            {moduleIdx + 1}
+                          </span>
+                          {module.name}
+                        </div>
                       </th>
                     );
                   })}
                 </tr>
-                <tr className="border-b bg-gray-50">
-                  <th className="sticky left-0 bg-gray-50"></th>
+                <tr className="border-b-2 border-gray-200 bg-gray-50">
+                  <th className="sticky left-0 bg-gray-50 z-10"></th>
                   <th></th>
                   {modules.sort((a, b) => a.order - b.order).map(module => {
                     const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
                     return moduleReqs.map((req, idx) => (
-                      <th key={req.id} className="text-center p-2 w-12">
+                      <th key={req.id} className="text-center p-3 w-14 border-l border-gray-200">
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <div className="text-xs text-gray-600 cursor-help">{idx + 1}</div>
+                              <div className="w-7 h-7 mx-auto bg-white border-2 border-gray-300 rounded-full flex items-center justify-center text-xs font-semibold text-gray-700 cursor-help hover:border-green-400 hover:bg-green-50 transition-colors">
+                                {idx + 1}
+                              </div>
                             </TooltipTrigger>
-                            <TooltipContent className="max-w-xs">
-                              <p className="text-sm">{req.text}</p>
+                            <TooltipContent className="max-w-sm">
+                              <p className="text-sm font-medium">{req.text}</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -174,38 +344,79 @@ export default function BadgeDetail() {
                 </tr>
               </thead>
                 <tbody>
-                  {relevantMembers.map(member => {
+                  {relevantMembers.map((member, memberIdx) => {
                     const memberProgress = getMemberProgress(member.id);
                     const isComplete = memberProgress.completed === memberProgress.total;
                     const isNearlyDone = memberProgress.completed >= memberProgress.total - 1 && !isComplete;
 
                     return (
-                      <tr key={member.id} className={`border-b hover:bg-gray-50 ${isComplete ? 'bg-green-50' : isNearlyDone ? 'bg-orange-50' : ''}`}>
-                        <td className="p-3 sticky left-0 bg-inherit">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{member.full_name}</span>
-                            {isComplete && <CheckCircle className="w-4 h-4 text-green-600" />}
-                            {isNearlyDone && <Badge variant="outline" className="text-xs">Nearly Done</Badge>}
+                      <tr 
+                        key={member.id} 
+                        className={`border-b transition-colors ${
+                          isComplete 
+                            ? 'bg-green-50 hover:bg-green-100' 
+                            : isNearlyDone 
+                            ? 'bg-orange-50 hover:bg-orange-100' 
+                            : 'hover:bg-gray-50'
+                        }`}
+                      >
+                        <td className="p-4 sticky left-0 bg-inherit z-10">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                              {member.full_name.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-gray-900">{member.full_name}</span>
+                                {isComplete && <CheckCircle className="w-5 h-5 text-green-600" />}
+                              </div>
+                              {isNearlyDone && (
+                                <Badge variant="outline" className="text-xs mt-1 border-orange-400 text-orange-700 bg-orange-50">
+                                  Nearly Complete!
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </td>
-                        <td className="p-3 text-center">
-                          <div className="text-sm font-medium">{memberProgress.percentage}%</div>
-                          <div className="text-xs text-gray-500">{memberProgress.completed}/{memberProgress.total}</div>
+                        <td className="p-4 text-center">
+                          <div className="flex flex-col items-center">
+                            <div className="text-lg font-bold text-gray-900 mb-1">{memberProgress.percentage}%</div>
+                            <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
+                              <div 
+                                className={`h-full rounded-full transition-all ${
+                                  isComplete ? 'bg-green-500' : 'bg-blue-500'
+                                }`}
+                                style={{ width: `${memberProgress.percentage}%` }}
+                              />
+                            </div>
+                            <div className="text-xs text-gray-500 font-medium">
+                              {memberProgress.completed} / {memberProgress.total}
+                            </div>
+                          </div>
                         </td>
                         {modules.sort((a, b) => a.order - b.order).map((module, moduleIdx) => {
                           const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
-                          return moduleReqs.map((req, reqIdx) => (
-                            <td key={req.id} className={`p-3 text-center ${reqIdx === 0 ? 'border-l-2' : ''}`}>
-                              <Checkbox
-                                checked={isRequirementCompleted(member.id, req.id)}
-                                onCheckedChange={(checked) => toggleReqMutation.mutate({
-                                  memberId: member.id,
-                                  reqId: req.id,
-                                  completed: checked,
-                                })}
-                              />
-                            </td>
-                          ));
+                          return moduleReqs.map((req, reqIdx) => {
+                            const isChecked = isRequirementCompleted(member.id, req.id);
+                            return (
+                              <td 
+                                key={req.id} 
+                                className={`p-3 text-center ${reqIdx === 0 ? 'border-l-4 border-green-300' : 'border-l border-gray-200'}`}
+                              >
+                                <div className="flex justify-center">
+                                  <Checkbox
+                                    checked={isChecked}
+                                    onCheckedChange={(checked) => toggleReqMutation.mutate({
+                                      memberId: member.id,
+                                      reqId: req.id,
+                                      completed: checked,
+                                    })}
+                                    className={isChecked ? 'border-green-500 data-[state=checked]:bg-green-500' : ''}
+                                  />
+                                </div>
+                              </td>
+                            );
+                          });
                         })}
                       </tr>
                     );
@@ -215,31 +426,7 @@ export default function BadgeDetail() {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>Requirements Key</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {modules.sort((a, b) => a.order - b.order).map(module => {
-                const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
-                return (
-                  <div key={module.id}>
-                    <h3 className="font-semibold mb-2">{module.name}</h3>
-                    <div className="space-y-1 ml-4">
-                      {moduleReqs.map((req, idx) => (
-                        <div key={req.id} className="text-sm">
-                          <span className="font-medium">{idx + 1}.</span> {req.text}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+        </motion.div>
       </div>
     </div>
   );
