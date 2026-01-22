@@ -17,7 +17,7 @@ import NewEventDialog from '../components/events/NewEventDialog';
 import TodoSection from '../components/meeting/TodoSection';
 import EventParentPortalSection from '../components/events/EventParentPortalSection';
 import RiskAssessmentSection from '../components/meeting/RiskAssessmentSection';
-import BadgesSection from '../components/meeting/BadgesSection';
+import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
 
 export default function EventDetail() {
   const navigate = useNavigate();
@@ -340,7 +340,7 @@ export default function EventDetail() {
           </TabsContent>
 
           <TabsContent value="badges">
-            <BadgesSection programmeId={eventId} entityType="event" />
+            <ProgrammeBadgeCriteriaSection programmeId={eventId} entityType="event" />
           </TabsContent>
 
           <TabsContent value="equipment" className="space-y-6">

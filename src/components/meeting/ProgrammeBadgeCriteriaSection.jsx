@@ -10,7 +10,7 @@ import { Award, Plus, X, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
-export default function ProgrammeBadgeCriteriaSection({ programmeId }) {
+export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType = 'programme' }) {
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,8 +24,13 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId }) {
   });
 
   const { data: linkedCriteria = [] } = useQuery({
-    queryKey: ['programme-criteria', programmeId],
-    queryFn: () => base44.entities.ProgrammeBadgeCriteria.filter({ programme_id: programmeId }),
+    queryKey: ['programme-criteria', programmeId, entityType],
+    queryFn: async () => {
+      const all = await base44.entities.ProgrammeBadgeCriteria.list();
+      return all.filter(c => 
+        entityType === 'event' ? c.event_id === programmeId : c.programme_id === programmeId
+      );
+    },
     enabled: !!programmeId,
   });
 
@@ -40,7 +45,12 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId }) {
   });
 
   const addCriteriaMutation = useMutation({
-    mutationFn: (data) => base44.entities.ProgrammeBadgeCriteria.create(data),
+    mutationFn: (data) => {
+      const criteriaData = entityType === 'event'
+        ? { event_id: programmeId, ...data }
+        : { programme_id: programmeId, ...data };
+      return base44.entities.ProgrammeBadgeCriteria.create(criteriaData);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['programme-criteria'] });
       setShowDialog(false);
@@ -63,7 +73,6 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId }) {
     if (!selectedBadge || selectedReqs.length === 0) return;
     
     addCriteriaMutation.mutate({
-      programme_id: programmeId,
       badge_id: selectedBadge,
       requirement_ids: selectedReqs,
     });

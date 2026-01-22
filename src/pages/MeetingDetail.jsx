@@ -390,7 +390,6 @@ export default function MeetingDetail() {
 
           <TabsContent value="badges" className="space-y-6">
             <ProgrammeBadgeCriteriaSection programmeId={existingProgramme?.id} />
-            <BadgesSection programmeId={existingProgramme?.id} />
           </TabsContent>
 
           <TabsContent value="attendance">
