@@ -10,6 +10,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
+import PageBuilder from '../components/pageBuilder/PageBuilder';
 
 export default function MonthlyNewsletter() {
   const navigate = useNavigate();
@@ -216,13 +217,14 @@ export default function MonthlyNewsletter() {
             <CardTitle>Page Builder</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4 p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 text-center">
-              <p className="text-gray-600 mb-4">Available blocks: Heading, Text, Image, Gallery, Questions, Votes, Text Input, Action Required</p>
-              <Button className="bg-purple-600 hover:bg-purple-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Block
-              </Button>
-            </div>
+            {page && (
+              <PageBuilder
+                blocks={page.blocks || []}
+                onBlocksChange={(blocks) => updatePageMutation.mutate({ blocks })}
+                pageId={page.page_id}
+                pageType="monthly_newsletter"
+              />
+            )}
           </CardContent>
         </Card>
       </div>
