@@ -187,7 +187,15 @@ export default function WeeklyMessage() {
           <Card>
             <CardContent className="p-4">
               <p className="text-gray-600 text-sm mb-1">Share URL</p>
-              <p className="text-xs font-mono truncate">{shareUrl}</p>
+              <a 
+                href={shareUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs font-mono text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center gap-1"
+              >
+                {shareUrl}
+                <ExternalLink className="w-3 h-3 flex-shrink-0" />
+              </a>
             </CardContent>
           </Card>
         </div>
