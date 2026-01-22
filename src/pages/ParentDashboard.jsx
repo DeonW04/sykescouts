@@ -155,35 +155,40 @@ export default function ParentDashboard() {
 
   return (
     <>
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Header */}
-      <div className="bg-[#7413dc] text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold">Parent Portal</h1>
-          <p className="mt-2 text-white/80">Welcome back, {user.full_name}</p>
+      <div className="relative bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] text-white py-16 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <h1 className="text-4xl font-bold mb-2">Welcome back!</h1>
+          <p className="text-purple-100 text-lg">{user.full_name}</p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
           {quickStats.map((stat, index) => (
             <motion.div
               key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.05 }}
+              whileHover={{ scale: 1.05 }}
             >
               <Card 
-                className="hover:shadow-lg transition-shadow cursor-pointer"
+                className="group hover:shadow-2xl transition-all duration-300 cursor-pointer border-l-4 border-l-transparent hover:border-l-[#7413dc] bg-white/80 backdrop-blur-sm"
                 onClick={stat.onClick}
               >
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center text-center">
-                    <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center mb-3`}>
-                      <stat.icon className="w-6 h-6 text-white" />
+                    <div className={`w-16 h-16 ${stat.color} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
+                      <stat.icon className="w-8 h-8 text-white" />
                     </div>
-                    <p className="text-sm font-medium text-gray-900">{stat.label}</p>
+                    <p className="font-semibold text-gray-900">{stat.label}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -195,16 +200,19 @@ export default function ParentDashboard() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Side - Actions Required */}
           <div className="lg:col-span-1">
-            <Card className="h-full">
+            <Card className="h-full border-l-4 border-l-orange-400 bg-gradient-to-br from-orange-50/50 to-white shadow-xl">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5 text-orange-500" />
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <AlertCircle className="w-6 h-6 text-orange-500" />
                   Actions Required
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {actionsRequired.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No actions required at this time.</p>
+                  <div className="text-center py-8">
+                    <Check className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                    <p className="text-gray-600">All caught up!</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {actionsRequired.map(action => (
@@ -319,70 +327,88 @@ export default function ParentDashboard() {
           {/* Right Side - Meetings and Events */}
           <div className="lg:col-span-2 space-y-6">
             {/* Next Weekly Meeting */}
-            <Card>
+            <Card className="border-l-4 border-l-green-500 shadow-xl bg-gradient-to-br from-green-50/50 to-white">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-green-500" />
-                  Next Weekly Meeting
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Clock className="w-6 h-6 text-green-500" />
+                  Next Meeting
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {nextMeeting ? (
-                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <h3 className="font-semibold text-green-900 text-lg">{nextMeeting.title}</h3>
-                    <p className="text-green-700 text-sm mt-1">
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-5 bg-white border-2 border-green-200 rounded-xl hover:shadow-md transition-shadow"
+                  >
+                    <h3 className="font-bold text-gray-900 text-lg mb-2">{nextMeeting.title}</h3>
+                    <p className="text-gray-700 font-medium mb-2">
                       {new Date(nextMeeting.date).toLocaleDateString('en-GB', { 
                         weekday: 'long', 
-                        year: 'numeric', 
                         month: 'long', 
                         day: 'numeric' 
                       })}
                     </p>
                     {nextMeeting.description && (
-                      <p className="text-green-600 text-sm mt-2">{nextMeeting.description}</p>
+                      <p className="text-gray-600 text-sm">{nextMeeting.description}</p>
                     )}
-                  </div>
+                  </motion.div>
                 ) : (
-                  <p className="text-gray-500">No upcoming meetings scheduled.</p>
+                  <div className="text-center py-6">
+                    <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-500">No meetings scheduled</p>
+                  </div>
                 )}
               </CardContent>
             </Card>
 
             {/* Upcoming Events and Camps */}
-            <Card>
+            <Card className="border-l-4 border-l-purple-500 shadow-xl bg-gradient-to-br from-purple-50/50 to-white">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-purple-500" />
-                  Upcoming Events and Camps
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Tent className="w-6 h-6 text-purple-500" />
+                  Upcoming Events
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {upcomingEvents.length === 0 ? (
-                  <p className="text-gray-500">No upcoming events or camps.</p>
+                  <div className="text-center py-6">
+                    <Tent className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-500">No upcoming events</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
-                    {upcomingEvents.map((event) => (
-                      <div
+                    {upcomingEvents.slice(0, 3).map((event, index) => (
+                      <motion.div
                         key={event.id}
-                        className="flex items-start justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="p-4 bg-white border border-purple-100 rounded-xl hover:shadow-lg hover:border-purple-300 transition-all cursor-pointer"
                         onClick={() => navigate(createPageUrl('ParentEvents'))}
                       >
-                        <div>
-                          <p className="font-semibold text-gray-900">{event.title}</p>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {new Date(event.start_date).toLocaleDateString('en-GB', { 
-                              weekday: 'short', 
-                              month: 'short', 
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
-                          </p>
-                          {event.location && (
-                            <p className="text-xs text-gray-500 mt-1">{event.location}</p>
-                          )}
-                        </div>
-                      </div>
+                        <p className="font-bold text-gray-900 mb-1">{event.title}</p>
+                        <p className="text-sm text-gray-600 font-medium">
+                          {new Date(event.start_date).toLocaleDateString('en-GB', { 
+                            month: 'short', 
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </p>
+                        {event.location && (
+                          <p className="text-xs text-gray-500 mt-1">{event.location}</p>
+                        )}
+                      </motion.div>
                     ))}
+                    {upcomingEvents.length > 3 && (
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => navigate(createPageUrl('ParentEvents'))}
+                      >
+                        View All Events ({upcomingEvents.length})
+                      </Button>
+                    )}
                   </div>
                 )}
               </CardContent>

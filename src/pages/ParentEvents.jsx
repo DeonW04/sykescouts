@@ -73,19 +73,23 @@ export default function ParentEvents() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#7413dc] text-white py-8">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+      <div className="relative bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] text-white py-16 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+        </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold">Events & Camps</h1>
-              <p className="mt-2 text-white/80">View upcoming and past events</p>
+              <h1 className="text-4xl font-bold mb-2">Events & Camps</h1>
+              <p className="text-purple-100 text-lg">Adventures await!</p>
             </div>
             <div className="flex gap-2">
               <Button
                 variant={viewMode === 'list' ? 'secondary' : 'outline'}
                 onClick={() => setViewMode('list')}
-                className={viewMode === 'list' ? 'bg-white text-[#7413dc]' : 'bg-white/10 text-white border-white hover:bg-white/20'}
+                className={viewMode === 'list' ? 'bg-white text-[#7413dc] font-semibold' : 'bg-white/10 text-white border-white/30 hover:bg-white/20'}
               >
                 <List className="w-4 h-4 mr-2" />
                 List
@@ -93,7 +97,7 @@ export default function ParentEvents() {
               <Button
                 variant={viewMode === 'calendar' ? 'secondary' : 'outline'}
                 onClick={() => setViewMode('calendar')}
-                className={viewMode === 'calendar' ? 'bg-white text-[#7413dc]' : 'bg-white/10 text-white border-white hover:bg-white/20'}
+                className={viewMode === 'calendar' ? 'bg-white text-[#7413dc] font-semibold' : 'bg-white/10 text-white border-white/30 hover:bg-white/20'}
               >
                 <CalendarViewIcon className="w-4 h-4 mr-2" />
                 Calendar
@@ -103,12 +107,14 @@ export default function ParentEvents() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {events.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600">No events planned at the moment</p>
+          <Card className="bg-white/80 backdrop-blur-sm shadow-xl">
+            <CardContent className="p-16 text-center">
+              <div className="w-20 h-20 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <CalendarIcon className="w-10 h-10 text-[#7413dc]" />
+              </div>
+              <p className="text-gray-600 text-lg">No events planned at the moment</p>
             </CardContent>
           </Card>
         ) : viewMode === 'calendar' ? (
@@ -170,76 +176,84 @@ export default function ParentEvents() {
         ) : (
           <>
             {upcomingEvents.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold mb-4">Upcoming Events</h2>
-                <div className="grid gap-4">
-                  {upcomingEvents.map(event => {
+              <div className="mb-10">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-1 w-12 bg-gradient-to-r from-[#7413dc] to-transparent rounded-full"></div>
+                  <h2 className="text-2xl font-bold">Upcoming</h2>
+                  <Badge className="bg-[#7413dc]">{upcomingEvents.length}</Badge>
+                </div>
+                <div className="grid gap-5">
+                  {upcomingEvents.map((event, index) => {
                     const eventSections = sections.filter(s => event.section_ids?.includes(s.id));
                     
                     return (
-                      <Card
+                      <motion.div
                         key={event.id}
-                        className="cursor-pointer hover:shadow-lg transition-shadow"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                      <Card
+                        className="cursor-pointer hover:shadow-2xl transition-all duration-300 border-l-4 border-l-[#7413dc] bg-white/80 backdrop-blur-sm"
                         onClick={() => navigate(createPageUrl('ParentEventDetail') + `?id=${event.id}`)}
                       >
                         <CardHeader>
-                          <div className="flex items-start justify-between">
+                          <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
-                              <CardTitle className="text-xl">{event.title}</CardTitle>
-                              <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-gray-600">
-                                <span className="flex items-center gap-1">
-                                  <CalendarIcon className="w-4 h-4" />
-                                  {format(new Date(event.start_date), 'EEEE, MMMM d, yyyy')}
+                              <div className="flex items-center gap-2 mb-3">
+                                <Badge className={event.type === 'Camp' ? 'bg-green-600' : event.type === 'Day Event' ? 'bg-blue-600' : 'bg-gray-600'}>
+                                  {event.type}
+                                </Badge>
+                              </div>
+                              <CardTitle className="text-2xl mb-3">{event.title}</CardTitle>
+                              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-gray-600">
+                                <div className="flex items-center gap-2">
+                                  <CalendarIcon className="w-4 h-4 text-[#7413dc]" />
+                                  <span className="font-medium">{format(new Date(event.start_date), 'MMM d, yyyy')}</span>
                                   {event.end_date && event.end_date !== event.start_date && (
-                                    <> to {format(new Date(event.end_date), 'EEEE, MMMM d, yyyy')}</>
+                                    <span className="text-gray-400">→ {format(new Date(event.end_date), 'MMM d')}</span>
                                   )}
-                                </span>
+                                </div>
                                 {event.location && (
-                                  <span className="flex items-center gap-1">
-                                    <MapPin className="w-4 h-4" />
-                                    {event.location}
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <MapPin className="w-4 h-4 text-gray-400" />
+                                    <span>{event.location}</span>
+                                  </div>
                                 )}
                               </div>
                             </div>
-                            <Badge variant="outline" className="capitalize">{event.type}</Badge>
                           </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
                           {event.description && (
                             <p className="text-gray-700 line-clamp-2">{event.description}</p>
                           )}
-                          
-                          <div className="flex flex-wrap gap-2 text-sm">
-                            {eventSections.map(section => (
-                              <Badge key={section.id} variant="outline">{section.display_name}</Badge>
-                            ))}
-                          </div>
 
                           {(event.cost > 0 || event.consent_deadline || event.payment_deadline) && (
-                            <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                            <div className="flex flex-wrap gap-4 pt-3 border-t">
                               {event.cost > 0 && (
-                                <div>
-                                  <p className="text-xs text-gray-600">Cost</p>
-                                  <p className="font-medium">£{event.cost.toFixed(2)}</p>
+                                <div className="flex-1 min-w-[120px]">
+                                  <p className="text-xs text-gray-500 mb-1">Cost</p>
+                                  <p className="font-bold text-lg text-[#7413dc]">£{event.cost.toFixed(2)}</p>
                                 </div>
                               )}
                               {event.consent_deadline && (
-                                <div>
-                                  <p className="text-xs text-gray-600">Consent Deadline</p>
-                                  <p className="font-medium">{format(new Date(event.consent_deadline), 'MMM d, yyyy')}</p>
+                                <div className="flex-1 min-w-[120px]">
+                                  <p className="text-xs text-gray-500 mb-1">Consent By</p>
+                                  <p className="font-medium text-sm">{format(new Date(event.consent_deadline), 'MMM d')}</p>
                                 </div>
                               )}
                               {event.payment_deadline && (
-                                <div>
-                                  <p className="text-xs text-gray-600">Payment Deadline</p>
-                                  <p className="font-medium">{format(new Date(event.payment_deadline), 'MMM d, yyyy')}</p>
+                                <div className="flex-1 min-w-[120px]">
+                                  <p className="text-xs text-gray-500 mb-1">Payment By</p>
+                                  <p className="font-medium text-sm">{format(new Date(event.payment_deadline), 'MMM d')}</p>
                                 </div>
                               )}
                             </div>
                           )}
                         </CardContent>
                       </Card>
+                      </motion.div>
                     );
                   })}
                 </div>
@@ -256,25 +270,19 @@ export default function ParentEvents() {
                     return (
                       <Card key={event.id} className="opacity-75">
                         <CardHeader>
-                          <div className="flex items-start justify-between">
+                          <div className="flex items-start justify-between gap-3">
                             <div className="flex-1">
-                              <CardTitle className="text-xl">{event.title}</CardTitle>
-                              <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                              <Badge variant="outline" className="mb-2">{event.type}</Badge>
+                              <CardTitle className="text-lg text-gray-700">{event.title}</CardTitle>
+                              <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
+                                <CalendarIcon className="w-3.5 h-3.5" />
                                 <span>{format(new Date(event.start_date), 'MMM d, yyyy')}</span>
-                                {event.location && <span>• {event.location}</span>}
                               </div>
                             </div>
-                            <Badge variant="outline" className="capitalize">{event.type}</Badge>
                           </div>
                         </CardHeader>
-                        <CardContent>
-                          <div className="flex flex-wrap gap-2">
-                            {eventSections.map(section => (
-                              <Badge key={section.id} variant="outline">{section.display_name}</Badge>
-                            ))}
-                          </div>
-                        </CardContent>
                       </Card>
+                      </motion.div>
                     );
                   })}
                 </div>
