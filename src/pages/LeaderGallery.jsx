@@ -14,6 +14,7 @@ import { format } from 'date-fns';
 
 export default function LeaderGallery() {
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploadForm, setUploadForm] = useState({
@@ -204,8 +205,10 @@ export default function LeaderGallery() {
     }
 
     setUploading(true);
+    setUploadProgress({ current: 0, total: selectedFiles.length });
     try {
-      for (const file of selectedFiles) {
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
         await base44.entities.EventPhoto.create({
@@ -219,12 +222,15 @@ export default function LeaderGallery() {
           is_public: uploadForm.is_public,
           uploaded_by: user.id,
         });
+        
+        setUploadProgress({ current: i + 1, total: selectedFiles.length });
       }
 
       queryClient.invalidateQueries(['all-photos']);
       toast.success(`${selectedFiles.length} photo${selectedFiles.length > 1 ? 's' : ''} uploaded successfully`);
       setShowUploadDialog(false);
       setSelectedFiles([]);
+      setUploadProgress({ current: 0, total: 0 });
       setUploadForm({
         link_type: 'event',
         event_id: '',
@@ -237,6 +243,7 @@ export default function LeaderGallery() {
       });
     } catch (error) {
       toast.error('Upload failed: ' + error.message);
+      setUploadProgress({ current: 0, total: 0 });
     } finally {
       setUploading(false);
     }
@@ -661,7 +668,7 @@ export default function LeaderGallery() {
                 {uploading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Uploading...
+                    Uploading {uploadProgress.current}/{uploadProgress.total}
                   </>
                 ) : (
                   'Upload'
