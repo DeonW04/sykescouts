@@ -15,13 +15,13 @@ export default function Gallery() {
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
 
   const { data: events = [], isLoading: eventsLoading } = useQuery({
-    queryKey: ['published-events'],
-    queryFn: () => base44.entities.Event.filter({ published: true }, '-start_date'),
+    queryKey: ['all-events'],
+    queryFn: () => base44.entities.Event.list('-start_date'),
   });
 
   const { data: programmes = [], isLoading: programmesLoading } = useQuery({
-    queryKey: ['published-programmes'],
-    queryFn: () => base44.entities.Programme.filter({ published: true, shown_in_portal: true }, '-date'),
+    queryKey: ['all-programmes'],
+    queryFn: () => base44.entities.Programme.list('-date'),
   });
 
   const { data: allPhotos = [], isLoading: photosLoading } = useQuery({
