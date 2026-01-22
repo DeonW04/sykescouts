@@ -642,7 +642,6 @@ export default function LeaderGallery() {
                 <SelectContent>
                   <SelectItem value="leaders">Leaders Only</SelectItem>
                   <SelectItem value="parents">Parents & Leaders</SelectItem>
-                  <SelectItem value="public">Public Gallery</SelectItem>
                 </SelectContent>
               </Select>
             </div>
