@@ -109,7 +109,7 @@ export default function EventUpdate() {
     );
   }
 
-  const shareUrl = `https://testsite.sykescouts.org/sharedpage/${page.page_id}`;
+  const shareUrl = `https://testsite.sykescouts.org/sharedpage?id=${page.page_id}`;
 
   return (
     <div className="min-h-screen bg-gray-50">
