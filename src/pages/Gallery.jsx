@@ -27,10 +27,8 @@ export default function Gallery() {
   const { data: allPhotos = [], isLoading: photosLoading } = useQuery({
     queryKey: ['public-photos'],
     queryFn: async () => {
-      const photos = await base44.entities.EventPhoto.filter({ 
-        visible_to: { $in: ['public', 'parents'] } 
-      });
-      return photos;
+      const photos = await base44.entities.EventPhoto.filter({});
+      return photos.filter(p => p.is_public === true || p.visible_to === 'parents' || p.visible_to === 'public');
     },
   });
 
