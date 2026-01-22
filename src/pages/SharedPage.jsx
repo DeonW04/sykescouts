@@ -13,19 +13,18 @@ import InteractiveBlock from '../components/pageBuilder/blocks/InteractiveBlock'
 export default function SharedPage() {
   const location = useLocation();
   const [pageId, setPageId] = useState(null);
-  const [sessionId] = useState(() => Math.random().toString(36).substr(2, 9));
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
     const id = location.pathname.split('/').pop();
     setPageId(id);
   }, [location]);
 
   const { data: page, isLoading, error } = useQuery({
     queryKey: ['shared-page', pageId],
-    queryFn: () => {
+    queryFn: async () => {
       if (!pageId) return null;
-      return base44.entities.CommunicationPage.filter({ page_id: pageId }).then(result => result[0]);
+      const response = await base44.functions.invoke('getSharedPage');
+      return response.data;
     },
     enabled: !!pageId,
   });
