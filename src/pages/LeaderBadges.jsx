@@ -137,7 +137,7 @@ export default function LeaderBadges() {
               <Button
                 onClick={() => navigate(createPageUrl('BadgeStockManagement'))}
                 variant="outline"
-                className="bg-green-600 border-white text-white hover:bg-white/20"
+                className="bg-green-100 border-white text-white hover:bg-white/20"
               >
                 <Package className="w-4 h-4 mr-2" />
                 Manage Stock
