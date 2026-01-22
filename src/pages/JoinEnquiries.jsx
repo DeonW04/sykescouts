@@ -23,6 +23,17 @@ export default function JoinEnquiries() {
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
 
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me(),
+  });
+
+  const { data: userLeader } = useQuery({
+    queryKey: ['leader', user?.id],
+    queryFn: () => base44.entities.Leader.filter({ user_id: user?.id }).then(result => result[0]),
+    enabled: !!user,
+  });
+
   const { data: enquiries = [] } = useQuery({
     queryKey: ['join-enquiries'],
     queryFn: () => base44.entities.JoinEnquiry.filter({}),
@@ -77,7 +88,24 @@ export default function JoinEnquiries() {
     },
   });
 
-  const filteredEnquiries = enquiries
+  // Filter enquiries based on user role
+  const accessibleEnquiries = enquiries.filter(e => {
+    // Admins can see all
+    if (user?.role === 'admin') return true;
+    // Leaders can only see enquiries for their sections
+    if (userLeader?.section_ids?.length > 0) {
+      const formData = e.form_data || {};
+      const sectionOfInterest = formData.section_interest || formData.section_id;
+      if (sectionOfInterest) {
+        const sectionId = sections.find(s => s.name === sectionOfInterest)?.id;
+        return userLeader.section_ids.includes(sectionId);
+      }
+      return false;
+    }
+    return false;
+  });
+
+  const filteredEnquiries = accessibleEnquiries
     .filter(e => e.enquiry_type === activeTab)
     .filter(e => {
       if (statusFilter !== 'all' && e.status !== statusFilter) return false;
@@ -87,14 +115,14 @@ export default function JoinEnquiries() {
 
   const stats = {
     member: {
-      uncontacted: enquiries.filter(e => e.enquiry_type === 'member' && e.status === 'uncontacted').length,
-      contacted: enquiries.filter(e => e.enquiry_type === 'member' && e.status === 'contacted').length,
-      complete: enquiries.filter(e => e.enquiry_type === 'member' && e.status === 'complete').length,
+      uncontacted: accessibleEnquiries.filter(e => e.enquiry_type === 'member' && e.status === 'uncontacted').length,
+      contacted: accessibleEnquiries.filter(e => e.enquiry_type === 'member' && e.status === 'contacted').length,
+      complete: accessibleEnquiries.filter(e => e.enquiry_type === 'member' && e.status === 'complete').length,
     },
     volunteer: {
-      uncontacted: enquiries.filter(e => e.enquiry_type === 'volunteer' && e.status === 'uncontacted').length,
-      contacted: enquiries.filter(e => e.enquiry_type === 'volunteer' && e.status === 'contacted').length,
-      complete: enquiries.filter(e => e.enquiry_type === 'volunteer' && e.status === 'complete').length,
+      uncontacted: accessibleEnquiries.filter(e => e.enquiry_type === 'volunteer' && e.status === 'uncontacted').length,
+      contacted: accessibleEnquiries.filter(e => e.enquiry_type === 'volunteer' && e.status === 'contacted').length,
+      complete: accessibleEnquiries.filter(e => e.enquiry_type === 'volunteer' && e.status === 'complete').length,
     },
   };
 

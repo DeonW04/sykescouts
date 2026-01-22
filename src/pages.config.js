@@ -3,7 +3,6 @@ import AdminSettings from './pages/AdminSettings';
 import AwardBadges from './pages/AwardBadges';
 import BadgeDetail from './pages/BadgeDetail';
 import BadgeStockManagement from './pages/BadgeStockManagement';
-import Communications from './pages/Communications';
 import CompleteRegistration from './pages/CompleteRegistration';
 import Contact from './pages/Contact';
 import EditBadgeStructure from './pages/EditBadgeStructure';
@@ -35,10 +34,11 @@ import RiskAssessments from './pages/RiskAssessments';
 import Sections from './pages/Sections';
 import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
-import JoinEnquiries from './pages/JoinEnquiries';
 import WeeklyMessage from './pages/WeeklyMessage';
 import MonthlyNewsletter from './pages/MonthlyNewsletter';
 import EventUpdate from './pages/EventUpdate';
+import Communications from './pages/Communications';
+import JoinEnquiries from './pages/JoinEnquiries';
 import __Layout from './Layout.jsx';
 
 
@@ -48,7 +48,6 @@ export const PAGES = {
     "AwardBadges": AwardBadges,
     "BadgeDetail": BadgeDetail,
     "BadgeStockManagement": BadgeStockManagement,
-    "Communications": Communications,
     "CompleteRegistration": CompleteRegistration,
     "Contact": Contact,
     "EditBadgeStructure": EditBadgeStructure,
@@ -80,10 +79,11 @@ export const PAGES = {
     "Sections": Sections,
     "StagedBadgeDetail": StagedBadgeDetail,
     "Volunteer": Volunteer,
-    "JoinEnquiries": JoinEnquiries,
     "WeeklyMessage": WeeklyMessage,
     "MonthlyNewsletter": MonthlyNewsletter,
     "EventUpdate": EventUpdate,
+    "Communications": Communications,
+    "JoinEnquiries": JoinEnquiries,
 }
 
 export const pagesConfig = {
