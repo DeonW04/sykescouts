@@ -34,7 +34,6 @@ import RiskAssessments from './pages/RiskAssessments';
 import Sections from './pages/Sections';
 import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
-import WeeklyMessage from './pages/WeeklyMessage';
 import MonthlyNewsletter from './pages/MonthlyNewsletter';
 import EventUpdate from './pages/EventUpdate';
 import Communications from './pages/Communications';
@@ -42,6 +41,7 @@ import JoinEnquiries from './pages/JoinEnquiries';
 import WeeklyMessageList from './pages/WeeklyMessageList';
 import MonthlyNewsletterList from './pages/MonthlyNewsletterList';
 import EventUpdateList from './pages/EventUpdateList';
+import WeeklyMessage from './pages/WeeklyMessage';
 import __Layout from './Layout.jsx';
 
 
@@ -82,7 +82,6 @@ export const PAGES = {
     "Sections": Sections,
     "StagedBadgeDetail": StagedBadgeDetail,
     "Volunteer": Volunteer,
-    "WeeklyMessage": WeeklyMessage,
     "MonthlyNewsletter": MonthlyNewsletter,
     "EventUpdate": EventUpdate,
     "Communications": Communications,
@@ -90,6 +89,7 @@ export const PAGES = {
     "WeeklyMessageList": WeeklyMessageList,
     "MonthlyNewsletterList": MonthlyNewsletterList,
     "EventUpdateList": EventUpdateList,
+    "WeeklyMessage": WeeklyMessage,
 }
 
 export const pagesConfig = {

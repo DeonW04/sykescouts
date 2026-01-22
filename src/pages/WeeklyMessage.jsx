@@ -11,6 +11,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
+import PageBuilder from '../components/pageBuilder/PageBuilder';
 
 export default function WeeklyMessage() {
   const navigate = useNavigate();
@@ -189,20 +190,21 @@ export default function WeeklyMessage() {
         </div>
 
         {/* Editor */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Page Builder</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 text-center">
-              <p className="text-gray-600 mb-4">Available blocks: Heading, Text, Image, Gallery, Action Required</p>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Block
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+         <Card>
+           <CardHeader>
+             <CardTitle>Page Builder</CardTitle>
+           </CardHeader>
+           <CardContent>
+             {page && (
+               <PageBuilder
+                 blocks={page.blocks || []}
+                 onBlocksChange={(blocks) => updatePageMutation.mutate({ blocks })}
+                 pageId={page.page_id}
+                 pageType="weekly_message"
+               />
+             )}
+           </CardContent>
+         </Card>
       </div>
     </div>
   );
