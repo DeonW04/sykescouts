@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, Send } from 'lucide-react';
+import { ArrowLeft, Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, Send, AlertCircle } from 'lucide-react';
 import EditMemberDialog from '../components/EditMemberDialog';
 import { toast } from 'sonner';
 
@@ -71,13 +71,23 @@ export default function MemberDetail() {
   });
 
   const { data: parentAccountExists } = useQuery({
-    queryKey: ['parent-account', member?.parent_email],
+    queryKey: ['parent-account', member?.id],
     queryFn: async () => {
-      if (!member?.parent_email) return false;
-      const users = await base44.entities.User.filter({ email: member.parent_email });
-      return users.length > 0;
+      if (!member?.id) return false;
+      // Check if member has parents linked with registered user accounts
+      if (member?.parent_ids?.length) {
+        const linkedParents = await base44.entities.Parent.filter({});
+        const memberParents = linkedParents.filter(p => member.parent_ids.includes(p.id));
+        
+        if (memberParents.length > 0) {
+          const allUsers = await base44.entities.User.list();
+          const hasRegisteredParent = memberParents.some(p => allUsers.some(u => u.id === p.user_id));
+          return hasRegisteredParent;
+        }
+      }
+      return false;
     },
-    enabled: !!member?.parent_email,
+    enabled: !!member?.id,
   });
 
   const calculateAge = (dob) => {
