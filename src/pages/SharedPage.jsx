@@ -46,6 +46,7 @@ export default function SharedPage() {
     question: InteractiveBlock,
     poll: InteractiveBlock,
     text_input: InteractiveBlock,
+    interactive: InteractiveBlock,
   };
 
   if (isLoading) {
