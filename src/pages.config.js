@@ -28,6 +28,9 @@ import ParentProgramme from './pages/ParentProgramme';
 import Parents from './pages/Parents';
 import Sections from './pages/Sections';
 import Volunteer from './pages/Volunteer';
+import RiskAssessments from './pages/RiskAssessments';
+import RiskAssessmentHistory from './pages/RiskAssessmentHistory';
+import RiskAssessmentDetail from './pages/RiskAssessmentDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -62,6 +65,9 @@ export const PAGES = {
     "Parents": Parents,
     "Sections": Sections,
     "Volunteer": Volunteer,
+    "RiskAssessments": RiskAssessments,
+    "RiskAssessmentHistory": RiskAssessmentHistory,
+    "RiskAssessmentDetail": RiskAssessmentDetail,
 }
 
 export const pagesConfig = {
