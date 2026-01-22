@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import HeadingBlock from '../components/pageBuilder/blocks/HeadingBlock';
 import TextBlock from '../components/pageBuilder/blocks/TextBlock';
 import ImageBlock from '../components/pageBuilder/blocks/ImageBlock';
