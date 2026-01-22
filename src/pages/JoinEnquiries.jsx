@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,10 +22,33 @@ export default function JoinEnquiries() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [user, setUser] = useState(null);
+  const [userSectionIds, setUserSectionIds] = useState([]);
+
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  const loadUser = async () => {
+    const currentUser = await base44.auth.me();
+    setUser(currentUser);
+    
+    if (currentUser.role !== 'admin') {
+      const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
+      if (leaders.length > 0) {
+        setUserSectionIds(leaders[0].section_ids || []);
+      }
+    }
+  };
 
   const { data: enquiries = [] } = useQuery({
     queryKey: ['join-enquiries'],
     queryFn: () => base44.entities.JoinEnquiry.filter({}),
+  });
+
+  const { data: members = [] } = useQuery({
+    queryKey: ['members'],
+    queryFn: () => base44.entities.Member.filter({ active: true }),
   });
 
   const { data: sections = [] } = useQuery({
@@ -78,6 +101,17 @@ export default function JoinEnquiries() {
   });
 
   const filteredEnquiries = enquiries
+    .filter(e => {
+      // Filter by section if not admin
+      if (user && user.role !== 'admin') {
+        // For member enquiries, check if member's section matches user's sections
+        if (e.enquiry_type === 'member' && e.created_member_id) {
+          const memberInfo = members.find(m => m.id === e.created_member_id);
+          if (memberInfo && !userSectionIds.includes(memberInfo.section_id)) return false;
+        }
+      }
+      return true;
+    })
     .filter(e => e.enquiry_type === activeTab)
     .filter(e => {
       if (statusFilter !== 'all' && e.status !== statusFilter) return false;
