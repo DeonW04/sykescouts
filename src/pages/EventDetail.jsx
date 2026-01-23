@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import NewEventDialog from '../components/events/NewEventDialog';
 import TodoSection from '../components/meeting/TodoSection';
 import EventParentPortalSection from '../components/events/EventParentPortalSection';
+import EventAttendeesSection from '../components/events/EventAttendeesSection';
 import RiskAssessmentSection from '../components/meeting/RiskAssessmentSection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
 
