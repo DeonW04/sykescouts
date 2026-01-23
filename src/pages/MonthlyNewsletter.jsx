@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
 import PageBuilder from '../components/pageBuilder/PageBuilder';
 import ResponsesDialog from '../components/communications/ResponsesDialog';
+import HeaderBarConfig from '../components/communications/HeaderBarConfig';
 
 export default function MonthlyNewsletter() {
   const navigate = useNavigate();
@@ -185,8 +186,11 @@ export default function MonthlyNewsletter() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header Bar Configuration */}
+        <HeaderBarConfig page={page} onUpdate={(data) => updatePageMutation.mutate(data)} />
+
         {/* Stats */}
-        <div className="grid md:grid-cols-4 gap-4 mb-6">
+        <div className="grid md:grid-cols-4 gap-4 my-6">
           <Card>
             <CardContent className="p-4">
               <p className="text-gray-600 text-sm mb-1">Page Views</p>
