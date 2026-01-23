@@ -28,16 +28,25 @@ export default function HeaderBarConfig({ page, onUpdate }) {
   const [selectedStyle, setSelectedStyle] = useState(page?.header_config?.style || 'from-orange-500 to-red-600');
   const [imageUrl, setImageUrl] = useState(page?.header_config?.imageUrl || '');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
-    const config = {
-      mode,
-      style: mode === 'image' ? '' : selectedStyle,
-      imageUrl: mode === 'image' ? imageUrl : '',
-    };
+    try {
+      setIsSaving(true);
+      const config = {
+        mode,
+        style: mode === 'image' ? '' : selectedStyle,
+        imageUrl: mode === 'image' ? imageUrl : '',
+      };
 
-    await onUpdate({ header_config: config });
-    toast.success('Header bar updated');
+      await onUpdate({ header_config: config });
+      toast.success('Header bar updated successfully!');
+      setIsExpanded(false);
+    } catch (error) {
+      toast.error('Failed to update header bar');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const getCurrentPreview = () => {
@@ -184,9 +193,10 @@ export default function HeaderBarConfig({ page, onUpdate }) {
             e.stopPropagation();
             handleSave();
           }} 
+          disabled={isSaving}
           className="w-full bg-blue-600 hover:bg-blue-700"
         >
-          Apply Header Style
+          {isSaving ? 'Saving...' : 'Apply Header Style'}
         </Button>
       </CardContent>
       )}
