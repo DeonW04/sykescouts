@@ -195,9 +195,6 @@ export default function EventUpdate() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header Bar Configuration */}
-        <HeaderBarConfig page={page} onUpdate={(data) => updatePageMutation.mutate(data)} />
-
         {/* Configuration */}
         <Card className="mb-6">
           <CardHeader>
@@ -312,6 +309,9 @@ export default function EventUpdate() {
         </div>
 
         {/* Editor */}
+        {/* Header Bar Configuration */}
+        <HeaderBarConfig page={page} onUpdate={(data) => updatePageMutation.mutate(data)} />
+        
         <Card>
           <CardHeader>
             <CardTitle>Page Builder</CardTitle>

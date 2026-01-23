@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Palette, Image as ImageIcon } from 'lucide-react';
+import { Palette, Image as ImageIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageSelector from '../pageBuilder/ImageSelector';
 
@@ -27,6 +27,7 @@ export default function HeaderBarConfig({ page, onUpdate }) {
   const [mode, setMode] = useState(page?.header_config?.mode || 'gradient');
   const [selectedStyle, setSelectedStyle] = useState(page?.header_config?.style || 'from-orange-500 to-red-600');
   const [imageUrl, setImageUrl] = useState(page?.header_config?.imageUrl || '');
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleSave = async () => {
     const config = {
@@ -39,11 +40,38 @@ export default function HeaderBarConfig({ page, onUpdate }) {
     toast.success('Header bar updated');
   };
 
+  const getCurrentPreview = () => {
+    if (mode === 'image' && imageUrl) {
+      return <img src={imageUrl} alt="Header" className="w-full h-8 object-cover rounded" />;
+    }
+    if (mode === 'solid') {
+      const color = SOLID_COLORS.find(c => c.value === selectedStyle);
+      return <div className="w-full h-8 rounded" style={{ backgroundColor: color?.preview }} />;
+    }
+    if (mode === 'gradient') {
+      const gradient = GRADIENT_OPTIONS.find(g => g.value === selectedStyle);
+      return <div className="w-full h-8 rounded" style={{ background: gradient?.preview }} />;
+    }
+    return null;
+  };
+
   return (
     <Card className="mb-6">
-      <CardHeader>
-        <CardTitle>Header Bar Configuration</CardTitle>
+      <CardHeader 
+        className="cursor-pointer hover:bg-gray-50 transition-colors"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">Header Bar Style</CardTitle>
+          {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+        </div>
+        {!isExpanded && (
+          <div className="mt-3">
+            {getCurrentPreview()}
+          </div>
+        )}
       </CardHeader>
+      {isExpanded && (
       <CardContent className="space-y-4">
         {/* Mode Selection */}
         <div className="flex gap-2">
@@ -140,6 +168,7 @@ export default function HeaderBarConfig({ page, onUpdate }) {
           Apply Header Style
         </Button>
       </CardContent>
+      )}
     </Card>
   );
 }
