@@ -343,10 +343,9 @@ export default function ParentEventDetail() {
               {/* Event Description */}
               {event.description && (
                 <div>
-                  <div 
-                    className="text-gray-800 text-lg leading-relaxed mb-6 prose prose-lg max-w-none"
-                    dangerouslySetInnerHTML={{ __html: event.description }}
-                  />
+                  <p className="text-gray-800 text-lg leading-relaxed mb-6 whitespace-pre-wrap">
+                    {event.description}
+                  </p>
                   
                   {(event.consent_deadline || event.payment_deadline) && (
                     <div className="flex gap-6 pt-6 border-t">
