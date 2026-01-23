@@ -13,7 +13,7 @@ export default function ResponsesDialog({ open, onClose, responses, page, blockI
   const deleteResponseMutation = useMutation({
     mutationFn: (responseId) => base44.entities.BlockResponse.delete(responseId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['block-responses'] });
+      queryClient.invalidateQueries({ queryKey: ['block-responses', page.page_id] });
       toast.success('Response deleted');
     },
   });

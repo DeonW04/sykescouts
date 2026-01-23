@@ -55,11 +55,13 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
       return;
     }
 
+    const blockId = data.id || `block_${Date.now()}`;
+
     // Check if child already responded by checking database
     try {
       const existingResponses = await base44.entities.BlockResponse.filter({ 
         page_id: pageId,
-        block_id: data.id || `block_${Date.now()}`
+        block_id: blockId
       });
       
       if (existingResponses.some(r => r.response_data?.childName?.toLowerCase() === childName.toLowerCase())) {
@@ -70,18 +72,19 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
       // Save to BlockResponse entity
       await base44.entities.BlockResponse.create({
         page_id: pageId,
-        block_id: data.id || `block_${Date.now()}`,
+        block_id: blockId,
         response_type: type,
         response_data: { childName, answer: finalAnswer },
         respondent_email: null,
         response_date: new Date().toISOString(),
       });
       
-      toast.success('Response submitted successfully!');
+      toast.success('✅ Response submitted successfully!');
       setChildName('');
       setAnswer('');
       setSelectedOptions([]);
     } catch (error) {
+      console.error('Submit error:', error);
       toast.error('Failed to save response: ' + error.message);
     }
   };
