@@ -191,9 +191,10 @@ export default function EventDetail() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="details" className="space-y-6">
-          <TabsList className="bg-white border grid grid-cols-7">
+          <TabsList className="bg-white border grid grid-cols-8">
             <TabsTrigger value="details">Overview</TabsTrigger>
             <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            <TabsTrigger value="attendees">Attendees</TabsTrigger>
             <TabsTrigger value="todo">To Do</TabsTrigger>
             <TabsTrigger value="parent">Parent Portal</TabsTrigger>
             <TabsTrigger value="risk">Risk</TabsTrigger>
