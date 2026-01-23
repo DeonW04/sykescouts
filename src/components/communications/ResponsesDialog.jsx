@@ -13,13 +13,18 @@ export default function ResponsesDialog({ open, onClose, responses, page, blockI
   const deleteResponseMutation = useMutation({
     mutationFn: (responseId) => base44.entities.BlockResponse.delete(responseId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['block-responses', page.page_id] });
+      queryClient.invalidateQueries({ queryKey: ['block-responses', page?.page_id] });
       toast.success('Response deleted');
     },
   });
 
   const block = page?.blocks?.find(b => b.id === blockId);
   const question = block?.data?.question || 'Question';
+
+  console.log('ResponsesDialog - blockId:', blockId);
+  console.log('ResponsesDialog - page blocks:', page?.blocks);
+  console.log('ResponsesDialog - found block:', block);
+  console.log('ResponsesDialog - responses received:', responses);
 
   const exportToPDF = () => {
     const doc = new jsPDF();
@@ -81,8 +86,6 @@ export default function ResponsesDialog({ open, onClose, responses, page, blockI
     doc.save(`${page.title.replace(/[^a-z0-9]/gi, '_')}_responses.pdf`);
     toast.success('PDF exported successfully');
   };
-
-  if (!block) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
