@@ -181,21 +181,18 @@ export default function NewEventDialog({ open, onOpenChange, sections, editEvent
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <div className="border rounded-md">
-              <ReactQuill
-                value={formData.description}
-                onChange={(value) => setFormData({ ...formData, description: value })}
-                placeholder="Describe the event..."
-                theme="snow"
-                className="min-h-[200px]"
-                modules={{
-                  toolbar: [
-                    ['bold', 'italic', 'underline'],
-                    [{ 'list': 'ordered' }, { 'list': 'bullet' }]
-                  ]
-                }}
-              />
-            </div>
+            <ReactQuill
+              value={formData.description}
+              onChange={(value) => setFormData({ ...formData, description: value })}
+              placeholder="Describe the event..."
+              theme="snow"
+              modules={{
+                toolbar: [
+                  ['bold', 'italic', 'underline'],
+                  [{ 'list': 'ordered' }, { 'list': 'bullet' }]
+                ]
+              }}
+            />
           </div>
 
           <div className="grid md:grid-cols-3 gap-4">
