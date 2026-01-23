@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
 import PageBuilder from '../components/pageBuilder/PageBuilder';
 import ResponsesDialog from '../components/communications/ResponsesDialog';
+import HeaderBarConfig from '../components/communications/HeaderBarConfig';
 
 export default function EventUpdate() {
   const navigate = useNavigate();
