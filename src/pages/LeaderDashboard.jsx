@@ -264,7 +264,7 @@ export default function LeaderDashboard() {
                 transition={{ delay: 0.2 }}
                 className="text-xl text-white/90"
               >
-                Welcome back, {user.full_name}
+                Welcome back, {user.display_name || user.full_name}
                 {user.role === 'admin' && (
                   <span className="ml-2 px-3 py-1 bg-white/20 rounded-full text-sm">Administrator</span>
                 )}

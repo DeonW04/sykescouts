@@ -164,7 +164,7 @@ export default function ParentDashboard() {
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <h1 className="text-4xl font-bold mb-2">Welcome back!</h1>
-          <p className="text-purple-100 text-lg">{user.full_name}</p>
+          <p className="text-purple-100 text-lg">{user.display_name || user.full_name}</p>
         </div>
       </div>
 
