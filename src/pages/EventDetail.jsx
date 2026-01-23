@@ -329,6 +329,10 @@ export default function EventDetail() {
             ))}
           </TabsContent>
 
+          <TabsContent value="attendees">
+            <EventAttendeesSection eventId={eventId} event={event} />
+          </TabsContent>
+
           <TabsContent value="todo">
             <TodoSection programmeId={eventId} entityType="event" />
           </TabsContent>
