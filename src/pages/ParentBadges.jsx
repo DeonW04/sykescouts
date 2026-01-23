@@ -191,19 +191,15 @@ export default function ParentBadges() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-purple-50">
-      <div className="relative bg-gradient-to-br from-yellow-600 to-[#7413dc] text-white py-16 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="flex items-center gap-4 mb-3">
-            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-              <Award className="w-8 h-8" />
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <Award className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold">Badges & Awards</h1>
-              <p className="text-yellow-100 text-lg">{child.full_name}'s progress</p>
+              <h1 className="text-3xl font-bold text-gray-900">Badges & Awards</h1>
+              <p className="text-gray-600 text-lg mt-1">{child.full_name}'s progress</p>
             </div>
           </div>
         </div>

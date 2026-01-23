@@ -157,14 +157,17 @@ export default function ParentDashboard() {
     <>
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Header */}
-      <div className="relative bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] text-white py-16 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <h1 className="text-4xl font-bold mb-2">Welcome back!</h1>
-          <p className="text-purple-100 text-lg">{user.display_name || user.full_name}</p>
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] rounded-2xl flex items-center justify-center shadow-lg">
+              <Users className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Welcome back!</h1>
+              <p className="text-gray-600 text-lg mt-1">{user.display_name || user.full_name}</p>
+            </div>
+          </div>
         </div>
       </div>
 
