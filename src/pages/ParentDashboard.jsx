@@ -27,12 +27,17 @@ export default function ParentDashboard() {
   }, []);
 
   const respondToActionMutation = useMutation({
-    mutationFn: async ({ actionId, memberId, response }) => {
+    mutationFn: async ({ actionId, memberId, response, entityId }) => {
       return base44.entities.ActionResponse.create({
         action_required_id: actionId,
+        action_id: actionId,
         member_id: memberId,
+        child_member_id: memberId,
+        entity_id: entityId,
         parent_email: user.email,
         response,
+        response_value: response,
+        status: 'completed',
         response_date: new Date().toISOString(),
       });
     },
@@ -110,24 +115,37 @@ export default function ParentDashboard() {
       const relevantProgrammes = programmes.filter(p => sectionIds.includes(p.section_id));
       const relevantProgrammeIds = relevantProgrammes.map(p => p.id);
       
-      // Get all actions for these programmes
+      // Get all actions (programmes and events)
       const allActions = await base44.entities.ActionRequired.filter({});
-      const relevantActions = allActions.filter(a => relevantProgrammeIds.includes(a.programme_id));
+      const programmeActions = allActions.filter(a => relevantProgrammeIds.includes(a.programme_id));
+      
+      // Get event actions for children's events
+      const eventAttendances = await base44.entities.EventAttendance.filter({});
+      const childEventIds = eventAttendances
+        .filter(a => children.some(c => c.id === a.member_id))
+        .map(a => a.event_id);
+      const eventActions = allActions.filter(a => a.event_id && childEventIds.includes(a.event_id));
+      
+      const relevantActions = [...programmeActions, ...eventActions];
       
       // Get all responses from this parent
       const responses = await base44.entities.ActionResponse.filter({ parent_email: user?.email });
       
-      // Add programme details to each action
-      const actionsWithProgrammes = relevantActions.map(action => ({
+      // Add programme/event details to each action
+      const actionsWithDetails = relevantActions.map(action => ({
         ...action,
         programme: relevantProgrammes.find(p => p.id === action.programme_id)
       }));
       
       // Filter out actions that have been completed for all children
-      return actionsWithProgrammes.filter(action => {
+      return actionsWithDetails.filter(action => {
         // Check if all children have responded to this action
         const allChildrenResponded = children.every(child => 
-          responses.some(r => r.action_required_id === action.id && r.member_id === child.id)
+          responses.some(r => 
+            (r.action_required_id === action.id || r.action_id === action.id) && 
+            (r.member_id === child.id || r.child_member_id === child.id) &&
+            r.status === 'completed'
+          )
         );
         return !allChildrenResponded;
       });
@@ -254,7 +272,12 @@ export default function ParentDashboard() {
                               <div className="flex gap-2">
                                 <Button
                                   size="sm"
-                                  onClick={() => respondToActionMutation.mutate({ actionId: action.id, memberId: child.id, response: 'Yes' })}
+                                  onClick={() => respondToActionMutation.mutate({ 
+                                    actionId: action.id, 
+                                    memberId: child.id, 
+                                    response: 'yes',
+                                    entityId: action.programme_id || action.event_id 
+                                  })}
                                   className="bg-green-600 hover:bg-green-700"
                                 >
                                   <Check className="w-3 h-3 mr-1" />
@@ -263,7 +286,12 @@ export default function ParentDashboard() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => respondToActionMutation.mutate({ actionId: action.id, memberId: child.id, response: 'No' })}
+                                  onClick={() => respondToActionMutation.mutate({ 
+                                    actionId: action.id, 
+                                    memberId: child.id, 
+                                    response: 'no',
+                                    entityId: action.programme_id || action.event_id 
+                                  })}
                                 >
                                   <X className="w-3 h-3 mr-1" />
                                   No
@@ -301,7 +329,12 @@ export default function ParentDashboard() {
                                   onClick={() => {
                                     const value = dropdownValues[`${action.id}-${child.id}`];
                                     if (value) {
-                                      respondToActionMutation.mutate({ actionId: action.id, memberId: child.id, response: value });
+                                      respondToActionMutation.mutate({ 
+                                        actionId: action.id, 
+                                        memberId: child.id, 
+                                        response: value,
+                                        entityId: action.programme_id || action.event_id 
+                                      });
                                     }
                                   }}
                                 >
@@ -324,7 +357,12 @@ export default function ParentDashboard() {
                                   onClick={() => {
                                     const value = textInputs[`${action.id}-${child.id}`];
                                     if (value) {
-                                      respondToActionMutation.mutate({ actionId: action.id, memberId: child.id, response: value });
+                                      respondToActionMutation.mutate({ 
+                                        actionId: action.id, 
+                                        memberId: child.id, 
+                                        response: value,
+                                        entityId: action.programme_id || action.event_id 
+                                      });
                                     }
                                   }}
                                 >
@@ -462,7 +500,8 @@ export default function ParentDashboard() {
               respondToActionMutation.mutate({
                 actionId: consentDialog.action.id,
                 memberId: consentDialog.child.id,
-                response: `Yes - ${new Date().toLocaleString()}`,
+                response: 'yes',
+                entityId: consentDialog.action.programme_id || consentDialog.action.event_id,
               });
               setConsentDialog(null);
             }}
