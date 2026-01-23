@@ -107,7 +107,7 @@ export default function SharedPage() {
               return (
                 <BlockComponent
                   key={block.id || index}
-                  data={block.data}
+                  data={{ ...block.data, id: block.id }}
                   pageId={page.page_id}
                   pageType={page.type}
                   isEditing={false}
