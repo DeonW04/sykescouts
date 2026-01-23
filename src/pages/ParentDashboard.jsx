@@ -147,10 +147,10 @@ export default function ParentDashboard() {
   }
 
   const quickStats = [
-    { icon: Users, label: 'My Child', color: 'bg-blue-500', onClick: () => navigate(createPageUrl('MyChild')) },
-    { icon: Calendar, label: 'Programme', color: 'bg-green-500', onClick: () => navigate(createPageUrl('ParentProgramme')) },
-    { icon: Tent, label: 'Events/Camps', color: 'bg-purple-500', onClick: () => navigate(createPageUrl('ParentEvents')) },
-    { icon: Award, label: 'Badges', color: 'bg-yellow-500', onClick: () => navigate(createPageUrl('ParentBadges')) },
+    { icon: Users, label: 'My Child', gradient: 'from-blue-500 to-cyan-500', onClick: () => navigate(createPageUrl('MyChild')) },
+    { icon: Calendar, label: 'Programme', gradient: 'from-green-500 to-emerald-500', onClick: () => navigate(createPageUrl('ParentProgramme')) },
+    { icon: Tent, label: 'Events/Camps', gradient: 'from-purple-500 to-pink-500', onClick: () => navigate(createPageUrl('ParentEvents')) },
+    { icon: Award, label: 'Badges', gradient: 'from-yellow-500 to-orange-500', onClick: () => navigate(createPageUrl('ParentBadges')) },
   ];
 
   return (
@@ -185,12 +185,15 @@ export default function ParentDashboard() {
               whileHover={{ scale: 1.05 }}
             >
               <Card 
-                className="group hover:shadow-2xl transition-all duration-300 cursor-pointer border-l-4 border-l-transparent hover:border-l-[#7413dc] bg-white/80 backdrop-blur-sm"
+                className="group hover:shadow-2xl transition-all duration-300 cursor-pointer border-0 bg-gradient-to-br from-white to-gray-50 overflow-hidden relative"
                 onClick={stat.onClick}
               >
-                <CardContent className="p-6">
+                <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300" style={{
+                  background: `linear-gradient(135deg, var(--tw-gradient-stops))`
+                }} />
+                <CardContent className="p-6 relative">
                   <div className="flex flex-col items-center text-center">
-                    <div className={`w-16 h-16 ${stat.color} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
+                    <div className={`w-16 h-16 bg-gradient-to-br ${stat.gradient} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
                       <stat.icon className="w-8 h-8 text-white" />
                     </div>
                     <p className="font-semibold text-gray-900">{stat.label}</p>
@@ -205,10 +208,13 @@ export default function ParentDashboard() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Side - Actions Required */}
           <div className="lg:col-span-1">
-            <Card className="h-full border-l-4 border-l-orange-400 bg-gradient-to-br from-orange-50/50 to-white shadow-xl">
-              <CardHeader>
+            <Card className="h-full border-0 bg-gradient-to-br from-orange-50 via-white to-orange-50/30 shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-400/10 to-transparent rounded-full blur-2xl" />
+              <CardHeader className="relative">
                 <CardTitle className="flex items-center gap-2 text-xl">
-                  <AlertCircle className="w-6 h-6 text-orange-500" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+                    <AlertCircle className="w-5 h-5 text-white" />
+                  </div>
                   Actions Required
                 </CardTitle>
               </CardHeader>
@@ -332,10 +338,13 @@ export default function ParentDashboard() {
           {/* Right Side - Meetings and Events */}
           <div className="lg:col-span-2 space-y-6">
             {/* Next Weekly Meeting */}
-            <Card className="border-l-4 border-l-green-500 shadow-xl bg-gradient-to-br from-green-50/50 to-white">
-              <CardHeader>
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-green-50 via-white to-emerald-50/30 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-green-400/10 to-transparent rounded-full blur-2xl" />
+              <CardHeader className="relative">
                 <CardTitle className="flex items-center gap-2 text-xl">
-                  <Clock className="w-6 h-6 text-green-500" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-white" />
+                  </div>
                   Next Meeting
                 </CardTitle>
               </CardHeader>
@@ -344,7 +353,7 @@ export default function ParentDashboard() {
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-5 bg-white border-2 border-green-200 rounded-xl hover:shadow-md transition-shadow"
+                    className="p-5 bg-gradient-to-br from-white to-green-50/30 border-2 border-green-200 rounded-xl hover:shadow-lg hover:border-green-300 transition-all"
                   >
                     <h3 className="font-bold text-gray-900 text-lg mb-2">{nextMeeting.title}</h3>
                     <p className="text-gray-700 font-medium mb-2">
@@ -368,10 +377,13 @@ export default function ParentDashboard() {
             </Card>
 
             {/* Upcoming Events and Camps */}
-            <Card className="border-l-4 border-l-purple-500 shadow-xl bg-gradient-to-br from-purple-50/50 to-white">
-              <CardHeader>
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-50 via-white to-pink-50/30 relative overflow-hidden">
+              <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-transparent rounded-full blur-2xl" />
+              <CardHeader className="relative">
                 <CardTitle className="flex items-center gap-2 text-xl">
-                  <Tent className="w-6 h-6 text-purple-500" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                    <Tent className="w-5 h-5 text-white" />
+                  </div>
                   Upcoming Events
                 </CardTitle>
               </CardHeader>
@@ -389,7 +401,7 @@ export default function ParentDashboard() {
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className="p-4 bg-white border border-purple-100 rounded-xl hover:shadow-lg hover:border-purple-300 transition-all cursor-pointer"
+                        className="p-4 bg-gradient-to-br from-white to-purple-50/30 border border-purple-100 rounded-xl hover:shadow-xl hover:border-purple-300 transition-all cursor-pointer"
                         onClick={() => navigate(createPageUrl('ParentEvents'))}
                       >
                         <p className="font-bold text-gray-900 mb-1">{event.title}</p>
