@@ -59,6 +59,9 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
 
     const blockId = data.id;
     
+    console.log('InteractiveBlock - Submitting with blockId:', blockId);
+    console.log('InteractiveBlock - data object:', data);
+    
     if (!blockId) {
       toast.error('Block ID not found. Please save the page first.');
       return;
@@ -71,13 +74,15 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
         block_id: blockId
       });
       
+      console.log('InteractiveBlock - Existing responses for this block:', existingResponses);
+      
       if (existingResponses.some(r => r.response_data?.childName?.toLowerCase() === childName.toLowerCase())) {
         toast.error('❌ This child has already responded');
         return;
       }
 
       // Save to BlockResponse entity
-      await base44.entities.BlockResponse.create({
+      const savedResponse = await base44.entities.BlockResponse.create({
         page_id: pageId,
         block_id: blockId,
         response_type: type,
@@ -85,6 +90,8 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
         respondent_email: null,
         response_date: new Date().toISOString(),
       });
+      
+      console.log('InteractiveBlock - Saved response:', savedResponse);
       
       // Invalidate query to refresh responses
       queryClient.invalidateQueries({ queryKey: ['block-responses', pageId] });
