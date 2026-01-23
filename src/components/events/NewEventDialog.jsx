@@ -190,13 +190,8 @@ export default function NewEventDialog({ open, onOpenChange, sections, editEvent
                 className="min-h-[200px]"
                 modules={{
                   toolbar: [
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'header': [1, 2, 3, false] }],
-                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                    [{ 'indent': '-1' }, { 'indent': '+1' }],
-                    ['link'],
-                    [{ 'color': [] }, { 'background': [] }],
-                    ['clean']
+                    ['bold', 'italic', 'underline'],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }]
                   ]
                 }}
               />
