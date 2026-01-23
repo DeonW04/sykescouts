@@ -157,18 +157,25 @@ export default function ParentDashboard() {
     <>
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Header */}
-      <div className="relative bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] text-white py-20 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+      <div className="relative bg-gradient-to-br from-[#7413dc] via-[#8b32eb] to-[#5c0fb0] text-white py-20 overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute top-20 right-20 w-96 h-96 bg-gradient-to-br from-pink-400/20 to-purple-400/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-10 left-1/3 w-80 h-80 bg-gradient-to-br from-cyan-400/15 to-blue-400/15 rounded-full blur-3xl"></div>
         </div>
+        {/* Overlay pattern */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.08),transparent_50%)]"></div>
+        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-2xl">
-            <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full mb-4 border border-white/30">
+              <Users className="w-4 h-4" />
               <p className="text-sm font-semibold">Parent Portal</p>
             </div>
-            <h1 className="text-5xl font-bold mb-3">Welcome back, {user.display_name || user.full_name}!</h1>
-            <p className="text-purple-100 text-xl">Manage your child's scouting journey all in one place</p>
+            <h1 className="text-5xl font-bold mb-3 drop-shadow-lg">Welcome back, {user.display_name || user.full_name}!</h1>
+            <p className="text-purple-100 text-xl drop-shadow">Manage your child's scouting journey all in one place</p>
           </div>
         </div>
       </div>
