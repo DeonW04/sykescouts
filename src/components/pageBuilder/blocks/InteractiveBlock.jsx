@@ -55,7 +55,12 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
       return;
     }
 
-    const blockId = data.id || `block_${Date.now()}`;
+    const blockId = data.id;
+    
+    if (!blockId) {
+      toast.error('Block ID not found. Please save the page first.');
+      return;
+    }
 
     // Check if child already responded by checking database
     try {
@@ -65,7 +70,7 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
       });
       
       if (existingResponses.some(r => r.response_data?.childName?.toLowerCase() === childName.toLowerCase())) {
-        toast.error('This child has already responded');
+        toast.error('❌ This child has already responded');
         return;
       }
 
