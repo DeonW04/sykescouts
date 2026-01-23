@@ -36,6 +36,11 @@ export default function EventAttendeesSection({ eventId, event }) {
     queryFn: () => base44.entities.ActionResponse.filter({ entity_id: eventId }),
   });
 
+  const { data: actionsRequired = [] } = useQuery({
+    queryKey: ['action-required', eventId],
+    queryFn: () => base44.entities.ActionRequired.filter({ event_id: eventId }),
+  });
+
   const addAttendanceMutation = useMutation({
     mutationFn: (memberIds) => {
       return Promise.all(
