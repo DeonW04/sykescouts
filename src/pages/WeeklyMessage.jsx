@@ -6,12 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Copy, Eye, Trash2, Settings, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Plus, Copy, Eye, Trash2, Settings, ExternalLink, MessageSquare } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
 import PageBuilder from '../components/pageBuilder/PageBuilder';
+import ResponsesDialog from '../components/communications/ResponsesDialog';
 
 export default function WeeklyMessage() {
   const navigate = useNavigate();
@@ -21,6 +22,8 @@ export default function WeeklyMessage() {
   const [editTitle, setEditTitle] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [copied, setCopied] = useState(false);
+  const [showResponses, setShowResponses] = useState(false);
+  const [selectedBlockId, setSelectedBlockId] = useState(null);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -39,6 +42,12 @@ export default function WeeklyMessage() {
   const { data: views = [] } = useQuery({
     queryKey: ['page-views', pageId],
     queryFn: () => base44.entities.PageView.filter({ page_id: pageId }),
+    enabled: !!pageId,
+  });
+
+  const { data: responses = [] } = useQuery({
+    queryKey: ['block-responses', pageId],
+    queryFn: () => base44.entities.BlockResponse.filter({ page_id: pageId }),
     enabled: !!pageId,
   });
 
@@ -169,11 +178,30 @@ export default function WeeklyMessage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats */}
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
+        <div className="grid md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
               <p className="text-gray-600 text-sm mb-1">Page Views</p>
               <p className="text-2xl font-bold text-blue-600">{views.length}</p>
+            </CardContent>
+          </Card>
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => {
+              if (page?.blocks?.find(b => b.type === 'interactive')) {
+                const interactiveBlock = page.blocks.find(b => b.type === 'interactive');
+                setSelectedBlockId(interactiveBlock.id);
+                setShowResponses(true);
+              }
+            }}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-gray-600 text-sm">Responses</p>
+                <MessageSquare className="w-4 h-4 text-blue-600" />
+              </div>
+              <p className="text-2xl font-bold text-blue-600">{responses.length}</p>
+              <p className="text-xs text-gray-500 mt-1">Click to view</p>
             </CardContent>
           </Card>
           <Card>
@@ -186,16 +214,10 @@ export default function WeeklyMessage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <p className="text-gray-600 text-sm mb-1">Share URL</p>
-              <a 
-                href={shareUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-xs font-mono text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center gap-1"
-              >
-                {shareUrl}
-                <ExternalLink className="w-3 h-3 flex-shrink-0" />
-              </a>
+              <p className="text-gray-600 text-sm mb-1">Engagement</p>
+              <p className="text-2xl font-bold text-purple-600">
+                {views.length > 0 ? Math.round((responses.length / views.length) * 100) : 0}%
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -217,6 +239,17 @@ export default function WeeklyMessage() {
            </CardContent>
          </Card>
       </div>
+
+      {/* Responses Dialog */}
+      {selectedBlockId && (
+        <ResponsesDialog
+          open={showResponses}
+          onClose={() => setShowResponses(false)}
+          responses={responses.filter(r => r.block_id === selectedBlockId)}
+          page={page}
+          blockId={selectedBlockId}
+        />
+      )}
     </div>
   );
 }
