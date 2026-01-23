@@ -105,44 +105,28 @@ export default function EventAttendeesSection({ eventId, event }) {
     addAttendanceMutation.mutate(selectedMembers);
   };
 
-  const getResponseStatus = (memberId) => {
-    const responses = actionResponses.filter(r => r.child_member_id === memberId);
-    if (responses.length === 0) return { status: 'none', count: 0 };
-    
-    const completed = responses.filter(r => r.status === 'completed').length;
-    const total = responses.length;
-    
-    return { status: completed === total ? 'complete' : 'partial', count: completed, total };
-  };
-
   const getMemberSection = (sectionId) => {
     return sections.find(s => s.id === sectionId)?.display_name || 'Unknown';
   };
 
-  const getStatusIcon = (rsvpStatus) => {
-    switch (rsvpStatus) {
-      case 'attending':
-        return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'not_attending':
-        return <XCircle className="w-4 h-4 text-red-600" />;
-      case 'maybe':
-        return <Clock className="w-4 h-4 text-yellow-600" />;
-      default:
-        return <Clock className="w-4 h-4 text-gray-400" />;
+  const getActionResponse = (memberId, actionId) => {
+    const response = actionResponses.find(
+      r => r.child_member_id === memberId && r.action_id === actionId
+    );
+    if (!response) return '-';
+    
+    if (response.status !== 'completed') return 'Pending';
+    
+    const action = actionsRequired.find(a => a.id === actionId);
+    if (!action) return response.response_value || 'Yes';
+    
+    if (action.action_purpose === 'attendance') {
+      return response.response_value === 'yes' ? '✓' : '✗';
     }
-  };
-
-  const getStatusColor = (rsvpStatus) => {
-    switch (rsvpStatus) {
-      case 'attending':
-        return 'bg-green-100 text-green-800';
-      case 'not_attending':
-        return 'bg-red-100 text-red-800';
-      case 'maybe':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+    if (action.action_purpose === 'consent') {
+      return response.response_value === 'yes' ? '✓ Consent Given' : '✗ Not Given';
     }
+    return response.response_value || '-';
   };
 
   return (
