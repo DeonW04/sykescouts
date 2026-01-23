@@ -157,62 +157,47 @@ export default function EventAttendeesSection({ eventId, event }) {
               <p className="text-sm">Click "Add Members" to invite members to this event</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {attendances.map((attendance) => {
-                const member = allMembers.find(m => m.id === attendance.member_id);
-                if (!member) return null;
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Member Name</TableHead>
+                    <TableHead>Section</TableHead>
+                    {actionsRequired.map((action) => (
+                      <TableHead key={action.id}>{action.column_title}</TableHead>
+                    ))}
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {attendances.map((attendance) => {
+                    const member = allMembers.find(m => m.id === attendance.member_id);
+                    if (!member) return null;
 
-                const responseStatus = getResponseStatus(member.id);
-
-                return (
-                  <div
-                    key={attendance.id}
-                    className="flex items-center justify-between p-4 border rounded-lg bg-gray-50"
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      {getStatusIcon(attendance.rsvp_status)}
-                      <div className="flex-1">
-                        <p className="font-semibold">{member.full_name}</p>
-                        <div className="flex items-center gap-3 mt-1">
-                          <p className="text-sm text-gray-600">{getMemberSection(member.section_id)}</p>
-                          <Badge className={getStatusColor(attendance.rsvp_status)}>
-                            {attendance.rsvp_status.replace('_', ' ')}
-                          </Badge>
-                          {attendance.consent_given && (
-                            <Badge className="bg-blue-100 text-blue-800">
-                              Consent Given
-                            </Badge>
-                          )}
-                          {event.cost > 0 && attendance.payment_status === 'paid' && (
-                            <Badge className="bg-green-100 text-green-800">
-                              Paid
-                            </Badge>
-                          )}
-                        </div>
-                        {responseStatus.status !== 'none' && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            {responseStatus.status === 'complete' ? (
-                              <span className="text-green-600">✓ All actions completed</span>
-                            ) : (
-                              <span className="text-yellow-600">
-                                {responseStatus.count} of {responseStatus.total} actions completed
-                              </span>
-                            )}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeAttendanceMutation.mutate(attendance.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                );
-              })}
+                    return (
+                      <TableRow key={attendance.id}>
+                        <TableCell className="font-medium">{member.full_name}</TableCell>
+                        <TableCell>{getMemberSection(member.section_id)}</TableCell>
+                        {actionsRequired.map((action) => (
+                          <TableCell key={action.id}>
+                            {getActionResponse(member.id, action.id)}
+                          </TableCell>
+                        ))}
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeAttendanceMutation.mutate(attendance.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            Remove
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>
