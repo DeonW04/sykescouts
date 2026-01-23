@@ -41,6 +41,11 @@ export default function HeaderBarConfig({ page, onUpdate }) {
   };
 
   const getCurrentPreview = () => {
+    if (mode === 'none') {
+      return <div className="w-full h-8 rounded bg-gray-100 border border-gray-300 flex items-center justify-center">
+        <span className="text-xs text-gray-500">No custom background</span>
+      </div>;
+    }
     if (mode === 'image' && imageUrl) {
       return <img src={imageUrl} alt="Header" className="w-full h-8 object-cover rounded" />;
     }
@@ -74,11 +79,16 @@ export default function HeaderBarConfig({ page, onUpdate }) {
       {isExpanded && (
       <CardContent className="space-y-4">
         {/* Mode Selection */}
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant={mode === 'none' ? 'default' : 'outline'}
+            onClick={() => setMode('none')}
+          >
+            No Background
+          </Button>
           <Button
             variant={mode === 'solid' ? 'default' : 'outline'}
             onClick={() => setMode('solid')}
-            className="flex-1"
           >
             <Palette className="w-4 h-4 mr-2" />
             Solid Color
@@ -86,7 +96,6 @@ export default function HeaderBarConfig({ page, onUpdate }) {
           <Button
             variant={mode === 'gradient' ? 'default' : 'outline'}
             onClick={() => setMode('gradient')}
-            className="flex-1"
           >
             <Palette className="w-4 h-4 mr-2" />
             Gradient
@@ -94,12 +103,18 @@ export default function HeaderBarConfig({ page, onUpdate }) {
           <Button
             variant={mode === 'image' ? 'default' : 'outline'}
             onClick={() => setMode('image')}
-            className="flex-1"
           >
             <ImageIcon className="w-4 h-4 mr-2" />
             Image
           </Button>
         </div>
+
+        {/* No Background Message */}
+        {mode === 'none' && (
+          <div className="p-4 bg-gray-50 rounded-lg text-center">
+            <p className="text-sm text-gray-600">Header will use the default styling without custom background.</p>
+          </div>
+        )}
 
         {/* Solid Colors */}
         {mode === 'solid' && (
@@ -164,7 +179,13 @@ export default function HeaderBarConfig({ page, onUpdate }) {
         )}
 
         {/* Save Button */}
-        <Button onClick={handleSave} className="w-full bg-blue-600 hover:bg-blue-700">
+        <Button 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSave();
+          }} 
+          className="w-full bg-blue-600 hover:bg-blue-700"
+        >
           Apply Header Style
         </Button>
       </CardContent>
