@@ -56,7 +56,12 @@ export default function EventUpdate() {
 
   const { data: responses = [] } = useQuery({
     queryKey: ['block-responses', pageId],
-    queryFn: () => base44.entities.BlockResponse.filter({ page_id: pageId }),
+    queryFn: async () => {
+      if (!pageId) return [];
+      const allResponses = await base44.entities.BlockResponse.filter({ page_id: pageId });
+      console.log('Fetched responses:', allResponses);
+      return allResponses;
+    },
     enabled: !!pageId,
   });
 
@@ -276,6 +281,10 @@ export default function EventUpdate() {
             onClick={() => {
               if (page?.blocks?.find(b => b.type === 'interactive')) {
                 const interactiveBlock = page.blocks.find(b => b.type === 'interactive');
+                console.log('Interactive block:', interactiveBlock);
+                console.log('Block ID:', interactiveBlock.id);
+                console.log('All responses:', responses);
+                console.log('Filtered responses:', responses.filter(r => r.block_id === interactiveBlock.id));
                 setSelectedBlockId(interactiveBlock.id);
                 setShowResponses(true);
               }
@@ -330,15 +339,13 @@ export default function EventUpdate() {
       </div>
 
       {/* Responses Dialog */}
-      {selectedBlockId && (
-        <ResponsesDialog
-          open={showResponses}
-          onClose={() => setShowResponses(false)}
-          responses={responses.filter(r => r.block_id === selectedBlockId)}
-          page={page}
-          blockId={selectedBlockId}
-        />
-      )}
+      <ResponsesDialog
+        open={showResponses}
+        onClose={() => setShowResponses(false)}
+        responses={responses.filter(r => r.block_id === selectedBlockId)}
+        page={page}
+        blockId={selectedBlockId}
+      />
 
       {/* Analytics Dialog */}
       <Dialog open={showStats} onOpenChange={setShowStats}>
