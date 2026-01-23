@@ -77,7 +77,10 @@ export default function ParentEventDetail() {
 
   const { data: actionsRequired = [] } = useQuery({
     queryKey: ['actions-required', eventId],
-    queryFn: () => base44.entities.ActionRequired.filter({ event_id: eventId }),
+    queryFn: async () => {
+      const actions = await base44.entities.ActionRequired.filter({ event_id: eventId });
+      return actions.filter(action => action.is_open !== false);
+    },
     enabled: !!eventId,
   });
 
