@@ -107,10 +107,6 @@ export default function MyChild() {
     return { years, months };
   };
 
-  const parent1HasAccount = child && child.parent_one_email && allUsers.some(u => u.email === child.parent_one_email);
-  const parent2HasAccount = child && child.parent_two_email && allUsers.some(u => u.email === child.parent_two_email);
-  const registeredCount = (parent1HasAccount ? 1 : 0) + (parent2HasAccount ? 1 : 0);
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -123,6 +119,10 @@ export default function MyChild() {
   }
 
   const child = children[0];
+
+  const parent1HasAccount = child && child.parent_one_email && allUsers.some(u => u.email === child.parent_one_email);
+  const parent2HasAccount = child && child.parent_two_email && allUsers.some(u => u.email === child.parent_two_email);
+  const registeredCount = (parent1HasAccount ? 1 : 0) + (parent2HasAccount ? 1 : 0);
 
   if (!child) {
     return (
