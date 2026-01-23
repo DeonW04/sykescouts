@@ -7,8 +7,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Edit2, Check, Plus, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditing, pageId, pageType, isPublicView }) {
+  const queryClient = useQueryClient();
   const [type, setType] = useState(data.type || 'question');
   const [question, setQuestion] = useState(data.question || '');
   const [options, setOptions] = useState(data.options || []);
@@ -83,6 +85,9 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
         respondent_email: null,
         response_date: new Date().toISOString(),
       });
+      
+      // Invalidate query to refresh responses
+      queryClient.invalidateQueries({ queryKey: ['block-responses', pageId] });
       
       toast.success('✅ Response submitted successfully!');
       setChildName('');
