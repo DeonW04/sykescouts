@@ -334,15 +334,16 @@ export default function ParentEventDetail() {
             </div>
           )}
 
-          <div className="space-y-8">
-            {/* Event Description */}
-            {event.description && (
-              <div className="prose prose-lg max-w-none">
-                <div className="bg-white/90 backdrop-blur rounded-2xl p-8 shadow-xl border-l-4 border-[#7413dc]">
-                  <p className="text-gray-800 text-lg leading-relaxed">{event.description}</p>
+          {/* Main Content - Continuous Flow */}
+          <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl overflow-hidden">
+            <div className="p-8 lg:p-12 space-y-12">
+              {/* Event Description */}
+              {event.description && (
+                <div>
+                  <p className="text-gray-800 text-lg leading-relaxed mb-6">{event.description}</p>
                   
                   {(event.consent_deadline || event.payment_deadline) && (
-                    <div className="flex gap-6 mt-6 pt-6 border-t">
+                    <div className="flex gap-6 pt-6 border-t">
                       {event.consent_deadline && (
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
@@ -368,65 +369,59 @@ export default function ParentEventDetail() {
                     </div>
                   )}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Schedule */}
-            {scheduleByDay.length > 0 && (
-              <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl overflow-hidden">
-                <div className="bg-gradient-to-r from-[#7413dc] to-[#5c0fb0] px-8 py-6">
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                    <Calendar className="w-6 h-6" />
+              {/* Schedule */}
+              {scheduleByDay.length > 0 && (
+                <div className="pt-8 border-t">
+                  <h2 className="text-3xl font-bold text-[#7413dc] mb-8 flex items-center gap-3">
+                    <Calendar className="w-8 h-8" />
                     Event Schedule
                   </h2>
-                </div>
-                <div className="p-8 space-y-8">
-                  {scheduleByDay.map((day, dayIndex) => (
-                    <div key={dayIndex}>
-                      <h3 className="font-bold text-xl mb-4 text-[#7413dc] flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-[#7413dc]"></span>
-                        {day.day_name}
-                      </h3>
-                      <div className="space-y-2 ml-4 border-l-2 border-purple-200 pl-6">
-                        {day.items.map((item, itemIndex) => (
-                          <div key={itemIndex} className="relative pb-4">
-                            <div className="absolute -left-[1.6rem] top-2 w-3 h-3 rounded-full bg-purple-400 border-2 border-white"></div>
-                            <div className="bg-gradient-to-r from-purple-50 to-transparent p-4 rounded-lg">
-                              <p className="font-bold text-[#7413dc] text-sm mb-1">{item.time}</p>
-                              <p className="font-semibold text-gray-900">{item.activity}</p>
-                              {item.notes && <p className="text-gray-600 text-sm mt-1">{item.notes}</p>}
+                  <div className="space-y-10">
+                    {scheduleByDay.map((day, dayIndex) => (
+                      <div key={dayIndex}>
+                        <h3 className="font-bold text-2xl mb-6 text-gray-900 flex items-center gap-2">
+                          <span className="w-3 h-3 rounded-full bg-[#7413dc]"></span>
+                          {day.day_name}
+                        </h3>
+                        <div className="space-y-3 ml-6 border-l-2 border-purple-200 pl-8">
+                          {day.items.map((item, itemIndex) => (
+                            <div key={itemIndex} className="relative pb-4">
+                              <div className="absolute -left-[2.1rem] top-2 w-4 h-4 rounded-full bg-purple-400 border-2 border-white shadow"></div>
+                              <div className="bg-gradient-to-r from-purple-50 to-transparent p-5 rounded-lg">
+                                <p className="font-bold text-[#7413dc] mb-2">{item.time}</p>
+                                <p className="font-semibold text-gray-900 text-lg">{item.activity}</p>
+                                {item.notes && <p className="text-gray-600 mt-2">{item.notes}</p>}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Documents */}
-            {documents.length > 0 && (
-              <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl overflow-hidden">
-                <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-8 py-6">
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                    <FileText className="w-6 h-6" />
+              {/* Documents */}
+              {documents.length > 0 && (
+                <div className="pt-8 border-t">
+                  <h2 className="text-3xl font-bold text-[#7413dc] mb-8 flex items-center gap-3">
+                    <FileText className="w-8 h-8" />
                     Documents & Kit Lists
                   </h2>
-                </div>
-                <div className="p-8">
-                  <div className="grid gap-3">
+                  <div className="grid gap-4">
                     {documents.map((doc, idx) => (
                       <a
                         key={idx}
                         href={doc.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex items-center justify-between p-5 bg-gradient-to-r from-blue-50 via-cyan-50 to-blue-50 rounded-xl hover:shadow-lg hover:scale-[1.02] transition-all"
+                        className="group flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 via-cyan-50 to-blue-50 rounded-xl hover:shadow-lg hover:scale-[1.01] transition-all border border-blue-100"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
-                            <FileText className="w-6 h-6 text-white" />
+                          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+                            <FileText className="w-7 h-7 text-white" />
                           </div>
                           <span className="font-semibold text-gray-900 text-lg">{doc.name}</span>
                         </div>
@@ -435,49 +430,41 @@ export default function ParentEventDetail() {
                     ))}
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Badge Criteria */}
-            {badgeCriteria.length > 0 && (
-              <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl overflow-hidden">
-                <div className="bg-gradient-to-r from-yellow-600 to-orange-600 px-8 py-6">
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-                    <Award className="w-6 h-6" />
+              {/* Badge Criteria */}
+              {badgeCriteria.length > 0 && (
+                <div className="pt-8 border-t">
+                  <h2 className="text-3xl font-bold text-[#7413dc] mb-3 flex items-center gap-3">
+                    <Award className="w-8 h-8" />
                     Badge Progress
                   </h2>
-                  <p className="text-yellow-100 mt-1">This event counts towards the following badges</p>
-                </div>
-                <div className="p-8">
-                  <div className="grid gap-4">
+                  <p className="text-gray-600 mb-8">This event counts towards the following badges</p>
+                  <div className="grid gap-5">
                     {badgeCriteria.map((criteria, idx) => (
-                      <div key={idx} className="flex items-start gap-4 p-5 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200">
-                        <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-                          <Award className="w-6 h-6 text-white" />
+                      <div key={idx} className="flex items-start gap-5 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200">
+                        <div className="w-14 h-14 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                          <Award className="w-7 h-7 text-white" />
                         </div>
                         <div className="flex-1">
-                          <p className="font-bold text-gray-900 text-lg">{getBadgeName(criteria.badge_id)}</p>
-                          <p className="text-gray-700 mt-1">{criteria.criteria_description || 'Participation in this event'}</p>
+                          <p className="font-bold text-gray-900 text-xl">{getBadgeName(criteria.badge_id)}</p>
+                          <p className="text-gray-700 mt-2">{criteria.criteria_description || 'Participation in this event'}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Photos */}
-            {photos.length > 0 && (
-              <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl overflow-hidden">
-                <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-6">
-                  <h2 className="text-2xl font-bold text-white">Event Photos</h2>
-                  <p className="text-purple-100 mt-1">Memories from this event</p>
-                </div>
-                <div className="p-8">
+              {/* Photos */}
+              {photos.length > 0 && (
+                <div className="pt-8 border-t">
+                  <h2 className="text-3xl font-bold text-[#7413dc] mb-3">Event Photos</h2>
+                  <p className="text-gray-600 mb-8">Memories from this event</p>
                   <PhotoGallery photos={photos} />
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
