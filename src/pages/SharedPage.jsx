@@ -3,7 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLocation } from 'react-router-dom';
-import LeaderNav from '../components/leader/LeaderNav';
 import HeadingBlock from '../components/pageBuilder/blocks/HeadingBlock';
 import TextBlock from '../components/pageBuilder/blocks/TextBlock';
 import ImageBlock from '../components/pageBuilder/blocks/ImageBlock';
@@ -70,61 +69,62 @@ export default function SharedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <LeaderNav />
-      <div className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">{page.title}</h1>
-            {page.description && (
-              <p className="text-lg text-gray-600">{page.description}</p>
-            )}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+      <div className="max-w-3xl mx-auto px-4 py-12">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <div className="inline-block px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full mb-4">
+            <p className="text-sm font-semibold">40th Rochdale (Syke) Scouts</p>
           </div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">{page.title}</h1>
+          {page.description && (
+            <p className="text-lg text-gray-600">{page.description}</p>
+          )}
+        </div>
 
-          {/* Content Blocks */}
-          <div className="space-y-6">
-            {(!page.blocks || page.blocks.length === 0) ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <p className="text-gray-500">No content available</p>
-                </CardContent>
-              </Card>
-            ) : (
-              page.blocks.map((block, index) => {
-                const BlockComponent = blockComponents[block.type];
+        {/* Content Blocks */}
+        <div className="space-y-6">
+          {(!page.blocks || page.blocks.length === 0) ? (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <p className="text-gray-500">No content available</p>
+              </CardContent>
+            </Card>
+          ) : (
+            page.blocks.map((block, index) => {
+              const BlockComponent = blockComponents[block.type];
 
-                if (!BlockComponent) {
-                  return (
-                    <Card key={block.id || index}>
-                      <CardContent className="p-6 text-center text-gray-500">
-                        Unknown block type: {block.type}
-                      </CardContent>
-                    </Card>
-                  );
-                }
-
+              if (!BlockComponent) {
                 return (
-                  <BlockComponent
-                    key={block.id || index}
-                    data={block.data}
-                    pageId={page.page_id}
-                    isEditing={false}
-                    setIsEditing={() => {}}
-                    onUpdate={() => {}}
-                    isPreview={true}
-                  />
+                  <Card key={block.id || index}>
+                    <CardContent className="p-6 text-center text-gray-500">
+                      Unknown block type: {block.type}
+                    </CardContent>
+                  </Card>
                 );
-              })
-            )}
-          </div>
+              }
 
-          {/* Footer */}
-          <div className="mt-12 text-center text-sm text-gray-500">
-            <p>Published on {new Date(page.published_date).toLocaleDateString()}</p>
-          </div>
-          </div>
-          </div>
+              return (
+                <BlockComponent
+                  key={block.id || index}
+                  data={block.data}
+                  pageId={page.page_id}
+                  pageType={page.type}
+                  isEditing={false}
+                  setIsEditing={() => {}}
+                  onUpdate={() => {}}
+                  isPublicView={true}
+                />
+              );
+            })
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-12 text-center text-sm text-gray-500">
+          <p>Published on {new Date(page.published_date).toLocaleDateString()}</p>
+        </div>
+      </div>
     </div>
   );
 }
