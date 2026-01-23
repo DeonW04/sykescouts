@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, User, Heart, Phone, Edit, Save, X, UserCircle, Camera } from 'lucide-react';
+import { ArrowLeft, User, Heart, Phone, Edit, Save, X, UserCircle, Camera, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
@@ -74,10 +74,8 @@ export default function MyChild() {
       emergency_contact_phone: child.emergency_contact_phone || '',
       emergency_contact_relationship: child.emergency_contact_relationship || '',
       parent_one_name: child.parent_one_name || '',
-      parent_one_email: child.parent_one_email || '',
       parent_one_phone: child.parent_one_phone || '',
       parent_two_name: child.parent_two_name || '',
-      parent_two_email: child.parent_two_email || '',
       parent_two_phone: child.parent_two_phone || '',
       photo_consent: child.photo_consent || false,
     });
@@ -88,6 +86,12 @@ export default function MyChild() {
     const { id, ...data } = editForm;
     updateMemberMutation.mutate({ id, data });
   };
+
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => base44.entities.User.list(),
+    enabled: !!user,
+  });
 
   const calculateAge = (dob) => {
     const birthDate = new Date(dob);
@@ -102,6 +106,10 @@ export default function MyChild() {
     
     return { years, months };
   };
+
+  const parent1HasAccount = child && child.parent_one_email && allUsers.some(u => u.email === child.parent_one_email);
+  const parent2HasAccount = child && child.parent_two_email && allUsers.some(u => u.email === child.parent_two_email);
+  const registeredCount = (parent1HasAccount ? 1 : 0) + (parent2HasAccount ? 1 : 0);
 
   if (isLoading) {
     return (
@@ -171,10 +179,13 @@ export default function MyChild() {
               </div>
               <div>
                 <h1 className="text-4xl font-bold mb-2">{child.full_name}</h1>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
                   <p className="text-blue-100 text-lg font-medium">{section?.display_name}</p>
                   <Badge variant="secondary" className="bg-white/20 text-white text-sm">
                     {age.years} years {age.months} months
+                  </Badge>
+                  <Badge variant="secondary" className="bg-white/20 text-white text-sm">
+                    {registeredCount} of 2 parents registered
                   </Badge>
                 </div>
               </div>
@@ -297,7 +308,22 @@ export default function MyChild() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Parent One</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Parent One</CardTitle>
+                    {!editMode && child.parent_one_email && (
+                      parent1HasAccount ? (
+                        <Badge className="bg-green-100 text-green-800 border-green-300">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Account Registered
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-gray-100 text-gray-600">
+                          <X className="w-3 h-3 mr-1" />
+                          No Account
+                        </Badge>
+                      )
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -314,15 +340,9 @@ export default function MyChild() {
                   </div>
                   <div>
                     <Label>Email Address</Label>
-                    {editMode ? (
-                      <Input
-                        type="email"
-                        value={editForm.parent_one_email}
-                        onChange={(e) => setEditForm({ ...editForm, parent_one_email: e.target.value })}
-                        className="mt-1"
-                      />
-                    ) : (
-                      <p className="mt-1 font-medium">{child.parent_one_email || 'Not provided'}</p>
+                    <p className="mt-1 font-medium">{child.parent_one_email || 'Not provided'}</p>
+                    {!editMode && (
+                      <p className="text-xs text-gray-500 mt-1">Email addresses can only be edited by leaders</p>
                     )}
                   </div>
                   <div>
@@ -343,7 +363,22 @@ export default function MyChild() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Parent Two</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Parent Two</CardTitle>
+                    {!editMode && child.parent_two_email && (
+                      parent2HasAccount ? (
+                        <Badge className="bg-green-100 text-green-800 border-green-300">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Account Registered
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-gray-100 text-gray-600">
+                          <X className="w-3 h-3 mr-1" />
+                          No Account
+                        </Badge>
+                      )
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
@@ -360,15 +395,9 @@ export default function MyChild() {
                   </div>
                   <div>
                     <Label>Email Address</Label>
-                    {editMode ? (
-                      <Input
-                        type="email"
-                        value={editForm.parent_two_email}
-                        onChange={(e) => setEditForm({ ...editForm, parent_two_email: e.target.value })}
-                        className="mt-1"
-                      />
-                    ) : (
-                      <p className="mt-1 font-medium">{child.parent_two_email || 'Not provided'}</p>
+                    <p className="mt-1 font-medium">{child.parent_two_email || 'Not provided'}</p>
+                    {!editMode && (
+                      <p className="text-xs text-gray-500 mt-1">Email addresses can only be edited by leaders</p>
                     )}
                   </div>
                   <div>

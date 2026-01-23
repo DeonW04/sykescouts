@@ -21,7 +21,7 @@ export default function CompleteRegistration() {
   const [noChildFound, setNoChildFound] = useState(false);
   
   const [userForm, setUserForm] = useState({
-    full_name: '',
+    display_name: '',
   });
 
   const [childForm, setChildForm] = useState({
@@ -55,7 +55,7 @@ export default function CompleteRegistration() {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
-      setUserForm({ full_name: currentUser.full_name });
+      setUserForm({ display_name: currentUser.display_name || currentUser.full_name || '' });
 
       // Check if user is a leader
       if (currentUser.role === 'admin') {
@@ -123,7 +123,7 @@ export default function CompleteRegistration() {
     
     try {
       // Update user profile
-      await base44.auth.updateMe({ full_name: userForm.full_name });
+      await base44.auth.updateMe({ display_name: userForm.display_name });
       
       // Optionally, refetch user data here if your API provides a method
       const updatedUser = await base44.auth.me();
@@ -227,14 +227,15 @@ export default function CompleteRegistration() {
             <CardContent>
               <form onSubmit={handleStep1Submit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="full_name">Full Name *</Label>
+                  <Label htmlFor="display_name">Your Name *</Label>
                   <Input
-                    id="full_name"
-                    value={userForm.full_name}
-                    onChange={(e) => setUserForm({ ...userForm, full_name: e.target.value })}
-                    placeholder="Enter your full name"
+                    id="display_name"
+                    value={userForm.display_name}
+                    onChange={(e) => setUserForm({ ...userForm, display_name: e.target.value })}
+                    placeholder="Enter your name"
                     required
                   />
+                  <p className="text-xs text-gray-500">This is how your name will appear in the portal</p>
                 </div>
 
                 <Button
