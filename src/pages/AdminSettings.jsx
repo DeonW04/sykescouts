@@ -8,15 +8,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Users, Shield, Mail, Edit } from 'lucide-react';
+import { Settings, Users, Shield, Mail, Edit, Image, Upload, X } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AdminSettings() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editForm, setEditForm] = useState({ full_name: '', email: '', user_type: 'parent', section_ids: [] });
+  const [editForm, setEditForm] = useState({ display_name: '', email: '', user_type: 'parent', section_ids: [] });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [showGallerySelector, setShowGallerySelector] = useState(false);
+  const [currentImagePage, setCurrentImagePage] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery({
@@ -37,6 +41,16 @@ export default function AdminSettings() {
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
     queryFn: () => base44.entities.Section.filter({ active: true }),
+  });
+
+  const { data: websiteImages = [] } = useQuery({
+    queryKey: ['website-images'],
+    queryFn: () => base44.entities.WebsiteImage.list(),
+  });
+
+  const { data: galleryPhotos = [] } = useQuery({
+    queryKey: ['gallery-photos'],
+    queryFn: () => base44.entities.EventPhoto.filter({}),
   });
 
   const promoteToLeaderMutation = useMutation({
@@ -115,12 +129,63 @@ export default function AdminSettings() {
     }
     const leaderRecord = leaders.find(l => l.user_id === user.id);
     setEditForm({
-      full_name: user.full_name,
+      display_name: user.display_name || user.full_name,
       email: user.email,
       user_type: typeValue,
       section_ids: leaderRecord?.section_ids || [],
     });
     setShowEditDialog(true);
+  };
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async ({ page, file, order }) => {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      return base44.entities.WebsiteImage.create({
+        page,
+        image_url: file_url,
+        order: order || 0,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['website-images'] });
+      toast.success('Image uploaded successfully');
+    },
+  });
+
+  const deleteImageMutation = useMutation({
+    mutationFn: (imageId) => base44.entities.WebsiteImage.delete(imageId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['website-images'] });
+      toast.success('Image deleted');
+    },
+  });
+
+  const selectFromGalleryMutation = useMutation({
+    mutationFn: async ({ page, imageUrl, order }) => {
+      return base44.entities.WebsiteImage.create({
+        page,
+        image_url: imageUrl,
+        order: order || 0,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['website-images'] });
+      setShowGallerySelector(false);
+      toast.success('Image added from gallery');
+    },
+  });
+
+  const handleFileUpload = async (page, file, order) => {
+    setUploadingImage(true);
+    try {
+      await uploadImageMutation.mutateAsync({ page, file, order });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const getImagesForPage = (page) => {
+    return websiteImages.filter(img => img.page === page).sort((a, b) => (a.order || 0) - (b.order || 0));
   };
 
   const handleSaveUser = async () => {
@@ -130,7 +195,7 @@ export default function AdminSettings() {
 
       const response = await base44.functions.invoke('updateUser', {
         userId: selectedUser.id,
-        full_name: editForm.full_name,
+        display_name: editForm.display_name,
         role: role,
       });
 
@@ -192,14 +257,21 @@ export default function AdminSettings() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              User Management
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        <Tabs defaultValue="users" className="space-y-6">
+          <TabsList className="bg-white border">
+            <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="images">Website Images</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="users">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  User Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
             {isLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin w-8 h-8 border-4 border-[#004851] border-t-transparent rounded-full mx-auto mb-4" />
@@ -208,7 +280,7 @@ export default function AdminSettings() {
             ) : (
               <div className="space-y-2">
                 <div className="grid grid-cols-4 gap-4 px-4 py-2 bg-gray-50 rounded-lg font-semibold text-sm text-gray-700">
-                  <div>Name</div>
+                  <div>Display Name</div>
                   <div>Email</div>
                   <div>Type</div>
                   <div className="text-right">Actions</div>
@@ -219,7 +291,7 @@ export default function AdminSettings() {
                   
                   return (
                     <div key={user.id} className="grid grid-cols-4 gap-4 px-4 py-3 bg-white border rounded-lg items-center">
-                      <div className="font-medium">{user.full_name}</div>
+                      <div className="font-medium">{user.display_name || user.full_name}</div>
                       <div className="text-sm text-gray-600">{user.email}</div>
                       <div>
                         <Badge className={userType.color}>
@@ -250,8 +322,166 @@ export default function AdminSettings() {
                 })}
               </div>
             )}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="images">
+            <div className="space-y-6">
+              {/* Home Page Images */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Image className="w-5 h-5" />
+                    Home Page Images
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Upload multiple images for the home page carousel</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {getImagesForPage('home').map((img) => (
+                      <div key={img.id} className="relative group">
+                        <img src={img.image_url} alt="Home" className="w-full h-48 object-cover rounded-lg" />
+                        <button
+                          onClick={() => deleteImageMutation.mutate(img.id)}
+                          className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const order = getImagesForPage('home').length;
+                            handleFileUpload('home', file, order);
+                          }
+                        }}
+                      />
+                      <Button type="button" variant="outline" disabled={uploadingImage}>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload New
+                      </Button>
+                    </label>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setCurrentImagePage('home');
+                        setShowGallerySelector(true);
+                      }}
+                    >
+                      <Image className="w-4 h-4 mr-2" />
+                      Select from Gallery
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* About Us Image */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>About Us Image</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {getImagesForPage('about')[0] && (
+                    <div className="relative group w-fit">
+                      <img src={getImagesForPage('about')[0].image_url} alt="About" className="w-full max-w-md h-64 object-cover rounded-lg" />
+                      <button
+                        onClick={() => deleteImageMutation.mutate(getImagesForPage('about')[0].id)}
+                        className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) handleFileUpload('about', file, 0);
+                        }}
+                      />
+                      <Button type="button" variant="outline" disabled={uploadingImage}>
+                        <Upload className="w-4 h-4 mr-2" />
+                        {getImagesForPage('about').length > 0 ? 'Replace' : 'Upload'}
+                      </Button>
+                    </label>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setCurrentImagePage('about');
+                        setShowGallerySelector(true);
+                      }}
+                    >
+                      <Image className="w-4 h-4 mr-2" />
+                      Select from Gallery
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Section Images */}
+              {['beavers', 'cubs', 'scouts'].map((section) => (
+                <Card key={section}>
+                  <CardHeader>
+                    <CardTitle className="capitalize">{section} Image</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {getImagesForPage(section)[0] && (
+                      <div className="relative group w-fit">
+                        <img src={getImagesForPage(section)[0].image_url} alt={section} className="w-full max-w-md h-64 object-cover rounded-lg" />
+                        <button
+                          onClick={() => deleteImageMutation.mutate(getImagesForPage(section)[0].id)}
+                          className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) handleFileUpload(section, file, 0);
+                          }}
+                        />
+                        <Button type="button" variant="outline" disabled={uploadingImage}>
+                          <Upload className="w-4 h-4 mr-2" />
+                          {getImagesForPage(section).length > 0 ? 'Replace' : 'Upload'}
+                        </Button>
+                      </label>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setCurrentImagePage(section);
+                          setShowGallerySelector(true);
+                        }}
+                      >
+                        <Image className="w-4 h-4 mr-2" />
+                        Select from Gallery
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Edit User Dialog */}
@@ -262,11 +492,11 @@ export default function AdminSettings() {
           </DialogHeader>
           <div className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="edit_full_name">Full Name</Label>
+              <Label htmlFor="edit_display_name">Display Name</Label>
               <Input
-                id="edit_full_name"
-                value={editForm.full_name}
-                onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                id="edit_display_name"
+                value={editForm.display_name}
+                onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -335,6 +565,42 @@ export default function AdminSettings() {
             >
               Save Changes
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Gallery Selector Dialog */}
+      <Dialog open={showGallerySelector} onOpenChange={setShowGallerySelector}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Select from Gallery</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-3 gap-4 mt-4">
+            {galleryPhotos.map((photo) => (
+              <div
+                key={photo.id}
+                className="relative group cursor-pointer"
+                onClick={() => {
+                  const order = currentImagePage === 'home' ? getImagesForPage('home').length : 0;
+                  selectFromGalleryMutation.mutate({
+                    page: currentImagePage,
+                    imageUrl: photo.photo_url,
+                    order,
+                  });
+                }}
+              >
+                <img
+                  src={photo.photo_url}
+                  alt=""
+                  className="w-full h-40 object-cover rounded-lg group-hover:opacity-75 transition-opacity"
+                />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="bg-white rounded-full p-3">
+                    <Image className="w-6 h-6 text-[#7413dc]" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </DialogContent>
       </Dialog>
