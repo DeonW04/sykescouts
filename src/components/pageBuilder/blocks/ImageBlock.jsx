@@ -4,7 +4,7 @@ import { Edit2, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageSelector from '../ImageSelector';
 
-export default function ImageBlock({ data, onUpdate, isEditing, setIsEditing, isPreview }) {
+export default function ImageBlock({ data, onUpdate, isEditing, setIsEditing, isPreview, isPublicView }) {
    const [imageUrl, setImageUrl] = useState(data.imageUrl || '');
 
    const handleSave = () => {
@@ -22,7 +22,7 @@ export default function ImageBlock({ data, onUpdate, isEditing, setIsEditing, is
          {imageUrl && (
            <img src={imageUrl} alt="Content" className="w-full h-64 object-cover rounded mb-4" />
          )}
-         {!isPreview && (
+         {!isPreview && !isPublicView && (
            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
              <Edit2 className="w-4 h-4" />
            </Button>

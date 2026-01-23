@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Edit2, Check, Bold, Italic } from 'lucide-react';
 
-export default function TextBlock({ data, onUpdate, isEditing, setIsEditing, isPreview }) {
+export default function TextBlock({ data, onUpdate, isEditing, setIsEditing, isPreview, isPublicView }) {
    const [text, setText] = useState(data.text || '');
 
    const handleSave = () => {
@@ -24,7 +24,7 @@ export default function TextBlock({ data, onUpdate, isEditing, setIsEditing, isP
          <div className="prose prose-sm max-w-none">
            <p className="text-gray-700">{text || 'Text content'}</p>
          </div>
-         {!isPreview && (
+         {!isPreview && !isPublicView && (
            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="mt-2">
              <Edit2 className="w-4 h-4" />
            </Button>

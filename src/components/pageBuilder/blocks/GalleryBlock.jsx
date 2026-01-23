@@ -28,9 +28,11 @@ export default function GalleryBlock({ data, onUpdate, isEditing, setIsEditing, 
             <img key={idx} src={img} alt={`Gallery ${idx}`} className="w-full h-24 object-cover rounded" />
           ))}
         </div>
-        <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
-          <Edit2 className="w-4 h-4" />
-        </Button>
+        {!isPublicView && (
+          <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
+            <Edit2 className="w-4 h-4" />
+          </Button>
+        )}
       </div>
     );
   }

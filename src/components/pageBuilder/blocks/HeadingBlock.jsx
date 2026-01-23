@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Edit2, Check } from 'lucide-react';
 
-export default function HeadingBlock({ data, onUpdate, isEditing, setIsEditing, isPreview }) {
+export default function HeadingBlock({ data, onUpdate, isEditing, setIsEditing, isPreview, isPublicView }) {
    const [text, setText] = useState(data.text || '');
    const [size, setSize] = useState(data.size || 'h1');
 
@@ -17,7 +17,7 @@ export default function HeadingBlock({ data, onUpdate, isEditing, setIsEditing, 
      return (
        <div className={`${size === 'h1' ? 'text-3xl' : size === 'h2' ? 'text-2xl' : 'text-xl'} font-bold mb-4`}>
          {text || 'Heading'}
-         {!isPreview && (
+         {!isPreview && !isPublicView && (
            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="ml-2">
              <Edit2 className="w-4 h-4" />
            </Button>
