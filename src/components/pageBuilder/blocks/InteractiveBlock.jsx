@@ -8,16 +8,16 @@ import { Edit2, Check, Plus, Trash2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
-export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditing, pageId, pageType }) {
+export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditing, pageId, pageType, isPublicView }) {
   const [type, setType] = useState(data.type || 'question');
   const [question, setQuestion] = useState(data.question || '');
   const [options, setOptions] = useState(data.options || []);
   const [allowMultiple, setAllowMultiple] = useState(data.allowMultiple || false);
   const [newOption, setNewOption] = useState('');
   const [responses, setResponses] = useState(data.responses || []);
-  const [showResponseForm, setShowResponseForm] = useState(false);
   const [childName, setChildName] = useState('');
   const [answer, setAnswer] = useState('');
+  const [selectedOptions, setSelectedOptions] = useState([]);
 
   const addOption = () => {
     if (newOption.trim()) {
@@ -35,55 +35,158 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
       toast.error('Please enter a question');
       return;
     }
-    if ((type === 'vote' || type === 'text_input') && !question.trim()) {
-      toast.error('Please fill all required fields');
-      return;
-    }
     onUpdate({ type, question, options, allowMultiple, responses });
     setIsEditing(false);
   };
 
   const submitResponse = async () => {
-    if (!childName.trim() || !answer.trim()) {
-      toast.error('Please fill all fields');
+    if (!childName.trim()) {
+      toast.error('Please enter child name');
       return;
     }
 
-    // Check if child already responded
-    if (responses.some(r => r.childName === childName)) {
-      toast.error('This child has already responded');
+    let finalAnswer = answer;
+    if (type === 'vote' && allowMultiple) {
+      finalAnswer = selectedOptions.join(', ');
+    }
+
+    if (!finalAnswer || finalAnswer.trim() === '') {
+      toast.error('Please select an answer');
       return;
     }
 
-    const newResponse = {
-      id: `response_${Date.now()}`,
-      childName,
-      answer,
-      timestamp: new Date().toISOString(),
-    };
-
-    const updated = [...responses, newResponse];
-    onUpdate({ type, question, options, allowMultiple, responses: updated });
-
-    // Save to BlockResponse entity
+    // Check if child already responded by checking database
     try {
+      const existingResponses = await base44.entities.BlockResponse.filter({ 
+        page_id: pageId,
+        block_id: data.id || `block_${Date.now()}`
+      });
+      
+      if (existingResponses.some(r => r.response_data?.childName?.toLowerCase() === childName.toLowerCase())) {
+        toast.error('This child has already responded');
+        return;
+      }
+
+      // Save to BlockResponse entity
       await base44.entities.BlockResponse.create({
         page_id: pageId,
-        block_id: data.id,
+        block_id: data.id || `block_${Date.now()}`,
         response_type: type,
-        response_data: { childName, answer },
+        response_data: { childName, answer: finalAnswer },
         respondent_email: null,
         response_date: new Date().toISOString(),
       });
-      toast.success('Response submitted');
+      
+      toast.success('Response submitted successfully!');
       setChildName('');
       setAnswer('');
-      setShowResponseForm(false);
+      setSelectedOptions([]);
     } catch (error) {
-      toast.error('Failed to save response');
+      toast.error('Failed to save response: ' + error.message);
     }
   };
 
+  const toggleOption = (opt) => {
+    if (selectedOptions.includes(opt)) {
+      setSelectedOptions(selectedOptions.filter(o => o !== opt));
+    } else {
+      setSelectedOptions([...selectedOptions, opt]);
+    }
+  };
+
+  // Public view (on shared page)
+  if (isPublicView) {
+    return (
+      <div className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-xl p-6 shadow-lg">
+        <h3 className="text-xl font-bold text-gray-900 mb-4">{question}</h3>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Child's Name</label>
+            <Input
+              placeholder="Enter child's name"
+              value={childName}
+              onChange={(e) => setChildName(e.target.value)}
+              className="bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Response</label>
+            
+            {type === 'question' && (
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant={answer === 'Yes' ? 'default' : 'outline'}
+                  onClick={() => setAnswer('Yes')}
+                  className={`h-12 ${answer === 'Yes' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                >
+                  Yes
+                </Button>
+                <Button
+                  variant={answer === 'No' ? 'default' : 'outline'}
+                  onClick={() => setAnswer('No')}
+                  className={`h-12 ${answer === 'No' ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                >
+                  No
+                </Button>
+              </div>
+            )}
+
+            {type === 'vote' && (
+              <div className="space-y-2">
+                {options.map((opt, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => {
+                      if (allowMultiple) {
+                        toggleOption(opt);
+                      } else {
+                        setAnswer(opt);
+                      }
+                    }}
+                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      allowMultiple 
+                        ? (selectedOptions.includes(opt) ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-300')
+                        : (answer === opt ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-blue-300')
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      {allowMultiple && (
+                        <Checkbox 
+                          checked={selectedOptions.includes(opt)}
+                          className="pointer-events-none"
+                        />
+                      )}
+                      <span className="font-medium">{opt}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {type === 'text_input' && (
+              <Textarea
+                placeholder="Type your response here..."
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                className="min-h-[100px] bg-white"
+              />
+            )}
+          </div>
+
+          <Button 
+            onClick={submitResponse} 
+            className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-lg font-semibold"
+          >
+            Submit Response
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Editor view (on EventUpdate page)
   if (!isEditing) {
     return (
       <div className="space-y-4">
@@ -96,88 +199,6 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
             <Edit2 className="w-4 h-4" />
           </Button>
         </div>
-
-        {/* Response Form */}
-        {!showResponseForm ? (
-          <Button onClick={() => setShowResponseForm(true)} className="bg-blue-600 hover:bg-blue-700">
-            Submit Response
-          </Button>
-        ) : (
-          <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-            <Input
-              placeholder="Child name"
-              value={childName}
-              onChange={(e) => setChildName(e.target.value)}
-            />
-
-            {type === 'question' && (
-              <div className="flex gap-2">
-                <Button
-                  variant={answer === 'yes' ? 'default' : 'outline'}
-                  onClick={() => setAnswer('yes')}
-                  className="flex-1"
-                >
-                  Yes
-                </Button>
-                <Button
-                  variant={answer === 'no' ? 'default' : 'outline'}
-                  onClick={() => setAnswer('no')}
-                  className="flex-1"
-                >
-                  No
-                </Button>
-              </div>
-            )}
-
-            {(type === 'vote') && (
-              <div className="space-y-2">
-                {options.map((opt, idx) => (
-                  <Button
-                    key={idx}
-                    variant={answer === opt ? 'default' : 'outline'}
-                    className="w-full justify-start"
-                    onClick={() => setAnswer(allowMultiple ? (answer.includes(opt) ? answer.replace(opt, '') : answer + ',' + opt) : opt)}
-                  >
-                    {allowMultiple && <Checkbox checked={answer.includes(opt)} className="mr-2" />}
-                    {opt}
-                  </Button>
-                ))}
-              </div>
-            )}
-
-            {type === 'text_input' && (
-              <Textarea
-                placeholder="Your response..."
-                value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
-              />
-            )}
-
-            <div className="flex gap-2">
-              <Button onClick={submitResponse} className="flex-1 bg-green-600 hover:bg-green-700">
-                Submit
-              </Button>
-              <Button onClick={() => setShowResponseForm(false)} variant="outline" className="flex-1">
-                Cancel
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Display Responses */}
-        {responses.length > 0 && (
-          <div className="mt-4 pt-4 border-t">
-            <p className="font-semibold text-sm mb-3">{responses.length} Responses</p>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {responses.map(r => (
-                <div key={r.id} className="bg-gray-50 p-2 rounded text-sm">
-                  <p className="font-medium">{r.childName}</p>
-                  <p className="text-gray-700">{r.answer}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     );
   }

@@ -4,7 +4,7 @@ import { Edit2, Check, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageSelector from '../ImageSelector';
 
-export default function GalleryBlock({ data, onUpdate, isEditing, setIsEditing }) {
+export default function GalleryBlock({ data, onUpdate, isEditing, setIsEditing, isPublicView }) {
   const [images, setImages] = useState(data.images || []);
 
   const removeImage = (url) => {
