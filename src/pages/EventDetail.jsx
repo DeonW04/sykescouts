@@ -215,7 +215,10 @@ export default function EventDetail() {
                 {event.description && (
                   <div>
                     <p className="text-sm text-gray-600">Description</p>
-                    <p className="text-gray-900 whitespace-pre-wrap">{event.description}</p>
+                    <div 
+                      className="text-gray-900 prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: event.description }}
+                    />
                   </div>
                 )}
                 <div className="grid md:grid-cols-3 gap-4">

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, FileText, Trash2, Download, Plus } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, Plus, Lock, Unlock } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function EventParentPortalSection({ eventId, event }) {
@@ -56,6 +56,14 @@ export default function EventParentPortalSection({ eventId, event }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-required'] });
       toast.success('Action deleted');
+    },
+  });
+
+  const toggleActionOpenMutation = useMutation({
+    mutationFn: ({ id, is_open }) => base44.entities.ActionRequired.update(id, { is_open }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['action-required'] });
+      toast.success('Action status updated');
     },
   });
 
@@ -172,20 +180,44 @@ export default function EventParentPortalSection({ eventId, event }) {
             <div className="space-y-2">
               {actions.map(action => (
                 <div key={action.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{action.action_text}</p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{action.action_text}</p>
+                      {action.is_open === false && (
+                        <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                          Closed
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-500">
                       Column: {action.column_title} • Type: {action.action_purpose}
                     </p>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => deleteActionMutation.mutate(action.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => toggleActionOpenMutation.mutate({ 
+                        id: action.id, 
+                        is_open: action.is_open === false 
+                      })}
+                      title={action.is_open === false ? 'Open responses' : 'Close responses'}
+                    >
+                      {action.is_open === false ? (
+                        <Unlock className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Lock className="w-4 h-4 text-gray-600" />
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteActionMutation.mutate(action.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

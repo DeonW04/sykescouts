@@ -5,10 +5,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
+import ReactQuill from 'react-quill';
 
 export default function NewEventDialog({ open, onOpenChange, sections, editEvent }) {
   const queryClient = useQueryClient();
@@ -181,12 +181,20 @@ export default function NewEventDialog({ open, onOpenChange, sections, editEvent
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
+            <ReactQuill
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(value) => setFormData({ ...formData, description: value })}
               placeholder="Describe the event..."
-              rows={4}
+              className="bg-white"
+              theme="snow"
+              modules={{
+                toolbar: [
+                  ['bold', 'italic', 'underline'],
+                  [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                  ['link'],
+                  ['clean']
+                ]
+              }}
             />
           </div>
 

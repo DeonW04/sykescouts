@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserPlus, Users, Search } from 'lucide-react';
+import { UserPlus, Users, Search, Pencil } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -15,6 +15,8 @@ export default function EventAttendeesSection({ eventId, event }) {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingResponse, setEditingResponse] = useState(null);
+  const [editValue, setEditValue] = useState('');
 
   const { data: attendances = [] } = useQuery({
     queryKey: ['event-attendances', eventId],
@@ -71,6 +73,27 @@ export default function EventAttendeesSection({ eventId, event }) {
     },
   });
 
+  const updateResponseMutation = useMutation({
+    mutationFn: ({ responseId, value }) => 
+      base44.entities.ActionResponse.update(responseId, { response_value: value }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['action-responses'] });
+      toast.success('Response updated');
+      setEditingResponse(null);
+      setEditValue('');
+    },
+  });
+
+  const createResponseMutation = useMutation({
+    mutationFn: (data) => base44.entities.ActionResponse.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['action-responses'] });
+      toast.success('Response added');
+      setEditingResponse(null);
+      setEditValue('');
+    },
+  });
+
   const invitedMemberIds = attendances.map(a => a.member_id);
   const availableMembers = allMembers.filter(m => 
     event.section_ids?.includes(m.section_id) && 
@@ -113,20 +136,49 @@ export default function EventAttendeesSection({ eventId, event }) {
     const response = actionResponses.find(
       r => r.child_member_id === memberId && r.action_id === actionId
     );
-    if (!response) return '-';
+    if (!response) return { display: '-', response: null };
     
-    if (response.status !== 'completed') return 'Pending';
+    if (response.status !== 'completed') return { display: 'Pending', response };
     
     const action = actionsRequired.find(a => a.id === actionId);
-    if (!action) return response.response_value || 'Yes';
+    if (!action) return { display: response.response_value || 'Yes', response };
     
     if (action.action_purpose === 'attendance') {
-      return response.response_value === 'yes' ? '✓' : '✗';
+      return { 
+        display: response.response_value === 'yes' ? '✓' : '✗', 
+        response 
+      };
     }
     if (action.action_purpose === 'consent') {
-      return response.response_value === 'yes' ? '✓ Consent Given' : '✗ Not Given';
+      return { 
+        display: response.response_value === 'yes' ? '✓ Consent Given' : '✗ Not Given', 
+        response 
+      };
     }
-    return response.response_value || '-';
+    return { display: response.response_value || '-', response };
+  };
+
+  const handleSaveResponse = (memberId, actionId) => {
+    const existingResponse = actionResponses.find(
+      r => r.child_member_id === memberId && r.action_id === actionId
+    );
+
+    if (existingResponse) {
+      updateResponseMutation.mutate({
+        responseId: existingResponse.id,
+        value: editValue,
+      });
+    } else {
+      const member = allMembers.find(m => m.id === memberId);
+      createResponseMutation.mutate({
+        action_id: actionId,
+        child_member_id: memberId,
+        entity_id: eventId,
+        parent_email: member?.parent_one_email || 'admin@manual.entry',
+        response_value: editValue,
+        status: 'completed',
+      });
+    }
   };
 
   return (
@@ -178,11 +230,57 @@ export default function EventAttendeesSection({ eventId, event }) {
                       <TableRow key={attendance.id}>
                         <TableCell className="font-medium">{member.full_name}</TableCell>
                         <TableCell>{getMemberSection(member.section_id)}</TableCell>
-                        {actionsRequired.map((action) => (
-                          <TableCell key={action.id}>
-                            {getActionResponse(member.id, action.id)}
-                          </TableCell>
-                        ))}
+                        {actionsRequired.map((action) => {
+                          const { display, response } = getActionResponse(member.id, action.id);
+                          const isEditing = editingResponse === `${member.id}-${action.id}`;
+
+                          return (
+                            <TableCell key={action.id}>
+                              {isEditing ? (
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    value={editValue}
+                                    onChange={(e) => setEditValue(e.target.value)}
+                                    className="h-8 w-24"
+                                    autoFocus
+                                  />
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleSaveResponse(member.id, action.id)}
+                                  >
+                                    Save
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setEditingResponse(null);
+                                      setEditValue('');
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span>{display}</span>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => {
+                                      setEditingResponse(`${member.id}-${action.id}`);
+                                      setEditValue(response?.response_value || '');
+                                    }}
+                                    className="h-6 w-6 p-0"
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              )}
+                            </TableCell>
+                          );
+                        })}
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"
