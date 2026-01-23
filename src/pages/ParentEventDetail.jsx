@@ -60,38 +60,37 @@ export default function ParentEventDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-      <div className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] text-white py-16 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+        </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <Button
             variant="ghost"
             onClick={() => navigate(createPageUrl('ParentEvents'))}
-            className="mb-6 -ml-2"
+            className="text-white hover:bg-white/20 mb-6 -ml-2"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
-          <div className="flex items-start gap-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
-              <Calendar className="w-8 h-8 text-white" />
-            </div>
-            <div className="flex-1">
-              <Badge className="mb-2">{event.type}</Badge>
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">{event.title}</h1>
-              <div className="flex flex-wrap items-center gap-5 text-gray-600">
-                <span className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span className="font-medium">{format(new Date(event.start_date), 'MMMM d, yyyy')}</span>
-                  {event.end_date && event.end_date !== event.start_date && (
-                    <span>→ {format(new Date(event.end_date), 'MMM d, yyyy')}</span>
-                  )}
-                </span>
-                {event.location && (
-                  <span className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    <span>{event.location}</span>
-                  </span>
+          <div>
+            <Badge className="bg-white/20 text-white mb-3">{event.type}</Badge>
+            <h1 className="text-4xl font-bold mb-4">{event.title}</h1>
+            <div className="flex flex-wrap items-center gap-5 text-purple-100">
+              <span className="flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                <span className="font-medium">{format(new Date(event.start_date), 'MMMM d, yyyy')}</span>
+                {event.end_date && event.end_date !== event.start_date && (
+                  <span>→ {format(new Date(event.end_date), 'MMM d, yyyy')}</span>
                 )}
-              </div>
+              </span>
+              {event.location && (
+                <span className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  <span>{event.location}</span>
+                </span>
+              )}
             </div>
           </div>
         </div>

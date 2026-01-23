@@ -157,12 +157,16 @@ export default function MyChild() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative bg-gradient-to-br from-blue-600 to-[#7413dc] text-white py-16 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <Button
             variant="ghost"
             onClick={() => navigate(createPageUrl('ParentDashboard'))}
-            className="mb-6 -ml-2"
+            className="text-white hover:bg-white/20 mb-6 -ml-2"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
@@ -170,17 +174,17 @@ export default function MyChild() {
           
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-3xl shadow-lg">
+              <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center text-[#7413dc] font-bold text-4xl shadow-2xl">
                 {child.full_name.charAt(0)}
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{child.full_name}</h1>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <p className="text-gray-600 text-lg font-medium">{section?.display_name}</p>
-                  <Badge variant="outline" className="text-sm">
+                <h1 className="text-4xl font-bold mb-2">{child.full_name}</h1>
+                <div className="flex items-center gap-4 flex-wrap">
+                  <p className="text-blue-100 text-lg font-medium">{section?.display_name}</p>
+                  <Badge variant="secondary" className="bg-white/20 text-white text-sm">
                     {age.years} years {age.months} months
                   </Badge>
-                  <Badge variant="outline" className="text-sm">
+                  <Badge variant="secondary" className="bg-white/20 text-white text-sm">
                     {registeredCount} of 2 parents registered
                   </Badge>
                 </div>
@@ -190,7 +194,7 @@ export default function MyChild() {
               <Button 
                 onClick={() => handleEdit(child)}
                 size="lg"
-                className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white"
+                className="bg-white text-[#7413dc] hover:bg-blue-50 font-semibold shadow-xl"
               >
                 <Edit className="w-5 h-5 mr-2" />
                 Edit Details
@@ -201,7 +205,7 @@ export default function MyChild() {
                   onClick={handleSave}
                   disabled={updateMemberMutation.isPending}
                   size="lg"
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  className="bg-white text-[#7413dc] hover:bg-blue-50 font-semibold shadow-xl"
                 >
                   <Save className="w-5 h-5 mr-2" />
                   Save
@@ -210,6 +214,7 @@ export default function MyChild() {
                   variant="outline"
                   onClick={() => setEditMode(false)}
                   size="lg"
+                  className="bg-white/10 text-white border-white/30 hover:bg-white/20"
                 >
                   <X className="w-5 h-5 mr-2" />
                   Cancel

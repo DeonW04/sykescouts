@@ -75,31 +75,30 @@ export default function ParentEvents() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-      <div className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] text-white py-16 overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+        </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <CalendarIcon className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Events & Camps</h1>
-                <p className="text-gray-600 text-lg mt-1">Adventures await!</p>
-              </div>
+            <div>
+              <h1 className="text-4xl font-bold mb-2">Events & Camps</h1>
+              <p className="text-purple-100 text-lg">Adventures await!</p>
             </div>
             <div className="flex gap-2">
               <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
+                variant={viewMode === 'list' ? 'secondary' : 'outline'}
                 onClick={() => setViewMode('list')}
-                className={viewMode === 'list' ? 'bg-[#7413dc] hover:bg-[#5c0fb0]' : ''}
+                className={viewMode === 'list' ? 'bg-white text-[#7413dc] font-semibold' : 'bg-white/10 text-white border-white/30 hover:bg-white/20'}
               >
                 <List className="w-4 h-4 mr-2" />
                 List
               </Button>
               <Button
-                variant={viewMode === 'calendar' ? 'default' : 'outline'}
+                variant={viewMode === 'calendar' ? 'secondary' : 'outline'}
                 onClick={() => setViewMode('calendar')}
-                className={viewMode === 'calendar' ? 'bg-[#7413dc] hover:bg-[#5c0fb0]' : ''}
+                className={viewMode === 'calendar' ? 'bg-white text-[#7413dc] font-semibold' : 'bg-white/10 text-white border-white/30 hover:bg-white/20'}
               >
                 <CalendarViewIcon className="w-4 h-4 mr-2" />
                 Calendar
