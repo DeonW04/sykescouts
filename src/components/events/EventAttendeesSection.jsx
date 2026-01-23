@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { UserPlus, Users, Search, Pencil } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -15,8 +16,9 @@ export default function EventAttendeesSection({ eventId, event }) {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [editingResponse, setEditingResponse] = useState(null);
-  const [editValue, setEditValue] = useState('');
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingMember, setEditingMember] = useState(null);
+  const [editResponses, setEditResponses] = useState({});
 
   const { data: attendances = [] } = useQuery({
     queryKey: ['event-attendances', eventId],
@@ -78,9 +80,6 @@ export default function EventAttendeesSection({ eventId, event }) {
       base44.entities.ActionResponse.update(responseId, { response_value: value }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-responses'] });
-      toast.success('Response updated');
-      setEditingResponse(null);
-      setEditValue('');
     },
   });
 
@@ -88,9 +87,6 @@ export default function EventAttendeesSection({ eventId, event }) {
     mutationFn: (data) => base44.entities.ActionResponse.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-responses'] });
-      toast.success('Response added');
-      setEditingResponse(null);
-      setEditValue('');
     },
   });
 
@@ -158,27 +154,54 @@ export default function EventAttendeesSection({ eventId, event }) {
     return { display: response.response_value || '-', response };
   };
 
-  const handleSaveResponse = (memberId, actionId) => {
-    const existingResponse = actionResponses.find(
-      r => r.child_member_id === memberId && r.action_id === actionId
-    );
+  const handleOpenEditDialog = (member) => {
+    setEditingMember(member);
+    const responses = {};
+    actionsRequired.forEach(action => {
+      const response = actionResponses.find(
+        r => r.child_member_id === member.id && r.action_id === action.id
+      );
+      responses[action.id] = response?.response_value || '';
+    });
+    setEditResponses(responses);
+    setShowEditDialog(true);
+  };
 
-    if (existingResponse) {
-      updateResponseMutation.mutate({
-        responseId: existingResponse.id,
-        value: editValue,
-      });
-    } else {
-      const member = allMembers.find(m => m.id === memberId);
-      createResponseMutation.mutate({
-        action_id: actionId,
-        child_member_id: memberId,
-        entity_id: eventId,
-        parent_email: member?.parent_one_email || 'admin@manual.entry',
-        response_value: editValue,
-        status: 'completed',
-      });
-    }
+  const handleSaveAllResponses = async () => {
+    const promises = [];
+    
+    actionsRequired.forEach(action => {
+      const existingResponse = actionResponses.find(
+        r => r.child_member_id === editingMember.id && r.action_id === action.id
+      );
+      const newValue = editResponses[action.id];
+
+      if (existingResponse && newValue) {
+        promises.push(
+          updateResponseMutation.mutateAsync({
+            responseId: existingResponse.id,
+            value: newValue,
+          })
+        );
+      } else if (newValue) {
+        promises.push(
+          createResponseMutation.mutateAsync({
+            action_id: action.id,
+            child_member_id: editingMember.id,
+            entity_id: eventId,
+            parent_email: editingMember?.parent_one_email || 'admin@manual.entry',
+            response_value: newValue,
+            status: 'completed',
+          })
+        );
+      }
+    });
+
+    await Promise.all(promises);
+    toast.success('Responses updated');
+    setShowEditDialog(false);
+    setEditingMember(null);
+    setEditResponses({});
   };
 
   return (
@@ -231,65 +254,33 @@ export default function EventAttendeesSection({ eventId, event }) {
                         <TableCell className="font-medium">{member.full_name}</TableCell>
                         <TableCell>{getMemberSection(member.section_id)}</TableCell>
                         {actionsRequired.map((action) => {
-                          const { display, response } = getActionResponse(member.id, action.id);
-                          const isEditing = editingResponse === `${member.id}-${action.id}`;
-
+                          const { display } = getActionResponse(member.id, action.id);
                           return (
                             <TableCell key={action.id}>
-                              {isEditing ? (
-                                <div className="flex items-center gap-1">
-                                  <Input
-                                    value={editValue}
-                                    onChange={(e) => setEditValue(e.target.value)}
-                                    className="h-8 w-24"
-                                    autoFocus
-                                  />
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleSaveResponse(member.id, action.id)}
-                                  >
-                                    Save
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => {
-                                      setEditingResponse(null);
-                                      setEditValue('');
-                                    }}
-                                  >
-                                    Cancel
-                                  </Button>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-2">
-                                  <span>{display}</span>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => {
-                                      setEditingResponse(`${member.id}-${action.id}`);
-                                      setEditValue(response?.response_value || '');
-                                    }}
-                                    className="h-6 w-6 p-0"
-                                  >
-                                    <Pencil className="w-3 h-3" />
-                                  </Button>
-                                </div>
-                              )}
+                              {display}
                             </TableCell>
                           );
                         })}
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeAttendanceMutation.mutate(attendance.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            Remove
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleOpenEditDialog(member)}
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <Pencil className="w-4 h-4 mr-1" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeAttendanceMutation.mutate(attendance.id)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              Remove
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -300,6 +291,65 @@ export default function EventAttendeesSection({ eventId, event }) {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Responses for {editingMember?.full_name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {actionsRequired.map(action => (
+              <div key={action.id} className="space-y-2">
+                <Label>{action.column_title}</Label>
+                <p className="text-sm text-gray-600">{action.action_text}</p>
+                
+                {action.action_purpose === 'attendance' || action.action_purpose === 'consent' ? (
+                  <Select
+                    value={editResponses[action.id] || ''}
+                    onValueChange={(value) => setEditResponses({...editResponses, [action.id]: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select response" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="yes">Yes</SelectItem>
+                      <SelectItem value="no">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : action.action_purpose === 'custom_dropdown' ? (
+                  <Select
+                    value={editResponses[action.id] || ''}
+                    onValueChange={(value) => setEditResponses({...editResponses, [action.id]: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {action.dropdown_options?.map((option, idx) => (
+                        <SelectItem key={idx} value={option}>{option}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    value={editResponses[action.id] || ''}
+                    onChange={(e) => setEditResponses({...editResponses, [action.id]: e.target.value})}
+                    placeholder="Enter response"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveAllResponses}>
+              Save All
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent className="max-w-2xl">
