@@ -193,15 +193,12 @@ export default function EventDetail() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="details" className="space-y-6">
-          <TabsList className="bg-white border grid grid-cols-8">
+          <TabsList className="bg-white border grid grid-cols-5">
             <TabsTrigger value="details">Overview</TabsTrigger>
-            <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            <TabsTrigger value="planning">Planning</TabsTrigger>
             <TabsTrigger value="attendees">Attendees</TabsTrigger>
-            <TabsTrigger value="todo">To Do</TabsTrigger>
             <TabsTrigger value="parent">Parent Portal</TabsTrigger>
-            <TabsTrigger value="risk">Risk</TabsTrigger>
             <TabsTrigger value="badges">Badges</TabsTrigger>
-            <TabsTrigger value="equipment">Equipment</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="space-y-6">
@@ -246,141 +243,152 @@ export default function EventDetail() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="schedule" className="space-y-6">
-            <div className="flex justify-end mb-4">
-              <Button onClick={handleAddDay} size="sm" variant="outline">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Day
-              </Button>
-            </div>
+          <TabsContent value="planning" className="space-y-6">
+            <Tabs defaultValue="schedule" className="space-y-6">
+              <TabsList className="bg-white border grid grid-cols-4">
+                <TabsTrigger value="schedule">Schedule</TabsTrigger>
+                <TabsTrigger value="todo">To Do</TabsTrigger>
+                <TabsTrigger value="risk">Risk</TabsTrigger>
+                <TabsTrigger value="equipment">Equipment</TabsTrigger>
+              </TabsList>
 
-            {formData.schedule_by_day.map((day, dayIndex) => (
-              <Card key={dayIndex}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1">
-                      <Input
-                        value={day.day_name}
-                        onChange={(e) => handleDayNameChange(dayIndex, e.target.value)}
-                        className="max-w-xs font-semibold"
-                        placeholder="Day name"
-                      />
-                      {formData.schedule_by_day.length > 1 && (
-                        <Button
-                          onClick={() => handleRemoveDay(dayIndex)}
-                          size="sm"
-                          variant="ghost"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Remove Day
+              <TabsContent value="schedule" className="space-y-6">
+                <div className="flex justify-end mb-4">
+                  <Button onClick={handleAddDay} size="sm" variant="outline">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Day
+                  </Button>
+                </div>
+
+                {formData.schedule_by_day.map((day, dayIndex) => (
+                  <Card key={dayIndex}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 flex-1">
+                          <Input
+                            value={day.day_name}
+                            onChange={(e) => handleDayNameChange(dayIndex, e.target.value)}
+                            className="max-w-xs font-semibold"
+                            placeholder="Day name"
+                          />
+                          {formData.schedule_by_day.length > 1 && (
+                            <Button
+                              onClick={() => handleRemoveDay(dayIndex)}
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Remove Day
+                            </Button>
+                          )}
+                        </div>
+                        <Button onClick={() => handleAddScheduleItem(dayIndex)} size="sm" variant="outline">
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Item
                         </Button>
-                      )}
-                    </div>
-                    <Button onClick={() => handleAddScheduleItem(dayIndex)} size="sm" variant="outline">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Item
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {day.items.map((item, itemIndex) => (
-                    <div key={itemIndex} className="p-4 border rounded-lg space-y-3 bg-gray-50">
-                      <div className="flex items-center justify-between mb-2">
-                        <Label>Item {itemIndex + 1}</Label>
-                        {day.items.length > 1 && (
-                          <Button
-                            onClick={() => handleRemoveScheduleItem(dayIndex, itemIndex)}
-                            size="sm"
-                            variant="ghost"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
                       </div>
-                      <div className="grid md:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label>Time</Label>
-                          <Input
-                            value={item.time}
-                            onChange={(e) => handleScheduleChange(dayIndex, itemIndex, 'time', e.target.value)}
-                            placeholder="e.g., 9:00am"
-                          />
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {day.items.map((item, itemIndex) => (
+                        <div key={itemIndex} className="p-4 border rounded-lg space-y-3 bg-gray-50">
+                          <div className="flex items-center justify-between mb-2">
+                            <Label>Item {itemIndex + 1}</Label>
+                            {day.items.length > 1 && (
+                              <Button
+                                onClick={() => handleRemoveScheduleItem(dayIndex, itemIndex)}
+                                size="sm"
+                                variant="ghost"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <div className="grid md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                              <Label>Time</Label>
+                              <Input
+                                value={item.time}
+                                onChange={(e) => handleScheduleChange(dayIndex, itemIndex, 'time', e.target.value)}
+                                placeholder="e.g., 9:00am"
+                              />
+                            </div>
+                            <div className="md:col-span-2 space-y-2">
+                              <Label>Activity</Label>
+                              <Input
+                                value={item.activity}
+                                onChange={(e) => handleScheduleChange(dayIndex, itemIndex, 'activity', e.target.value)}
+                                placeholder="e.g., Breakfast"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Notes</Label>
+                            <Textarea
+                              value={item.notes}
+                              onChange={(e) => handleScheduleChange(dayIndex, itemIndex, 'notes', e.target.value)}
+                              placeholder="Additional details..."
+                              rows={2}
+                            />
+                          </div>
                         </div>
-                        <div className="md:col-span-2 space-y-2">
-                          <Label>Activity</Label>
-                          <Input
-                            value={item.activity}
-                            onChange={(e) => handleScheduleChange(dayIndex, itemIndex, 'activity', e.target.value)}
-                            placeholder="e.g., Breakfast"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Notes</Label>
-                        <Textarea
-                          value={item.notes}
-                          onChange={(e) => handleScheduleChange(dayIndex, itemIndex, 'notes', e.target.value)}
-                          placeholder="Additional details..."
-                          rows={2}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            ))}
+                      ))}
+                    </CardContent>
+                  </Card>
+                ))}
+              </TabsContent>
+
+              <TabsContent value="todo">
+                <TodoSection programmeId={eventId} entityType="event" />
+              </TabsContent>
+
+              <TabsContent value="risk">
+                <RiskAssessmentSection programmeId={eventId} entityType="event" />
+              </TabsContent>
+
+              <TabsContent value="equipment" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Equipment List</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Textarea
+                      value={formData.equipment_list}
+                      onChange={(e) => setFormData({ ...formData, equipment_list: e.target.value })}
+                      placeholder="List all equipment needed for this event..."
+                      className="min-h-[150px]"
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Instructions & Notes</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Textarea
+                      value={formData.instructions}
+                      onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+                      placeholder="Add any important instructions or notes..."
+                      className="min-h-[150px]"
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           <TabsContent value="attendees">
             <EventAttendeesSection eventId={eventId} event={event} />
           </TabsContent>
 
-          <TabsContent value="todo">
-            <TodoSection programmeId={eventId} entityType="event" />
-          </TabsContent>
-
           <TabsContent value="parent">
             <EventParentPortalSection eventId={eventId} event={event} />
           </TabsContent>
 
-          <TabsContent value="risk">
-            <RiskAssessmentSection programmeId={eventId} entityType="event" />
-          </TabsContent>
-
           <TabsContent value="badges">
             <ProgrammeBadgeCriteriaSection programmeId={eventId} entityType="event" />
-          </TabsContent>
-
-          <TabsContent value="equipment" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Equipment List</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={formData.equipment_list}
-                  onChange={(e) => setFormData({ ...formData, equipment_list: e.target.value })}
-                  placeholder="List all equipment needed for this event..."
-                  className="min-h-[150px]"
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Instructions & Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={formData.instructions}
-                  onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
-                  placeholder="Add any important instructions or notes..."
-                  className="min-h-[150px]"
-                />
-              </CardContent>
-            </Card>
           </TabsContent>
 
 
