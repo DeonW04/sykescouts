@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Package, ShoppingCart, Plus, Minus, Download, Check, AlertTriangle, X } from 'lucide-react';
+import { ArrowLeft, Package, ShoppingCart, Plus, Minus, Download, Check, AlertTriangle, X, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
@@ -13,6 +13,7 @@ import LeaderNav from '../components/leader/LeaderNav';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import jsPDF from 'jspdf';
 
 export default function BadgeStockManagement() {
@@ -24,6 +25,9 @@ export default function BadgeStockManagement() {
   const [additionalBadges, setAdditionalBadges] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+  const [stockSearchQuery, setStockSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('name');
 
   const { data: badges = [] } = useQuery({
     queryKey: ['badges'],
@@ -278,6 +282,42 @@ export default function BadgeStockManagement() {
     !additionalBadges.includes(b.id)
   );
 
+  const filteredAndSortedBadges = useMemo(() => {
+    let filtered = badges;
+
+    // Apply search filter
+    if (stockSearchQuery.trim()) {
+      filtered = filtered.filter(badge =>
+        badge.name.toLowerCase().includes(stockSearchQuery.toLowerCase())
+      );
+    }
+
+    // Apply category filter
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(badge => badge.category === categoryFilter);
+    }
+
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      if (sortBy === 'name') {
+        return a.name.localeCompare(b.name);
+      } else if (sortBy === 'stock') {
+        const stockA = getStockForBadge(a.id);
+        const stockB = getStockForBadge(b.id);
+        return stockA - stockB;
+      } else if (sortBy === 'needed') {
+        const neededA = badgesNeeded[a.id] || 0;
+        const neededB = badgesNeeded[b.id] || 0;
+        return neededB - neededA;
+      } else if (sortBy === 'section') {
+        return a.section.localeCompare(b.section);
+      }
+      return 0;
+    });
+
+    return sorted;
+  }, [badges, stockSearchQuery, categoryFilter, sortBy, badgesNeeded]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <LeaderNav />
@@ -376,8 +416,44 @@ export default function BadgeStockManagement() {
             <CardDescription>View and manually adjust stock for each badge</CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Search and Filters */}
+            <div className="flex flex-wrap gap-3 mb-4">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Search badges..."
+                  value={stockSearchQuery}
+                  onChange={(e) => setStockSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="challenge">Challenge</SelectItem>
+                  <SelectItem value="activity">Activity</SelectItem>
+                  <SelectItem value="staged">Staged</SelectItem>
+                  <SelectItem value="core">Core</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="stock">Stock Level</SelectItem>
+                  <SelectItem value="needed">Needed Most</SelectItem>
+                  <SelectItem value="section">Section</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="space-y-2">
-              {badges.map(badge => {
+              {filteredAndSortedBadges.map(badge => {
                 const currentStock = getStockForBadge(badge.id);
                 const needed = badgesNeeded[badge.id] || 0;
                 const isLow = currentStock < needed;
