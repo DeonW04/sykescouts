@@ -71,7 +71,16 @@ export default function ParentEvents() {
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
   const getEventsForDay = (day) => {
-    return events.filter(event => isSameDay(new Date(event.start_date), day));
+    return events.filter(event => {
+      const eventStart = new Date(event.start_date);
+      const eventEnd = event.end_date ? new Date(event.end_date) : eventStart;
+      const dayStart = new Date(day);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(day);
+      dayEnd.setHours(23, 59, 59, 999);
+      
+      return (eventStart <= dayEnd && eventEnd >= dayStart);
+    });
   };
 
   return (
@@ -210,19 +219,25 @@ export default function ParentEvents() {
                               </div>
                               <CardTitle className="text-2xl mb-3">{event.title}</CardTitle>
                               <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-gray-600">
-                                <div className="flex items-center gap-2">
-                                  <CalendarIcon className="w-4 h-4 text-[#7413dc]" />
-                                  <span className="font-medium">{format(new Date(event.start_date), 'MMM d, yyyy')}</span>
-                                  {event.end_date && event.end_date !== event.start_date && (
-                                    <span className="text-gray-400">→ {format(new Date(event.end_date), 'MMM d')}</span>
-                                  )}
-                                </div>
-                                {event.location && (
-                                  <div className="flex items-center gap-2">
-                                    <MapPin className="w-4 h-4 text-gray-400" />
-                                    <span>{event.location}</span>
-                                  </div>
-                                )}
+                               <div className="flex items-center gap-2">
+                                 <CalendarIcon className="w-4 h-4 text-[#7413dc]" />
+                                 <span className="font-medium">{format(new Date(event.start_date), 'MMM d, yyyy')}</span>
+                                 {event.end_date && event.end_date !== event.start_date && (
+                                   <span className="text-gray-400">→ {format(new Date(event.end_date), 'MMM d')}</span>
+                                 )}
+                               </div>
+                               {event.meeting_time && (
+                                 <span>Meet: {event.meeting_time}</span>
+                               )}
+                               {event.pickup_time && (
+                                 <span>Pickup: {event.pickup_time}</span>
+                               )}
+                               {event.location && (
+                                 <div className="flex items-center gap-2">
+                                   <MapPin className="w-4 h-4 text-gray-400" />
+                                   <span>{event.location}</span>
+                                 </div>
+                               )}
                               </div>
                             </div>
                           </div>
