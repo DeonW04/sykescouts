@@ -96,7 +96,7 @@ export default function Sections() {
                     </div>
                   </div>
 
-                  <Link to={createPageUrl('JoinUs')} className="inline-block mt-6">
+                  <Link to={createPageUrl('Join')} className="inline-block mt-6">
                     <Button
                       style={{ backgroundColor: section.color }}
                       className="hover:opacity-90"
@@ -140,7 +140,7 @@ export default function Sections() {
           <p className="mt-4 text-white/80 text-lg">
             Register your interest today and we'll be in touch about availability
           </p>
-          <Link to={createPageUrl('JoinUs')} className="inline-block mt-8">
+          <Link to={createPageUrl('Join')} className="inline-block mt-8">
             <Button size="lg" className="bg-white text-[#7413dc] hover:bg-gray-100">
               Register Interest
               <ArrowRight className="ml-2 w-4 h-4" />
