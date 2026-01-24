@@ -18,6 +18,8 @@ export default function NewEventDialog({ open, onOpenChange, sections, editEvent
     section_ids: [],
     start_date: '',
     end_date: '',
+    meeting_time: '',
+    pickup_time: '',
     location: '',
     description: '',
     cost: 0,
@@ -36,6 +38,8 @@ export default function NewEventDialog({ open, onOpenChange, sections, editEvent
         section_ids: editEvent.section_ids || [],
         start_date: editEvent.start_date?.split('T')[0] || '',
         end_date: editEvent.end_date?.split('T')[0] || '',
+        meeting_time: editEvent.meeting_time || '',
+        pickup_time: editEvent.pickup_time || '',
         location: editEvent.location || '',
         description: editEvent.description || '',
         cost: editEvent.cost || 0,
@@ -52,6 +56,8 @@ export default function NewEventDialog({ open, onOpenChange, sections, editEvent
         section_ids: [],
         start_date: '',
         end_date: '',
+        meeting_time: '',
+        pickup_time: '',
         location: '',
         description: '',
         cost: 0,
@@ -165,6 +171,29 @@ export default function NewEventDialog({ open, onOpenChange, sections, editEvent
                 type="date"
                 value={formData.end_date}
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="meeting_time">Meeting Time</Label>
+              <Input
+                id="meeting_time"
+                type="time"
+                value={formData.meeting_time}
+                onChange={(e) => setFormData({ ...formData, meeting_time: e.target.value })}
+                placeholder="09:00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pickup_time">Pickup Time</Label>
+              <Input
+                id="pickup_time"
+                type="time"
+                value={formData.pickup_time}
+                onChange={(e) => setFormData({ ...formData, pickup_time: e.target.value })}
+                placeholder="15:00"
               />
             </div>
           </div>
