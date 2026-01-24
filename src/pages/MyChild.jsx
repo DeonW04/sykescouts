@@ -13,6 +13,7 @@ import { ArrowLeft, User, Heart, Phone, Edit, Save, X, UserCircle, Camera, Check
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
+import ParentNav from '../components/parent/ParentNav';
 
 export default function MyChild() {
   const navigate = useNavigate();
@@ -157,6 +158,7 @@ export default function MyChild() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <ParentNav />
       {/* Header */}
       <div className="relative bg-gradient-to-br from-blue-600 to-[#7413dc] text-white py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
