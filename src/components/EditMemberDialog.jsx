@@ -37,6 +37,7 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
     notes: member?.notes || '',
     join_date: member?.join_date || '',
     scouting_start_date: member?.scouting_start_date || '',
+    invested: member?.invested || false,
   });
 
   const { data: sections = [] } = useQuery({
@@ -159,13 +160,23 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="photo_consent"
-                checked={formData.photo_consent}
-                onCheckedChange={(checked) => setFormData({ ...formData, photo_consent: checked })}
-              />
-              <Label htmlFor="photo_consent" className="cursor-pointer">Photo consent given</Label>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="photo_consent"
+                  checked={formData.photo_consent}
+                  onCheckedChange={(checked) => setFormData({ ...formData, photo_consent: checked })}
+                />
+                <Label htmlFor="photo_consent" className="cursor-pointer">Photo consent given</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="invested"
+                  checked={formData.invested}
+                  onCheckedChange={(checked) => setFormData({ ...formData, invested: checked })}
+                />
+                <Label htmlFor="invested" className="cursor-pointer">Invested</Label>
+              </div>
             </div>
             </TabsContent>
 

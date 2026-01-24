@@ -107,10 +107,43 @@ export default function MemberDetail() {
 
   const handleSaveMember = async (formData) => {
     try {
+      // Check if invested status changed from false to true
+      const investedChanged = !member.invested && formData.invested;
+      
       await base44.entities.Member.update(memberId, formData);
+      
+      // If invested was just set to true, create World Membership badge award
+      if (investedChanged) {
+        const badges = await base44.entities.BadgeDefinition.filter({ 
+          special_type: 'membership',
+          active: true 
+        });
+        const membershipBadge = badges[0];
+        
+        if (membershipBadge) {
+          // Check if already awarded
+          const existingAwards = await base44.entities.MemberBadgeAward.filter({
+            member_id: memberId,
+            badge_id: membershipBadge.id
+          });
+          
+          if (existingAwards.length === 0) {
+            await base44.entities.MemberBadgeAward.create({
+              member_id: memberId,
+              badge_id: membershipBadge.id,
+              completed_date: new Date().toISOString().split('T')[0],
+              award_status: 'pending',
+            });
+            toast.success('Member updated and World Membership badge marked as due');
+          }
+        }
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['member', memberId] });
       setShowEditDialog(false);
-      toast.success('Member updated successfully');
+      if (!investedChanged) {
+        toast.success('Member updated successfully');
+      }
     } catch (error) {
       toast.error('Error updating member: ' + error.message);
     }
@@ -302,6 +335,10 @@ export default function MemberDetail() {
                       <p className="font-medium">{new Date(member.scouting_start_date).toLocaleDateString()}</p>
                     </div>
                   )}
+                  <div>
+                    <p className="text-sm text-gray-600">Invested</p>
+                    <p className="font-medium">{member.invested ? 'Yes' : 'No'}</p>
+                  </div>
                 </CardContent>
               </Card>
 
