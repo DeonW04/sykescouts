@@ -94,7 +94,7 @@ export default function HeroSection() {
               We help young people aged 6-14 develop confidence, teamwork, and leadership skills.
             </p>
             <div className="mt-8 flex flex-wrap gap-4 relative z-10">
-              <Link to={createPageUrl('JoinUs')} className="inline-block">
+              <Link to={createPageUrl('Join')} className="inline-block">
                 <button className="px-8 py-3 bg-[#7413dc] hover:bg-[#5c0fb0] text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2">
                   Join Scouts
                   <ArrowRight className="w-5 h-5" />
