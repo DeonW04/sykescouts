@@ -14,6 +14,41 @@ import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
+// Handle parent volunteer responses
+const handleVolunteerResponse = async (actionId, memberId, response, user, queryClient) => {
+  try {
+    const action = await base44.entities.ActionRequired.filter({ id: actionId }).then(r => r[0]);
+    
+    // Create parent volunteer record
+    await base44.entities.ParentVolunteer.create({
+      ...(action.programme_id ? { programme_id: action.programme_id } : { event_id: action.event_id }),
+      parent_email: user.email,
+      parent_name: user.display_name || user.full_name,
+      response,
+    });
+
+    // Also create ActionResponse
+    await base44.entities.ActionResponse.create({
+      action_required_id: actionId,
+      action_id: actionId,
+      member_id: memberId,
+      child_member_id: memberId,
+      entity_id: action.programme_id || action.event_id,
+      parent_email: user.email,
+      response,
+      response_value: response,
+      status: 'completed',
+      response_date: new Date().toISOString(),
+    });
+
+    queryClient.invalidateQueries({ queryKey: ['actions-required'] });
+    queryClient.invalidateQueries({ queryKey: ['parent-volunteers'] });
+    toast.success('Response recorded');
+  } catch (error) {
+    toast.error('Error recording response');
+  }
+};
+
 export default function ParentDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -27,7 +62,11 @@ export default function ParentDashboard() {
   }, []);
 
   const respondToActionMutation = useMutation({
-    mutationFn: async ({ actionId, memberId, response, entityId }) => {
+    mutationFn: async ({ actionId, memberId, response, entityId, isVolunteer }) => {
+      if (isVolunteer) {
+        return handleVolunteerResponse(actionId, memberId, response, user, queryClient);
+      }
+      
       return base44.entities.ActionResponse.create({
         action_required_id: actionId,
         action_id: actionId,
@@ -276,7 +315,8 @@ export default function ParentDashboard() {
                                     actionId: action.id, 
                                     memberId: child.id, 
                                     response: 'yes',
-                                    entityId: action.programme_id || action.event_id 
+                                    entityId: action.programme_id || action.event_id,
+                                    isVolunteer: action.action_text?.includes('volunteer')
                                   })}
                                   className="bg-green-600 hover:bg-green-700"
                                 >
@@ -290,7 +330,8 @@ export default function ParentDashboard() {
                                     actionId: action.id, 
                                     memberId: child.id, 
                                     response: 'no',
-                                    entityId: action.programme_id || action.event_id 
+                                    entityId: action.programme_id || action.event_id,
+                                    isVolunteer: action.action_text?.includes('volunteer')
                                   })}
                                 >
                                   <X className="w-3 h-3 mr-1" />

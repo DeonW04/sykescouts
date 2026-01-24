@@ -139,74 +139,8 @@ export default function Communications() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Quick Action Boxes */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="border-t-4 border-t-blue-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('WeeklyMessageList'))}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm mb-1">Weekly Message</p>
-                  <p className="text-2xl font-bold">{pages.filter(p => p.type === 'weekly_message').length}</p>
-                </div>
-                <MessageSquare className="w-12 h-12 text-blue-500 opacity-20" />
-              </div>
-              <Button className="w-full mt-4 bg-blue-500 hover:bg-blue-600" size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Manage
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-t-4 border-t-purple-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('MonthlyNewsletterList'))}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm mb-1">Monthly Newsletter</p>
-                  <p className="text-2xl font-bold">{pages.filter(p => p.type === 'monthly_newsletter').length}</p>
-                </div>
-                <BookOpen className="w-12 h-12 text-purple-500 opacity-20" />
-              </div>
-              <Button className="w-full mt-4 bg-purple-500 hover:bg-purple-600" size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Manage
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-t-4 border-t-orange-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('EventUpdateList'))}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm mb-1">Event Update</p>
-                  <p className="text-2xl font-bold">{pages.filter(p => p.type === 'event_update').length}</p>
-                </div>
-                <TrendingUp className="w-12 h-12 text-orange-500 opacity-20" />
-              </div>
-              <Button className="w-full mt-4 bg-orange-500 hover:bg-orange-600" size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Manage
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-t-4 border-t-green-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('JoinEnquiries'))}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm mb-1">Join Enquiries</p>
-                  <p className="text-2xl font-bold">{enquiries.length}</p>
-                </div>
-                <Users className="w-12 h-12 text-green-500 opacity-20" />
-              </div>
-              <Button className="w-full mt-4 bg-green-500 hover:bg-green-600" size="sm">
-                View All
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Dashboard Statistics */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Statistics */}
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
@@ -217,32 +151,6 @@ export default function Communications() {
             <CardContent>
               <p className="text-3xl font-bold text-orange-600">{stats.uncontactedEnquiries}</p>
               <p className="text-sm text-gray-600 mt-2">Require follow-up</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Users className="w-5 h-5 text-blue-500" />
-                Parent Portal Registration
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-blue-600">{stats.membersWithParentPortal}</p>
-              <p className="text-sm text-gray-600 mt-2">Young people with registered parents</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                Join Enquiries (6 months)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-green-600">{stats.totalEnquiries6m}</p>
-              <p className="text-sm text-gray-600 mt-2">New enquiries</p>
             </CardContent>
           </Card>
 
@@ -269,31 +177,6 @@ export default function Communications() {
             <CardContent>
               <p className="text-3xl font-bold text-indigo-600">{stats.totalViews}</p>
               <p className="text-sm text-gray-600 mt-2">Across all pages</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-teal-500" />
-                Average Open Rate
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-teal-600">{avgOpenRate}%</p>
-              <div className="flex items-center gap-2 mt-2 text-xs">
-                <Select value={timeFilter} onValueChange={setTimeFilter}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="month">Last Month</SelectItem>
-                    <SelectItem value="3months">3 Months</SelectItem>
-                    <SelectItem value="6months">6 Months</SelectItem>
-                    <SelectItem value="year">1 Year</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </CardContent>
           </Card>
         </div>

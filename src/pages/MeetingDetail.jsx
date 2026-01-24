@@ -18,6 +18,8 @@ import ParentPortalSection from '../components/meeting/ParentPortalSection';
 import RiskAssessmentSection from '../components/meeting/RiskAssessmentSection';
 import BadgesSection from '../components/meeting/BadgesSection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
+import LeaderRotaSection from '../components/meeting/LeaderRotaSection';
+import LeaderNav from '../components/leader/LeaderNav';
 
 export default function MeetingDetail() {
   const navigate = useNavigate();
@@ -197,6 +199,7 @@ export default function MeetingDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <LeaderNav />
       <div className="bg-[#004851] text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Button
@@ -392,7 +395,9 @@ export default function MeetingDetail() {
             <ProgrammeBadgeCriteriaSection programmeId={existingProgramme?.id} />
           </TabsContent>
 
-          <TabsContent value="attendance">
+          <TabsContent value="attendance" className="space-y-6">
+            <LeaderRotaSection programmeId={existingProgramme?.id} sectionId={sectionId} />
+            
             <Card>
               <CardHeader>
                 <CardTitle>Mark Attendance</CardTitle>
