@@ -15,19 +15,27 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
 // Handle parent volunteer responses
-const handleVolunteerResponse = async (actionId, memberId, response, user, queryClient) => {
+const handleVolunteerResponse = async (actionId, memberId, response, user, queryClient, children) => {
   try {
     const action = await base44.entities.ActionRequired.filter({ id: actionId }).then(r => r[0]);
     
-    // Create parent volunteer record
-    await base44.entities.ParentVolunteer.create({
-      ...(action.programme_id ? { programme_id: action.programme_id } : { event_id: action.event_id }),
+    // Check if parent volunteer record already exists for this action
+    const existingVolunteer = await base44.entities.ParentVolunteer.filter({
       parent_email: user.email,
-      parent_name: user.display_name || user.full_name,
-      response,
+      ...(action.programme_id ? { programme_id: action.programme_id } : { event_id: action.event_id })
     });
 
-    // Also create ActionResponse
+    if (existingVolunteer.length === 0) {
+      // Create parent volunteer record only once per parent per event/programme
+      await base44.entities.ParentVolunteer.create({
+        ...(action.programme_id ? { programme_id: action.programme_id } : { event_id: action.event_id }),
+        parent_email: user.email,
+        parent_name: user.display_name || user.full_name,
+        response,
+      });
+    }
+
+    // Create ActionResponse for this specific child
     await base44.entities.ActionResponse.create({
       action_required_id: actionId,
       action_id: actionId,
@@ -64,7 +72,7 @@ export default function ParentDashboard() {
   const respondToActionMutation = useMutation({
     mutationFn: async ({ actionId, memberId, response, entityId, isVolunteer }) => {
       if (isVolunteer) {
-        return handleVolunteerResponse(actionId, memberId, response, user, queryClient);
+        return handleVolunteerResponse(actionId, memberId, response, user, queryClient, children);
       }
       
       return base44.entities.ActionResponse.create({
@@ -176,8 +184,11 @@ export default function ParentDashboard() {
         programme: relevantProgrammes.find(p => p.id === action.programme_id)
       }));
       
-      // Filter out actions that have been completed for all children
+      // Filter out actions that are closed or have been completed for all children
       return actionsWithDetails.filter(action => {
+        // Don't show closed actions
+        if (action.is_open === false) return false;
+        
         // Check if all children have responded to this action
         const allChildrenResponded = children.every(child => 
           responses.some(r => 

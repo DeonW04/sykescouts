@@ -139,6 +139,72 @@ export default function Communications() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick Action Boxes */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Card className="border-t-4 border-t-blue-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('WeeklyMessageList'))}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm mb-1">Weekly Message</p>
+                  <p className="text-2xl font-bold">{pages.filter(p => p.type === 'weekly_message').length}</p>
+                </div>
+                <MessageSquare className="w-12 h-12 text-blue-500 opacity-20" />
+              </div>
+              <Button className="w-full mt-4 bg-blue-500 hover:bg-blue-600" size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Manage
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-t-4 border-t-purple-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('MonthlyNewsletterList'))}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm mb-1">Monthly Newsletter</p>
+                  <p className="text-2xl font-bold">{pages.filter(p => p.type === 'monthly_newsletter').length}</p>
+                </div>
+                <BookOpen className="w-12 h-12 text-purple-500 opacity-20" />
+              </div>
+              <Button className="w-full mt-4 bg-purple-500 hover:bg-purple-600" size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Manage
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-t-4 border-t-orange-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('EventUpdateList'))}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm mb-1">Event Update</p>
+                  <p className="text-2xl font-bold">{pages.filter(p => p.type === 'event_update').length}</p>
+                </div>
+                <TrendingUp className="w-12 h-12 text-orange-500 opacity-20" />
+              </div>
+              <Button className="w-full mt-4 bg-orange-500 hover:bg-orange-600" size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Manage
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="border-t-4 border-t-green-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('JoinEnquiries'))}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm mb-1">Join Enquiries</p>
+                  <p className="text-2xl font-bold">{enquiries.length}</p>
+                </div>
+                <Users className="w-12 h-12 text-green-500 opacity-20" />
+              </div>
+              <Button className="w-full mt-4 bg-green-500 hover:bg-green-600" size="sm">
+                View All
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Statistics */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <Card>
