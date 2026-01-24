@@ -35,6 +35,8 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
     emergency_contact_relationship: member?.emergency_contact_relationship || '',
     photo_consent: member?.photo_consent || false,
     notes: member?.notes || '',
+    join_date: member?.join_date || '',
+    scouting_start_date: member?.scouting_start_date || '',
   });
 
   const { data: sections = [] } = useQuery({
@@ -135,6 +137,26 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 className="min-h-[80px]"
               />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Join Date</Label>
+                <Input
+                  type="date"
+                  value={formData.join_date}
+                  onChange={(e) => setFormData({ ...formData, join_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Scouting Movement Start Date</Label>
+                <p className="text-xs text-gray-500">For Joining In awards</p>
+                <Input
+                  type="date"
+                  value={formData.scouting_start_date}
+                  onChange={(e) => setFormData({ ...formData, scouting_start_date: e.target.value })}
+                />
+              </div>
             </div>
 
             <div className="flex items-center space-x-2">
