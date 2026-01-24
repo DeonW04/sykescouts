@@ -296,6 +296,12 @@ export default function MemberDetail() {
                       <p className="font-medium">{new Date(member.join_date).toLocaleDateString()}</p>
                     </div>
                   )}
+                  {member.scouting_start_date && (
+                    <div>
+                      <p className="text-sm text-gray-600">Scouting Movement Start Date</p>
+                      <p className="font-medium">{new Date(member.scouting_start_date).toLocaleDateString()}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

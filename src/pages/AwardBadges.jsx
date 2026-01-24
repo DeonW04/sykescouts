@@ -7,11 +7,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Award, AlertTriangle, CheckCircle, Package } from 'lucide-react';
+import { ArrowLeft, Award, AlertTriangle, CheckCircle, Package, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
+import ManualAwardDialog from '../components/badges/ManualAwardDialog';
 
 export default function AwardBadges() {
   const navigate = useNavigate();
@@ -22,6 +23,8 @@ export default function AwardBadges() {
   const [onlyDue, setOnlyDue] = useState(true);
   const [selectedAwards, setSelectedAwards] = useState([]);
   const [confirmDialog, setConfirmDialog] = useState(null);
+  const [manualAwardBadge, setManualAwardBadge] = useState(null);
+  const [checkingJoiningIn, setCheckingJoiningIn] = useState(false);
 
   useEffect(() => {
     loadUser();
@@ -166,6 +169,25 @@ export default function AwardBadges() {
     }
   };
 
+  const handleCheckJoiningIn = async () => {
+    setCheckingJoiningIn(true);
+    try {
+      const response = await base44.functions.invoke('checkJoiningInBadges');
+      if (response.data.error) {
+        toast.error(response.data.error);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['awards'] });
+        toast.success(response.data.message);
+      }
+    } catch (error) {
+      toast.error('Error checking Joining In badges: ' + error.message);
+    } finally {
+      setCheckingJoiningIn(false);
+    }
+  };
+
+  const manualBadges = badges.filter(b => b.completion_rule === 'manual' && b.category === 'special');
+
   return (
     <div className="min-h-screen bg-gray-50">
       <LeaderNav />
@@ -201,6 +223,52 @@ export default function AwardBadges() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Manual Award Section */}
+        {manualBadges.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-500" />
+                Manual Awards
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {manualBadges.map(badge => (
+                  <button
+                    key={badge.id}
+                    onClick={() => setManualAwardBadge(badge)}
+                    className="flex flex-col items-center gap-2 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <img src={badge.image_url} alt={badge.name} className="w-20 h-20 object-contain" />
+                    <p className="text-sm font-medium text-center">{badge.name}</p>
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Joining In Check */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Joining In Awards</p>
+                <p className="text-sm text-gray-600">Check for members eligible for automatic Joining In badges</p>
+              </div>
+              <Button
+                onClick={handleCheckJoiningIn}
+                disabled={checkingJoiningIn}
+                variant="outline"
+              >
+                <Award className="w-4 h-4 mr-2" />
+                {checkingJoiningIn ? 'Checking...' : 'Check Now'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="mb-6">
           <CardContent className="p-4">
             <div className="flex gap-4 flex-wrap">
@@ -396,6 +464,12 @@ export default function AwardBadges() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ManualAwardDialog
+        badge={manualAwardBadge}
+        open={!!manualAwardBadge}
+        onOpenChange={(open) => !open && setManualAwardBadge(null)}
+      />
     </div>
   );
 }
