@@ -8,8 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { UserPlus, Users, Search, Pencil } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import LeaderRotaSection from '../meeting/LeaderRotaSection';
 
 export default function EventAttendeesSection({ eventId, event }) {
   const queryClient = useQueryClient();
@@ -128,6 +130,8 @@ export default function EventAttendeesSection({ eventId, event }) {
     return sections.find(s => s.id === sectionId)?.display_name || 'Unknown';
   };
 
+  const eventSections = sections.filter(s => event.section_ids?.includes(s.id));
+
   const getActionResponse = (memberId, actionId) => {
     const response = actionResponses.find(
       r => r.child_member_id === memberId && r.action_id === actionId
@@ -206,6 +210,8 @@ export default function EventAttendeesSection({ eventId, event }) {
 
   return (
     <div className="space-y-6">
+      <LeaderRotaSection eventId={eventId} sectionId={eventSections[0]?.id} />
+      
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
