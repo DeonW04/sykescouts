@@ -352,24 +352,28 @@ export default function AdminSettings() {
                     ))}
                   </div>
                   <div className="flex gap-2">
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          if (file) {
-                            const order = getImagesForPage('home').length;
-                            handleFileUpload('home', file, order);
-                          }
-                        }}
-                      />
-                      <Button type="button" variant="outline" disabled={uploadingImage}>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload New
-                      </Button>
-                    </label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploadingImage}
+                      onClick={() => document.getElementById('home-upload').click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload New
+                    </Button>
+                    <input
+                      id="home-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const order = getImagesForPage('home').length;
+                          handleFileUpload('home', file, order);
+                        }
+                      }}
+                    />
                     <Button
                       variant="outline"
                       onClick={() => {
@@ -402,21 +406,25 @@ export default function AdminSettings() {
                     </div>
                   )}
                   <div className="flex gap-2">
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          if (file) handleFileUpload('about', file, 0);
-                        }}
-                      />
-                      <Button type="button" variant="outline" disabled={uploadingImage}>
-                        <Upload className="w-4 h-4 mr-2" />
-                        {getImagesForPage('about').length > 0 ? 'Replace' : 'Upload'}
-                      </Button>
-                    </label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploadingImage}
+                      onClick={() => document.getElementById('about-upload').click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      {getImagesForPage('about').length > 0 ? 'Replace' : 'Upload'}
+                    </Button>
+                    <input
+                      id="about-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) handleFileUpload('about', file, 0);
+                      }}
+                    />
                     <Button
                       variant="outline"
                       onClick={() => {
@@ -450,21 +458,25 @@ export default function AdminSettings() {
                       </div>
                     )}
                     <div className="flex gap-2">
-                      <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files[0];
-                            if (file) handleFileUpload(section, file, 0);
-                          }}
-                        />
-                        <Button type="button" variant="outline" disabled={uploadingImage}>
-                          <Upload className="w-4 h-4 mr-2" />
-                          {getImagesForPage(section).length > 0 ? 'Replace' : 'Upload'}
-                        </Button>
-                      </label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={uploadingImage}
+                        onClick={() => document.getElementById(`${section}-upload`).click()}
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        {getImagesForPage(section).length > 0 ? 'Replace' : 'Upload'}
+                      </Button>
+                      <input
+                        id={`${section}-upload`}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) handleFileUpload(section, file, 0);
+                        }}
+                      />
                       <Button
                         variant="outline"
                         onClick={() => {
