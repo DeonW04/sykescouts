@@ -195,7 +195,7 @@ Our group is run by volunteers, and we’re always looking for adults who can he
             we'd love to hear from you!
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Link to={createPageUrl('JoinUs')}>
+            <Link to={createPageUrl('Join')}>
               <Button size="lg" className="bg-white text-[#7413dc] hover:bg-gray-100">
                 Join Scouts
               </Button>
