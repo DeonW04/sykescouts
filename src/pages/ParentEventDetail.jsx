@@ -192,6 +192,18 @@ export default function ParentEventDetail() {
                       <span>→ {format(new Date(event.end_date), 'MMM d')}</span>
                     )}
                   </span>
+                  {event.meeting_time && (
+                    <span className="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full">
+                      <Clock className="w-5 h-5" />
+                      <span>Meet: {event.meeting_time}</span>
+                    </span>
+                  )}
+                  {event.pickup_time && (
+                    <span className="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full">
+                      <Clock className="w-5 h-5" />
+                      <span>Pickup: {event.pickup_time}</span>
+                    </span>
+                  )}
                   {event.location && (
                     <span className="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full">
                       <MapPin className="w-5 h-5" />
