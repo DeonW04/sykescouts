@@ -8,13 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Users, Shield, Mail, Edit, Image, Upload, X } from 'lucide-react';
+import { Settings, Users, Shield, Mail, Edit, Image, Upload, X, Award } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AdminSettings() {
+  const navigate = useNavigate();
   const [selectedUser, setSelectedUser] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editForm, setEditForm] = useState({ display_name: '', email: '', user_type: 'parent', section_ids: [] });
@@ -261,6 +264,7 @@ export default function AdminSettings() {
           <TabsList className="bg-white border">
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="images">Website Images</TabsTrigger>
+            <TabsTrigger value="badges">Badge System</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -492,6 +496,27 @@ export default function AdminSettings() {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="badges">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="w-5 h-5" />
+                  Badge System Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-gray-600">Manage the badge structure and definitions for your sections.</p>
+                <Button
+                  onClick={() => navigate(createPageUrl('ManageBadges'))}
+                  className="bg-[#7413dc] hover:bg-[#5c0fb0]"
+                >
+                  <Award className="w-4 h-4 mr-2" />
+                  Manage Badges
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

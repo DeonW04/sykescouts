@@ -390,7 +390,7 @@ export default function ParentEventDetail() {
               )}
 
               {/* Schedule */}
-              {scheduleByDay.length > 0 && (
+              {scheduleByDay.length > 0 && event.show_schedule_in_portal !== false && (
                 <div className="pt-8 border-t">
                   <h2 className="text-3xl font-bold text-[#7413dc] mb-8 flex items-center gap-3">
                     <Calendar className="w-8 h-8" />

@@ -142,13 +142,6 @@ export default function LeaderBadges() {
                 <Package className="w-4 h-4 mr-2" />
                 Manage Stock
               </Button>
-              <Button
-                onClick={() => navigate(createPageUrl('ManageBadges'))}
-                className="bg-white text-[#7413dc] hover:bg-gray-100"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Manage Badges
-              </Button>
             </div>
           </div>
         </div>
@@ -206,13 +199,6 @@ export default function LeaderBadges() {
                     <CardContent className="p-12 text-center">
                       <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <p className="text-gray-600">No badges found</p>
-                      <Button
-                        onClick={() => navigate(createPageUrl('ManageBadges'))}
-                        className="mt-4 bg-[#7413dc] hover:bg-[#5c0fb0]"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create First Badge
-                      </Button>
                     </CardContent>
                   </Card>
                 ) : (

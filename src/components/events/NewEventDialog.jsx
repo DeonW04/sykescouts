@@ -28,6 +28,7 @@ export default function NewEventDialog({ open, onOpenChange, sections, editEvent
     payment_deadline: '',
     max_attendees: null,
     published: false,
+    show_schedule_in_portal: true,
   });
 
   React.useEffect(() => {
@@ -48,6 +49,7 @@ export default function NewEventDialog({ open, onOpenChange, sections, editEvent
         payment_deadline: editEvent.payment_deadline || '',
         max_attendees: editEvent.max_attendees || null,
         published: editEvent.published || false,
+        show_schedule_in_portal: editEvent.show_schedule_in_portal ?? true,
       });
     } else {
       setFormData({
@@ -66,6 +68,7 @@ export default function NewEventDialog({ open, onOpenChange, sections, editEvent
         payment_deadline: '',
         max_attendees: null,
         published: false,
+        show_schedule_in_portal: true,
       });
     }
   }, [editEvent, open]);
@@ -250,7 +253,7 @@ export default function NewEventDialog({ open, onOpenChange, sections, editEvent
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Checkbox
                 id="requires_consent"
@@ -269,6 +272,16 @@ export default function NewEventDialog({ open, onOpenChange, sections, editEvent
               />
               <label htmlFor="published" className="text-sm cursor-pointer">
                 Publish to parent portal
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="show_schedule_in_portal"
+                checked={formData.show_schedule_in_portal}
+                onCheckedChange={(checked) => setFormData({ ...formData, show_schedule_in_portal: checked })}
+              />
+              <label htmlFor="show_schedule_in_portal" className="text-sm cursor-pointer">
+                Show schedule to parents
               </label>
             </div>
           </div>
