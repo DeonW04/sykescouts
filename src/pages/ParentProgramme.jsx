@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Award } from 'lucide-react';
 import { format } from 'date-fns';
+import ParentNav from '../components/parent/ParentNav';
 import { motion } from 'framer-motion';
 
 export default function ParentProgramme() {
@@ -117,6 +118,7 @@ export default function ParentProgramme() {
   if (currentTerm == null) {
     return (
       <div className="min-h-screen bg-gray-50">
+        <ParentNav />
         <div className="bg-[#7413dc] text-white py-8">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-3xl font-bold">Term Programme</h1>

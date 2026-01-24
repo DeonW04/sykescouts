@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import ParentNav from '../components/parent/ParentNav';
 import PhotoGallery from '../components/events/PhotoGallery';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';

@@ -12,6 +12,7 @@ import { ArrowLeft, Plus, Trash2, GripVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
+import LeaderNav from '../components/leader/LeaderNav';
 
 export default function EditBadgeStructure() {
   const navigate = useNavigate();
@@ -95,6 +96,7 @@ export default function EditBadgeStructure() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <LeaderNav />
       <div className="bg-[#7413dc] text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Button

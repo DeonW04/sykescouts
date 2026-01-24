@@ -19,6 +19,7 @@ import EventParentPortalSection from '../components/events/EventParentPortalSect
 import EventAttendeesSection from '../components/events/EventAttendeesSection';
 import RiskAssessmentSection from '../components/meeting/RiskAssessmentSection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
+import LeaderNav from '../components/leader/LeaderNav';
 
 export default function EventDetail() {
   const navigate = useNavigate();
@@ -130,6 +131,7 @@ export default function EventDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <LeaderNav />
       <div className="bg-[#7413dc] text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Button

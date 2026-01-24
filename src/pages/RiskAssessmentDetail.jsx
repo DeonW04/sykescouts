@@ -11,6 +11,7 @@ import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import RiskTable from '../components/risk/RiskTable';
 import AIEnhancer from '../components/risk/AIEnhancer';
+import LeaderNav from '../components/leader/LeaderNav';
 import PDFGenerator from '../components/risk/PDFGenerator';
 
 export default function RiskAssessmentDetail() {

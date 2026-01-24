@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, Send, AlertCircle } from 'lucide-react';
 import EditMemberDialog from '../components/EditMemberDialog';
 import { toast } from 'sonner';
+import LeaderNav from '../components/leader/LeaderNav';
 
 export default function MemberDetail() {
   const navigate = useNavigate();
@@ -164,6 +165,7 @@ export default function MemberDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <LeaderNav />
       {/* Header */}
       <div className="bg-[#004851] text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
