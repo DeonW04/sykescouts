@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Award, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import ParentNav from '../components/parent/ParentNav';
+import { motion } from 'framer-motion';
 
 export default function ParentBadges() {
   const [user, setUser] = useState(null);
@@ -192,6 +194,7 @@ export default function ParentBadges() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-purple-50">
+      <ParentNav />
       <div className="relative bg-gradient-to-br from-yellow-600 to-[#7413dc] text-white py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
