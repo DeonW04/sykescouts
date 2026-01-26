@@ -166,7 +166,11 @@ export default function EditBadgeStructure() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => deleteModuleMutation.mutate(module.id)}
+                        onClick={() => {
+                          if (confirm('Are you sure you want to delete this module? This will also delete all its requirements.')) {
+                            deleteModuleMutation.mutate(module.id);
+                          }
+                        }}
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -200,7 +204,11 @@ export default function EditBadgeStructure() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => deleteReqMutation.mutate(req.id)}
+                            onClick={() => {
+                              if (confirm('Are you sure you want to delete this requirement?')) {
+                                deleteReqMutation.mutate(req.id);
+                              }
+                            }}
                           >
                             <Trash2 className="w-3 h-3" />
                           </Button>

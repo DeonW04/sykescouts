@@ -117,6 +117,20 @@ export default function RiskAssessmentDetail() {
             <div className="flex gap-3">
               <PDFGenerator assessment={formData} />
               <Button
+                variant="outline"
+                onClick={() => {
+                  if (confirm('Are you sure you want to delete this risk assessment? This action cannot be undone.')) {
+                    base44.entities.RiskAssessment.delete(assessmentId).then(() => {
+                      toast.success('Risk assessment deleted');
+                      navigate(createPageUrl('RiskAssessmentHistory'));
+                    });
+                  }
+                }}
+                className="bg-white text-red-600 border-red-300 hover:bg-red-50"
+              >
+                Delete
+              </Button>
+              <Button
                 onClick={handleSave}
                 disabled={updateMutation.isPending}
                 className="bg-white text-[#7413dc] hover:bg-purple-50"
