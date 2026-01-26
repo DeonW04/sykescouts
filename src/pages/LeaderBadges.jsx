@@ -257,24 +257,33 @@ export default function LeaderBadges() {
                                     </div>
                                   </CardHeader>
                                   <CardContent>
-                                   {isStaged ? (
-                                     <Button
-                                       variant="outline"
-                                       className="w-full"
-                                       onClick={() => {
-                                         if (badge.badge_family_id === 'nights_away') {
-                                           navigate(createPageUrl('NightsAwayBadgeDetail'));
-                                         } else if (badge.badge_family_id === 'hikes_away') {
-                                           navigate(createPageUrl('HikesAwayBadgeDetail'));
-                                         } else {
-                                           navigate(createPageUrl('StagedBadgeDetail') + `?familyId=${badge.badge_family_id}`);
-                                         }
-                                       }}
-                                     >
-                                       <Award className="w-4 h-4 mr-2" />
-                                       View Stages
-                                     </Button>
-                                   ) : (
+                                  {isStaged ? (
+                                    <Button
+                                      variant="outline"
+                                      className="w-full"
+                                      onClick={() => {
+                                        if (badge.badge_family_id === 'nights_away') {
+                                          navigate(createPageUrl('NightsAwayBadgeDetail'));
+                                        } else if (badge.badge_family_id === 'hikes_away') {
+                                          navigate(createPageUrl('HikesAwayBadgeDetail'));
+                                        } else {
+                                          navigate(createPageUrl('StagedBadgeDetail') + `?familyId=${badge.badge_family_id}`);
+                                        }
+                                      }}
+                                    >
+                                      <Award className="w-4 h-4 mr-2" />
+                                      View Stages
+                                    </Button>
+                                  ) : badge.is_chief_scout_award ? (
+                                    <Button
+                                      variant="outline"
+                                      className="w-full bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-300 hover:from-amber-100 hover:to-yellow-100"
+                                      onClick={() => navigate(createPageUrl('GoldAwardDetail'))}
+                                    >
+                                      <Award className="w-4 h-4 mr-2 text-amber-600" />
+                                      <span className="text-amber-900">View Gold Award</span>
+                                    </Button>
+                                  ) : (
                                       <div 
                                         className="space-y-3 cursor-pointer"
                                         onClick={() => navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`)}
