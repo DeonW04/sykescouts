@@ -406,12 +406,13 @@ export default function MemberDetail() {
                         try {
                           await base44.functions.invoke('sendParentPortalInvite', {
                             parentEmail: member.parent_one_email,
-                            parentName: member.parent_one_name,
+                            parentName: member.parent_one_name || 'Parent',
                             childName: member.full_name
                           });
                           toast.success('Invitation sent');
                         } catch (error) {
-                          toast.error('Failed to send invitation');
+                          console.error('Invitation error:', error);
+                          toast.error('Failed to send invitation: ' + (error.message || 'Unknown error'));
                         }
                       }}
                       className="bg-[#7413dc] hover:bg-[#5c0fb0]"
@@ -459,12 +460,13 @@ export default function MemberDetail() {
                         try {
                           await base44.functions.invoke('sendParentPortalInvite', {
                             parentEmail: member.parent_two_email,
-                            parentName: member.parent_two_name,
+                            parentName: member.parent_two_name || 'Parent',
                             childName: member.full_name
                           });
                           toast.success('Invitation sent');
                         } catch (error) {
-                          toast.error('Failed to send invitation');
+                          console.error('Invitation error:', error);
+                          toast.error('Failed to send invitation: ' + (error.message || 'Unknown error'));
                         }
                       }}
                       className="bg-[#7413dc] hover:bg-[#5c0fb0]"
