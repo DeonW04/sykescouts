@@ -90,6 +90,12 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800&display=swap');
+        * {
+          font-family: 'Nunito Sans', sans-serif !important;
+        }
+      `}</style>
       <Toaster position="top-right" />
       {/* Header */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
