@@ -184,8 +184,8 @@ export default function AdminSettings() {
     try {
       const response = await base44.functions.invoke('exportAllData', {});
       
-      // Create blob from response data
-      const blob = new Blob([response.data], { type: 'application/zip' });
+      // Response data is already a Uint8Array/ArrayBuffer for binary data
+      const blob = new Blob([new Uint8Array(response.data)], { type: 'application/zip' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
