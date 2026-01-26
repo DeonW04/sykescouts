@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Users, Shield, Mail, Edit, Image, Upload, X, Award } from 'lucide-react';
+import { Settings, Users, Shield, Mail, Edit, Image, Upload, X, Award, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -24,6 +24,7 @@ export default function AdminSettings() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showGallerySelector, setShowGallerySelector] = useState(false);
   const [currentImagePage, setCurrentImagePage] = useState(null);
+  const [exporting, setExporting] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery({
@@ -178,6 +179,30 @@ export default function AdminSettings() {
     },
   });
 
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const response = await base44.functions.invoke('exportAllData', {});
+      
+      // Create blob from response data
+      const blob = new Blob([response.data], { type: 'application/zip' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `scout-data-export-${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      
+      toast.success('Data exported successfully');
+    } catch (error) {
+      toast.error('Export failed: ' + error.message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleFileUpload = async (page, file, order) => {
     setUploadingImage(true);
     try {
@@ -265,6 +290,7 @@ export default function AdminSettings() {
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="images">Website Images</TabsTrigger>
             <TabsTrigger value="badges">Badge System</TabsTrigger>
+            <TabsTrigger value="export">Data Export</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -514,6 +540,46 @@ export default function AdminSettings() {
                 >
                   <Award className="w-4 h-4 mr-2" />
                   Manage Badges
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="export">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="w-5 h-5" />
+                  Data Export
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-gray-600">
+                  Export all your group's data including members, events, badges, and more. 
+                  Data will be downloaded as a ZIP file containing both JSON and CSV formats.
+                </p>
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Export includes:</strong> Members, Leaders, Sections, Events, Attendance, 
+                    Badges, Badge Progress, Programme, Payments, and all other system data.
+                  </p>
+                </div>
+                <Button
+                  onClick={handleExportData}
+                  disabled={exporting}
+                  className="bg-[#004851] hover:bg-[#003840]"
+                >
+                  {exporting ? (
+                    <>
+                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-2" />
+                      Export All Data
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>
