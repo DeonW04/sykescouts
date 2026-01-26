@@ -45,6 +45,7 @@ import WeeklyMessage from './pages/WeeklyMessage';
 import WeeklyMessageList from './pages/WeeklyMessageList';
 import NightsAwayTracking from './pages/NightsAwayTracking';
 import NightsAwayBadgeDetail from './pages/NightsAwayBadgeDetail';
+import HikesAwayBadgeDetail from './pages/HikesAwayBadgeDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -96,6 +97,7 @@ export const PAGES = {
     "WeeklyMessageList": WeeklyMessageList,
     "NightsAwayTracking": NightsAwayTracking,
     "NightsAwayBadgeDetail": NightsAwayBadgeDetail,
+    "HikesAwayBadgeDetail": HikesAwayBadgeDetail,
 }
 
 export const pagesConfig = {

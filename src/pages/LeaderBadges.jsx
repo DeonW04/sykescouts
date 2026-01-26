@@ -264,6 +264,8 @@ export default function LeaderBadges() {
                                        onClick={() => {
                                          if (badge.badge_family_id === 'nights_away') {
                                            navigate(createPageUrl('NightsAwayBadgeDetail'));
+                                         } else if (badge.badge_family_id === 'hikes_away') {
+                                           navigate(createPageUrl('HikesAwayBadgeDetail'));
                                          } else {
                                            navigate(createPageUrl('StagedBadgeDetail') + `?familyId=${badge.badge_family_id}`);
                                          }
