@@ -17,6 +17,7 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [selectedReqs, setSelectedReqs] = useState([]);
   const [selectedFamily, setSelectedFamily] = useState(null);
+  const [countsAsHikeAway, setCountsAsHikeAway] = useState(false);
 
   const { data: badges = [] } = useQuery({
     queryKey: ['badges'],
@@ -57,6 +58,7 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
       setSelectedBadge(null);
       setSelectedReqs([]);
       setSelectedFamily(null);
+      setCountsAsHikeAway(false);
       toast.success('Badge criteria added');
     },
   });
@@ -75,6 +77,7 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
     addCriteriaMutation.mutate({
       badge_id: selectedBadge,
       requirement_ids: selectedReqs,
+      counts_as_hike_away: countsAsHikeAway,
     });
   };
 
@@ -139,7 +142,14 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
                       )}
                       <div>
                         <p className="font-medium">{badge?.name}</p>
-                        <p className="text-sm text-gray-500">{reqCount} requirement{reqCount !== 1 ? 's' : ''}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-gray-500">{reqCount} requirement{reqCount !== 1 ? 's' : ''}</p>
+                          {criteria.counts_as_hike_away && (
+                            <Badge variant="outline" className="text-xs bg-blue-50">
+                              Counts as hike away
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <Button
@@ -289,6 +299,16 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
                 </div>
 
                 <div className="flex justify-end gap-2 mt-6">
+                  <div className="flex items-center gap-3 flex-1">
+                    <Checkbox
+                      id="hike-away"
+                      checked={countsAsHikeAway}
+                      onCheckedChange={setCountsAsHikeAway}
+                    />
+                    <label htmlFor="hike-away" className="text-sm cursor-pointer">
+                      Counts as hike away
+                    </label>
+                  </div>
                   <Button variant="outline" onClick={() => setShowDialog(false)}>
                     Cancel
                   </Button>
