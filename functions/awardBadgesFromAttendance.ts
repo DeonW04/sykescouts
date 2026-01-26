@@ -66,6 +66,16 @@ Deno.serve(async (req) => {
               });
               awardedCount++;
 
+              // Check if this counts as hike away
+              if (badgeCriteria.counts_as_hike_away) {
+                const member = await base44.entities.Member.filter({ id: memberId }).then(res => res[0]);
+                if (member) {
+                  await base44.entities.Member.update(memberId, {
+                    total_hikes_away: (member.total_hikes_away || 0) + 1
+                  });
+                }
+              }
+
               // Check if we should update/create badge progress
               const allBadgeReqs = await base44.entities.BadgeRequirement.filter({ badge_id: requirement.badge_id });
               const memberReqProgress = await base44.entities.MemberRequirementProgress.filter({
@@ -94,10 +104,43 @@ Deno.serve(async (req) => {
                   status: 'completed',
                   completion_date: programme.date,
                 });
+
+                // Create pending award if not already exists
+                const existingAward = await base44.entities.MemberBadgeAward.filter({
+                  member_id: memberId,
+                  badge_id: requirement.badge_id
+                });
+
+                if (existingAward.length === 0) {
+                  await base44.entities.MemberBadgeAward.create({
+                    member_id: memberId,
+                    badge_id: requirement.badge_id,
+                    awarded_date: programme.date,
+                    awarded_by: user.email,
+                    award_status: 'pending'
+                  });
+                }
               } else if (badgeProgress.status === 'not_started') {
                 await base44.entities.MemberBadgeProgress.update(badgeProgress.id, {
                   status: 'in_progress',
                 });
+              } else if (badgeProgress.status === 'completed') {
+                // Badge was complete but now incomplete - mark as in progress
+                await base44.entities.MemberBadgeProgress.update(badgeProgress.id, {
+                  status: 'in_progress',
+                  completion_date: null
+                });
+
+                // Remove pending award
+                const pendingAward = await base44.entities.MemberBadgeAward.filter({
+                  member_id: memberId,
+                  badge_id: requirement.badge_id,
+                  award_status: 'pending'
+                });
+
+                for (const award of pendingAward) {
+                  await base44.entities.MemberBadgeAward.delete(award.id);
+                }
               }
             }
           }
