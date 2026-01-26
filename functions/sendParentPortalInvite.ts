@@ -74,6 +74,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // First, invite the user to the app so they can receive emails
+    await base44.asServiceRole.users.inviteUser(parentEmail, 'user');
+
+    // Now send the custom invitation email
     const inviteLink = `${req.headers.get('origin') || 'https://your-app.base44.io'}/`;
 
     await base44.asServiceRole.integrations.Core.SendEmail({
