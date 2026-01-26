@@ -230,13 +230,29 @@ export default function MemberDetail() {
                 </div>
               </div>
             </div>
-            <Button 
-              onClick={() => setShowEditDialog(true)}
-              className="bg-white text-[#004851] hover:bg-gray-100"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => setShowEditDialog(true)}
+                className="bg-white text-[#004851] hover:bg-gray-100"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (confirm('Are you sure you want to archive this member? They will be hidden from the main list but their data will be kept.')) {
+                    base44.entities.Member.update(memberId, { active: false }).then(() => {
+                      toast.success('Member archived');
+                      navigate(createPageUrl('LeaderMembers'));
+                    });
+                  }
+                }}
+                className="bg-white border-orange-300 text-orange-600 hover:bg-orange-50"
+              >
+                Archive Member
+              </Button>
+            </div>
           </div>
         </div>
       </div>
