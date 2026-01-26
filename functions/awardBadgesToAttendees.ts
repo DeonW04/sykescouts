@@ -111,6 +111,15 @@ Deno.serve(async (req) => {
             const requirement = requirements[0];
             if (!requirement) continue;
 
+            // Check if requirement has nights away requirement
+            if (requirement.nights_away_required) {
+              const members = await base44.asServiceRole.entities.Member.filter({ id: memberId });
+              const member = members[0];
+              if (!member || (member.total_nights_away || 0) < requirement.nights_away_required) {
+                continue; // Skip this requirement if not enough nights away
+              }
+            }
+
             // Check existing progress
             const existingProgress = await base44.asServiceRole.entities.MemberRequirementProgress.filter({
               member_id: memberId,

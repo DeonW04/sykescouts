@@ -59,6 +59,17 @@ export default function BadgeDetail() {
   const toggleReqMutation = useMutation({
     mutationFn: async ({ memberId, reqId, completed }) => {
       const existing = progress.find(p => p.member_id === memberId && p.requirement_id === reqId);
+      const req = requirements.find(r => r.id === reqId);
+      
+      // Check if member has enough nights away
+      if (completed && req?.nights_away_required) {
+        const memberData = await base44.entities.Member.filter({ id: memberId });
+        const member = memberData[0];
+        if (member && (member.total_nights_away || 0) < req.nights_away_required) {
+          toast.error(`Member needs ${req.nights_away_required} nights away (currently has ${member.total_nights_away || 0})`);
+          throw new Error('Not enough nights away');
+        }
+      }
       
       if (existing) {
         if (completed) {
@@ -71,7 +82,6 @@ export default function BadgeDetail() {
           return base44.entities.MemberRequirementProgress.delete(existing.id);
         }
       } else {
-        const req = requirements.find(r => r.id === reqId);
         return base44.entities.MemberRequirementProgress.create({
           member_id: memberId,
           badge_id: badgeId,
@@ -424,7 +434,14 @@ export default function BadgeDetail() {
                             <div className="w-6 h-6 bg-white border-2 border-gray-300 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                               <span className="text-xs font-semibold text-gray-600">{reqIdx + 1}</span>
                             </div>
-                            <p className="text-sm text-gray-700 leading-relaxed">{req.text}</p>
+                            <div className="flex-1">
+                              <p className="text-sm text-gray-700 leading-relaxed">{req.text}</p>
+                              {req.nights_away_required && (
+                                <Badge className="mt-2 bg-blue-100 text-blue-800 text-xs">
+                                  Requires {req.nights_away_required} nights away
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
