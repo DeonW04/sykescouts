@@ -57,12 +57,13 @@ export default function BadgeDetail() {
   });
 
   const toggleReqMutation = useMutation({
-    mutationFn: async ({ memberId, reqId, completed }) => {
+    mutationFn: async ({ memberId, reqId, increment }) => {
       const existing = progress.find(p => p.member_id === memberId && p.requirement_id === reqId);
       const req = requirements.find(r => r.id === reqId);
+      const requiredCount = req?.required_completions || 1;
       
       // Check if member has enough nights away
-      if (completed && req?.nights_away_required) {
+      if (increment && req?.nights_away_required) {
         const memberData = await base44.entities.Member.filter({ id: memberId });
         const member = memberData[0];
         if (member && (member.total_nights_away || 0) < req.nights_away_required) {
@@ -72,23 +73,32 @@ export default function BadgeDetail() {
       }
       
       if (existing) {
-        if (completed) {
+        const currentCount = existing.completion_count || 0;
+        const newCount = increment ? currentCount + 1 : Math.max(0, currentCount - 1);
+        const isComplete = newCount >= requiredCount;
+        
+        if (newCount === 0) {
+          // Delete if count goes to 0
+          return base44.entities.MemberRequirementProgress.delete(existing.id);
+        } else {
           return base44.entities.MemberRequirementProgress.update(existing.id, {
-            completed: true,
-            completed_date: new Date().toISOString().split('T')[0],
+            completion_count: newCount,
+            completed: isComplete,
+            completed_date: isComplete ? new Date().toISOString().split('T')[0] : null,
             source: 'manual',
           });
-        } else {
-          return base44.entities.MemberRequirementProgress.delete(existing.id);
         }
-      } else {
+      } else if (increment) {
+        // Create new progress record
+        const isComplete = 1 >= requiredCount;
         return base44.entities.MemberRequirementProgress.create({
           member_id: memberId,
           badge_id: badgeId,
           module_id: req.module_id,
           requirement_id: reqId,
-          completed: true,
-          completed_date: new Date().toISOString().split('T')[0],
+          completion_count: 1,
+          completed: isComplete,
+          completed_date: isComplete ? new Date().toISOString().split('T')[0] : null,
           source: 'manual',
         });
       }
@@ -187,6 +197,18 @@ export default function BadgeDetail() {
   const relevantMembers = members.filter(m => {
     return badge.section === 'all' || m.section_id === sections.find(s => s.name === badge.section)?.id;
   });
+
+  const getRequirementProgress = (memberId, reqId) => {
+    const req = requirements.find(r => r.id === reqId);
+    const reqProgress = progress.find(p => p.member_id === memberId && p.requirement_id === reqId);
+    const requiredCount = req?.required_completions || 1;
+    const currentCount = reqProgress?.completion_count || 0;
+    return {
+      currentCount,
+      requiredCount,
+      isComplete: reqProgress?.completed || false,
+    };
+  };
 
   const isRequirementCompleted = (memberId, reqId) => {
     return progress.some(p => p.member_id === memberId && p.requirement_id === reqId && p.completed);
@@ -436,11 +458,18 @@ export default function BadgeDetail() {
                             </div>
                             <div className="flex-1">
                               <p className="text-sm text-gray-700 leading-relaxed">{req.text}</p>
-                              {req.nights_away_required && (
-                                <Badge className="mt-2 bg-blue-100 text-blue-800 text-xs">
-                                  Requires {req.nights_away_required} nights away
-                                </Badge>
-                              )}
+                              <div className="flex gap-2 mt-2">
+                                {(req.required_completions || 1) > 1 && (
+                                  <Badge className="bg-purple-100 text-purple-800 text-xs">
+                                    Complete {req.required_completions} times
+                                  </Badge>
+                                )}
+                                {req.nights_away_required && (
+                                  <Badge className="bg-blue-100 text-blue-800 text-xs">
+                                    Requires {req.nights_away_required} nights away
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -582,7 +611,8 @@ export default function BadgeDetail() {
                           ).length;
                           
                           return moduleReqs.map((req, reqIdx) => {
-                            const isChecked = isRequirementCompleted(member.id, req.id);
+                            const reqProgress = getRequirementProgress(member.id, req.id);
+                            const requiresMultiple = (req.required_completions || 1) > 1;
                             return (
                               <td 
                                 key={req.id} 
@@ -590,20 +620,56 @@ export default function BadgeDetail() {
                                   reqIdx === 0 ? 'border-l-4 border-green-300' : 'border-l border-gray-200'
                                 } ${moduleComplete ? 'bg-green-50' : ''}`}
                               >
-                                <div className="flex justify-center relative">
-                                  <Checkbox
-                                    checked={isChecked}
-                                    onCheckedChange={(checked) => toggleReqMutation.mutate({
-                                      memberId: member.id,
-                                      reqId: req.id,
-                                      completed: checked,
-                                    })}
-                                    className={isChecked ? 'border-green-500 data-[state=checked]:bg-green-500' : ''}
-                                  />
-                                  {reqIdx === 0 && moduleComplete && (
-                                    <CheckCircle className="w-4 h-4 text-green-600 absolute -top-1 -right-1" />
-                                  )}
-                                </div>
+                                {requiresMultiple ? (
+                                  <div className="flex flex-col items-center gap-1">
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => toggleReqMutation.mutate({
+                                          memberId: member.id,
+                                          reqId: req.id,
+                                          increment: false,
+                                        })}
+                                        className="w-5 h-5 rounded bg-gray-200 hover:bg-gray-300 text-xs font-bold"
+                                        disabled={reqProgress.currentCount === 0}
+                                      >
+                                        -
+                                      </button>
+                                      <span className={`text-xs font-bold min-w-[2rem] ${
+                                        reqProgress.isComplete ? 'text-green-600' : 'text-gray-700'
+                                      }`}>
+                                        {reqProgress.currentCount}/{reqProgress.requiredCount}
+                                      </span>
+                                      <button
+                                        onClick={() => toggleReqMutation.mutate({
+                                          memberId: member.id,
+                                          reqId: req.id,
+                                          increment: true,
+                                        })}
+                                        className="w-5 h-5 rounded bg-green-500 hover:bg-green-600 text-white text-xs font-bold"
+                                      >
+                                        +
+                                      </button>
+                                    </div>
+                                    {reqProgress.isComplete && (
+                                      <CheckCircle className="w-3 h-3 text-green-600" />
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="flex justify-center relative">
+                                    <Checkbox
+                                      checked={reqProgress.isComplete}
+                                      onCheckedChange={(checked) => toggleReqMutation.mutate({
+                                        memberId: member.id,
+                                        reqId: req.id,
+                                        increment: checked,
+                                      })}
+                                      className={reqProgress.isComplete ? 'border-green-500 data-[state=checked]:bg-green-500' : ''}
+                                    />
+                                    {reqIdx === 0 && moduleComplete && (
+                                      <CheckCircle className="w-4 h-4 text-green-600 absolute -top-1 -right-1" />
+                                    )}
+                                  </div>
+                                )}
                               </td>
                             );
                           });
