@@ -72,6 +72,18 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
   });
 
   const handleAddCriteria = () => {
+    const badge = badges.find(b => b.id === selectedBadge);
+    
+    // For hikes away badges, no requirements needed
+    if (badge?.badge_family_id === 'hikes_away') {
+      addCriteriaMutation.mutate({
+        badge_id: selectedBadge,
+        requirement_ids: [],
+        counts_as_hike_away: true,
+      });
+      return;
+    }
+    
     if (!selectedBadge || selectedReqs.length === 0) return;
     
     addCriteriaMutation.mutate({
@@ -201,16 +213,26 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
                 ))}
                 {stagedFamilies.map(([familyId, stages]) => {
                   const sortedStages = [...stages].sort((a, b) => a.stage_number - b.stage_number);
+                  const isHikesAway = familyId === 'hikes_away';
+                  
                   return (
                     <div
                       key={familyId}
-                      onClick={() => setSelectedFamily(familyId)}
+                      onClick={() => {
+                        if (isHikesAway) {
+                          setSelectedBadge(sortedStages[0].id);
+                        } else {
+                          setSelectedFamily(familyId);
+                        }
+                      }}
                       className="flex items-center gap-3 p-3 bg-blue-50 border-2 border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100"
                     >
                       <img src={sortedStages[0].image_url} alt={sortedStages[0].name} className="w-12 h-12 rounded" />
                       <div className="flex-1">
-                        <p className="font-medium">{sortedStages[0].name} (Staged)</p>
-                        <p className="text-sm text-gray-500">{sortedStages.length} stages available</p>
+                        <p className="font-medium">{sortedStages[0].name} {!isHikesAway && '(Staged)'}</p>
+                        <p className="text-sm text-gray-500">
+                          {isHikesAway ? 'Click to add hike away requirement' : `${sortedStages.length} stages available`}
+                        </p>
                       </div>
                     </div>
                   );
@@ -249,76 +271,119 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
               </div>
             ) : (
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <img 
-                      src={badges.find(b => b.id === selectedBadge)?.image_url} 
-                      alt="" 
-                      className="w-12 h-12 rounded" 
-                    />
-                    <p className="font-medium">{badges.find(b => b.id === selectedBadge)?.name}</p>
-                  </div>
-                  <Button variant="ghost" onClick={() => {
-                    setSelectedBadge(null);
-                    setSelectedReqs([]);
-                    setSelectedFamily(null);
-                  }}>
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                <div className="space-y-4">
-                  {getBadgeModules(selectedBadge).map(module => {
-                    const moduleReqs = getModuleRequirements(module.id);
+                {(() => {
+                  const badge = badges.find(b => b.id === selectedBadge);
+                  const isHikesAway = badge?.badge_family_id === 'hikes_away';
+                  
+                  if (isHikesAway) {
                     return (
-                      <div key={module.id} className="border rounded-lg p-4">
-                        <h4 className="font-medium mb-3">{module.name}</h4>
-                        <div className="space-y-2">
-                          {moduleReqs.map((req, idx) => (
-                            <div key={req.id} className="flex items-start gap-2">
-                              <Checkbox
-                                id={req.id}
-                                checked={selectedReqs.includes(req.id)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    setSelectedReqs([...selectedReqs, req.id]);
-                                  } else {
-                                    setSelectedReqs(selectedReqs.filter(id => id !== req.id));
-                                  }
-                                }}
-                              />
-                              <label htmlFor={req.id} className="text-sm cursor-pointer flex-1">
-                                <span className="font-medium">{idx + 1}.</span> {req.text}
-                              </label>
+                      <>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <img src={badge.image_url} alt="" className="w-12 h-12 rounded" />
+                            <div>
+                              <p className="font-medium">{badge.name}</p>
+                              <p className="text-sm text-gray-500">Hikes Away Requirement</p>
                             </div>
-                          ))}
+                          </div>
+                          <Button variant="ghost" onClick={() => {
+                            setSelectedBadge(null);
+                            setSelectedReqs([]);
+                            setSelectedFamily(null);
+                          }}>
+                            <X className="w-4 h-4" />
+                          </Button>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                        
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                          <p className="text-sm text-blue-900">
+                            Adding this will count as a hike away for all attending members. Their hike counter will increment automatically.
+                          </p>
+                        </div>
 
-                <div className="flex justify-end gap-2 mt-6">
-                  <div className="flex items-center gap-3 flex-1">
-                    <Checkbox
-                      id="hike-away"
-                      checked={countsAsHikeAway}
-                      onCheckedChange={setCountsAsHikeAway}
-                    />
-                    <label htmlFor="hike-away" className="text-sm cursor-pointer">
-                      Counts as hike away
-                    </label>
-                  </div>
-                  <Button variant="outline" onClick={() => setShowDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleAddCriteria}
-                    disabled={selectedReqs.length === 0}
-                  >
-                    Add {selectedReqs.length} Requirement{selectedReqs.length !== 1 ? 's' : ''}
-                  </Button>
-                </div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => setShowDialog(false)}>
+                            Cancel
+                          </Button>
+                          <Button onClick={handleAddCriteria}>
+                            Add Hike Away Requirement
+                          </Button>
+                        </div>
+                      </>
+                    );
+                  }
+                  
+                  return (
+                    <>
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <img src={badge?.image_url} alt="" className="w-12 h-12 rounded" />
+                          <p className="font-medium">{badge?.name}</p>
+                        </div>
+                        <Button variant="ghost" onClick={() => {
+                          setSelectedBadge(null);
+                          setSelectedReqs([]);
+                          setSelectedFamily(null);
+                        }}>
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+
+                      <div className="space-y-4">
+                        {getBadgeModules(selectedBadge).map(module => {
+                          const moduleReqs = getModuleRequirements(module.id);
+                          return (
+                            <div key={module.id} className="border rounded-lg p-4">
+                              <h4 className="font-medium mb-3">{module.name}</h4>
+                              <div className="space-y-2">
+                                {moduleReqs.map((req, idx) => (
+                                  <div key={req.id} className="flex items-start gap-2">
+                                    <Checkbox
+                                      id={req.id}
+                                      checked={selectedReqs.includes(req.id)}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          setSelectedReqs([...selectedReqs, req.id]);
+                                        } else {
+                                          setSelectedReqs(selectedReqs.filter(id => id !== req.id));
+                                        }
+                                      }}
+                                    />
+                                    <label htmlFor={req.id} className="text-sm cursor-pointer flex-1">
+                                      <span className="font-medium">{idx + 1}.</span> {req.text}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex justify-end gap-2 mt-6">
+                        <div className="flex items-center gap-3 flex-1">
+                          <Checkbox
+                            id="hike-away"
+                            checked={countsAsHikeAway}
+                            onCheckedChange={setCountsAsHikeAway}
+                          />
+                          <label htmlFor="hike-away" className="text-sm cursor-pointer">
+                            Counts as hike away
+                          </label>
+                        </div>
+                        <Button variant="outline" onClick={() => setShowDialog(false)}>
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={handleAddCriteria}
+                          disabled={selectedReqs.length === 0}
+                        >
+                          Add {selectedReqs.length} Requirement{selectedReqs.length !== 1 ? 's' : ''}
+                        </Button>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
