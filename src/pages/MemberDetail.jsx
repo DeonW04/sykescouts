@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, Send, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import EditMemberDialog from '../components/EditMemberDialog';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
@@ -46,14 +46,10 @@ export default function MemberDetail() {
     enabled: !!member?.parent_ids?.length,
   });
 
-  const { data: parentUsers = [] } = useQuery({
-    queryKey: ['parent-users', parents],
-    queryFn: async () => {
-      if (!parents.length) return [];
-      const allUsers = await base44.entities.User.list();
-      return allUsers.filter(u => parents.some(p => p.user_id === u.id));
-    },
-    enabled: parents.length > 0,
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['all-users'],
+    queryFn: () => base44.entities.User.list(),
+    enabled: !!member,
   });
 
   const { data: badgeProgress = [] } = useQuery({
@@ -71,25 +67,11 @@ export default function MemberDetail() {
     enabled: !!memberId,
   });
 
-  const { data: parentAccountExists } = useQuery({
-    queryKey: ['parent-account', member?.id],
-    queryFn: async () => {
-      if (!member?.id) return false;
-      // Check if member has parents linked with registered user accounts
-      if (member?.parent_ids?.length) {
-        const linkedParents = await base44.entities.Parent.filter({});
-        const memberParents = linkedParents.filter(p => member.parent_ids.includes(p.id));
-        
-        if (memberParents.length > 0) {
-          const allUsers = await base44.entities.User.list();
-          const hasRegisteredParent = memberParents.some(p => allUsers.some(u => u.id === p.user_id));
-          return hasRegisteredParent;
-        }
-      }
-      return false;
-    },
-    enabled: !!member?.id,
-  });
+  // Check if either parent has a registered account
+  const parentAccountExists = member && allUsers.length > 0 && (
+    (member.parent_one_email && allUsers.some(u => u.email === member.parent_one_email)) ||
+    (member.parent_two_email && allUsers.some(u => u.email === member.parent_two_email))
+  );
 
   const calculateAge = (dob) => {
     const birthDate = new Date(dob);
@@ -374,11 +356,18 @@ export default function MemberDetail() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <CardTitle>Parent One</CardTitle>
-                  {member.parent_one_email && parentUsers.some(u => u.email === member.parent_one_email) && (
-                    <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                      <CheckCircle className="w-3 h-3" />
-                      Registered
-                    </div>
+                  {formData.parent_one_email && (
+                    allUsers.some(u => u.email === member.parent_one_email) ? (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                        <CheckCircle className="w-3 h-3" />
+                        Account Registered
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                        <XCircle className="w-3 h-3" />
+                        No Account
+                      </div>
+                    )
                   )}
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -400,11 +389,18 @@ export default function MemberDetail() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <CardTitle>Parent Two</CardTitle>
-                  {member.parent_two_email && parentUsers.some(u => u.email === member.parent_two_email) && (
-                    <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                      <CheckCircle className="w-3 h-3" />
-                      Registered
-                    </div>
+                  {member.parent_two_email && (
+                    allUsers.some(u => u.email === member.parent_two_email) ? (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                        <CheckCircle className="w-3 h-3" />
+                        Registered
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                        <XCircle className="w-3 h-3" />
+                        No Account
+                      </div>
+                    )
                   )}
                 </CardHeader>
                 <CardContent className="space-y-3">
