@@ -207,10 +207,24 @@ export default function LeaderBadges() {
                       const categoryBadges = filteredBadges.filter(b => b.category === category);
                       if (categoryBadges.length === 0) return null;
 
-                      // For staged badges, only show family badges (stage_number = null)
-                      const displayBadges = category === 'staged' 
-                        ? categoryBadges.filter(b => b.stage_number === null)
-                        : categoryBadges;
+                      // For staged badges, group by family and show one badge per family
+                      let displayBadges;
+                      if (category === 'staged') {
+                        const familyMap = new Map();
+                        categoryBadges.forEach(badge => {
+                          const familyId = badge.badge_family_id;
+                          if (familyId && !familyMap.has(familyId)) {
+                            // Find the first stage or use current badge
+                            const firstStage = categoryBadges
+                              .filter(b => b.badge_family_id === familyId)
+                              .sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0))[0];
+                            familyMap.set(familyId, firstStage);
+                          }
+                        });
+                        displayBadges = Array.from(familyMap.values());
+                      } else {
+                        displayBadges = categoryBadges;
+                      }
 
                       return (
                         <div key={category} className="mb-8">
@@ -243,16 +257,22 @@ export default function LeaderBadges() {
                                     </div>
                                   </CardHeader>
                                   <CardContent>
-                                    {isStaged ? (
-                                      <Button
-                                        variant="outline"
-                                        className="w-full"
-                                        onClick={() => navigate(createPageUrl('StagedBadgeDetail') + `?familyId=${badge.badge_family_id}`)}
-                                      >
-                                        <Award className="w-4 h-4 mr-2" />
-                                        View Stages
-                                      </Button>
-                                    ) : (
+                                   {isStaged ? (
+                                     <Button
+                                       variant="outline"
+                                       className="w-full"
+                                       onClick={() => {
+                                         if (badge.badge_family_id === 'nights_away') {
+                                           navigate(createPageUrl('NightsAwayBadgeDetail'));
+                                         } else {
+                                           navigate(createPageUrl('StagedBadgeDetail') + `?familyId=${badge.badge_family_id}`);
+                                         }
+                                       }}
+                                     >
+                                       <Award className="w-4 h-4 mr-2" />
+                                       View Stages
+                                     </Button>
+                                   ) : (
                                       <div 
                                         className="space-y-3 cursor-pointer"
                                         onClick={() => navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`)}

@@ -44,6 +44,7 @@ import Volunteer from './pages/Volunteer';
 import WeeklyMessage from './pages/WeeklyMessage';
 import WeeklyMessageList from './pages/WeeklyMessageList';
 import NightsAwayTracking from './pages/NightsAwayTracking';
+import NightsAwayBadgeDetail from './pages/NightsAwayBadgeDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -94,6 +95,7 @@ export const PAGES = {
     "WeeklyMessage": WeeklyMessage,
     "WeeklyMessageList": WeeklyMessageList,
     "NightsAwayTracking": NightsAwayTracking,
+    "NightsAwayBadgeDetail": NightsAwayBadgeDetail,
 }
 
 export const pagesConfig = {
