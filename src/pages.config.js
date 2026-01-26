@@ -11,6 +11,7 @@ import EventDetail from './pages/EventDetail';
 import EventUpdate from './pages/EventUpdate';
 import EventUpdateList from './pages/EventUpdateList';
 import Gallery from './pages/Gallery';
+import HikesAwayBadgeDetail from './pages/HikesAwayBadgeDetail';
 import Home from './pages/Home';
 import Join from './pages/Join';
 import JoinEnquiries from './pages/JoinEnquiries';
@@ -28,6 +29,8 @@ import MemberDetail from './pages/MemberDetail';
 import MonthlyNewsletter from './pages/MonthlyNewsletter';
 import MonthlyNewsletterList from './pages/MonthlyNewsletterList';
 import MyChild from './pages/MyChild';
+import NightsAwayBadgeDetail from './pages/NightsAwayBadgeDetail';
+import NightsAwayTracking from './pages/NightsAwayTracking';
 import ParentBadges from './pages/ParentBadges';
 import ParentDashboard from './pages/ParentDashboard';
 import ParentEventDetail from './pages/ParentEventDetail';
@@ -43,9 +46,7 @@ import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
 import WeeklyMessage from './pages/WeeklyMessage';
 import WeeklyMessageList from './pages/WeeklyMessageList';
-import NightsAwayTracking from './pages/NightsAwayTracking';
-import NightsAwayBadgeDetail from './pages/NightsAwayBadgeDetail';
-import HikesAwayBadgeDetail from './pages/HikesAwayBadgeDetail';
+import GoldAwardDetail from './pages/GoldAwardDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -63,6 +64,7 @@ export const PAGES = {
     "EventUpdate": EventUpdate,
     "EventUpdateList": EventUpdateList,
     "Gallery": Gallery,
+    "HikesAwayBadgeDetail": HikesAwayBadgeDetail,
     "Home": Home,
     "Join": Join,
     "JoinEnquiries": JoinEnquiries,
@@ -80,6 +82,8 @@ export const PAGES = {
     "MonthlyNewsletter": MonthlyNewsletter,
     "MonthlyNewsletterList": MonthlyNewsletterList,
     "MyChild": MyChild,
+    "NightsAwayBadgeDetail": NightsAwayBadgeDetail,
+    "NightsAwayTracking": NightsAwayTracking,
     "ParentBadges": ParentBadges,
     "ParentDashboard": ParentDashboard,
     "ParentEventDetail": ParentEventDetail,
@@ -95,9 +99,7 @@ export const PAGES = {
     "Volunteer": Volunteer,
     "WeeklyMessage": WeeklyMessage,
     "WeeklyMessageList": WeeklyMessageList,
-    "NightsAwayTracking": NightsAwayTracking,
-    "NightsAwayBadgeDetail": NightsAwayBadgeDetail,
-    "HikesAwayBadgeDetail": HikesAwayBadgeDetail,
+    "GoldAwardDetail": GoldAwardDetail,
 }
 
 export const pagesConfig = {

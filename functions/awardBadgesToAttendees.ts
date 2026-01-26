@@ -158,6 +158,9 @@ Deno.serve(async (req) => {
     // Check for Joining In badges for all attendees
     await base44.asServiceRole.functions.invoke('checkJoiningInBadges', {});
 
+    // Check for Gold Award eligibility
+    await base44.asServiceRole.functions.invoke('checkGoldAward', {});
+
     return Response.json({
       success: true,
       attendees: attendanceRecords.length,

@@ -369,17 +369,32 @@ export default function EventDetail() {
                       <CardTitle>Nights Away</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <Label>Number of nights away</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={formData.nights_away_count}
-                        onChange={(e) => setFormData({ ...formData, nights_away_count: parseInt(e.target.value) || 0 })}
-                        className="mt-2 max-w-xs"
-                      />
-                      <p className="text-sm text-gray-500 mt-2">
-                        This will be added to each attendee's total nights away count when badges are awarded.
-                      </p>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Number of nights away</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={formData.nights_away_count}
+                            onChange={(e) => setFormData({ ...formData, nights_away_count: parseInt(e.target.value) || 0 })}
+                            className="mt-2 max-w-xs"
+                          />
+                          <p className="text-sm text-gray-500 mt-2">
+                            This will be added to each attendee's total nights away count when badges are awarded.
+                          </p>
+                        </div>
+                        {event.start_date && event.end_date && event.end_date !== event.start_date && (
+                          <p className="text-xs text-gray-400">
+                            Auto-calculated: {(() => {
+                              const start = new Date(event.start_date);
+                              const end = new Date(event.end_date);
+                              const diffTime = Math.abs(end - start);
+                              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                              return diffDays;
+                            })()} nights (edit above to override)
+                          </p>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 )}
