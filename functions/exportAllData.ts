@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import JSZip from 'npm:jszip@3.10.1';
+import { Buffer } from 'node:buffer';
 
 Deno.serve(async (req) => {
   try {
