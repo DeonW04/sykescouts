@@ -24,7 +24,7 @@ export default function EditBadgeStructure() {
   const [showReqDialog, setShowReqDialog] = useState(false);
   const [selectedModule, setSelectedModule] = useState(null);
   const [moduleForm, setModuleForm] = useState({ name: '', completion_rule: 'all_required', required_count: 0 });
-  const [reqForm, setReqForm] = useState({ text: '', notes: '' });
+  const [reqForm, setReqForm] = useState({ text: '', notes: '', required_completions: 1 });
 
   const { data: badge } = useQuery({
     queryKey: ['badge', badgeId],
@@ -67,7 +67,7 @@ export default function EditBadgeStructure() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['requirements'] });
       setShowReqDialog(false);
-      setReqForm({ text: '', notes: '' });
+      setReqForm({ text: '', notes: '', required_completions: 1 });
       toast.success('Requirement added');
     },
   });
@@ -188,6 +188,11 @@ export default function EditBadgeStructure() {
                           </div>
                           <div className="flex-1">
                             <p className="text-sm">{req.text}</p>
+                            {req.required_completions > 1 && (
+                              <p className="text-xs text-[#7413dc] font-medium mt-1">
+                                Must complete {req.required_completions} times
+                              </p>
+                            )}
                             {req.notes && (
                               <p className="text-xs text-gray-500 mt-1">{req.notes}</p>
                             )}
@@ -271,6 +276,17 @@ export default function EditBadgeStructure() {
                 onChange={(e) => setReqForm({ ...reqForm, text: e.target.value })}
                 placeholder="Describe what needs to be done..."
               />
+            </div>
+            <div>
+              <Label>Required Completions</Label>
+              <Input
+                type="number"
+                min="1"
+                value={reqForm.required_completions}
+                onChange={(e) => setReqForm({ ...reqForm, required_completions: parseInt(e.target.value) || 1 })}
+                placeholder="1"
+              />
+              <p className="text-xs text-gray-500 mt-1">How many times must this requirement be completed? (default: 1)</p>
             </div>
             <div>
               <Label>Leader Notes (Optional)</Label>
