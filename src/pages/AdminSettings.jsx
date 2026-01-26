@@ -546,43 +546,66 @@ export default function AdminSettings() {
           </TabsContent>
 
           <TabsContent value="export">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Download className="w-5 h-5" />
-                  Data Export
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-gray-600">
-                  Export all your group's data including members, events, badges, and more. 
-                  Data will be downloaded as a ZIP file containing both JSON and CSV formats.
-                </p>
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Export includes:</strong> Members, Leaders, Sections, Events, Attendance, 
-                    Badges, Badge Progress, Programme, Payments, and all other system data.
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Download className="w-5 h-5" />
+                    Data Export
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-gray-600">
+                    Export all your group's data including members, events, badges, and more. 
+                    Data will be downloaded as a ZIP file containing both JSON and CSV formats.
                   </p>
-                </div>
-                <Button
-                  onClick={handleExportData}
-                  disabled={exporting}
-                  className="bg-[#004851] hover:bg-[#003840]"
-                >
-                  {exporting ? (
-                    <>
-                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                      Exporting...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4 mr-2" />
-                      Export All Data
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Export includes:</strong> Members, Leaders, Sections, Events, Attendance, 
+                      Badges, Badge Progress, Programme, Payments, and all other system data.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleExportData}
+                    disabled={exporting}
+                    className="bg-[#004851] hover:bg-[#003840]"
+                  >
+                    {exporting ? (
+                      <>
+                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                        Exporting...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Export All Data
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="border-orange-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-orange-800">
+                    <Users className="w-5 h-5" />
+                    Archived Members
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-gray-600">
+                    View and manage members who have been archived. Archived members are hidden from the main list but their data is preserved.
+                  </p>
+                  <Button
+                    onClick={() => navigate(createPageUrl('ArchivedMembers'))}
+                    variant="outline"
+                    className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                  >
+                    View Archived Members
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
