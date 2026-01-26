@@ -71,6 +71,30 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
     },
   });
 
+  const awardBadgesMutation = useMutation({
+    mutationFn: async () => {
+      const entityId = entityType === 'event' ? 'eventId' : 'programmeId';
+      return base44.functions.invoke('awardBadgesToAttendees', {
+        [entityId]: programmeId,
+        entityType
+      });
+    },
+    onSuccess: () => {
+      toast.success('Badge requirements awarded to all attendees');
+      queryClient.invalidateQueries({ queryKey: ['badge-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['member-badge-progress'] });
+    },
+    onError: (error) => {
+      toast.error('Error awarding badges: ' + error.message);
+    },
+  });
+
+  const handleAwardBadges = () => {
+    if (window.confirm('Award all linked badge requirements to members marked as present?')) {
+      awardBadgesMutation.mutate();
+    }
+  };
+
   const handleAddCriteria = () => {
     const badge = badges.find(b => b.id === selectedBadge);
     
@@ -129,10 +153,22 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
               <Award className="w-5 h-5" />
               Badge Criteria
             </CardTitle>
-            <Button onClick={() => setShowDialog(true)} size="sm">
-              <Plus className="w-4 h-4 mr-1" />
-              Link Badge
-            </Button>
+            <div className="flex gap-2">
+              {linkedCriteria.length > 0 && (
+                <Button 
+                  onClick={() => handleAwardBadges()} 
+                  size="sm" 
+                  variant="outline"
+                  disabled={awardBadgesMutation.isPending}
+                >
+                  {awardBadgesMutation.isPending ? 'Awarding...' : 'Award to Attendees'}
+                </Button>
+              )}
+              <Button onClick={() => setShowDialog(true)} size="sm">
+                <Plus className="w-4 h-4 mr-1" />
+                Link Badge
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

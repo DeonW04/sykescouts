@@ -37,6 +37,7 @@ export default function EventDetail() {
     ],
     equipment_list: '',
     instructions: '',
+    nights_away_count: 0,
   });
 
   const { data: event } = useQuery({
@@ -52,12 +53,25 @@ export default function EventDetail() {
 
   useEffect(() => {
     if (event) {
+      // Auto-calculate nights away based on date range
+      const calculateNights = () => {
+        if (event.start_date && event.end_date && event.end_date !== event.start_date) {
+          const start = new Date(event.start_date);
+          const end = new Date(event.end_date);
+          const diffTime = Math.abs(end - start);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          return diffDays;
+        }
+        return 0;
+      };
+
       setFormData({
         schedule_by_day: event.schedule_by_day?.length > 0 
           ? event.schedule_by_day 
           : [{ day_name: 'Day 1', items: [{ time: '', activity: '', notes: '' }] }],
         equipment_list: event.equipment_list || '',
         instructions: event.instructions || '',
+        nights_away_count: event.nights_away_count !== undefined ? event.nights_away_count : calculateNights(),
       });
     }
   }, [event]);
@@ -152,6 +166,7 @@ export default function EventDetail() {
                   <span>to {format(new Date(event.end_date), 'EEEE, MMMM d, yyyy')}</span>
                 )}
                 {event.location && <span>• {event.location}</span>}
+                {event.type === 'Camp' && <span>• {formData.nights_away_count} night{formData.nights_away_count !== 1 ? 's' : ''} away</span>}
               </div>
             </div>
             <div className="flex gap-2">
@@ -348,6 +363,27 @@ export default function EventDetail() {
               </TabsContent>
 
               <TabsContent value="equipment" className="space-y-6">
+                {event.type === 'Camp' && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Nights Away</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Label>Number of nights away</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={formData.nights_away_count}
+                        onChange={(e) => setFormData({ ...formData, nights_away_count: parseInt(e.target.value) || 0 })}
+                        className="mt-2 max-w-xs"
+                      />
+                      <p className="text-sm text-gray-500 mt-2">
+                        This will be added to each attendee's total nights away count when badges are awarded.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+                
                 <Card>
                   <CardHeader>
                     <CardTitle>Equipment List</CardTitle>
