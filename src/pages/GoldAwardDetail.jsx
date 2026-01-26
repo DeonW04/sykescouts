@@ -28,11 +28,15 @@ export default function GoldAwardDetail() {
 
   const { data: challengeBadges = [] } = useQuery({
     queryKey: ['challenge-badges'],
-    queryFn: () => base44.entities.BadgeDefinition.filter({ 
-      category: 'challenge',
-      section: 'scouts',
-      active: true 
-    }),
+    queryFn: async () => {
+      const badges = await base44.entities.BadgeDefinition.filter({ 
+        category: 'challenge',
+        section: 'scouts',
+        active: true 
+      });
+      // Exclude the Gold Award itself from the requirements
+      return badges.filter(b => !b.is_chief_scout_award);
+    },
   });
 
   const { data: members = [] } = useQuery({

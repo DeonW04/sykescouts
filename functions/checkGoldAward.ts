@@ -17,12 +17,13 @@ Deno.serve(async (req) => {
 
     const goldAwardBadge = goldAwardBadges[0];
 
-    // Get all challenge badges
-    const challengeBadges = await base44.asServiceRole.entities.BadgeDefinition.filter({
+    // Get all challenge badges (excluding Gold Award itself)
+    const allChallengeBadges = await base44.asServiceRole.entities.BadgeDefinition.filter({
       category: 'challenge',
       section: 'scouts',
       active: true
     });
+    const challengeBadges = allChallengeBadges.filter(b => !b.is_chief_scout_award);
 
     if (challengeBadges.length === 0) {
       return Response.json({ message: 'No challenge badges found' }, { status: 200 });
