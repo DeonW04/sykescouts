@@ -42,12 +42,20 @@ export default function EventParentPortalSection({ eventId, event }) {
   });
 
   const createActionMutation = useMutation({
-    mutationFn: (data) => base44.entities.ActionRequired.create({ ...data, event_id: eventId }),
+    mutationFn: async (data) => {
+      const action = await base44.entities.ActionRequired.create({ ...data, event_id: eventId });
+      // Send email notifications
+      await base44.functions.invoke('sendActionRequiredEmail', {
+        actionRequiredId: action.id,
+        entityType: 'event'
+      });
+      return action;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-required'] });
       setShowActionDialog(false);
       setActionForm({ action_text: '', column_title: '', action_purpose: '', dropdown_options: [''] });
-      toast.success('Action required added');
+      toast.success('Action required added and emails sent');
     },
   });
 
@@ -172,6 +180,29 @@ export default function EventParentPortalSection({ eventId, event }) {
               Add Action
             </Button>
           </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-600 mb-4">
+            Schedule reminder emails for parents with attending children
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              try {
+                await base44.functions.invoke('sendEventReminder', { eventId });
+                toast.success('Reminder emails sent');
+              } catch (error) {
+                toast.error('Failed to send reminders: ' + error.message);
+              }
+            }}
+            className="mb-4"
+          >
+            Send Reminder Now
+          </Button>
+        </CardContent>
+        <CardHeader>
+          <CardTitle>Action Required</CardTitle>
         </CardHeader>
         <CardContent>
           {actions.length === 0 ? (

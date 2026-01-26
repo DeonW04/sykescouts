@@ -194,7 +194,8 @@ export default function ParentDashboard() {
           responses.some(r => 
             (r.action_required_id === action.id || r.action_id === action.id) && 
             (r.member_id === child.id || r.child_member_id === child.id) &&
-            r.status === 'completed'
+            r.status === 'completed' &&
+            r.response // Only count as responded if there's actually a response value
           )
         );
         return !allChildrenResponded;

@@ -399,6 +399,26 @@ export default function MemberDetail() {
                     <p className="text-sm text-gray-600">Phone</p>
                     <p className="font-medium">{member.parent_one_phone || 'Not provided'}</p>
                   </div>
+                  {member.parent_one_email && !allUsers.some(u => u.email === member.parent_one_email) && (
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          await base44.functions.invoke('sendParentPortalInvite', {
+                            parentEmail: member.parent_one_email,
+                            parentName: member.parent_one_name,
+                            childName: member.full_name
+                          });
+                          toast.success('Invitation sent');
+                        } catch (error) {
+                          toast.error('Failed to send invitation');
+                        }
+                      }}
+                      className="bg-[#7413dc] hover:bg-[#5c0fb0]"
+                    >
+                      Invite to Parent Portal
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
 
@@ -432,6 +452,26 @@ export default function MemberDetail() {
                     <p className="text-sm text-gray-600">Phone</p>
                     <p className="font-medium">{member.parent_two_phone || 'Not provided'}</p>
                   </div>
+                  {member.parent_two_email && !allUsers.some(u => u.email === member.parent_two_email) && (
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          await base44.functions.invoke('sendParentPortalInvite', {
+                            parentEmail: member.parent_two_email,
+                            parentName: member.parent_two_name,
+                            childName: member.full_name
+                          });
+                          toast.success('Invitation sent');
+                        } catch (error) {
+                          toast.error('Failed to send invitation');
+                        }
+                      }}
+                      className="bg-[#7413dc] hover:bg-[#5c0fb0]"
+                    >
+                      Invite to Parent Portal
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </div>

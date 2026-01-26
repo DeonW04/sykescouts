@@ -29,12 +29,20 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
   });
 
   const createActionMutation = useMutation({
-    mutationFn: (data) => base44.entities.ActionRequired.create({ ...data, programme_id: programmeId }),
+    mutationFn: async (data) => {
+      const action = await base44.entities.ActionRequired.create({ ...data, programme_id: programmeId });
+      // Send email notifications
+      await base44.functions.invoke('sendActionRequiredEmail', {
+        actionRequiredId: action.id,
+        entityType: 'programme'
+      });
+      return action;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-required'] });
       setShowActionDialog(false);
       setActionForm({ action_text: '', column_title: '', action_purpose: '', dropdown_options: [''] });
-      toast.success('Action required added');
+      toast.success('Action required added and emails sent');
     },
   });
 
