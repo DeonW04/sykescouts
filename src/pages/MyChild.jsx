@@ -187,9 +187,6 @@ export default function MyChild() {
                   <Badge variant="secondary" className="bg-white/20 text-white text-sm">
                     {age.years} years {age.months} months
                   </Badge>
-                  <Badge variant="secondary" className="bg-white/20 text-white text-sm">
-                    {registeredCount} of 2 parents registered
-                  </Badge>
                 </div>
               </div>
             </div>
