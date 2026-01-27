@@ -45,7 +45,7 @@ const createInviteEmailTemplate = (parentName, childName, inviteLink) => {
 
           <p class="message">Click the button below to create your account and get started:</p>
           <center>
-            <a href="${inviteLink}" class="button">Create Your Account</a>
+            <a href="${inviteLink}" style="display: inline-block; background-color: #7413dc; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 20px 0;">Create Your Account</a>
           </center>
           <p class="message" style="font-size: 14px; color: #6b7280;">If you have any questions, please don't hesitate to contact us.</p>
         </div>
