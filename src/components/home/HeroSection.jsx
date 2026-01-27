@@ -19,11 +19,12 @@ const ImageCarousel = ({ websiteImages }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
+    if (images.length === 0) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % images.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [images.length]);
 
   const goToNext = () => setCurrentIndex((prev) => (prev + 1) % images.length);
   const goToPrev = () => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);

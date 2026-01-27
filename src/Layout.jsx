@@ -54,8 +54,8 @@ export default function Layout({ children, currentPageName }) {
   // Access control - check after auth is loaded
   useEffect(() => {
     if (!checkingAuth) {
-      // Redirect unauthenticated users from protected pages
-      if (!user && protectedPages.includes(currentPageName)) {
+      // Redirect unauthenticated users from protected pages (but not public pages)
+      if (!user && protectedPages.includes(currentPageName) && !publicPages.includes(currentPageName)) {
         base44.auth.redirectToLogin(window.location.pathname + window.location.search);
         return;
       }
