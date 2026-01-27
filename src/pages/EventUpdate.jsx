@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Copy, BarChart3, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Plus, Copy, BarChart3, MessageSquare, Mail } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ import LeaderNav from '../components/leader/LeaderNav';
 import PageBuilder from '../components/pageBuilder/PageBuilder';
 import ResponsesDialog from '../components/communications/ResponsesDialog';
 import HeaderBarConfig from '../components/communications/HeaderBarConfig';
+import SendEmailDialog from '../components/communications/SendEmailDialog';
 
 export default function EventUpdate() {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ export default function EventUpdate() {
   const [copied, setCopied] = useState(false);
   const [showResponses, setShowResponses] = useState(false);
   const [selectedBlockId, setSelectedBlockId] = useState(null);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -166,8 +168,7 @@ export default function EventUpdate() {
             </div>
             <div className="flex gap-2">
               <Button
-                variant="outline"
-                className="text-black border-white hover:bg-white/20"
+                className="bg-white text-orange-600 hover:bg-orange-50"
                 onClick={() => setShowStats(true)}
               >
                 <BarChart3 className="w-4 h-4 mr-2" />
@@ -176,14 +177,21 @@ export default function EventUpdate() {
               {page.status === 'draft' && (
                 <Button
                   onClick={() => publishMutation.mutate()}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 text-white"
                 >
                   Publish
                 </Button>
               )}
               <Button
+                onClick={() => setShowEmailDialog(true)}
+                className="bg-white text-orange-600 hover:bg-orange-50"
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Send as Email
+              </Button>
+              <Button
                 variant="outline"
-                className={`text-black border-white transition-all ${copied ? 'bg-green-600 hover:bg-green-700' : 'hover:bg-white/20'}`}
+                className={`text-white border-white transition-all ${copied ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-white/10 hover:bg-white/20'}`}
                 onClick={() => {
                   navigator.clipboard.writeText(shareUrl);
                   setCopied(true);
@@ -345,6 +353,13 @@ export default function EventUpdate() {
         responses={responses.filter(r => r.block_id === selectedBlockId)}
         page={page}
         blockId={selectedBlockId}
+      />
+
+      {/* Email Dialog */}
+      <SendEmailDialog
+        open={showEmailDialog}
+        onClose={() => setShowEmailDialog(false)}
+        page={page}
       />
 
       {/* Analytics Dialog */}
