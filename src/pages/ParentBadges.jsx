@@ -198,19 +198,36 @@ export default function ParentBadges() {
     return badge && badge.category !== 'staged';
   });
 
-  // Get unique badges that have progress from requirements
-  const uniqueBadgeIds = [...new Set(reqProgress.filter(rp => rp.member_id === child.id).map(rp => rp.badge_id))];
+  // Get all badges for the child's section with progress
+  const childSection = badges.find(b => b.id)?.section; // Get section from any badge
   
-  const badgesWithProgress = uniqueBadgeIds.map(badgeId => {
-    const badge = badges.find(b => b.id === badgeId);
-    if (!badge) return null;
-    const progress = getBadgeProgress(badgeId);
-    if (progress.total === 0 || progress.percentage === 100) return null;
-    return { badge, progress };
-  }).filter(Boolean);
+  const allAvailableBadges = badges
+    .filter(b => {
+      // Filter by child's section or 'all' sections
+      if (!child.section_id) return false;
+      const sections = badges.filter(badge => badge.section);
+      const childSectionBadge = sections.find(s => s.id === child.section_id);
+      
+      return (b.section === 'all' || b.section === childSectionBadge?.section) && 
+             b.category !== 'special' && 
+             !b.is_chief_scout_award;
+    })
+    .map(badge => {
+      const progress = getBadgeProgress(badge.id);
+      const isCompleted = badgeProgress.some(p => p.member_id === child.id && p.badge_id === badge.id && p.status === 'completed');
+      
+      return {
+        badge,
+        progress: {
+          ...progress,
+          isCompleted
+        }
+      };
+    })
+    .filter(bp => !bp.progress.isCompleted); // Filter out completed badges
 
   // Filter and sort
-  const filteredBadges = badgesWithProgress
+  const filteredBadges = allAvailableBadges
     .filter(bp => filterType === 'all' || bp.badge.category === filterType)
     .sort((a, b) => b.progress.percentage - a.progress.percentage);
 
@@ -352,12 +369,12 @@ export default function ParentBadges() {
           </motion.div>
         )}
 
-        {/* Badges In Progress */}
+        {/* Badges Available */}
         <div>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="h-1 w-12 bg-gradient-to-r from-purple-600 to-transparent rounded-full"></div>
-              <h2 className="text-3xl font-bold">Badges In Progress</h2>
+              <h2 className="text-3xl font-bold">Badges to Work Towards</h2>
             </div>
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-gray-500" />
@@ -381,7 +398,7 @@ export default function ParentBadges() {
             <Card>
               <CardContent className="p-12 text-center">
                 <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600">No badges in progress matching the filter</p>
+                <p className="text-gray-600">No badges available matching the filter</p>
               </CardContent>
             </Card>
           ) : (
