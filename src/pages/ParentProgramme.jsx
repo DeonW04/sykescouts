@@ -87,24 +87,40 @@ export default function ParentProgramme() {
     : [];
 
   // Separate into next/upcoming and previous
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const endOfToday = new Date(today);
-  endOfToday.setHours(23, 59, 59, 999);
+  const now = new Date();
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
 
-  const upcomingProgrammes = allTermProgrammes.filter(p => {
+  // Find programmes from today onwards
+  const upcomingAndFuture = allTermProgrammes.filter(p => {
     const progDate = new Date(p.date);
-    return progDate <= endOfToday;
+    progDate.setHours(0, 0, 0, 0);
+    return progDate >= startOfToday;
   });
 
-  const futureProgrammes = allTermProgrammes.filter(p => {
-    const progDate = new Date(p.date);
-    return progDate > endOfToday;
-  });
+  // Next meeting is the first upcoming one
+  const nextMeeting = upcomingAndFuture.length > 0 ? upcomingAndFuture[0] : null;
+  
+  // Check if we should still show next meeting (if we're within its day)
+  let showNextMeeting = false;
+  if (nextMeeting) {
+    const meetingDate = new Date(nextMeeting.date);
+    meetingDate.setHours(0, 0, 0, 0);
+    const endOfMeetingDay = new Date(meetingDate);
+    endOfMeetingDay.setHours(23, 59, 59, 999);
+    showNextMeeting = now <= endOfMeetingDay;
+  }
 
+  // Future meetings are after the next meeting
+  const futureProgrammes = upcomingAndFuture.slice(1);
+
+  // Previous meetings are before today, or the next meeting if we're past its day
   const previousProgrammes = allTermProgrammes.filter(p => {
     const progDate = new Date(p.date);
-    return progDate < today;
+    progDate.setHours(0, 0, 0, 0);
+    if (progDate < startOfToday) return true;
+    if (!showNextMeeting && nextMeeting && p.id === nextMeeting.id) return true;
+    return false;
   });
 
   // Get unique badges from criteria
@@ -200,10 +216,10 @@ export default function ParentProgramme() {
         )}
 
         {/* Next Meeting */}
-        {upcomingProgrammes.length > 0 && (
+        {showNextMeeting && nextMeeting && (
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Next Meeting</h2>
-            {upcomingProgrammes.slice(0, 1).map((prog, index) => {
+            {[nextMeeting].map((prog, index) => {
               const section = sections.find(s => s.id === prog.section_id);
               const isToday = format(new Date(prog.date), 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
               const progBadges = badgeCriteria
