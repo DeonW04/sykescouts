@@ -77,7 +77,7 @@ export default function ParentProgramme() {
   });
 
   // Get programmes for current term
-  const termProgrammes = currentTerm
+  const allTermProgrammes = currentTerm
     ? programmes.filter(p => {
         const progDate = new Date(p.date);
         const termStart = new Date(currentTerm.start_date);
@@ -86,9 +86,30 @@ export default function ParentProgramme() {
       }).sort((a, b) => new Date(a.date) - new Date(b.date))
     : [];
 
+  // Separate into next/upcoming and previous
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const endOfToday = new Date(today);
+  endOfToday.setHours(23, 59, 59, 999);
+
+  const upcomingProgrammes = allTermProgrammes.filter(p => {
+    const progDate = new Date(p.date);
+    return progDate <= endOfToday;
+  });
+
+  const futureProgrammes = allTermProgrammes.filter(p => {
+    const progDate = new Date(p.date);
+    return progDate > endOfToday;
+  });
+
+  const previousProgrammes = allTermProgrammes.filter(p => {
+    const progDate = new Date(p.date);
+    return progDate < today;
+  });
+
   // Get unique badges from criteria
   const programmeBadges = {};
-  termProgrammes.forEach(prog => {
+  allTermProgrammes.forEach(prog => {
     const criteria = badgeCriteria.filter(c => c.programme_id === prog.id);
     criteria.forEach(c => {
       const badge = badges.find(b => b.id === c.badge_id);
@@ -178,20 +199,12 @@ export default function ParentProgramme() {
           </Card>
         )}
 
-        <div className="space-y-4">
-          {termProgrammes.length === 0 ? (
-            <Card className="bg-white/80 backdrop-blur-sm shadow-xl">
-              <CardContent className="p-16 text-center">
-                <div className="w-20 h-20 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <Calendar className="w-10 h-10 text-green-600" />
-                </div>
-                <p className="text-gray-600 text-lg">No meetings planned yet</p>
-              </CardContent>
-            </Card>
-          ) : (
-            termProgrammes.map((prog, index) => {
+        {/* Next Meeting */}
+        {upcomingProgrammes.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">Next Meeting</h2>
+            {upcomingProgrammes.slice(0, 1).map((prog, index) => {
               const section = sections.find(s => s.id === prog.section_id);
-              const isPast = new Date(prog.date) < now;
               const isToday = format(new Date(prog.date), 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
               const progBadges = badgeCriteria
                 .filter(c => c.programme_id === prog.id)
@@ -201,50 +214,172 @@ export default function ParentProgramme() {
               return (
                 <motion.div
                   key={prog.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
                 >
-                <Card className={`shadow-xl ${isToday ? 'border-l-4 border-l-green-600 bg-gradient-to-r from-green-50 to-white' : 'bg-white/80 backdrop-blur-sm'}`}>
-                  <CardHeader>
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        {isToday && (
-                          <Badge className="bg-green-600">Today</Badge>
-                        )}
-                      </div>
-                      <CardTitle className="text-2xl">{prog.title}</CardTitle>
-                      <div className="flex items-center gap-2 mt-2 text-gray-600">
-                        <Calendar className="w-4 h-4" />
-                        <span className="font-medium">{format(new Date(prog.date), 'EEEE, MMMM d')}</span>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  {(prog.shown_in_portal && prog.description) && (
-                    <CardContent>
-                      <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">{prog.description}</p>
-                      
-                      {progBadges.length > 0 && (
-                        <div className="mt-5 pt-5 border-t">
-                          <p className="text-sm font-semibold text-gray-700 mb-3">Badge Work:</p>
-                          <div className="flex flex-wrap gap-3">
-                            {progBadges.map(badge => (
-                              <div key={badge.id} className="flex items-center gap-2 bg-purple-100 px-4 py-2 rounded-full">
-                                <img src={badge.image_url} alt={badge.name} className="w-6 h-6 rounded" />
-                                <span className="text-sm font-medium text-gray-800">{badge.name}</span>
-                              </div>
-                            ))}
-                          </div>
+                  <Card className="shadow-xl border-l-4 border-l-green-600 bg-gradient-to-r from-green-50 to-white">
+                    <CardHeader>
+                      <div>
+                        <div className="flex items-center gap-3 mb-2">
+                          {isToday && (
+                            <Badge className="bg-green-600">Today</Badge>
+                          )}
                         </div>
-                      )}
-                    </CardContent>
-                  )}
-                </Card>
+                        <CardTitle className="text-2xl">{prog.title}</CardTitle>
+                        <div className="flex items-center gap-2 mt-2 text-gray-600">
+                          <Calendar className="w-4 h-4" />
+                          <span className="font-medium">{format(new Date(prog.date), 'EEEE, MMMM d')}</span>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    {(prog.shown_in_portal && prog.description) && (
+                      <CardContent>
+                        <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">{prog.description}</p>
+                        
+                        {progBadges.length > 0 && (
+                          <div className="mt-5 pt-5 border-t">
+                            <p className="text-sm font-semibold text-gray-700 mb-3">Badge Work:</p>
+                            <div className="flex flex-wrap gap-3">
+                              {progBadges.map(badge => (
+                                <div key={badge.id} className="flex items-center gap-2 bg-purple-100 px-4 py-2 rounded-full">
+                                  <img src={badge.image_url} alt={badge.name} className="w-6 h-6 rounded" />
+                                  <span className="text-sm font-medium text-gray-800">{badge.name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    )}
+                  </Card>
                 </motion.div>
               );
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
+
+        {/* Future Meetings */}
+        {futureProgrammes.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">Upcoming Meetings</h2>
+            <div className="space-y-4">
+              {futureProgrammes.map((prog, index) => {
+                const section = sections.find(s => s.id === prog.section_id);
+                const progBadges = badgeCriteria
+                  .filter(c => c.programme_id === prog.id)
+                  .map(c => badges.find(b => b.id === c.badge_id))
+                  .filter(Boolean);
+
+                return (
+                  <motion.div
+                    key={prog.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Card className="shadow-xl bg-white/80 backdrop-blur-sm">
+                      <CardHeader>
+                        <div>
+                          <CardTitle className="text-2xl">{prog.title}</CardTitle>
+                          <div className="flex items-center gap-2 mt-2 text-gray-600">
+                            <Calendar className="w-4 h-4" />
+                            <span className="font-medium">{format(new Date(prog.date), 'EEEE, MMMM d')}</span>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      {(prog.shown_in_portal && prog.description) && (
+                        <CardContent>
+                          <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">{prog.description}</p>
+                          
+                          {progBadges.length > 0 && (
+                            <div className="mt-5 pt-5 border-t">
+                              <p className="text-sm font-semibold text-gray-700 mb-3">Badge Work:</p>
+                              <div className="flex flex-wrap gap-3">
+                                {progBadges.map(badge => (
+                                  <div key={badge.id} className="flex items-center gap-2 bg-purple-100 px-4 py-2 rounded-full">
+                                    <img src={badge.image_url} alt={badge.name} className="w-6 h-6 rounded" />
+                                    <span className="text-sm font-medium text-gray-800">{badge.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      )}
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Previous Meetings */}
+        {previousProgrammes.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">Previous Meetings</h2>
+            <div className="space-y-4">
+              {previousProgrammes.reverse().map((prog, index) => {
+                const section = sections.find(s => s.id === prog.section_id);
+                const progBadges = badgeCriteria
+                  .filter(c => c.programme_id === prog.id)
+                  .map(c => badges.find(b => b.id === c.badge_id))
+                  .filter(Boolean);
+
+                return (
+                  <motion.div
+                    key={prog.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Card className="shadow-lg bg-gray-50/80 backdrop-blur-sm border-gray-200">
+                      <CardHeader>
+                        <div>
+                          <CardTitle className="text-xl text-gray-700">{prog.title}</CardTitle>
+                          <div className="flex items-center gap-2 mt-2 text-gray-500">
+                            <Calendar className="w-4 h-4" />
+                            <span className="font-medium">{format(new Date(prog.date), 'EEEE, MMMM d')}</span>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      {(prog.shown_in_portal && prog.description) && (
+                        <CardContent>
+                          <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{prog.description}</p>
+                          
+                          {progBadges.length > 0 && (
+                            <div className="mt-5 pt-5 border-t border-gray-300">
+                              <p className="text-sm font-semibold text-gray-600 mb-3">Badge Work:</p>
+                              <div className="flex flex-wrap gap-3">
+                                {progBadges.map(badge => (
+                                  <div key={badge.id} className="flex items-center gap-2 bg-gray-200 px-4 py-2 rounded-full">
+                                    <img src={badge.image_url} alt={badge.name} className="w-6 h-6 rounded" />
+                                    <span className="text-sm font-medium text-gray-700">{badge.name}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      )}
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {allTermProgrammes.length === 0 && (
+          <Card className="bg-white/80 backdrop-blur-sm shadow-xl">
+            <CardContent className="p-16 text-center">
+              <div className="w-20 h-20 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <Calendar className="w-10 h-10 text-green-600" />
+              </div>
+              <p className="text-gray-600 text-lg">No meetings planned yet</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

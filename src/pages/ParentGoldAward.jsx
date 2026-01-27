@@ -127,12 +127,29 @@ export default function ParentGoldAward() {
   };
 
   const getBadgeProgress = (badgeId) => {
-    const badgeReqs = requirements.filter(r => r.badge_id === badgeId);
-    const completedReqs = reqProgress.filter(p => p.badge_id === badgeId && p.completed);
+    const badgeModules = modules.filter(m => m.badge_id === badgeId);
+    let totalRequired = 0;
+    let totalCompleted = 0;
+
+    badgeModules.forEach(module => {
+      const moduleReqs = requirements.filter(r => r.module_id === module.id);
+      const completedReqs = reqProgress.filter(p => 
+        moduleReqs.some(r => r.id === p.requirement_id) && p.completed
+      );
+
+      if (module.completion_rule === 'x_of_n_required') {
+        totalRequired += module.required_count || moduleReqs.length;
+        totalCompleted += Math.min(completedReqs.length, module.required_count || moduleReqs.length);
+      } else {
+        totalRequired += moduleReqs.length;
+        totalCompleted += completedReqs.length;
+      }
+    });
+
     return {
-      completed: completedReqs.length,
-      total: badgeReqs.length,
-      percentage: Math.round((completedReqs.length / badgeReqs.length) * 100) || 0,
+      completed: totalCompleted,
+      total: totalRequired,
+      percentage: totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0,
     };
   };
 

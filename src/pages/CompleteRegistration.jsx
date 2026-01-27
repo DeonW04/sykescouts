@@ -30,15 +30,23 @@ export default function CompleteRegistration() {
     full_name: '',
     preferred_name: '',
     date_of_birth: '',
+    gender: '',
     section_id: '',
     patrol: '',
+    parent_one_first_name: '',
+    parent_one_surname: '',
     parent_one_name: '',
     parent_one_email: '',
     parent_one_phone: '',
+    parent_two_first_name: '',
+    parent_two_surname: '',
     parent_two_name: '',
     parent_two_email: '',
     parent_two_phone: '',
     address: '',
+    doctors_surgery: '',
+    doctors_surgery_address: '',
+    doctors_phone: '',
     medical_info: '',
     allergies: '',
     dietary_requirements: '',
@@ -98,15 +106,23 @@ export default function CompleteRegistration() {
         full_name: existingChild.full_name || '',
         preferred_name: existingChild.preferred_name || '',
         date_of_birth: existingChild.date_of_birth || '',
+        gender: existingChild.gender || '',
         section_id: existingChild.section_id || '',
         patrol: existingChild.patrol || '',
+        parent_one_first_name: existingChild.parent_one_first_name || '',
+        parent_one_surname: existingChild.parent_one_surname || '',
         parent_one_name: existingChild.parent_one_name || '',
         parent_one_email: existingChild.parent_one_email || user.email,
         parent_one_phone: existingChild.parent_one_phone || '',
+        parent_two_first_name: existingChild.parent_two_first_name || '',
+        parent_two_surname: existingChild.parent_two_surname || '',
         parent_two_name: existingChild.parent_two_name || '',
         parent_two_email: existingChild.parent_two_email || '',
         parent_two_phone: existingChild.parent_two_phone || '',
         address: existingChild.address || '',
+        doctors_surgery: existingChild.doctors_surgery || '',
+        doctors_surgery_address: existingChild.doctors_surgery_address || '',
+        doctors_phone: existingChild.doctors_phone || '',
         medical_info: existingChild.medical_info || '',
         allergies: existingChild.allergies || '',
         dietary_requirements: existingChild.dietary_requirements || '',
@@ -307,15 +323,33 @@ export default function CompleteRegistration() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="date_of_birth">Date of Birth *</Label>
-                      <Input
-                        id="date_of_birth"
-                        type="date"
-                        value={childForm.date_of_birth}
-                        onChange={(e) => setChildForm({ ...childForm, date_of_birth: e.target.value })}
-                        required
-                      />
+                      <Label htmlFor="gender">Gender</Label>
+                      <Select
+                        value={childForm.gender}
+                        onValueChange={(value) => setChildForm({ ...childForm, gender: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                          <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="date_of_birth">Date of Birth *</Label>
+                    <Input
+                      id="date_of_birth"
+                      type="date"
+                      value={childForm.date_of_birth}
+                      onChange={(e) => setChildForm({ ...childForm, date_of_birth: e.target.value })}
+                      required
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -355,22 +389,30 @@ export default function CompleteRegistration() {
                   <h3 className="font-semibold text-gray-900 border-b pb-2">Parent One Details</h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="parent_one_name">Name</Label>
+                      <Label htmlFor="parent_one_first_name">First Name</Label>
                       <Input
-                        id="parent_one_name"
-                        value={childForm.parent_one_name}
-                        onChange={(e) => setChildForm({ ...childForm, parent_one_name: e.target.value })}
+                        id="parent_one_first_name"
+                        value={childForm.parent_one_first_name}
+                        onChange={(e) => setChildForm({ ...childForm, parent_one_first_name: e.target.value, parent_one_name: `${e.target.value} ${childForm.parent_one_surname || ''}`.trim() })}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="parent_one_email">Email</Label>
+                      <Label htmlFor="parent_one_surname">Surname</Label>
                       <Input
-                        id="parent_one_email"
-                        type="email"
-                        value={childForm.parent_one_email}
-                        onChange={(e) => setChildForm({ ...childForm, parent_one_email: e.target.value })}
+                        id="parent_one_surname"
+                        value={childForm.parent_one_surname}
+                        onChange={(e) => setChildForm({ ...childForm, parent_one_surname: e.target.value, parent_one_name: `${childForm.parent_one_first_name || ''} ${e.target.value}`.trim() })}
                       />
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="parent_one_email">Email</Label>
+                    <Input
+                      id="parent_one_email"
+                      type="email"
+                      value={childForm.parent_one_email}
+                      onChange={(e) => setChildForm({ ...childForm, parent_one_email: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="parent_one_phone">Phone</Label>
@@ -387,22 +429,30 @@ export default function CompleteRegistration() {
                   <h3 className="font-semibold text-gray-900 border-b pb-2">Parent Two Details (Optional)</h3>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="parent_two_name">Name</Label>
+                      <Label htmlFor="parent_two_first_name">First Name</Label>
                       <Input
-                        id="parent_two_name"
-                        value={childForm.parent_two_name}
-                        onChange={(e) => setChildForm({ ...childForm, parent_two_name: e.target.value })}
+                        id="parent_two_first_name"
+                        value={childForm.parent_two_first_name}
+                        onChange={(e) => setChildForm({ ...childForm, parent_two_first_name: e.target.value, parent_two_name: `${e.target.value} ${childForm.parent_two_surname || ''}`.trim() })}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="parent_two_email">Email</Label>
+                      <Label htmlFor="parent_two_surname">Surname</Label>
                       <Input
-                        id="parent_two_email"
-                        type="email"
-                        value={childForm.parent_two_email}
-                        onChange={(e) => setChildForm({ ...childForm, parent_two_email: e.target.value })}
+                        id="parent_two_surname"
+                        value={childForm.parent_two_surname}
+                        onChange={(e) => setChildForm({ ...childForm, parent_two_surname: e.target.value, parent_two_name: `${childForm.parent_two_first_name || ''} ${e.target.value}`.trim() })}
                       />
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="parent_two_email">Email</Label>
+                    <Input
+                      id="parent_two_email"
+                      type="email"
+                      value={childForm.parent_two_email}
+                      onChange={(e) => setChildForm({ ...childForm, parent_two_email: e.target.value })}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="parent_two_phone">Phone</Label>
@@ -419,6 +469,37 @@ export default function CompleteRegistration() {
                 <div className="space-y-4">
                   <h3 className="font-semibold text-gray-900 border-b pb-2">Medical Information</h3>
                   
+                  <div className="space-y-2">
+                    <Label htmlFor="doctors_surgery">Doctor's Surgery Name</Label>
+                    <Input
+                      id="doctors_surgery"
+                      value={childForm.doctors_surgery}
+                      onChange={(e) => setChildForm({ ...childForm, doctors_surgery: e.target.value })}
+                      placeholder="Name of doctor's surgery"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="doctors_surgery_address">Doctor's Surgery Address</Label>
+                    <Textarea
+                      id="doctors_surgery_address"
+                      value={childForm.doctors_surgery_address}
+                      onChange={(e) => setChildForm({ ...childForm, doctors_surgery_address: e.target.value })}
+                      placeholder="Surgery address"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="doctors_phone">Doctor's Surgery Phone</Label>
+                    <Input
+                      id="doctors_phone"
+                      type="tel"
+                      value={childForm.doctors_phone}
+                      onChange={(e) => setChildForm({ ...childForm, doctors_phone: e.target.value })}
+                      placeholder="Surgery phone number"
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="medical_info">Medical Conditions</Label>
                     <Textarea
