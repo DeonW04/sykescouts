@@ -69,6 +69,31 @@ Deno.serve(async (req) => {
           throw new Error('Missing required fields: first_name, surname, or date_of_birth');
         }
 
+        // Ensure section_id is set (required for member to appear in attendance/badges)
+        if (!memberData.section_id) {
+          throw new Error('Missing required field: section_id');
+        }
+
+        // Set defaults for required fields
+        if (!memberData.join_date) {
+          memberData.join_date = new Date().toISOString().split('T')[0];
+        }
+        if (memberData.active === null || memberData.active === undefined) {
+          memberData.active = true;
+        }
+        if (memberData.invested === null || memberData.invested === undefined) {
+          memberData.invested = false;
+        }
+        if (memberData.photo_consent === null || memberData.photo_consent === undefined) {
+          memberData.photo_consent = false;
+        }
+        if (!memberData.total_nights_away) {
+          memberData.total_nights_away = 0;
+        }
+        if (!memberData.total_hikes_away) {
+          memberData.total_hikes_away = 0;
+        }
+
         // Create member using service role
         await base44.asServiceRole.entities.Member.create(memberData);
         imported++;
