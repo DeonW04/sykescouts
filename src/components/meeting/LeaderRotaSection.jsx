@@ -29,18 +29,9 @@ export default function LeaderRotaSection({ programmeId, eventId, sectionId }) {
     enabled: !!sectionId && !!section,
   });
 
-  const { data: users = [] } = useQuery({
-    queryKey: ['leader-users', leaders.map(l => l.user_id).sort().join(',')],
-    queryFn: async () => {
-      // Get user IDs from leaders
-      const leaderUserIds = leaders.map(l => l.user_id).filter(Boolean);
-      if (leaderUserIds.length === 0) return [];
-      
-      // Fetch only users that are leaders
-      const allUsers = await base44.entities.User.list();
-      return allUsers.filter(u => leaderUserIds.includes(u.id));
-    },
-    enabled: leaders.length > 0,
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['all-users'],
+    queryFn: () => base44.entities.User.list(),
   });
 
   const { data: leaderAttendance = [] } = useQuery({
@@ -116,7 +107,8 @@ export default function LeaderRotaSection({ programmeId, eventId, sectionId }) {
 
   const getLeaderName = (leaderId) => {
     const leader = leaders.find(l => l.id === leaderId);
-    const user = users.find(u => u.id === leader?.user_id);
+    if (!leader) return 'Unknown';
+    const user = allUsers.find(u => u.id === leader.user_id);
     return user?.display_name || user?.full_name || 'Unknown';
   };
 
