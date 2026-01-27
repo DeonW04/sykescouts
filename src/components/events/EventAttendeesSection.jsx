@@ -93,10 +93,12 @@ export default function EventAttendeesSection({ eventId, event }) {
   });
 
   const invitedMemberIds = attendances.map(a => a.member_id);
-  const availableMembers = allMembers.filter(m => 
-    event.section_ids?.includes(m.section_id) && 
-    !invitedMemberIds.includes(m.id)
-  );
+  const availableMembers = allMembers
+    .filter(m => 
+      event.section_ids?.includes(m.section_id) && 
+      !invitedMemberIds.includes(m.id)
+    )
+    .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime());
 
   const filteredMembers = availableMembers.filter(m =>
     m.full_name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -251,9 +253,14 @@ export default function EventAttendeesSection({ eventId, event }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {attendances.map((attendance) => {
-                    const member = allMembers.find(m => m.id === attendance.member_id);
-                    if (!member) return null;
+                  {attendances
+                    .map((attendance) => ({
+                      attendance,
+                      member: allMembers.find(m => m.id === attendance.member_id)
+                    }))
+                    .filter(({ member }) => member)
+                    .sort((a, b) => new Date(a.member.date_of_birth).getTime() - new Date(b.member.date_of_birth).getTime())
+                    .map(({ attendance, member }) => {
 
                     return (
                       <TableRow key={attendance.id}>
