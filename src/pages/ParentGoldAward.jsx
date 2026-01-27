@@ -88,12 +88,22 @@ export default function ParentGoldAward() {
     b.category === 'activity' && b.section === 'scouts'
   );
 
+  const { data: badgeProgress = [] } = useQuery({
+    queryKey: ['badge-progress', child],
+    queryFn: async () => {
+      if (!child) return [];
+      const allProgress = await base44.entities.MemberBadgeProgress.filter({});
+      return allProgress.filter(p => p.member_id === child.id);
+    },
+    enabled: !!child,
+  });
+
   const completedChallenges = challengeBadges.filter(badge =>
-    awards.some(a => a.badge_id === badge.id && a.award_status === 'awarded')
+    badgeProgress.some(p => p.badge_id === badge.id && p.status === 'completed')
   );
 
   const completedActivities = activityBadges.filter(badge =>
-    awards.some(a => a.badge_id === badge.id && a.award_status === 'awarded')
+    badgeProgress.some(p => p.badge_id === badge.id && p.status === 'completed')
   );
 
   const goldAward = badges.find(b => b.is_chief_scout_award && b.section === 'scouts');
@@ -228,7 +238,7 @@ export default function ParentGoldAward() {
           
           <div className="grid grid-cols-3 gap-6">
             {challengeBadges.map((badge, index) => {
-              const isComplete = awards.some(a => a.badge_id === badge.id && a.award_status === 'awarded');
+              const isComplete = badgeProgress.some(p => p.badge_id === badge.id && p.status === 'completed');
               const progress = getBadgeProgress(badge.id);
               
               return (

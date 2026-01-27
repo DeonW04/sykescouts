@@ -183,42 +183,16 @@ export default function ParentBadges() {
     return badge && badge.category !== 'staged';
   });
 
-  // Available badges for the grid (not 100% complete)
-  const inProgressBadges = badgeProgress.filter(p => 
-    p.member_id === child.id && p.status === 'in_progress'
-  );
-
-  // Get all possible badges for child's section
-  const sections = [...new Set(badges.map(b => b.section))];
-  const childSection = child.section_id;
+  // Get unique badges that have progress from requirements
+  const uniqueBadgeIds = [...new Set(reqProgress.filter(rp => rp.member_id === child.id).map(rp => rp.badge_id))];
   
-  // Available badges to show (not started or in progress, but not completed)
-  const availableBadges = badges.filter(b => {
-    // Check if badge is for child's section or all sections
-    if (b.section !== 'all') {
-      // Need to match section name - would need sections data
-      // For now, just show all
-    }
-    
-    // Don't show if 100% complete
-    const bp = badgeProgress.find(p => p.member_id === child.id && p.badge_id === b.id);
-    if (bp && bp.status === 'completed') return false;
-    
-    // For staged badges, only show family once (not individual stages)
-    if (b.category === 'staged' && b.stage_number !== null) {
-      const family = stagedBadgeFamilies[b.badge_family_id];
-      if (!family) return false;
-      // Only show the first stage of the family
-      return b.id === family.stages[0].id;
-    }
-    
-    return true;
-  });
-
-  const badgesWithProgress = availableBadges.map(badge => {
-    const progress = getBadgeProgress(badge.id);
+  const badgesWithProgress = uniqueBadgeIds.map(badgeId => {
+    const badge = badges.find(b => b.id === badgeId);
+    if (!badge) return null;
+    const progress = getBadgeProgress(badgeId);
+    if (progress.total === 0 || progress.percentage === 100) return null;
     return { badge, progress };
-  }).filter(b => b.progress.percentage > 0 && b.progress.percentage < 100);
+  }).filter(Boolean);
 
   // Filter and sort
   const filteredBadges = badgesWithProgress

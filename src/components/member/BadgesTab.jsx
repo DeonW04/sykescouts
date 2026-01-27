@@ -1,22 +1,20 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '../../utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Award, Filter } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 export default function BadgesTab({ memberId }) {
+  const navigate = useNavigate();
   const [filterType, setFilterType] = useState('all');
 
   const { data: badges = [] } = useQuery({
     queryKey: ['badges'],
     queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
-  });
-
-  const { data: badgeProgress = [] } = useQuery({
-    queryKey: ['badge-progress', memberId],
-    queryFn: () => base44.entities.MemberBadgeProgress.filter({ member_id: memberId }),
   });
 
   const { data: requirements = [] } = useQuery({
@@ -39,12 +37,14 @@ export default function BadgesTab({ memberId }) {
     };
   };
 
-  // Get badges with progress
-  const badgesWithProgress = badgeProgress.map(bp => {
-    const badge = badges.find(b => b.id === bp.badge_id);
+  // Get unique badges that have progress
+  const uniqueBadgeIds = [...new Set(reqProgress.map(rp => rp.badge_id))];
+  const badgesWithProgress = uniqueBadgeIds.map(badgeId => {
+    const badge = badges.find(b => b.id === badgeId);
     if (!badge) return null;
-    const progress = getBadgeProgress(bp.badge_id);
-    return { ...bp, badge, progress };
+    const progress = getBadgeProgress(badgeId);
+    if (progress.total === 0) return null;
+    return { badge, progress };
   }).filter(Boolean);
 
   // Filter and sort
@@ -105,7 +105,11 @@ export default function BadgesTab({ memberId }) {
             </h3>
             <div className="grid md:grid-cols-3 gap-4 mb-8">
               {badgesByCategory[category].map(bp => (
-                <Card key={bp.id} className="hover:shadow-lg transition-shadow">
+                <Card 
+                  key={bp.badge.id} 
+                  onClick={() => navigate(createPageUrl('BadgeDetail') + `?id=${bp.badge.id}`)}
+                  className="hover:shadow-lg transition-shadow cursor-pointer"
+                >
                   <CardHeader>
                     <div className="flex items-center gap-3">
                       <img
