@@ -60,9 +60,21 @@ export default function Layout({ children, currentPageName }) {
         return;
       }
 
+      // Redirect non-admins from admin pages
+      if (user && user.role !== 'admin' && adminPages.includes(currentPageName)) {
+        window.location.href = createPageUrl(isLeader ? 'LeaderDashboard' : 'ParentDashboard');
+        return;
+      }
+
       // Redirect parents from leader pages
-      if (user && !isLeader && leaderPages.includes(currentPageName)) {
+      if (user && !isLeader && user.role !== 'admin' && leaderPages.includes(currentPageName)) {
         window.location.href = createPageUrl('ParentDashboard');
+        return;
+      }
+
+      // Redirect leaders from parent pages (unless admin)
+      if (user && isLeader && user.role !== 'admin' && parentPages.includes(currentPageName)) {
+        window.location.href = createPageUrl('LeaderDashboard');
         return;
       }
     }
