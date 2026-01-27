@@ -14,18 +14,28 @@ import { CheckCircle, XCircle } from 'lucide-react';
 
 export default function EditMemberDialog({ member, open, onOpenChange, onSave }) {
   const [formData, setFormData] = useState({
+    first_name: member?.first_name || '',
+    surname: member?.surname || '',
     full_name: member?.full_name || '',
     preferred_name: member?.preferred_name || '',
     date_of_birth: member?.date_of_birth || '',
+    gender: member?.gender || '',
     section_id: member?.section_id || '',
     patrol: member?.patrol || '',
+    parent_one_first_name: member?.parent_one_first_name || '',
+    parent_one_surname: member?.parent_one_surname || '',
     parent_one_name: member?.parent_one_name || '',
     parent_one_email: member?.parent_one_email || '',
     parent_one_phone: member?.parent_one_phone || '',
+    parent_two_first_name: member?.parent_two_first_name || '',
+    parent_two_surname: member?.parent_two_surname || '',
     parent_two_name: member?.parent_two_name || '',
     parent_two_email: member?.parent_two_email || '',
     parent_two_phone: member?.parent_two_phone || '',
     address: member?.address || '',
+    doctors_surgery: member?.doctors_surgery || '',
+    doctors_surgery_address: member?.doctors_surgery_address || '',
+    doctors_phone: member?.doctors_phone || '',
     medical_info: member?.medical_info || '',
     allergies: member?.allergies || '',
     dietary_requirements: member?.dietary_requirements || '',
@@ -79,12 +89,22 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
           <TabsContent value="personal" className="space-y-4 mt-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Full Name</Label>
+                <Label>First Name *</Label>
                 <Input
-                  value={formData.full_name}
-                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value, full_name: `${e.target.value} ${formData.surname || ''}`.trim() })}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Surname *</Label>
+                <Input
+                  value={formData.surname}
+                  onChange={(e) => setFormData({ ...formData, surname: e.target.value, full_name: `${formData.first_name || ''} ${e.target.value}`.trim() })}
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Preferred Name</Label>
                 <Input
@@ -92,11 +112,25 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
                   onChange={(e) => setFormData({ ...formData, preferred_name: e.target.value })}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Gender</Label>
+                <select
+                  className="w-full h-9 rounded-md border border-input bg-transparent px-3 py-1 text-sm"
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                >
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                </select>
+              </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Date of Birth</Label>
+                <Label>Date of Birth *</Label>
                 <Input
                   type="date"
                   value={formData.date_of_birth}
@@ -200,20 +234,27 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Name</Label>
+                  <Label>First Name</Label>
                   <Input
-                    value={formData.parent_one_name}
-                    onChange={(e) => setFormData({ ...formData, parent_one_name: e.target.value })}
+                    value={formData.parent_one_first_name}
+                    onChange={(e) => setFormData({ ...formData, parent_one_first_name: e.target.value, parent_one_name: `${e.target.value} ${formData.parent_one_surname || ''}`.trim() })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Email</Label>
+                  <Label>Surname</Label>
                   <Input
-                    type="email"
-                    value={formData.parent_one_email}
-                    onChange={(e) => setFormData({ ...formData, parent_one_email: e.target.value })}
+                    value={formData.parent_one_surname}
+                    onChange={(e) => setFormData({ ...formData, parent_one_surname: e.target.value, parent_one_name: `${formData.parent_one_first_name || ''} ${e.target.value}`.trim() })}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={formData.parent_one_email}
+                  onChange={(e) => setFormData({ ...formData, parent_one_email: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Phone</Label>
@@ -243,20 +284,27 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Name</Label>
+                  <Label>First Name</Label>
                   <Input
-                    value={formData.parent_two_name}
-                    onChange={(e) => setFormData({ ...formData, parent_two_name: e.target.value })}
+                    value={formData.parent_two_first_name}
+                    onChange={(e) => setFormData({ ...formData, parent_two_first_name: e.target.value, parent_two_name: `${e.target.value} ${formData.parent_two_surname || ''}`.trim() })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Email</Label>
+                  <Label>Surname</Label>
                   <Input
-                    type="email"
-                    value={formData.parent_two_email}
-                    onChange={(e) => setFormData({ ...formData, parent_two_email: e.target.value })}
+                    value={formData.parent_two_surname}
+                    onChange={(e) => setFormData({ ...formData, parent_two_surname: e.target.value, parent_two_name: `${formData.parent_two_first_name || ''} ${e.target.value}`.trim() })}
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={formData.parent_two_email}
+                  onChange={(e) => setFormData({ ...formData, parent_two_email: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Phone</Label>
@@ -296,6 +344,35 @@ export default function EditMemberDialog({ member, open, onOpenChange, onSave })
             </TabsContent>
 
           <TabsContent value="medical" className="space-y-4 mt-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Doctor's Surgery</Label>
+                <Input
+                  value={formData.doctors_surgery}
+                  onChange={(e) => setFormData({ ...formData, doctors_surgery: e.target.value })}
+                  placeholder="Surgery name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Doctor's Phone</Label>
+                <Input
+                  value={formData.doctors_phone}
+                  onChange={(e) => setFormData({ ...formData, doctors_phone: e.target.value })}
+                  placeholder="Phone number"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Doctor's Surgery Address</Label>
+              <Textarea
+                value={formData.doctors_surgery_address}
+                onChange={(e) => setFormData({ ...formData, doctors_surgery_address: e.target.value })}
+                className="min-h-[80px]"
+                placeholder="Full address"
+              />
+            </div>
+
             <div className="space-y-2">
               <Label>Medical Conditions</Label>
               <Textarea
