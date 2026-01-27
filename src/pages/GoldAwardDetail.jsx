@@ -74,11 +74,7 @@ export default function GoldAwardDetail() {
     m.full_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const sortedMembers = [...filteredMembers].sort((a, b) => {
-    const progressA = getMemberProgress(a.id);
-    const progressB = getMemberProgress(b.id);
-    return progressB.completed - progressA.completed;
-  });
+  const sortedMembers = [...filteredMembers].sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime());
 
   const eligibleMembers = sortedMembers.filter(m => getMemberProgress(m.id).completed === challengeBadges.length);
 

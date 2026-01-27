@@ -172,7 +172,7 @@ export default function HikesAwayBadgeDetail() {
               </TableHeader>
               <TableBody>
                 {members
-                  .sort((a, b) => (b.total_hikes_away || 0) - (a.total_hikes_away || 0))
+                  .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime())
                   .map(member => {
                     const totalHikes = member.total_hikes_away || 0;
                     const earnedBadges = getMemberBadges(member.id);
