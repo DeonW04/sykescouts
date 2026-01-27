@@ -44,9 +44,21 @@ export default function ManageBadges() {
   });
 
   const createBadgeMutation = useMutation({
-    mutationFn: (data) => base44.entities.BadgeDefinition.create(data),
+    mutationFn: async (data) => {
+      const newBadge = await base44.entities.BadgeDefinition.create(data);
+      
+      // Create stock entry with 0 stock
+      await base44.entities.BadgeStock.create({
+        badge_id: newBadge.id,
+        current_stock: 0,
+        last_updated: new Date().toISOString(),
+      });
+      
+      return newBadge;
+    },
     onSuccess: (newBadge) => {
       queryClient.invalidateQueries({ queryKey: ['badges'] });
+      queryClient.invalidateQueries({ queryKey: ['badge-stock'] });
       setShowDialog(false);
       resetForm();
       toast.success('Badge created successfully');
@@ -144,14 +156,6 @@ export default function ManageBadges() {
       <LeaderNav />
       <div className="bg-[#7413dc] text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(createPageUrl('LeaderBadges'))}
-            className="text-white hover:bg-white/10 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Badges
-          </Button>
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <Award className="w-8 h-8" />
@@ -160,23 +164,25 @@ export default function ManageBadges() {
                 <p className="mt-1 text-white/80">Create and configure badges</p>
               </div>
             </div>
-            <Button
-              onClick={() => {
-                resetForm();
-                setShowDialog(true);
-              }}
-              className="bg-white text-[#7413dc] hover:bg-gray-100"
+            <div className="flex gap-2">
+              <Button
+                onClick={() => navigate(createPageUrl('BadgeStockManagement'))}
+                className="bg-white text-[#7413dc] hover:bg-gray-100"
               >
-              <Plus className="w-4 h-4 mr-2" />
-              New Badge
+                <Package className="w-4 h-4 mr-2" />
+                Manage Stock
               </Button>
               <Button
-              onClick={() => navigate(createPageUrl('BadgeStockManagement'))}
-              className="bg-white text-[#7413dc] hover:bg-gray-100"
+                onClick={() => {
+                  resetForm();
+                  setShowDialog(true);
+                }}
+                className="bg-white text-[#7413dc] hover:bg-gray-100"
               >
-              <Package className="w-4 h-4 mr-2" />
-              Manage Stock
+                <Plus className="w-4 h-4 mr-2" />
+                New Badge
               </Button>
+            </div>
           </div>
         </div>
       </div>

@@ -5,12 +5,16 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const ImageCarousel = () => {
-  const images = [
+const ImageCarousel = ({ websiteImages }) => {
+  // Use uploaded home images or fall back to defaults
+  const defaultImages = [
     'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/2e87b5f25_492395842_2704743879914647_1991593466070344351_n_2704743866581315.jpg',
     'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/b5c4d9296_campfire.jpg',
     'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/a7545720b_487691994_10162610204869169_513148409949064129_n_10162610203574169.jpg',
   ];
+  
+  const homeImages = websiteImages?.filter(img => img.page === 'home').sort((a, b) => (a.order || 0) - (b.order || 0)) || [];
+  const images = homeImages.length > 0 ? homeImages.map(img => img.image_url) : defaultImages;
 
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -68,6 +72,22 @@ const ImageCarousel = () => {
 };
 
 export default function HeroSection() {
+  const [websiteImages, setWebsiteImages] = React.useState([]);
+
+  React.useEffect(() => {
+    loadImages();
+  }, []);
+
+  const loadImages = async () => {
+    try {
+      const { base44 } = await import('@/api/base44Client');
+      const images = await base44.entities.WebsiteImage.filter({});
+      setWebsiteImages(images);
+    } catch (error) {
+      console.error('Error loading website images:', error);
+    }
+  };
+
   return (
     <section className="relative bg-[#004851] overflow-hidden">
       {/* Background Pattern */}
@@ -115,7 +135,7 @@ export default function HeroSection() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="relative"
           >
-            <ImageCarousel />
+            <ImageCarousel websiteImages={websiteImages} />
             {/* Decorative Elements */}
             <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-[#ffe627] rounded-lg -z-10" />
             <div className="absolute -top-4 -right-4 w-16 h-16 bg-[#7413dc] rounded-full -z-10" />

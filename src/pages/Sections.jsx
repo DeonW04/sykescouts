@@ -33,6 +33,27 @@ const sections = [
 ];
 
 export default function Sections() {
+  const [websiteImages, setWebsiteImages] = React.useState([]);
+
+  React.useEffect(() => {
+    loadImages();
+  }, []);
+
+  const loadImages = async () => {
+    try {
+      const { base44 } = await import('@/api/base44Client');
+      const images = await base44.entities.WebsiteImage.filter({});
+      setWebsiteImages(images);
+    } catch (error) {
+      console.error('Error loading website images:', error);
+    }
+  };
+
+  const getImageForSection = (sectionName) => {
+    const img = websiteImages.find(img => img.page === sectionName.toLowerCase());
+    return img?.image_url;
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero */}
@@ -107,25 +128,35 @@ export default function Sections() {
                   </Link>
                 </div>
 
-                {/* Image Placeholder */}
+                {/* Image */}
                 <div className={index % 2 === 1 ? 'lg:order-1' : ''}>
-                  <div
-                    className="aspect-[4/3] rounded-2xl flex items-center justify-center border-2 border-dashed"
-                    style={{ borderColor: section.color, backgroundColor: `${section.color}10` }}
-                  >
-                    <div className="text-center p-8">
-                      <div
-                        className="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4"
-                        style={{ backgroundColor: section.color }}
-                      >
-                        <svg viewBox="0 0 100 100" className="w-10 h-10 text-white fill-current">
-                          <path d="M50 10 L60 40 L90 40 L65 60 L75 90 L50 70 L25 90 L35 60 L10 40 L40 40 Z" />
-                        </svg>
-                      </div>
-                      <p className="text-gray-500 text-sm">{section.name} photo placeholder</p>
-                      <p className="text-gray-400 text-xs mt-1">Upload your images later</p>
+                  {getImageForSection(section.name) ? (
+                    <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-xl">
+                      <img
+                        src={getImageForSection(section.name)}
+                        alt={section.name}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                  </div>
+                  ) : (
+                    <div
+                      className="aspect-[4/3] rounded-2xl flex items-center justify-center border-2 border-dashed"
+                      style={{ borderColor: section.color, backgroundColor: `${section.color}10` }}
+                    >
+                      <div className="text-center p-8">
+                        <div
+                          className="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4"
+                          style={{ backgroundColor: section.color }}
+                        >
+                          <svg viewBox="0 0 100 100" className="w-10 h-10 text-white fill-current">
+                            <path d="M50 10 L60 40 L90 40 L65 60 L75 90 L50 70 L25 90 L35 60 L10 40 L40 40 Z" />
+                          </svg>
+                        </div>
+                        <p className="text-gray-500 text-sm">{section.name} photo placeholder</p>
+                        <p className="text-gray-400 text-xs mt-1">Upload images in Admin Settings</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}

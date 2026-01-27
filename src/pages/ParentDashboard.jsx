@@ -316,8 +316,13 @@ export default function ParentDashboard() {
                         )}
 
                         {children.map(child => (
-                          <div key={child.id} className="mt-3 pt-3 border-t border-orange-200">
-                            <p className="text-xs text-orange-700 font-medium mb-2">{child.full_name}</p>
+                         <div key={child.id} className="mt-3 pt-3 border-t border-orange-200">
+                           <button
+                             onClick={() => navigate(createPageUrl('MemberDetail') + `?id=${child.id}`)}
+                             className="text-xs text-orange-700 font-medium mb-2 hover:text-orange-900 hover:underline transition-colors"
+                           >
+                             {child.full_name}
+                           </button>
 
                             {action.action_purpose === 'attendance' && (
                               <div className="flex gap-2">

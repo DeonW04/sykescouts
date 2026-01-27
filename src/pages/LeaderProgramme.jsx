@@ -171,6 +171,50 @@ export default function LeaderProgramme() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Next Meeting Highlight */}
+        {!isLoading && currentTerm && meetings.length > 0 && (() => {
+          const nextMeeting = meetings.find(m => !m.isHalfTerm && m.date >= new Date());
+          if (!nextMeeting) return null;
+          
+          const programme = programmes.find(p => p.date === nextMeeting.date.toISOString().split('T')[0]);
+          
+          return (
+            <Card className="mb-8 shadow-xl border-l-4 border-l-green-600 bg-gradient-to-r from-green-50 to-white">
+              <CardHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <Badge className="bg-green-600">Next Meeting</Badge>
+                </div>
+                <CardTitle className="text-2xl">{programme?.title || 'Not planned yet'}</CardTitle>
+                <div className="flex items-center gap-2 mt-2 text-gray-600">
+                  <Calendar className="w-4 h-4" />
+                  <span className="font-medium">
+                    {nextMeeting.date.toLocaleDateString('en-GB', { 
+                      weekday: 'long', 
+                      day: 'numeric', 
+                      month: 'long',
+                      year: 'numeric'
+                    })}
+                  </span>
+                </div>
+              </CardHeader>
+              {programme?.description && (
+                <CardContent>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{programme.description}</p>
+                </CardContent>
+              )}
+              <CardContent className="pt-0">
+                <Button
+                  onClick={() => handleMeetingClick(nextMeeting)}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {programme ? 'View Details' : 'Plan Meeting'}
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })()}
+        
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="animate-spin w-12 h-12 border-4 border-[#004851] border-t-transparent rounded-full mb-4" />
