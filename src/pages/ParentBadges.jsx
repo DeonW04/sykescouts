@@ -216,7 +216,7 @@ export default function ParentBadges() {
 
   // Get child's section name
   const childSectionRecord = sections.find(s => s.id === child.section_id);
-  const childSectionName = childSectionRecord?.section;
+  const childSectionName = childSectionRecord?.name;
 
   // Get all badges for the child's section
   const allSectionBadges = badges.filter(b => 
