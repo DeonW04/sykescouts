@@ -36,7 +36,7 @@ const createEmailTemplate = (childName, actionText, entityName, dashboardLink) =
           </div>
           <p class="message">Please log in to your parent portal to respond.</p>
           <center>
-            <a href="${dashboardLink}" class="button">Go to Parent Portal</a>
+            <a href="${dashboardLink}" style="display: inline-block; background-color: #7413dc; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 20px 0;">Go to Parent Portal</a>
           </center>
         </div>
         <div class="footer">

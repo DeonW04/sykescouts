@@ -52,7 +52,7 @@ const createReminderEmailTemplate = (childName, eventTitle, eventDate, eventTime
 
           <p class="message">Please ensure ${childName} is ready and has everything they need for the event.</p>
           <center>
-            <a href="${detailsLink}" class="button">View Event Details</a>
+            <a href="${detailsLink}" style="display: inline-block; background-color: #7413dc; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 20px 0;">View Event Details</a>
           </center>
         </div>
         <div class="footer">

@@ -51,7 +51,7 @@ const createMeetingReminderTemplate = (childName, meetingTitle, meetingDate, act
 
           <p class="message">The meeting is in 2 days. Please respond as soon as possible so we can plan accordingly.</p>
           <center>
-            <a href="${dashboardLink}" class="button">Respond Now</a>
+            <a href="${dashboardLink}" style="display: inline-block; background-color: #7413dc; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 20px 0;">Respond Now</a>
           </center>
         </div>
         <div class="footer">
