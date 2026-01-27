@@ -87,11 +87,17 @@ export default function LeaderMembers() {
     return { years, months };
   };
 
-  const filteredMembers = members.filter(member => {
-    const matchesSearch = member.full_name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSection = sectionFilter === 'all' || member.section_id === sectionFilter;
-    return matchesSearch && matchesSection;
-  });
+  const filteredMembers = members
+    .filter(member => {
+      const matchesSearch = member.full_name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSection = sectionFilter === 'all' || member.section_id === sectionFilter;
+      return matchesSearch && matchesSection;
+    })
+    .sort((a, b) => {
+      const ageA = new Date(a.date_of_birth).getTime();
+      const ageB = new Date(b.date_of_birth).getTime();
+      return ageA - ageB; // Oldest first (earlier birth date)
+    });
 
   const handleSendInvite = async (e) => {
     e.preventDefault();
@@ -299,42 +305,37 @@ export default function LeaderMembers() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredMembers.map(member => {
               const age = calculateAge(member.date_of_birth);
               const section = sections.find(s => s.id === member.section_id);
               
               return (
                 <Link key={member.id} to={createPageUrl(`MemberDetail?id=${member.id}`)}>
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                  <Card className="hover:shadow-xl transition-all hover:-translate-y-1 h-full">
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-6 flex-1">
-                          <div className="w-12 h-12 bg-[#004851] rounded-full flex items-center justify-center text-white font-bold text-lg">
-                            {member.full_name.charAt(0)}
-                          </div>
-                          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                              <p className="font-semibold text-gray-900">{member.full_name}</p>
-                              <p className="text-sm text-gray-500">{section?.display_name || 'No section'}</p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-600">Age</p>
-                              <p className="font-medium text-gray-900">
-                                {age.years} years {age.months} months
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-sm text-gray-600">Patrol</p>
-                              <p className="font-medium text-gray-900">
-                                {member.patrol || 'Not assigned'}
-                              </p>
-                            </div>
-                          </div>
+                      <div className="flex flex-col items-center text-center space-y-4">
+                        <div className="w-20 h-20 bg-gradient-to-br from-[#004851] to-[#7413dc] rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                          {member.full_name.charAt(0)}
                         </div>
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
+                        <div>
+                          <p className="font-bold text-lg text-gray-900">{member.full_name}</p>
+                          <p className="text-sm text-gray-500 mt-1">{section?.display_name || 'No section'}</p>
+                        </div>
+                        <div className="w-full space-y-2 pt-2 border-t">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Age:</span>
+                            <span className="font-semibold text-gray-900">
+                              {age.years}y {age.months}m
+                            </span>
+                          </div>
+                          {member.patrol && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Patrol:</span>
+                              <span className="font-semibold text-gray-900">{member.patrol}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
