@@ -87,7 +87,6 @@ export default function ParentProgramme() {
     : [];
 
   // Separate into next/upcoming and previous
-  const now = new Date();
   const startOfToday = new Date(now);
   startOfToday.setHours(0, 0, 0, 0);
 
