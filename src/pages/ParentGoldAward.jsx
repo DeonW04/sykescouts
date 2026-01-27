@@ -72,6 +72,16 @@ export default function ParentGoldAward() {
     enabled: !!child,
   });
 
+  const { data: badgeProgress = [] } = useQuery({
+    queryKey: ['badge-progress', child],
+    queryFn: async () => {
+      if (!child) return [];
+      const allProgress = await base44.entities.MemberBadgeProgress.filter({});
+      return allProgress.filter(p => p.member_id === child.id);
+    },
+    enabled: !!child,
+  });
+
   if (!user || !child) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -87,16 +97,6 @@ export default function ParentGoldAward() {
   const activityBadges = badges.filter(b => 
     b.category === 'activity' && b.section === 'scouts'
   );
-
-  const { data: badgeProgress = [] } = useQuery({
-    queryKey: ['badge-progress', child],
-    queryFn: async () => {
-      if (!child) return [];
-      const allProgress = await base44.entities.MemberBadgeProgress.filter({});
-      return allProgress.filter(p => p.member_id === child.id);
-    },
-    enabled: !!child,
-  });
 
   const completedChallenges = challengeBadges.filter(badge =>
     badgeProgress.some(p => p.badge_id === badge.id && p.status === 'completed')
