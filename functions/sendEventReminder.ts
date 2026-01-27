@@ -18,11 +18,11 @@ const createReminderEmailTemplate = (childName, eventTitle, eventDate, eventTime
         body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; }
         .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
         .header { background: linear-gradient(135deg, #7413dc 0%, #004851 100%); padding: 40px 20px; text-align: center; }
-        .logo { max-width: 120px; height: auto; }
+        .logo { max-width: 240px; height: auto; }
         .content { padding: 40px 30px; }
         .title { color: #1a1a1a; font-size: 24px; font-weight: 600; margin: 0 0 20px 0; }
         .message { color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; }
-        .button { display: inline-block; background: linear-gradient(135deg, #7413dc, #5c0fb0); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 20px 0; }
+        .button { display: inline-block; background: linear-gradient(135deg, #7413dc, #5c0fb0); color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 20px 0; }
         .footer { background-color: #f9fafb; padding: 30px; text-align: center; color: #6b7280; font-size: 14px; }
         .event-details { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 4px; }
         .detail-row { margin: 10px 0; }
