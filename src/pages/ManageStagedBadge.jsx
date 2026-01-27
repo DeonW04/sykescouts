@@ -44,15 +44,27 @@ export default function ManageStagedBadge() {
   const stages = allBadges.filter(b => b.stage_number !== null);
 
   const createStageMutation = useMutation({
-    mutationFn: (data) => base44.entities.BadgeDefinition.create({
-      ...data,
-      name: `${familyBadge?.name} - Stage ${data.stage_number}`,
-      badge_family_id: familyId,
-      section: 'all',
-      category: 'staged',
-    }),
+    mutationFn: async (data) => {
+      const newStage = await base44.entities.BadgeDefinition.create({
+        ...data,
+        name: `${familyBadge?.name} - Stage ${data.stage_number}`,
+        badge_family_id: familyId,
+        section: 'all',
+        category: 'staged',
+      });
+      
+      // Create stock entry with 0 stock
+      await base44.entities.BadgeStock.create({
+        badge_id: newStage.id,
+        current_stock: 0,
+        last_updated: new Date().toISOString(),
+      });
+      
+      return newStage;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staged-badges', familyId] });
+      queryClient.invalidateQueries({ queryKey: ['badge-stock'] });
       setShowDialog(false);
       resetForm();
       toast.success('Stage added successfully');
