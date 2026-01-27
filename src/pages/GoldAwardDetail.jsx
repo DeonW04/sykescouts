@@ -53,6 +53,13 @@ export default function GoldAwardDetail() {
     queryFn: () => base44.entities.MemberBadgeAward.filter({}),
   });
 
+  // Trigger Gold Award check when awards change
+  React.useEffect(() => {
+    if (allAwards.length > 0) {
+      base44.functions.invoke('checkGoldAward', {});
+    }
+  }, [allAwards.length]);
+
   const getMemberProgress = (memberId) => {
     const memberAwards = allAwards.filter(a => a.member_id === memberId);
     const challengesCompleted = challengeBadges.filter(badge => 
