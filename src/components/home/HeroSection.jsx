@@ -30,7 +30,7 @@ const ImageCarousel = ({ websiteImages }) => {
 
   return (
     <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border-4 border-white/20">
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="popLayout">
         <motion.img
           key={currentIndex}
           src={images[currentIndex]}
