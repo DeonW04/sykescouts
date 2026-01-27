@@ -45,9 +45,10 @@ export default function Layout({ children, currentPageName }) {
   };
 
   // Define protected pages
-  const leaderPages = ['LeaderDashboard', 'LeaderMembers', 'LeaderProgramme', 'MeetingDetail', 'MemberDetail', 'AdminSettings', 'LeaderGallery'];
-  const parentPages = ['ParentDashboard', 'MyChild'];
-  const protectedPages = [...leaderPages, ...parentPages];
+  const leaderPages = ['LeaderDashboard', 'LeaderMembers', 'LeaderProgramme', 'MeetingDetail', 'MemberDetail', 'LeaderGallery', 'LeaderEvents', 'EventDetail', 'LeaderAttendance', 'LeaderBadges', 'BadgeDetail', 'AwardBadges', 'ManageBadges', 'EditBadgeStructure', 'StagedBadgeDetail', 'ManageStagedBadge', 'NightsAwayBadgeDetail', 'HikesAwayBadgeDetail', 'BadgeStockManagement', 'NightsAwayTracking', 'RiskAssessments', 'RiskAssessmentDetail', 'RiskAssessmentHistory', 'Communications', 'WeeklyMessage', 'WeeklyMessageList', 'MonthlyNewsletter', 'MonthlyNewsletterList', 'EventUpdate', 'EventUpdateList', 'JoinEnquiries', 'ArchivedMembers', 'GoldAwardDetail'];
+  const adminPages = ['AdminSettings'];
+  const parentPages = ['ParentDashboard', 'MyChild', 'ParentProgramme', 'ParentEvents', 'ParentEventDetail', 'ParentBadges', 'ParentGoldAward', 'CompleteRegistration'];
+  const protectedPages = [...leaderPages, ...adminPages, ...parentPages];
   const publicPages = ['Home', 'About', 'Sections', 'Parents', 'Gallery', 'Contact', 'Join', 'Volunteer', 'SharedPage'];
 
   // Access control - check after auth is loaded

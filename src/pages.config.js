@@ -37,6 +37,7 @@ import ParentBadges from './pages/ParentBadges';
 import ParentDashboard from './pages/ParentDashboard';
 import ParentEventDetail from './pages/ParentEventDetail';
 import ParentEvents from './pages/ParentEvents';
+import ParentGoldAward from './pages/ParentGoldAward';
 import ParentPortal from './pages/ParentPortal';
 import ParentProgramme from './pages/ParentProgramme';
 import Parents from './pages/Parents';
@@ -49,7 +50,6 @@ import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
 import WeeklyMessage from './pages/WeeklyMessage';
 import WeeklyMessageList from './pages/WeeklyMessageList';
-import ParentGoldAward from './pages/ParentGoldAward';
 import __Layout from './Layout.jsx';
 
 
@@ -93,6 +93,7 @@ export const PAGES = {
     "ParentDashboard": ParentDashboard,
     "ParentEventDetail": ParentEventDetail,
     "ParentEvents": ParentEvents,
+    "ParentGoldAward": ParentGoldAward,
     "ParentPortal": ParentPortal,
     "ParentProgramme": ParentProgramme,
     "Parents": Parents,
@@ -105,7 +106,6 @@ export const PAGES = {
     "Volunteer": Volunteer,
     "WeeklyMessage": WeeklyMessage,
     "WeeklyMessageList": WeeklyMessageList,
-    "ParentGoldAward": ParentGoldAward,
 }
 
 export const pagesConfig = {

@@ -31,7 +31,16 @@ export default function LeaderRotaSection({ programmeId, eventId, sectionId }) {
 
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: async () => {
+      // Get user IDs from leaders
+      const leaderUserIds = leaders.map(l => l.user_id).filter(Boolean);
+      if (leaderUserIds.length === 0) return [];
+      
+      // Fetch only users that are leaders
+      const allUsers = await base44.entities.User.list();
+      return allUsers.filter(u => leaderUserIds.includes(u.id));
+    },
+    enabled: leaders.length > 0,
   });
 
   const { data: leaderAttendance = [] } = useQuery({
