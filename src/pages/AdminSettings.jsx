@@ -25,6 +25,8 @@ export default function AdminSettings() {
   const [showGallerySelector, setShowGallerySelector] = useState(false);
   const [currentImagePage, setCurrentImagePage] = useState(null);
   const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importFile, setImportFile] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery({
@@ -290,7 +292,7 @@ export default function AdminSettings() {
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="images">Website Images</TabsTrigger>
             <TabsTrigger value="badges">Badge System</TabsTrigger>
-            <TabsTrigger value="export">Data Export</TabsTrigger>
+            <TabsTrigger value="export">Data</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -547,6 +549,101 @@ export default function AdminSettings() {
 
           <TabsContent value="export">
             <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Upload className="w-5 h-5" />
+                    Import Members
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-gray-600">
+                    Import member data from a CSV file. Download the template to see the required format.
+                  </p>
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-sm text-amber-800">
+                      <strong>Important:</strong> Make sure your CSV matches the template format. 
+                      For section_id, use the actual section ID from your system.
+                    </p>
+                  </div>
+                  <div className="space-y-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const template = 'first_name,surname,preferred_name,date_of_birth,gender,section_id,patrol,parent_one_first_name,parent_one_surname,parent_one_email,parent_one_phone,parent_two_first_name,parent_two_surname,parent_two_email,parent_two_phone,address,doctors_surgery,doctors_surgery_address,doctors_phone,medical_info,allergies,dietary_requirements,medications,emergency_contact_name,emergency_contact_phone,emergency_contact_relationship,photo_consent,invested,active,join_date,scouting_start_date,notes\n';
+                        const blob = new Blob([template], { type: 'text/csv' });
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'member-import-template.csv';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        a.remove();
+                      }}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download CSV Template
+                    </Button>
+                    
+                    <div className="flex items-center gap-3">
+                      <input
+                        id="csv-upload"
+                        type="file"
+                        accept=".csv"
+                        className="hidden"
+                        onChange={(e) => setImportFile(e.target.files[0])}
+                      />
+                      <Button
+                        variant="outline"
+                        onClick={() => document.getElementById('csv-upload').click()}
+                      >
+                        {importFile ? 'Change File' : 'Select CSV File'}
+                      </Button>
+                      {importFile && (
+                        <span className="text-sm text-gray-600">{importFile.name}</span>
+                      )}
+                    </div>
+
+                    {importFile && (
+                      <Button
+                        onClick={async () => {
+                          setImporting(true);
+                          try {
+                            const response = await base44.functions.invoke('importMembers', { file: importFile });
+                            if (response.data.success) {
+                              toast.success(`Successfully imported ${response.data.imported} members. ${response.data.failed} failed.`);
+                              setImportFile(null);
+                              queryClient.invalidateQueries({ queryKey: ['members'] });
+                            } else {
+                              toast.error('Import failed: ' + response.data.error);
+                            }
+                          } catch (error) {
+                            toast.error('Import failed: ' + error.message);
+                          } finally {
+                            setImporting(false);
+                          }
+                        }}
+                        disabled={importing}
+                        className="bg-[#7413dc] hover:bg-[#5c0fb0]"
+                      >
+                        {importing ? (
+                          <>
+                            <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                            Importing...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            Import Members
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
