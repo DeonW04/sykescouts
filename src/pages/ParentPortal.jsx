@@ -166,7 +166,9 @@ export default function ParentPortal() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {members.map(member => {
+              {members
+                .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime())
+                .map(member => {
                 const completion = calculateDataCompletion(member);
                 const parent1Registered = isParentRegistered(member.parent_one_email);
                 const parent2Registered = isParentRegistered(member.parent_two_email);
@@ -190,7 +192,7 @@ export default function ParentPortal() {
                       </div>
 
                       {/* Parent 1 Status */}
-                      <div className="lg:w-64">
+                      <div className="lg:w-72">
                         <p className="text-sm text-gray-600 mb-2">Parent One</p>
                         {member.parent_one_email ? (
                           <div className="space-y-2">
@@ -231,9 +233,9 @@ export default function ParentPortal() {
                       </div>
 
                       {/* Parent 2 Status */}
-                      {hasParent2 && (
-                        <div className="lg:w-64">
-                          <p className="text-sm text-gray-600 mb-2">Parent Two</p>
+                      <div className="lg:w-72">
+                        <p className="text-sm text-gray-600 mb-2">Parent Two</p>
+                        {hasParent2 ? (
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
                               {parent2Registered ? (
@@ -266,8 +268,12 @@ export default function ParentPortal() {
                               </Button>
                             )}
                           </div>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <p className="text-sm text-gray-400">No second parent</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );

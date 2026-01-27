@@ -191,7 +191,8 @@ export default function LeaderDashboard() {
       iconColor: 'text-blue-600',
       dropdown: [
         { label: 'Member Details', page: 'LeaderMembers', icon: Users },
-        { label: 'Attendance', page: 'LeaderAttendance', icon: UserCheck }
+        { label: 'Attendance', page: 'LeaderAttendance', icon: UserCheck },
+        { label: 'Parent Portal', page: 'ParentPortal', icon: Users }
       ]
     },
     { 

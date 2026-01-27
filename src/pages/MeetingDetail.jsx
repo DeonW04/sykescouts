@@ -56,11 +56,13 @@ export default function MeetingDetail() {
     enabled: !!sectionId && !!date,
   });
 
-  const { data: members = [] } = useQuery({
+  const { data: allMembers = [] } = useQuery({
     queryKey: ['section-members', sectionId],
     queryFn: () => base44.entities.Member.filter({ section_id: sectionId, active: true }),
     enabled: !!sectionId,
   });
+
+  const members = allMembers.sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime());
 
   const { data: attendance = [] } = useQuery({
     queryKey: ['attendance', sectionId, date],

@@ -193,7 +193,9 @@ export default function LeaderAttendance() {
               const section = sections.find(s => s.id === programme.section_id);
               if (!section) return null;
               
-              const sectionMembers = members.filter(m => m.section_id === section.id);
+              const sectionMembers = members
+                .filter(m => m.section_id === section.id)
+                .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime());
               const presentCount = sectionMembers.filter(m => getMemberAttendance(m.id, section.id)?.status === 'present').length;
               
               return (
@@ -235,7 +237,9 @@ export default function LeaderAttendance() {
               const eventSections = sections.filter(s => event.section_ids?.includes(s.id));
               
               return eventSections.map(section => {
-                const sectionMembers = members.filter(m => m.section_id === section.id);
+                const sectionMembers = members
+                  .filter(m => m.section_id === section.id)
+                  .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime());
                 const presentCount = sectionMembers.filter(m => getMemberAttendance(m.id, section.id)?.status === 'present').length;
                 
                 return (

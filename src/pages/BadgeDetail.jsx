@@ -194,9 +194,11 @@ export default function BadgeDetail() {
     </div>;
   }
 
-  const relevantMembers = members.filter(m => {
-    return badge.section === 'all' || m.section_id === sections.find(s => s.name === badge.section)?.id;
-  });
+  const relevantMembers = members
+    .filter(m => {
+      return badge.section === 'all' || m.section_id === sections.find(s => s.name === badge.section)?.id;
+    })
+    .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime());
 
   const getRequirementProgress = (memberId, reqId) => {
     const req = requirements.find(r => r.id === reqId);

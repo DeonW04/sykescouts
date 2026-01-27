@@ -164,7 +164,7 @@ export default function NightsAwayBadgeDetail() {
               </TableHeader>
               <TableBody>
                 {members
-                  .sort((a, b) => (b.total_nights_away || 0) - (a.total_nights_away || 0))
+                  .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime())
                   .map(member => {
                     const totalNights = member.total_nights_away || 0;
                     const earnedBadges = getMemberBadges(member.id);
