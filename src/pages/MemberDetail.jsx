@@ -508,25 +508,8 @@ export default function MemberDetail() {
           </TabsContent>
 
           {/* Badges Tab */}
-          <TabsContent value="badges" className="space-y-6">
-            {badgeProgress.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center text-gray-500">
-                  No badge progress recorded yet
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {badgeProgress.map(progress => (
-                  <Card key={progress.id}>
-                    <CardContent className="p-4">
-                      <Badge className="mb-2">{progress.status}</Badge>
-                      <p className="text-sm text-gray-600">Badge progress details coming soon</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+          <TabsContent value="badges">
+            <BadgesTab memberId={memberId} />
           </TabsContent>
 
           {/* Attendance Tab */}
