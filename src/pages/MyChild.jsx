@@ -320,19 +320,6 @@ export default function MyChild() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>Parent One</CardTitle>
-                    {!editMode && child.parent_one_email && (
-                      parent1HasAccount ? (
-                        <Badge className="bg-green-100 text-green-800 border-green-300">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Account Registered
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-gray-100 text-gray-600">
-                          <X className="w-3 h-3 mr-1" />
-                          No Account
-                        </Badge>
-                      )
-                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -373,19 +360,6 @@ export default function MyChild() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle>Parent Two</CardTitle>
-                    {!editMode && child.parent_two_email && (
-                      parent2HasAccount ? (
-                        <Badge className="bg-green-100 text-green-800 border-green-300">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Account Registered
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-gray-100 text-gray-600">
-                          <X className="w-3 h-3 mr-1" />
-                          No Account
-                        </Badge>
-                      )
-                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
