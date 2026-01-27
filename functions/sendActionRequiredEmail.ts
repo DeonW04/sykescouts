@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const createEmailTemplate = (childName, actionText, dashboardLink) => {
+const createEmailTemplate = (childName, actionText, entityName, dashboardLink) => {
   return `
     <!DOCTYPE html>
     <html>
@@ -18,6 +18,7 @@ const createEmailTemplate = (childName, actionText, dashboardLink) => {
         .button { display: inline-block; background: linear-gradient(135deg, #7413dc, #5c0fb0); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 20px 0; }
         .footer { background-color: #f9fafb; padding: 30px; text-align: center; color: #6b7280; font-size: 14px; }
         .action-box { background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 16px; margin: 20px 0; border-radius: 4px; }
+        .entity-title { color: #6b7280; font-size: 14px; margin-top: 8px; font-style: italic; }
       </style>
     </head>
     <body>
@@ -31,6 +32,7 @@ const createEmailTemplate = (childName, actionText, dashboardLink) => {
           <p class="message">You have a new action required for ${childName}:</p>
           <div class="action-box">
             <strong>${actionText}</strong>
+            ${entityName ? `<div class="entity-title">${entityName}</div>` : ''}
           </div>
           <p class="message">Please log in to your parent portal to respond.</p>
           <center>
@@ -108,7 +110,7 @@ Deno.serve(async (req) => {
             from_name: '40th Rochdale Scouts',
             to: member.parent_one_email,
             subject: `Action Required for ${member.full_name}`,
-            body: createEmailTemplate(member.full_name, action.action_text, dashboardLink)
+            body: createEmailTemplate(member.full_name, action.action_text, entityName, dashboardLink)
           }).catch(err => console.error(`Failed to send to ${member.parent_one_email}:`, err))
         );
       }
@@ -121,7 +123,7 @@ Deno.serve(async (req) => {
             from_name: '40th Rochdale Scouts',
             to: member.parent_two_email,
             subject: `Action Required for ${member.full_name}`,
-            body: createEmailTemplate(member.full_name, action.action_text, dashboardLink)
+            body: createEmailTemplate(member.full_name, action.action_text, entityName, dashboardLink)
           }).catch(err => console.error(`Failed to send to ${member.parent_two_email}:`, err))
         );
       }
