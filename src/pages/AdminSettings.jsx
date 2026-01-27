@@ -242,10 +242,12 @@ export default function AdminSettings() {
           await base44.entities.Leader.create({
             user_id: selectedUser.id,
             phone: '',
+            display_name: editForm.display_name,
             section_ids: editForm.section_ids,
           });
         } else if (leaderRecord) {
           await base44.entities.Leader.update(leaderRecord.id, {
+            display_name: editForm.display_name,
             section_ids: editForm.section_ids,
           });
         }

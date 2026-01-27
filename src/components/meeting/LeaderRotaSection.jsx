@@ -108,8 +108,7 @@ export default function LeaderRotaSection({ programmeId, eventId, sectionId }) {
   const getLeaderName = (leaderId) => {
     const leader = leaders.find(l => l.id === leaderId);
     if (!leader) return 'Unknown';
-    const user = allUsers.find(u => u.id === leader.user_id);
-    return user?.display_name || user?.full_name || 'Unknown';
+    return leader.display_name || 'Unknown';
   };
 
   if (!programmeId && !eventId) return null;

@@ -149,7 +149,23 @@ export default function CompleteRegistration() {
       const updatedUser = await base44.auth.me();
       setUser(updatedUser);
 
-      // Check if user is a leader
+      // Check if user is a leader and update Leader entity
+      const leaderRecords = await base44.entities.Leader.filter({ user_id: updatedUser.id });
+      if (leaderRecords.length > 0) {
+        // Update leader display name
+        await base44.entities.Leader.update(leaderRecords[0].id, {
+          display_name: userForm.display_name
+        });
+        
+        // Complete onboarding and redirect to leader dashboard
+        setIsLeader(true);
+        await base44.auth.updateMe({ onboarding_complete: true });
+        toast.success('Registration completed successfully!');
+        window.location.href = createPageUrl('LeaderDashboard');
+        return;
+      }
+
+      // Check if user is admin
       if (updatedUser.role === 'admin') {
         setIsLeader(true);
         await base44.auth.updateMe({ onboarding_complete: true });
