@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import EditMemberDialog from '../components/EditMemberDialog';
+import BadgesTab from '../components/member/BadgesTab';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
 
