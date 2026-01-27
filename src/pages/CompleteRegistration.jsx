@@ -25,6 +25,8 @@ export default function CompleteRegistration() {
   });
 
   const [childForm, setChildForm] = useState({
+    first_name: '',
+    surname: '',
     full_name: '',
     preferred_name: '',
     date_of_birth: '',
@@ -91,6 +93,8 @@ export default function CompleteRegistration() {
   useEffect(() => {
     if (existingChild && step === 2) {
       setChildForm({
+        first_name: existingChild.first_name || '',
+        surname: existingChild.surname || '',
         full_name: existingChild.full_name || '',
         preferred_name: existingChild.preferred_name || '',
         date_of_birth: existingChild.date_of_birth || '',
@@ -274,14 +278,26 @@ export default function CompleteRegistration() {
                   
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="full_name">Full Name *</Label>
+                      <Label htmlFor="first_name">First Name *</Label>
                       <Input
-                        id="full_name"
-                        value={childForm.full_name}
-                        onChange={(e) => setChildForm({ ...childForm, full_name: e.target.value })}
+                        id="first_name"
+                        value={childForm.first_name}
+                        onChange={(e) => setChildForm({ ...childForm, first_name: e.target.value, full_name: `${e.target.value} ${childForm.surname || ''}`.trim() })}
                         required
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="surname">Surname *</Label>
+                      <Input
+                        id="surname"
+                        value={childForm.surname}
+                        onChange={(e) => setChildForm({ ...childForm, surname: e.target.value, full_name: `${childForm.first_name || ''} ${e.target.value}`.trim() })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="preferred_name">Preferred Name</Label>
                       <Input
@@ -290,9 +306,6 @@ export default function CompleteRegistration() {
                         onChange={(e) => setChildForm({ ...childForm, preferred_name: e.target.value })}
                       />
                     </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="date_of_birth">Date of Birth *</Label>
                       <Input
@@ -303,25 +316,26 @@ export default function CompleteRegistration() {
                         required
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="section_id">Section *</Label>
-                      <Select
-                        value={childForm.section_id}
-                        onValueChange={(value) => setChildForm({ ...childForm, section_id: value })}
-                        required
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select section" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sections.map(section => (
-                            <SelectItem key={section.id} value={section.id}>
-                              {section.display_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="section_id">Section *</Label>
+                    <Select
+                      value={childForm.section_id}
+                      onValueChange={(value) => setChildForm({ ...childForm, section_id: value })}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select section" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sections.map(section => (
+                          <SelectItem key={section.id} value={section.id}>
+                            {section.display_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">

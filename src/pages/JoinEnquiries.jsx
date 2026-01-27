@@ -59,10 +59,17 @@ export default function JoinEnquiries() {
   const createMemberFromEnquiryMutation = useMutation({
     mutationFn: async (enquiry) => {
       const formData = enquiry.form_data || {};
+      const childName = formData.child_name || enquiry.full_name || '';
+      const nameParts = childName.split(' ');
+      const firstName = nameParts[0] || '';
+      const surname = nameParts.slice(1).join(' ') || '';
+      
       const member = await base44.entities.Member.create({
-        full_name: enquiry.full_name,
+        first_name: firstName,
+        surname: surname,
+        full_name: childName,
         date_of_birth: formData.date_of_birth || '',
-        parent_one_name: enquiry.full_name,
+        parent_one_name: formData.parent_name || enquiry.full_name,
         parent_one_email: enquiry.email,
         parent_one_phone: enquiry.phone,
         address: formData.address || '',
