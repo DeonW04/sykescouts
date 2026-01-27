@@ -30,7 +30,7 @@ export default function LeaderRotaSection({ programmeId, eventId, sectionId }) {
   });
 
   const { data: users = [] } = useQuery({
-    queryKey: ['users'],
+    queryKey: ['leader-users', leaders.map(l => l.user_id).sort().join(',')],
     queryFn: async () => {
       // Get user IDs from leaders
       const leaderUserIds = leaders.map(l => l.user_id).filter(Boolean);
