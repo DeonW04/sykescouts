@@ -48,6 +48,7 @@ import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
 import WeeklyMessage from './pages/WeeklyMessage';
 import WeeklyMessageList from './pages/WeeklyMessageList';
+import ParentPortal from './pages/ParentPortal';
 import __Layout from './Layout.jsx';
 
 
@@ -102,6 +103,7 @@ export const PAGES = {
     "Volunteer": Volunteer,
     "WeeklyMessage": WeeklyMessage,
     "WeeklyMessageList": WeeklyMessageList,
+    "ParentPortal": ParentPortal,
 }
 
 export const pagesConfig = {

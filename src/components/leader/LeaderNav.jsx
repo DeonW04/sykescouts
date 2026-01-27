@@ -17,7 +17,8 @@ export default function LeaderNav() {
       color: 'bg-blue-500',
       dropdown: [
         { label: 'Member Details', page: 'LeaderMembers', icon: Users },
-        { label: 'Attendance', page: 'LeaderAttendance', icon: UserCheck }
+        { label: 'Attendance', page: 'LeaderAttendance', icon: UserCheck },
+        { label: 'Parent Portal', page: 'ParentPortal', icon: Users }
       ]
     },
     { 
