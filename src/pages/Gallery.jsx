@@ -13,6 +13,7 @@ export default function Gallery() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
+  const [displayCount, setDisplayCount] = useState(30);
 
   const { data: events = [], isLoading: eventsLoading } = useQuery({
     queryKey: ['all-events'],
@@ -69,7 +70,9 @@ export default function Gallery() {
     return [...allPhotos].sort(() => Math.random() - 0.5);
   };
 
-  const displayPhotos = getDisplayPhotos();
+  const allDisplayPhotos = getDisplayPhotos();
+  const displayPhotos = allDisplayPhotos.slice(0, displayCount);
+  const hasMore = allDisplayPhotos.length > displayCount;
 
   const getItemPhoto = (item, type) => {
     if (type === 'meeting') {
@@ -217,35 +220,50 @@ export default function Gallery() {
           </Card>
         ) : view === 'all' || selectedItem ? (
           /* Show photos grid */
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <AnimatePresence>
-              {displayPhotos.map((photo, index) => (
-                <motion.div
-                  key={photo.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: index * 0.02 }}
-                  className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer"
-                  onClick={() => {
-                    setLightboxPhoto(photo);
-                    setLightboxOpen(true);
-                  }}
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <AnimatePresence>
+                {displayPhotos.map((photo, index) => (
+                  <motion.div
+                    key={photo.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ delay: Math.min(index * 0.02, 0.5) }}
+                    className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer"
+                    onClick={() => {
+                      setLightboxPhoto(photo);
+                      setLightboxOpen(true);
+                    }}
+                  >
+                    <img
+                      src={photo.thumbnail_url || photo.file_url}
+                      alt={photo.caption || ''}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                    {photo.caption && (
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                        <p className="text-white text-sm p-3 font-medium">{photo.caption}</p>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+            
+            {hasMore && (
+              <div className="flex justify-center mt-8">
+                <Button
+                  onClick={() => setDisplayCount(prev => prev + 30)}
+                  size="lg"
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
                 >
-                  <img
-                    src={photo.file_url}
-                    alt={photo.caption || ''}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  {photo.caption && (
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
-                      <p className="text-white text-sm p-3 font-medium">{photo.caption}</p>
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+                  Load More Photos ({allDisplayPhotos.length - displayCount} remaining)
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           /* Show grid of camps/events/meetings */
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">

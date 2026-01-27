@@ -6,6 +6,24 @@ import { MapPin, Clock, Users, Award, Heart, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function About() {
+  const [websiteImages, setWebsiteImages] = React.useState([]);
+
+  React.useEffect(() => {
+    loadImages();
+  }, []);
+
+  const loadImages = async () => {
+    try {
+      const { base44 } = await import('@/api/base44Client');
+      const images = await base44.entities.WebsiteImage.filter({});
+      setWebsiteImages(images);
+    } catch (error) {
+      console.error('Error loading website images:', error);
+    }
+  };
+
+  const aboutImage = websiteImages.find(img => img.page === 'about');
+
   const values = [
   {
     icon: Heart,
@@ -80,20 +98,30 @@ Our group is run by volunteers, and we’re always looking for adults who can he
               </p>
             </motion.div>
 
-            {/* Image Placeholder */}
+            {/* Image */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-[#7413dc]/20 to-[#004851]/20 flex items-center justify-center border-2 border-dashed border-gray-300">
-
-              <div className="text-center p-8">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
-                  <Users className="w-8 h-8 text-gray-400" />
+              viewport={{ once: true }}>
+              {aboutImage ? (
+                <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-xl">
+                  <img
+                    src={aboutImage.image_url}
+                    alt="About us"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <p className="text-gray-500 text-sm">Group photo placeholder</p>
-                <p className="text-gray-400 text-xs mt-1">Upload your images later</p>
-              </div>
+              ) : (
+                <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-[#7413dc]/20 to-[#004851]/20 flex items-center justify-center border-2 border-dashed border-gray-300">
+                  <div className="text-center p-8">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+                      <Users className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 text-sm">Group photo placeholder</p>
+                    <p className="text-gray-400 text-xs mt-1">Upload in Admin Settings</p>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </div>
         </div>
