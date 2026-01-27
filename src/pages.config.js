@@ -1,5 +1,6 @@
 import About from './pages/About';
 import AdminSettings from './pages/AdminSettings';
+import ArchivedMembers from './pages/ArchivedMembers';
 import AwardBadges from './pages/AwardBadges';
 import BadgeDetail from './pages/BadgeDetail';
 import BadgeStockManagement from './pages/BadgeStockManagement';
@@ -47,13 +48,13 @@ import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
 import WeeklyMessage from './pages/WeeklyMessage';
 import WeeklyMessageList from './pages/WeeklyMessageList';
-import ArchivedMembers from './pages/ArchivedMembers';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "About": About,
     "AdminSettings": AdminSettings,
+    "ArchivedMembers": ArchivedMembers,
     "AwardBadges": AwardBadges,
     "BadgeDetail": BadgeDetail,
     "BadgeStockManagement": BadgeStockManagement,
@@ -101,7 +102,6 @@ export const PAGES = {
     "Volunteer": Volunteer,
     "WeeklyMessage": WeeklyMessage,
     "WeeklyMessageList": WeeklyMessageList,
-    "ArchivedMembers": ArchivedMembers,
 }
 
 export const pagesConfig = {

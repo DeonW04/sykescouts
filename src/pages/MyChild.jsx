@@ -263,9 +263,15 @@ export default function MyChild() {
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <Label>Full Name</Label>
-                    <p className="mt-1 font-medium">{child.full_name}</p>
+                    <Label>First Name</Label>
+                    <p className="mt-1 font-medium">{child.first_name}</p>
                   </div>
+                  <div>
+                    <Label>Surname</Label>
+                    <p className="mt-1 font-medium">{child.surname}</p>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <Label>Preferred Name</Label>
                     {editMode ? (
@@ -276,6 +282,10 @@ export default function MyChild() {
                     ) : (
                       <p className="mt-1 font-medium">{child.preferred_name || 'Not set'}</p>
                     )}
+                  </div>
+                  <div>
+                    <Label>Gender</Label>
+                    <p className="mt-1 font-medium">{child.gender || 'Not provided'}</p>
                   </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
@@ -329,17 +339,15 @@ export default function MyChild() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label>Name</Label>
-                    {editMode ? (
-                      <Input
-                        value={editForm.parent_one_name}
-                        onChange={(e) => setEditForm({ ...editForm, parent_one_name: e.target.value })}
-                        className="mt-1"
-                      />
-                    ) : (
-                      <p className="mt-1 font-medium">{child.parent_one_name || 'Not provided'}</p>
-                    )}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>First Name</Label>
+                      <p className="mt-1 font-medium">{child.parent_one_first_name || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <Label>Surname</Label>
+                      <p className="mt-1 font-medium">{child.parent_one_surname || 'Not provided'}</p>
+                    </div>
                   </div>
                   <div>
                     <Label>Email Address</Label>
@@ -384,17 +392,15 @@ export default function MyChild() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label>Name</Label>
-                    {editMode ? (
-                      <Input
-                        value={editForm.parent_two_name}
-                        onChange={(e) => setEditForm({ ...editForm, parent_two_name: e.target.value })}
-                        className="mt-1"
-                      />
-                    ) : (
-                      <p className="mt-1 font-medium">{child.parent_two_name || 'Not provided'}</p>
-                    )}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>First Name</Label>
+                      <p className="mt-1 font-medium">{child.parent_two_first_name || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <Label>Surname</Label>
+                      <p className="mt-1 font-medium">{child.parent_two_surname || 'Not provided'}</p>
+                    </div>
                   </div>
                   <div>
                     <Label>Email Address</Label>
@@ -428,6 +434,18 @@ export default function MyChild() {
                 <CardTitle>Medical Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div>
+                  <Label>Doctor's Surgery</Label>
+                  <p className="mt-1 font-medium">{child.doctors_surgery || 'Not provided'}</p>
+                </div>
+                <div>
+                  <Label>Doctor's Surgery Address</Label>
+                  <p className="mt-1 font-medium whitespace-pre-line">{child.doctors_surgery_address || 'Not provided'}</p>
+                </div>
+                <div>
+                  <Label>Doctor's Phone Number</Label>
+                  <p className="mt-1 font-medium">{child.doctors_phone || 'Not provided'}</p>
+                </div>
                 <div>
                   <Label>Medical Conditions</Label>
                   {editMode ? (
