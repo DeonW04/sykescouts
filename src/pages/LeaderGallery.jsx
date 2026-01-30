@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Upload, Trash2, Loader2, ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import SearchableEventSelect from '../components/gallery/SearchableEventSelect';
 
 export default function LeaderGallery() {
   const [uploading, setUploading] = useState(false);
@@ -604,64 +605,26 @@ export default function LeaderGallery() {
             {uploadForm.link_type === 'event' && (
               <div>
                 <Label>Search and Select Event</Label>
-                <Select value={uploadForm.event_id} onValueChange={handleEventChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Search events..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <div className="p-2">
-                      <Input
-                        type="text"
-                        placeholder="Type to search..."
-                        onChange={(e) => {
-                          const search = e.target.value.toLowerCase();
-                          const filtered = events.filter(ev => 
-                            ev.title.toLowerCase().includes(search)
-                          );
-                          setFilteredEvents(filtered);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                    {(filteredEvents || events).map(event => (
-                      <SelectItem key={event.id} value={event.id}>
-                        {event.title} - {format(new Date(event.start_date), 'MMM d, yyyy')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableEventSelect
+                  items={events}
+                  value={uploadForm.event_id}
+                  onValueChange={handleEventChange}
+                  placeholder="Search by name, date, or month..."
+                  type="event"
+                />
               </div>
             )}
 
             {uploadForm.link_type === 'programme' && (
               <div>
                 <Label>Search and Select Meeting</Label>
-                <Select value={uploadForm.programme_id} onValueChange={handleProgrammeChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Search meetings..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <div className="p-2">
-                      <Input
-                        type="text"
-                        placeholder="Type to search..."
-                        onChange={(e) => {
-                          const search = e.target.value.toLowerCase();
-                          const filtered = programmes.filter(p => 
-                            p.title.toLowerCase().includes(search)
-                          );
-                          setFilteredProgrammes(filtered);
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                    {(filteredProgrammes || programmes).map(prog => (
-                      <SelectItem key={prog.id} value={prog.id}>
-                        {prog.title} - {format(new Date(prog.date), 'MMM d, yyyy')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableEventSelect
+                  items={programmes}
+                  value={uploadForm.programme_id}
+                  onValueChange={handleProgrammeChange}
+                  placeholder="Search by name, date, or month..."
+                  type="programme"
+                />
               </div>
             )}
 
