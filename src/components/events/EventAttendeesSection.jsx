@@ -79,7 +79,7 @@ export default function EventAttendeesSection({ eventId, event }) {
 
   const updateResponseMutation = useMutation({
     mutationFn: ({ responseId, value }) => 
-      base44.entities.ActionResponse.update(responseId, { response_value: value }),
+      base44.entities.ActionResponse.update(responseId, { response: value }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-responses'] });
     },
@@ -143,21 +143,22 @@ export default function EventAttendeesSection({ eventId, event }) {
     if (response.status !== 'completed') return { display: 'Pending', response };
     
     const action = actionsRequired.find(a => a.id === actionId);
-    if (!action) return { display: response.response_value || 'Yes', response };
+    const responseValue = response.response || response.response_value;
+    if (!action) return { display: responseValue || 'Yes', response };
     
     if (action.action_purpose === 'attendance') {
       return { 
-        display: response.response_value === 'yes' ? '✓' : '✗', 
+        display: responseValue === 'yes' ? '✓' : '✗', 
         response 
       };
     }
     if (action.action_purpose === 'consent') {
       return { 
-        display: response.response_value === 'yes' ? '✓ Consent Given' : '✗ Not Given', 
+        display: responseValue === 'yes' ? '✓ Consent Given' : '✗ Not Given', 
         response 
       };
     }
-    return { display: response.response_value || '-', response };
+    return { display: responseValue || '-', response };
   };
 
   const handleOpenEditDialog = (member) => {
@@ -167,7 +168,7 @@ export default function EventAttendeesSection({ eventId, event }) {
       const response = actionResponses.find(
         r => r.member_id === member.id && r.action_required_id === action.id
       );
-      responses[action.id] = response?.response_value || '';
+      responses[action.id] = response?.response || response?.response_value || '';
     });
     setEditResponses(responses);
     setShowEditDialog(true);
