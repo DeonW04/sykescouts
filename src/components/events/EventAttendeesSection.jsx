@@ -192,9 +192,12 @@ export default function EventAttendeesSection({ eventId, event }) {
       } else if (newValue) {
         promises.push(
           createResponseMutation.mutateAsync({
-            action_required_id: action.id,
-            member_id: editingMember.id,
-            response: newValue,
+            action_id: action.id,
+            child_member_id: editingMember.id,
+            entity_id: eventId,
+            parent_email: editingMember?.parent_one_email || 'admin@manual.entry',
+            response_value: newValue,
+            status: 'completed',
           })
         );
       }
