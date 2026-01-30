@@ -18,6 +18,8 @@ export default function EventParentPortalSection({ eventId, event }) {
   const [docFile, setDocFile] = useState(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingAction, setEditingAction] = useState(null);
   const [actionForm, setActionForm] = useState({
     action_text: '',
     column_title: '',
@@ -240,6 +242,23 @@ export default function EventParentPortalSection({ eventId, event }) {
                     <Button
                       size="sm"
                       variant="ghost"
+                      onClick={() => {
+                        setEditingAction(action);
+                        setActionForm({
+                          action_text: action.action_text,
+                          column_title: action.column_title,
+                          action_purpose: action.action_purpose,
+                          dropdown_options: action.dropdown_options || [''],
+                        });
+                        setShowEditDialog(true);
+                      }}
+                      title="Edit action"
+                    >
+                      <Plus className="w-4 h-4 text-blue-600" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       onClick={() => toggleActionOpenMutation.mutate({ 
                         id: action.id, 
                         is_open: action.is_open === false 
@@ -377,6 +396,94 @@ export default function EventParentPortalSection({ eventId, event }) {
               className="w-full"
             >
               Add Action Required
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Action Required</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label>Required Action *</Label>
+              <Textarea
+                value={actionForm.action_text}
+                onChange={(e) => setActionForm({ ...actionForm, action_text: e.target.value })}
+                placeholder="e.g., Please confirm attendance for the camp"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Column Title *</Label>
+              <Input
+                value={actionForm.column_title}
+                onChange={(e) => setActionForm({ ...actionForm, column_title: e.target.value })}
+                placeholder="e.g., Camp Attendance"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Action Purpose *</Label>
+              <Select
+                value={actionForm.action_purpose}
+                onValueChange={(value) => setActionForm({ ...actionForm, action_purpose: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select purpose" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="attendance">Attendance</SelectItem>
+                  <SelectItem value="consent">Consent</SelectItem>
+                  <SelectItem value="custom_dropdown">Custom Dropdown</SelectItem>
+                  <SelectItem value="text_input">Text Input</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {actionForm.action_purpose === 'custom_dropdown' && (
+              <div className="space-y-2">
+                <Label>Dropdown Options</Label>
+                {actionForm.dropdown_options.map((option, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      value={option}
+                      onChange={(e) => handleOptionChange(index, e.target.value)}
+                      placeholder={`Option ${index + 1}`}
+                    />
+                    {actionForm.dropdown_options.length > 1 && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleRemoveOption(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button onClick={handleAddOption} size="sm" variant="outline">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Option
+                </Button>
+              </div>
+            )}
+
+            <Button
+              onClick={() => {
+                if (editingAction) {
+                  updateActionMutation.mutate({
+                    id: editingAction.id,
+                    data: actionForm
+                  });
+                  setShowEditDialog(false);
+                  setEditingAction(null);
+                }
+              }}
+              disabled={!actionForm.action_text || !actionForm.column_title || !actionForm.action_purpose}
+              className="w-full"
+            >
+              Save Changes
             </Button>
           </div>
         </DialogContent>

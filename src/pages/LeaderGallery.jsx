@@ -23,6 +23,7 @@ export default function LeaderGallery() {
     programme_id: '',
     manual_event_name: '',
     manual_date: '',
+    manual_type: 'Event',
     section_id: '',
     caption: '',
     visible_to: 'parents',
@@ -199,6 +200,7 @@ export default function LeaderGallery() {
       programme_id: '',
       manual_event_name: '',
       manual_date: '',
+      manual_type: 'Event',
       section_id: '',
     });
     setFilteredEvents(null);
@@ -258,6 +260,7 @@ export default function LeaderGallery() {
           programme_id: uploadForm.link_type === 'programme' ? uploadForm.programme_id : undefined,
           manual_event_name: uploadForm.link_type === 'manual' ? uploadForm.manual_event_name : undefined,
           manual_date: uploadForm.link_type === 'manual' ? uploadForm.manual_date : undefined,
+          manual_type: uploadForm.link_type === 'manual' ? uploadForm.manual_type : undefined,
           section_id: uploadForm.section_id,
           file_url,
           caption: uploadForm.caption,
@@ -601,23 +604,25 @@ export default function LeaderGallery() {
             {uploadForm.link_type === 'event' && (
               <div>
                 <Label>Search and Select Event</Label>
-                <Input
-                  type="text"
-                  placeholder="Search events..."
-                  onChange={(e) => {
-                    const search = e.target.value.toLowerCase();
-                    const filtered = events.filter(ev => 
-                      ev.title.toLowerCase().includes(search)
-                    );
-                    setFilteredEvents(filtered);
-                  }}
-                  className="mb-2"
-                />
                 <Select value={uploadForm.event_id} onValueChange={handleEventChange}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Choose event..." />
+                    <SelectValue placeholder="Search events..." />
                   </SelectTrigger>
                   <SelectContent>
+                    <div className="p-2">
+                      <Input
+                        type="text"
+                        placeholder="Type to search..."
+                        onChange={(e) => {
+                          const search = e.target.value.toLowerCase();
+                          const filtered = events.filter(ev => 
+                            ev.title.toLowerCase().includes(search)
+                          );
+                          setFilteredEvents(filtered);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
                     {(filteredEvents || events).map(event => (
                       <SelectItem key={event.id} value={event.id}>
                         {event.title} - {format(new Date(event.start_date), 'MMM d, yyyy')}
@@ -631,23 +636,25 @@ export default function LeaderGallery() {
             {uploadForm.link_type === 'programme' && (
               <div>
                 <Label>Search and Select Meeting</Label>
-                <Input
-                  type="text"
-                  placeholder="Search meetings..."
-                  onChange={(e) => {
-                    const search = e.target.value.toLowerCase();
-                    const filtered = programmes.filter(p => 
-                      p.title.toLowerCase().includes(search)
-                    );
-                    setFilteredProgrammes(filtered);
-                  }}
-                  className="mb-2"
-                />
                 <Select value={uploadForm.programme_id} onValueChange={handleProgrammeChange}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Choose meeting..." />
+                    <SelectValue placeholder="Search meetings..." />
                   </SelectTrigger>
                   <SelectContent>
+                    <div className="p-2">
+                      <Input
+                        type="text"
+                        placeholder="Type to search..."
+                        onChange={(e) => {
+                          const search = e.target.value.toLowerCase();
+                          const filtered = programmes.filter(p => 
+                            p.title.toLowerCase().includes(search)
+                          );
+                          setFilteredProgrammes(filtered);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
                     {(filteredProgrammes || programmes).map(prog => (
                       <SelectItem key={prog.id} value={prog.id}>
                         {prog.title} - {format(new Date(prog.date), 'MMM d, yyyy')}
@@ -667,6 +674,22 @@ export default function LeaderGallery() {
                     onChange={(e) => setUploadForm({ ...uploadForm, manual_event_name: e.target.value })}
                     placeholder="Enter event name..."
                   />
+                </div>
+                <div>
+                  <Label>Type</Label>
+                  <Select
+                    value={uploadForm.manual_type}
+                    onValueChange={(value) => setUploadForm({ ...uploadForm, manual_type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Camp">Camp</SelectItem>
+                      <SelectItem value="Event">Event</SelectItem>
+                      <SelectItem value="Meeting">Meeting</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Event Date</Label>

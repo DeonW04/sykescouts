@@ -59,6 +59,48 @@ export default function AdminSettings() {
     queryFn: () => base44.entities.EventPhoto.filter({}),
   });
 
+  const { data: events = [] } = useQuery({
+    queryKey: ['events-for-gallery'],
+    queryFn: () => base44.entities.Event.list('-start_date'),
+  });
+
+  const { data: programmes = [] } = useQuery({
+    queryKey: ['programmes-for-gallery'],
+    queryFn: () => base44.entities.Programme.list('-date'),
+  });
+
+  const [galleryView, setGalleryView] = useState('all');
+  const [galleryFolder, setGalleryFolder] = useState(null);
+
+  // Group gallery photos
+  const galleryCamps = [...new Map(
+    galleryPhotos
+      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp'))
+      .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
+  ).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+
+  const galleryEvents = [...new Map(
+    galleryPhotos
+      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'Camp'))
+      .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
+  ).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+
+  const galleryMeetings = [...new Map(
+    galleryPhotos
+      .filter(p => p.programme_id)
+      .map(p => [p.programme_id, programmes.find(pr => pr.id === p.programme_id)])
+  ).values()].filter(Boolean).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const getGalleryDisplayPhotos = () => {
+    if (galleryFolder) {
+      return galleryPhotos.filter(p => 
+        p.event_id === galleryFolder.id || 
+        p.programme_id === galleryFolder.id
+      );
+    }
+    return galleryPhotos;
+  };
+
   const promoteToLeaderMutation = useMutation({
     mutationFn: async (userId) => {
       const existing = leaders.find(l => l.user_id === userId);
@@ -795,37 +837,118 @@ export default function AdminSettings() {
       </Dialog>
 
       {/* Gallery Selector Dialog */}
-      <Dialog open={showGallerySelector} onOpenChange={setShowGallerySelector}>
+      <Dialog open={showGallerySelector} onOpenChange={(open) => {
+        setShowGallerySelector(open);
+        if (!open) {
+          setGalleryFolder(null);
+          setGalleryView('all');
+        }
+      }}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Select from Gallery</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-3 gap-4 mt-4">
-            {galleryPhotos.map((photo) => (
-              <div
-                key={photo.id}
-                className="relative group cursor-pointer"
-                onClick={() => {
-                  const order = currentImagePage === 'home' ? getImagesForPage('home').length : 0;
-                  selectFromGalleryMutation.mutate({
-                    page: currentImagePage,
-                    imageUrl: photo.file_url,
-                    order,
-                  });
-                }}
-              >
-                <img
-                  src={photo.file_url}
-                  alt=""
-                  className="w-full h-40 object-cover rounded-lg group-hover:opacity-75 transition-opacity"
-                />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="bg-white rounded-full p-3">
-                    <Image className="w-6 h-6 text-[#7413dc]" />
-                  </div>
+          <div className="mt-4">
+            {!galleryFolder ? (
+              // Show folders
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={galleryView === 'camps' ? 'default' : 'outline'}
+                    onClick={() => setGalleryView('camps')}
+                  >
+                    Camps ({galleryCamps.length})
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={galleryView === 'events' ? 'default' : 'outline'}
+                    onClick={() => setGalleryView('events')}
+                  >
+                    Events ({galleryEvents.length})
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={galleryView === 'meetings' ? 'default' : 'outline'}
+                    onClick={() => setGalleryView('meetings')}
+                  >
+                    Meetings ({galleryMeetings.length})
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+                  {galleryView === 'camps' && galleryCamps.map(camp => (
+                    <div
+                      key={camp.id}
+                      onClick={() => setGalleryFolder(camp)}
+                      className="cursor-pointer border rounded-lg p-3 hover:bg-gray-50"
+                    >
+                      <p className="font-medium">{camp.title}</p>
+                      <p className="text-sm text-gray-500">
+                        {galleryPhotos.filter(p => p.event_id === camp.id).length} photos
+                      </p>
+                    </div>
+                  ))}
+                  {galleryView === 'events' && galleryEvents.map(event => (
+                    <div
+                      key={event.id}
+                      onClick={() => setGalleryFolder(event)}
+                      className="cursor-pointer border rounded-lg p-3 hover:bg-gray-50"
+                    >
+                      <p className="font-medium">{event.title}</p>
+                      <p className="text-sm text-gray-500">
+                        {galleryPhotos.filter(p => p.event_id === event.id).length} photos
+                      </p>
+                    </div>
+                  ))}
+                  {galleryView === 'meetings' && galleryMeetings.map(meeting => (
+                    <div
+                      key={meeting.id}
+                      onClick={() => setGalleryFolder(meeting)}
+                      className="cursor-pointer border rounded-lg p-3 hover:bg-gray-50"
+                    >
+                      <p className="font-medium">{meeting.title}</p>
+                      <p className="text-sm text-gray-500">
+                        {galleryPhotos.filter(p => p.programme_id === meeting.id).length} photos
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            ) : (
+              // Show photos in selected folder
+              <div className="space-y-4">
+                <Button size="sm" variant="outline" onClick={() => setGalleryFolder(null)}>
+                  ← Back to folders
+                </Button>
+                <div className="grid grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                  {getGalleryDisplayPhotos().map((photo) => (
+                    <div
+                      key={photo.id}
+                      className="relative group cursor-pointer"
+                      onClick={() => {
+                        const order = currentImagePage === 'home' ? getImagesForPage('home').length : 0;
+                        selectFromGalleryMutation.mutate({
+                          page: currentImagePage,
+                          imageUrl: photo.file_url,
+                          order,
+                        });
+                      }}
+                    >
+                      <img
+                        src={photo.file_url}
+                        alt=""
+                        className="w-full h-40 object-cover rounded-lg group-hover:opacity-75 transition-opacity"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="bg-white rounded-full p-3">
+                          <Image className="w-6 h-6 text-[#7413dc]" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
