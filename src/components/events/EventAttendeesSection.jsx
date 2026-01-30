@@ -136,7 +136,7 @@ export default function EventAttendeesSection({ eventId, event }) {
 
   const getActionResponse = (memberId, actionId) => {
     const response = actionResponses.find(
-      r => r.child_member_id === memberId && r.action_id === actionId
+      r => r.member_id === memberId && r.action_required_id === actionId
     );
     if (!response) return { display: '-', response: null };
     
@@ -165,7 +165,7 @@ export default function EventAttendeesSection({ eventId, event }) {
     const responses = {};
     actionsRequired.forEach(action => {
       const response = actionResponses.find(
-        r => r.child_member_id === member.id && r.action_id === action.id
+        r => r.member_id === member.id && r.action_required_id === action.id
       );
       responses[action.id] = response?.response_value || '';
     });
@@ -178,7 +178,7 @@ export default function EventAttendeesSection({ eventId, event }) {
     
     actionsRequired.forEach(action => {
       const existingResponse = actionResponses.find(
-        r => r.child_member_id === editingMember.id && r.action_id === action.id
+        r => r.member_id === editingMember.id && r.action_required_id === action.id
       );
       const newValue = editResponses[action.id];
 
@@ -192,12 +192,9 @@ export default function EventAttendeesSection({ eventId, event }) {
       } else if (newValue) {
         promises.push(
           createResponseMutation.mutateAsync({
-            action_id: action.id,
-            child_member_id: editingMember.id,
-            entity_id: eventId,
-            parent_email: editingMember?.parent_one_email || 'admin@manual.entry',
-            response_value: newValue,
-            status: 'completed',
+            action_required_id: action.id,
+            member_id: editingMember.id,
+            response: newValue,
           })
         );
       }
