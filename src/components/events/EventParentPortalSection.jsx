@@ -472,15 +472,23 @@ export default function EventParentPortalSection({ eventId, event }) {
             <Button
               onClick={() => {
                 if (editingAction) {
+                  const updateData = {
+                    action_text: actionForm.action_text,
+                    column_title: actionForm.column_title,
+                    action_purpose: actionForm.action_purpose,
+                  };
+                  if (actionForm.action_purpose === 'custom_dropdown') {
+                    updateData.dropdown_options = actionForm.dropdown_options.filter(o => o.trim() !== '');
+                  }
                   updateActionMutation.mutate({
                     id: editingAction.id,
-                    data: actionForm
+                    data: updateData
                   });
                   setShowEditDialog(false);
                   setEditingAction(null);
                 }
               }}
-              disabled={!actionForm.action_text || !actionForm.column_title || !actionForm.action_purpose}
+              disabled={!actionForm.action_text || !actionForm.column_title || !actionForm.action_purpose || updateActionMutation.isPending}
               className="w-full"
             >
               Save Changes
