@@ -194,7 +194,10 @@ export default function EventAttendeesSection({ eventId, event }) {
           createResponseMutation.mutateAsync({
             action_required_id: action.id,
             member_id: editingMember.id,
+            entity_id: eventId,
+            parent_email: editingMember?.parent_one_email || 'admin@manual.entry',
             response: newValue,
+            status: 'completed',
           })
         );
       }
