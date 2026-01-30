@@ -10,11 +10,54 @@ import { toast } from 'sonner';
 export default function ImageSelector({ onSelect, isMultiple = false }) {
   const [uploading, setUploading] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
+  const [viewMode, setViewMode] = useState('all'); // 'all', 'camps', 'events', 'meetings'
+  const [selectedFolder, setSelectedFolder] = useState(null);
 
   const { data: photos = [] } = useQuery({
     queryKey: ['event-photos'],
     queryFn: () => base44.entities.EventPhoto.filter({}),
   });
+
+  const { data: events = [] } = useQuery({
+    queryKey: ['events'],
+    queryFn: () => base44.entities.Event.list('-start_date'),
+  });
+
+  const { data: programmes = [] } = useQuery({
+    queryKey: ['programmes'],
+    queryFn: () => base44.entities.Programme.list('-date'),
+  });
+
+  // Group photos similar to LeaderGallery
+  const camps = [...new Map(
+    photos
+      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp'))
+      .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
+  ).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+
+  const regularEvents = [...new Map(
+    photos
+      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'Camp'))
+      .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
+  ).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+
+  const meetings = [...new Map(
+    photos
+      .filter(p => p.programme_id)
+      .map(p => [p.programme_id, programmes.find(pr => pr.id === p.programme_id)])
+  ).values()].filter(Boolean).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const getDisplayPhotos = () => {
+    if (selectedFolder) {
+      return photos.filter(p => 
+        p.event_id === selectedFolder.id || 
+        p.programme_id === selectedFolder.id
+      );
+    }
+    return photos;
+  };
+
+  const displayPhotos = getDisplayPhotos();
 
   const handleFileUpload = async (e) => {
     const files = e.target.files;
@@ -121,30 +164,103 @@ export default function ImageSelector({ onSelect, isMultiple = false }) {
               <p className="text-center text-gray-500 py-8">No photos in gallery yet</p>
             ) : (
               <>
-                <div className="grid grid-cols-4 gap-2 max-h-96 overflow-y-auto">
-                  {photos.map((photo) => {
-                    const photoUrl = photo.photo_url || photo.file_url || photo.url;
-                    return (
-                      <div
-                        key={photo.id}
-                        onClick={() => handleSelectFromGallery(photoUrl)}
-                        className="relative cursor-pointer group"
+                {!selectedFolder ? (
+                  // Show folders
+                  <div className="space-y-2">
+                    <div className="flex gap-2 mb-4">
+                      <Button
+                        size="sm"
+                        variant={viewMode === 'camps' ? 'default' : 'outline'}
+                        onClick={() => setViewMode('camps')}
                       >
-                        <img
-                          src={photoUrl}
-                          alt="Gallery"
-                          className="w-full h-24 object-cover rounded group-hover:opacity-75 transition"
-                          onError={(e) => e.target.style.display = 'none'}
-                        />
-                        {isMultiple && selectedImages.includes(photoUrl) && (
-                          <div className="absolute inset-0 bg-blue-500/50 rounded flex items-center justify-center">
-                            <span className="text-white font-bold">✓</span>
+                        Camps ({camps.length})
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={viewMode === 'events' ? 'default' : 'outline'}
+                        onClick={() => setViewMode('events')}
+                      >
+                        Events ({regularEvents.length})
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={viewMode === 'meetings' ? 'default' : 'outline'}
+                        onClick={() => setViewMode('meetings')}
+                      >
+                        Meetings ({meetings.length})
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
+                      {viewMode === 'camps' && camps.map(camp => (
+                        <div
+                          key={camp.id}
+                          onClick={() => setSelectedFolder(camp)}
+                          className="relative cursor-pointer group border rounded-lg p-3 hover:bg-gray-50"
+                        >
+                          <p className="font-medium text-sm">{camp.title}</p>
+                          <p className="text-xs text-gray-500">
+                            {photos.filter(p => p.event_id === camp.id).length} photos
+                          </p>
+                        </div>
+                      ))}
+                      {viewMode === 'events' && regularEvents.map(event => (
+                        <div
+                          key={event.id}
+                          onClick={() => setSelectedFolder(event)}
+                          className="relative cursor-pointer group border rounded-lg p-3 hover:bg-gray-50"
+                        >
+                          <p className="font-medium text-sm">{event.title}</p>
+                          <p className="text-xs text-gray-500">
+                            {photos.filter(p => p.event_id === event.id).length} photos
+                          </p>
+                        </div>
+                      ))}
+                      {viewMode === 'meetings' && meetings.map(meeting => (
+                        <div
+                          key={meeting.id}
+                          onClick={() => setSelectedFolder(meeting)}
+                          className="relative cursor-pointer group border rounded-lg p-3 hover:bg-gray-50"
+                        >
+                          <p className="font-medium text-sm">{meeting.title}</p>
+                          <p className="text-xs text-gray-500">
+                            {photos.filter(p => p.programme_id === meeting.id).length} photos
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  // Show photos in selected folder
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => setSelectedFolder(null)}>
+                      ← Back to folders
+                    </Button>
+                    <div className="grid grid-cols-4 gap-2 max-h-96 overflow-y-auto">
+                      {displayPhotos.map((photo) => {
+                        const photoUrl = photo.photo_url || photo.file_url || photo.url;
+                        return (
+                          <div
+                            key={photo.id}
+                            onClick={() => handleSelectFromGallery(photoUrl)}
+                            className="relative cursor-pointer group"
+                          >
+                            <img
+                              src={photoUrl}
+                              alt="Gallery"
+                              className="w-full h-24 object-cover rounded group-hover:opacity-75 transition"
+                              onError={(e) => e.target.style.display = 'none'}
+                            />
+                            {isMultiple && selectedImages.includes(photoUrl) && (
+                              <div className="absolute inset-0 bg-blue-500/50 rounded flex items-center justify-center">
+                                <span className="text-white font-bold">✓</span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
                 {isMultiple && selectedImages.length > 0 && (
                   <Button onClick={handleConfirmMultiple} className="w-full bg-green-600">
                     Confirm {selectedImages.length} Images

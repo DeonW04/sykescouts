@@ -68,10 +68,22 @@ export default function EventParentPortalSection({ eventId, event }) {
   });
 
   const toggleActionOpenMutation = useMutation({
-    mutationFn: ({ id, is_open }) => base44.entities.ActionRequired.update(id, { is_open }),
+    mutationFn: async ({ id, is_open }) => {
+      return base44.entities.ActionRequired.update(id, { is_open });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-required'] });
       toast.success('Action status updated');
+    },
+  });
+
+  const updateActionMutation = useMutation({
+    mutationFn: async ({ id, data }) => {
+      return base44.entities.ActionRequired.update(id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['action-required'] });
+      toast.success('Action updated');
     },
   });
 

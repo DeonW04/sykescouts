@@ -42,14 +42,24 @@ export default function Join() {
     e.preventDefault();
     setSubmitting(true);
 
-    await base44.entities.ChildRegistration.create({
-      ...formData,
-      status: 'pending',
-    });
+    try {
+      const registration = await base44.entities.ChildRegistration.create({
+        ...formData,
+        status: 'pending',
+      });
 
-    setSubmitting(false);
-    setSubmitted(true);
-    toast.success('Registration submitted successfully!');
+      // Send email notifications to leaders
+      await base44.functions.invoke('sendJoinEnquiryEmail', { 
+        registrationId: registration.id 
+      });
+
+      setSubmitting(false);
+      setSubmitted(true);
+      toast.success('Registration submitted successfully!');
+    } catch (error) {
+      setSubmitting(false);
+      toast.error('Error submitting registration: ' + error.message);
+    }
   };
 
   if (submitted) {

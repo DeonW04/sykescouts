@@ -22,6 +22,7 @@ export default function LeaderGallery() {
     event_id: '',
     programme_id: '',
     manual_event_name: '',
+    manual_date: '',
     section_id: '',
     caption: '',
     visible_to: 'parents',
@@ -31,6 +32,8 @@ export default function LeaderGallery() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState([]);
+  const [filteredEvents, setFilteredEvents] = useState(null);
+  const [filteredProgrammes, setFilteredProgrammes] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -67,27 +70,51 @@ export default function LeaderGallery() {
     },
   });
 
-  // Get unique camps, events, and meetings
+  // Get unique camps, events, and meetings - sorted by date
   const camps = [...new Map(
     allPhotos
       .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp'))
       .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
-  ).values()].filter(Boolean);
+  ).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
 
   const regularEvents = [...new Map(
     allPhotos
       .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'Camp'))
       .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
-  ).values()].filter(Boolean);
+  ).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
 
   const meetings = [...new Map(
     allPhotos
       .filter(p => p.programme_id)
       .map(p => [p.programme_id, programmes.find(pr => pr.id === p.programme_id)])
-  ).values()].filter(Boolean);
+  ).values()].filter(Boolean).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // Manual entries grouped by name+date
+  const manualEntries = [...new Map(
+    allPhotos
+      .filter(p => p.manual_event_name)
+      .map(p => [`${p.manual_event_name}-${p.manual_date || 'no-date'}`, {
+        id: `${p.manual_event_name}-${p.manual_date || 'no-date'}`,
+        title: p.manual_event_name,
+        date: p.manual_date,
+        section_id: p.section_id,
+        isManual: true
+      }])
+  ).values()].filter(Boolean).sort((a, b) => {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return new Date(b.date) - new Date(a.date);
+  });
 
   const getDisplayPhotos = () => {
     if (selectedItem) {
+      if (selectedItem.isManual) {
+        return allPhotos.filter(p => 
+          p.manual_event_name === selectedItem.title && 
+          (p.manual_date || 'no-date') === (selectedItem.date || 'no-date')
+        );
+      }
       return allPhotos.filter(p => 
         p.event_id === selectedItem.id || 
         p.programme_id === selectedItem.id
@@ -102,12 +129,24 @@ export default function LeaderGallery() {
     if (type === 'meeting') {
       return allPhotos.find(p => p.programme_id === item.id)?.file_url;
     }
+    if (item.isManual) {
+      return allPhotos.find(p => 
+        p.manual_event_name === item.title && 
+        (p.manual_date || 'no-date') === (item.date || 'no-date')
+      )?.file_url;
+    }
     return allPhotos.find(p => p.event_id === item.id)?.file_url;
   };
 
   const getItemPhotoCount = (item, type) => {
     if (type === 'meeting') {
       return allPhotos.filter(p => p.programme_id === item.id).length;
+    }
+    if (item.isManual) {
+      return allPhotos.filter(p => 
+        p.manual_event_name === item.title && 
+        (p.manual_date || 'no-date') === (item.date || 'no-date')
+      ).length;
     }
     return allPhotos.filter(p => p.event_id === item.id).length;
   };
@@ -159,8 +198,11 @@ export default function LeaderGallery() {
       event_id: '',
       programme_id: '',
       manual_event_name: '',
+      manual_date: '',
       section_id: '',
     });
+    setFilteredEvents(null);
+    setFilteredProgrammes(null);
   };
 
   const handleEventChange = (eventId) => {
@@ -215,6 +257,7 @@ export default function LeaderGallery() {
           event_id: uploadForm.link_type === 'event' ? uploadForm.event_id : undefined,
           programme_id: uploadForm.link_type === 'programme' ? uploadForm.programme_id : undefined,
           manual_event_name: uploadForm.link_type === 'manual' ? uploadForm.manual_event_name : undefined,
+          manual_date: uploadForm.link_type === 'manual' ? uploadForm.manual_date : undefined,
           section_id: uploadForm.section_id,
           file_url,
           caption: uploadForm.caption,
@@ -557,13 +600,25 @@ export default function LeaderGallery() {
 
             {uploadForm.link_type === 'event' && (
               <div>
-                <Label>Select Event</Label>
+                <Label>Search and Select Event</Label>
+                <Input
+                  type="text"
+                  placeholder="Search events..."
+                  onChange={(e) => {
+                    const search = e.target.value.toLowerCase();
+                    const filtered = events.filter(ev => 
+                      ev.title.toLowerCase().includes(search)
+                    );
+                    setFilteredEvents(filtered);
+                  }}
+                  className="mb-2"
+                />
                 <Select value={uploadForm.event_id} onValueChange={handleEventChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choose event..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {events.map(event => (
+                    {(filteredEvents || events).map(event => (
                       <SelectItem key={event.id} value={event.id}>
                         {event.title} - {format(new Date(event.start_date), 'MMM d, yyyy')}
                       </SelectItem>
@@ -575,13 +630,25 @@ export default function LeaderGallery() {
 
             {uploadForm.link_type === 'programme' && (
               <div>
-                <Label>Select Programme Meeting</Label>
+                <Label>Search and Select Meeting</Label>
+                <Input
+                  type="text"
+                  placeholder="Search meetings..."
+                  onChange={(e) => {
+                    const search = e.target.value.toLowerCase();
+                    const filtered = programmes.filter(p => 
+                      p.title.toLowerCase().includes(search)
+                    );
+                    setFilteredProgrammes(filtered);
+                  }}
+                  className="mb-2"
+                />
                 <Select value={uploadForm.programme_id} onValueChange={handleProgrammeChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choose meeting..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {programmes.map(prog => (
+                    {(filteredProgrammes || programmes).map(prog => (
                       <SelectItem key={prog.id} value={prog.id}>
                         {prog.title} - {format(new Date(prog.date), 'MMM d, yyyy')}
                       </SelectItem>
@@ -592,14 +659,24 @@ export default function LeaderGallery() {
             )}
 
             {uploadForm.link_type === 'manual' && (
-              <div>
-                <Label>Event Name</Label>
-                <Input
-                  value={uploadForm.manual_event_name}
-                  onChange={(e) => setUploadForm({ ...uploadForm, manual_event_name: e.target.value })}
-                  placeholder="Enter event name..."
-                />
-              </div>
+              <>
+                <div>
+                  <Label>Event Name</Label>
+                  <Input
+                    value={uploadForm.manual_event_name}
+                    onChange={(e) => setUploadForm({ ...uploadForm, manual_event_name: e.target.value })}
+                    placeholder="Enter event name..."
+                  />
+                </div>
+                <div>
+                  <Label>Event Date</Label>
+                  <Input
+                    type="date"
+                    value={uploadForm.manual_date || ''}
+                    onChange={(e) => setUploadForm({ ...uploadForm, manual_date: e.target.value })}
+                  />
+                </div>
+              </>
             )}
 
             <div>

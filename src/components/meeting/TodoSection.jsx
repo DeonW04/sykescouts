@@ -73,6 +73,8 @@ export default function TodoSection({ programmeId, entityType = 'programme' }) {
   });
 
   const getLeaderName = (userId) => {
+    const leader = leaders.find(l => l.user_id === userId);
+    if (leader?.display_name) return leader.display_name;
     const user = users.find(u => u.id === userId);
     return user?.full_name || 'Unknown';
   };
@@ -155,10 +157,10 @@ export default function TodoSection({ programmeId, entityType = 'programme' }) {
                 </SelectTrigger>
                 <SelectContent>
                   {leaders.map(leader => {
-                    const user = users.find(u => u.id === leader.user_id);
+                    const displayName = leader.display_name || users.find(u => u.id === leader.user_id)?.full_name;
                     return (
                       <SelectItem key={leader.user_id} value={leader.user_id}>
-                        {user?.full_name}
+                        {displayName}
                       </SelectItem>
                     );
                   })}

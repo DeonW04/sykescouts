@@ -809,13 +809,13 @@ export default function AdminSettings() {
                   const order = currentImagePage === 'home' ? getImagesForPage('home').length : 0;
                   selectFromGalleryMutation.mutate({
                     page: currentImagePage,
-                    imageUrl: photo.photo_url,
+                    imageUrl: photo.file_url,
                     order,
                   });
                 }}
               >
                 <img
-                  src={photo.photo_url}
+                  src={photo.file_url}
                   alt=""
                   className="w-full h-40 object-cover rounded-lg group-hover:opacity-75 transition-opacity"
                 />
