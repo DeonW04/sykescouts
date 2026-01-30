@@ -173,11 +173,11 @@ export default function ParentEventDetail() {
               Back to Events
             </Button>
             
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col lg:flex-row items-start justify-between gap-6">
               <div className="flex-1">
                 <Badge className="bg-white/20 backdrop-blur text-white mb-3 border-0">{event.type}</Badge>
-                <h1 className="text-5xl font-bold mb-4 drop-shadow-lg">{event.title}</h1>
-                <div className="flex flex-wrap items-center gap-6 text-purple-100">
+                <h1 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg">{event.title}</h1>
+                <div className="flex flex-wrap items-center gap-3 md:gap-6 text-purple-100">
                   <span className="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full">
                     <Calendar className="w-5 h-5" />
                     <span className="font-medium">{format(new Date(event.start_date), 'MMMM d, yyyy')}</span>
@@ -206,9 +206,9 @@ export default function ParentEventDetail() {
                 </div>
               </div>
               {event.cost > 0 && (
-                <div className="bg-white/20 backdrop-blur border border-white/30 rounded-2xl p-6 text-center">
+                <div className="bg-white/20 backdrop-blur border border-white/30 rounded-2xl p-4 md:p-6 text-center lg:min-w-[140px]">
                   <p className="text-purple-100 text-sm mb-1">Cost</p>
-                  <p className="text-4xl font-bold">£{event.cost.toFixed(2)}</p>
+                  <p className="text-3xl md:text-4xl font-bold">£{event.cost.toFixed(2)}</p>
                 </div>
               )}
             </div>

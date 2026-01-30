@@ -228,26 +228,26 @@ export default function MyChild() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <Tabs defaultValue="personal" className="space-y-8">
-          <TabsList className="bg-white/80 backdrop-blur-sm border shadow-lg p-1">
-            <TabsTrigger value="personal" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white">
-              <User className="w-4 h-4 mr-2" />
-              Personal
+          <TabsList className="bg-white/80 backdrop-blur-sm border shadow-lg p-1 grid grid-cols-5 md:inline-flex overflow-x-auto">
+            <TabsTrigger value="personal" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+              <User className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Personal</span>
             </TabsTrigger>
-            <TabsTrigger value="parent" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white">
-              <UserCircle className="w-4 h-4 mr-2" />
-              Parents
+            <TabsTrigger value="parent" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+              <UserCircle className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Parents</span>
             </TabsTrigger>
-            <TabsTrigger value="medical" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white">
-              <Heart className="w-4 h-4 mr-2" />
-              Medical
+            <TabsTrigger value="medical" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+              <Heart className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Medical</span>
             </TabsTrigger>
-            <TabsTrigger value="emergency" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white">
-              <Phone className="w-4 h-4 mr-2" />
-              Emergency
+            <TabsTrigger value="emergency" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+              <Phone className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Emergency</span>
             </TabsTrigger>
-            <TabsTrigger value="consent" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white">
-              <Camera className="w-4 h-4 mr-2" />
-              Consent
+            <TabsTrigger value="consent" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+              <Camera className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Consent</span>
             </TabsTrigger>
           </TabsList>
 

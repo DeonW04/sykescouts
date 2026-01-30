@@ -253,7 +253,7 @@ export default function ParentGoldAward() {
             <h2 className="text-3xl font-bold text-amber-900">Challenge Badges</h2>
           </div>
           
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {challengeBadges.map((badge, index) => {
               const isComplete = badgeProgress.some(p => p.badge_id === badge.id && p.status === 'completed');
               const progress = getBadgeProgress(badge.id);

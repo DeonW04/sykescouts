@@ -132,7 +132,7 @@ Focus on practical, specific risks following Scouts UK safety standards. Conside
 
           <div className="grid md:grid-cols-2 gap-6">
             <Card className="border-2 border-[#7413dc] shadow-xl">
-            <CardContent className="p-8">
+            <CardContent className="p-4 md:p-8">
               <div className="flex items-start gap-4 mb-6">
                 <div className="w-12 h-12 bg-gradient-to-br from-[#7413dc] to-[#ff66b2] rounded-xl flex items-center justify-center flex-shrink-0">
                   <Sparkles className="w-6 h-6 text-white" />
@@ -178,7 +178,7 @@ Focus on practical, specific risks following Scouts UK safety standards. Conside
           </Card>
 
             <Card className="border-2 border-[#004851] shadow-xl">
-              <CardContent className="p-8">
+              <CardContent className="p-4 md:p-8">
                 <div className="flex items-start gap-4 mb-6">
                   <div className="w-12 h-12 bg-gradient-to-br from-[#004851] to-[#00a794] rounded-xl flex items-center justify-center flex-shrink-0">
                     <Sparkles className="w-6 h-6 text-white" />

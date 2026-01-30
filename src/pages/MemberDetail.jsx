@@ -261,30 +261,30 @@ export default function MemberDetail() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-white border">
-            <TabsTrigger value="overview">
-              <User className="w-4 h-4 mr-2" />
-              Overview
+          <TabsList className="bg-white border grid grid-cols-3 md:inline-flex overflow-x-auto gap-1">
+            <TabsTrigger value="overview" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+              <User className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="parents">
-              <Users className="w-4 h-4 mr-2" />
-              Parents
+            <TabsTrigger value="parents" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+              <Users className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Parents</span>
             </TabsTrigger>
-            <TabsTrigger value="medical">
-              <Heart className="w-4 h-4 mr-2" />
-              Medical
+            <TabsTrigger value="medical" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+              <Heart className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Medical</span>
             </TabsTrigger>
-            <TabsTrigger value="badges">
-              <Award className="w-4 h-4 mr-2" />
-              Badges
+            <TabsTrigger value="badges" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+              <Award className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Badges</span>
             </TabsTrigger>
-            <TabsTrigger value="attendance">
-              <Calendar className="w-4 h-4 mr-2" />
-              Attendance
+            <TabsTrigger value="attendance" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+              <Calendar className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Attendance</span>
             </TabsTrigger>
-            <TabsTrigger value="notes">
-              <FileText className="w-4 h-4 mr-2" />
-              Notes
+            <TabsTrigger value="notes" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+              <FileText className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Notes</span>
             </TabsTrigger>
           </TabsList>
 

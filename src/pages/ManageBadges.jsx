@@ -154,33 +154,35 @@ export default function ManageBadges() {
   return (
     <div className="min-h-screen bg-gray-50">
       <LeaderNav />
-      <div className="bg-[#7413dc] text-white py-8">
+      <div className="bg-[#7413dc] text-white py-6 md:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="flex items-center gap-3">
-              <Award className="w-8 h-8" />
+              <Award className="w-6 h-6 md:w-8 md:h-8" />
               <div>
-                <h1 className="text-3xl font-bold">Manage Badges</h1>
-                <p className="mt-1 text-white/80">Create and configure badges</p>
+                <h1 className="text-2xl md:text-3xl font-bold">Manage Badges</h1>
+                <p className="mt-1 text-white/80 text-sm md:text-base">Create and configure badges</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full md:w-auto">
               <Button
                 onClick={() => navigate(createPageUrl('BadgeStockManagement'))}
-                className="bg-white text-[#7413dc] hover:bg-gray-100"
+                className="bg-white text-[#7413dc] hover:bg-gray-100 flex-1 md:flex-none text-sm"
               >
-                <Package className="w-4 h-4 mr-2" />
-                Manage Stock
+                <Package className="w-4 h-4 md:mr-2" />
+                <span className="hidden sm:inline">Manage Stock</span>
+                <span className="sm:hidden">Stock</span>
               </Button>
               <Button
                 onClick={() => {
                   resetForm();
                   setShowDialog(true);
                 }}
-                className="bg-white text-[#7413dc] hover:bg-gray-100"
+                className="bg-white text-[#7413dc] hover:bg-gray-100 flex-1 md:flex-none text-sm"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                New Badge
+                <Plus className="w-4 h-4 md:mr-2" />
+                <span className="hidden sm:inline">New Badge</span>
+                <span className="sm:hidden">New</span>
               </Button>
             </div>
           </div>

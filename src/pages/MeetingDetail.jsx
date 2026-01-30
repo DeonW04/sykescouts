@@ -258,30 +258,30 @@ export default function MeetingDetail() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="plan" className="space-y-6">
-          <TabsList className="bg-white border grid grid-cols-6">
-            <TabsTrigger value="plan">
-              <Calendar className="w-4 h-4 mr-2" />
-              Plan Meeting
+          <TabsList className="bg-white border grid grid-cols-3 md:grid-cols-6 gap-1 md:gap-0">
+            <TabsTrigger value="plan" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4 py-2">
+              <Calendar className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Plan</span>
             </TabsTrigger>
-            <TabsTrigger value="todo">
-              <ListTodo className="w-4 h-4 mr-2" />
-              To Do
+            <TabsTrigger value="todo" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4 py-2">
+              <ListTodo className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">To Do</span>
             </TabsTrigger>
-            <TabsTrigger value="attendance">
-              <Users className="w-4 h-4 mr-2" />
-              Attendance
+            <TabsTrigger value="attendance" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4 py-2">
+              <Users className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Attendance</span>
             </TabsTrigger>
-            <TabsTrigger value="parent">
-              <Eye className="w-4 h-4 mr-2" />
-              Parent Portal
+            <TabsTrigger value="parent" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4 py-2">
+              <Eye className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Parent</span>
             </TabsTrigger>
-            <TabsTrigger value="risk">
-              <Shield className="w-4 h-4 mr-2" />
-              Risk Assessments
+            <TabsTrigger value="risk" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4 py-2">
+              <Shield className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Risk</span>
             </TabsTrigger>
-            <TabsTrigger value="badges">
-              <Award className="w-4 h-4 mr-2" />
-              Badges
+            <TabsTrigger value="badges" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4 py-2">
+              <Award className="w-4 h-4 flex-shrink-0" />
+              <span className="text-xs md:text-sm">Badges</span>
             </TabsTrigger>
           </TabsList>
 
