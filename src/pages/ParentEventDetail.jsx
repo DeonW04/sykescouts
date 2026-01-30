@@ -141,7 +141,7 @@ export default function ParentEventDetail() {
   const unresolvedActions = actionsRequired.filter(action => {
     return myChildrenInEvent.some(child => {
       const hasResponse = actionResponses.some(
-        r => r.action_id === action.id && r.child_member_id === child.id && r.status === 'completed'
+        r => r.action_required_id === action.id && r.member_id === child.id && r.status === 'completed'
       );
       return !hasResponse;
     });
@@ -238,7 +238,7 @@ export default function ParentEventDetail() {
                       
                       {myChildrenInEvent.map(child => {
                         const hasResponse = actionResponses.some(
-                          r => r.action_id === action.id && r.child_member_id === child.id && r.status === 'completed'
+                          r => r.action_required_id === action.id && r.member_id === child.id && r.status === 'completed'
                         );
                         
                         if (hasResponse) return null;
