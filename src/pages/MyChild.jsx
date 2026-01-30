@@ -175,17 +175,17 @@ export default function MyChild() {
             Back
           </Button>
           
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-6">
-              <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center text-[#7413dc] font-bold text-4xl shadow-2xl">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+            <div className="flex items-center gap-4 md:gap-6 flex-1">
+              <div className="w-16 h-16 md:w-24 md:h-24 bg-white rounded-2xl flex items-center justify-center text-[#7413dc] font-bold text-2xl md:text-4xl shadow-2xl flex-shrink-0">
                 {child.full_name.charAt(0)}
               </div>
-              <div>
-                <h1 className="text-4xl font-bold mb-2">{child.full_name}</h1>
-                <div className="flex items-center gap-4 flex-wrap">
-                  <p className="text-blue-100 text-lg font-medium">{section?.display_name}</p>
-                  <Badge variant="secondary" className="bg-white/20 text-white text-sm">
-                    {age.years} years {age.months} months
+              <div className="min-w-0">
+                <h1 className="text-2xl md:text-4xl font-bold mb-2 truncate">{child.full_name}</h1>
+                <div className="flex items-center gap-2 md:gap-4 flex-wrap">
+                  <p className="text-blue-100 text-sm md:text-lg font-medium">{section?.display_name}</p>
+                  <Badge variant="secondary" className="bg-white/20 text-white text-xs md:text-sm">
+                    {age.years}y {age.months}m
                   </Badge>
                 </div>
               </div>
@@ -193,31 +193,34 @@ export default function MyChild() {
             {!editMode ? (
               <Button 
                 onClick={() => handleEdit(child)}
-                size="lg"
-                className="bg-white text-[#7413dc] hover:bg-blue-50 font-semibold shadow-xl"
+                size="default"
+                className="bg-white text-[#7413dc] hover:bg-blue-50 font-semibold shadow-xl w-full md:w-auto"
               >
-                <Edit className="w-5 h-5 mr-2" />
-                Edit Details
+                <Edit className="w-4 h-4 md:w-5 md:h-5 md:mr-2" />
+                <span className="hidden sm:inline">Edit Details</span>
+                <span className="sm:hidden">Edit</span>
               </Button>
             ) : (
-              <div className="flex gap-3">
+              <div className="flex gap-2 md:gap-3 w-full md:w-auto">
                 <Button 
                   onClick={handleSave}
                   disabled={updateMemberMutation.isPending}
-                  size="lg"
-                  className="bg-white text-[#7413dc] hover:bg-blue-50 font-semibold shadow-xl"
+                  size="default"
+                  className="bg-white text-[#7413dc] hover:bg-blue-50 font-semibold shadow-xl flex-1 md:flex-none"
                 >
-                  <Save className="w-5 h-5 mr-2" />
-                  Save
+                  <Save className="w-4 h-4 md:w-5 md:h-5 md:mr-2" />
+                  <span className="hidden sm:inline">Save</span>
+                  <span className="sm:hidden">Save</span>
                 </Button>
                 <Button 
                   variant="outline"
                   onClick={() => setEditMode(false)}
-                  size="lg"
-                  className="bg-white/10 text-white border-white/30 hover:bg-white/20"
+                  size="default"
+                  className="bg-white/10 text-white border-white/30 hover:bg-white/20 flex-1 md:flex-none"
                 >
-                  <X className="w-5 h-5 mr-2" />
-                  Cancel
+                  <X className="w-4 h-4 md:w-5 md:h-5 md:mr-2" />
+                  <span className="hidden sm:inline">Cancel</span>
+                  <span className="sm:hidden">Cancel</span>
                 </Button>
               </div>
             )}
@@ -229,25 +232,25 @@ export default function MyChild() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <Tabs defaultValue="personal" className="space-y-8">
           <TabsList className="bg-white/80 backdrop-blur-sm border shadow-lg p-1 grid grid-cols-5 md:inline-flex overflow-x-auto">
-            <TabsTrigger value="personal" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
-              <User className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Personal</span>
+            <TabsTrigger value="personal" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex items-center justify-center md:gap-2 px-2 md:px-4 py-2">
+              <User className="w-5 h-5 md:w-4 md:h-4 flex-shrink-0" />
+              <span className="hidden md:inline text-sm">Personal</span>
             </TabsTrigger>
-            <TabsTrigger value="parent" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
-              <UserCircle className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Parents</span>
+            <TabsTrigger value="parent" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex items-center justify-center md:gap-2 px-2 md:px-4 py-2">
+              <UserCircle className="w-5 h-5 md:w-4 md:h-4 flex-shrink-0" />
+              <span className="hidden md:inline text-sm">Parents</span>
             </TabsTrigger>
-            <TabsTrigger value="medical" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
-              <Heart className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Medical</span>
+            <TabsTrigger value="medical" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex items-center justify-center md:gap-2 px-2 md:px-4 py-2">
+              <Heart className="w-5 h-5 md:w-4 md:h-4 flex-shrink-0" />
+              <span className="hidden md:inline text-sm">Medical</span>
             </TabsTrigger>
-            <TabsTrigger value="emergency" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
-              <Phone className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Emergency</span>
+            <TabsTrigger value="emergency" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex items-center justify-center md:gap-2 px-2 md:px-4 py-2">
+              <Phone className="w-5 h-5 md:w-4 md:h-4 flex-shrink-0" />
+              <span className="hidden md:inline text-sm">Emergency</span>
             </TabsTrigger>
-            <TabsTrigger value="consent" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
-              <Camera className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Consent</span>
+            <TabsTrigger value="consent" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex items-center justify-center md:gap-2 px-2 md:px-4 py-2">
+              <Camera className="w-5 h-5 md:w-4 md:h-4 flex-shrink-0" />
+              <span className="hidden md:inline text-sm">Consent</span>
             </TabsTrigger>
           </TabsList>
 

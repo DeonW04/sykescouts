@@ -59,14 +59,14 @@ export default function ParentNav() {
                 >
                   <Link to={createPageUrl(item.page)}>
                     <button
-                      className={`flex flex-col sm:flex-row items-center gap-1 sm:gap-2 px-3 py-2 rounded-lg transition-all ${
+                      className={`flex items-center justify-center px-3 py-2 rounded-lg transition-all ${
                         isActive
                           ? `${item.color} text-white shadow-md scale-105`
                           : 'text-gray-600 hover:bg-gray-100'
                       }`}
                     >
-                      <item.icon className="w-4 h-4" />
-                      <span className="text-xs sm:text-sm font-medium">{item.label}</span>
+                      <item.icon className="w-5 h-5 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline sm:ml-2 text-sm font-medium">{item.label}</span>
                     </button>
                   </Link>
                 </motion.div>
