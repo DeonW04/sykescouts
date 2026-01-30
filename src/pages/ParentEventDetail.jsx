@@ -110,15 +110,8 @@ export default function ParentEventDetail() {
     mutationFn: async ({ actionId, memberId, response }) => {
       return base44.entities.ActionResponse.create({
         action_required_id: actionId,
-        action_id: actionId,
         member_id: memberId,
-        child_member_id: memberId,
-        entity_id: eventId,
-        parent_email: user.email,
         response: response,
-        response_value: response,
-        status: 'completed',
-        response_date: new Date().toISOString(),
       });
     },
     onSuccess: () => {
