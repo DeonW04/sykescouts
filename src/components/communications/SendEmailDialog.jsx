@@ -193,12 +193,12 @@ export default function SendEmailDialog({ open, onClose, page }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] sm:max-h-[80vh]">
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] sm:max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Send as Email</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto flex-1">
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex-1">
@@ -236,7 +236,7 @@ export default function SendEmailDialog({ open, onClose, page }) {
           </div>
 
           {/* User List */}
-          <div className="border rounded-lg max-h-96 overflow-y-auto">
+          <div className="border rounded-lg max-h-[40vh] sm:max-h-96 overflow-y-auto">
             {filteredUsers.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
                 <Search className="w-12 h-12 mx-auto mb-2 opacity-30" />
@@ -281,7 +281,7 @@ export default function SendEmailDialog({ open, onClose, page }) {
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0">
           <Button variant="outline" onClick={onClose} disabled={sending}>
             Cancel
           </Button>
