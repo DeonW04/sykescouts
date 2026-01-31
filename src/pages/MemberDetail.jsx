@@ -194,50 +194,52 @@ export default function MemberDetail() {
             Back to Members
           </Button>
           
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-6">
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-[#004851] font-bold text-3xl">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+            <div className="flex items-center gap-4 md:gap-6 flex-1">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full flex items-center justify-center text-[#004851] font-bold text-2xl md:text-3xl flex-shrink-0">
                 {member.full_name.charAt(0)}
               </div>
-              <div>
-                <h1 className="text-3xl font-bold">{member.full_name}</h1>
-                <div className="flex items-center gap-4 mt-2">
-                  <p className="text-white/80">{section?.display_name}</p>
-                  <Badge variant="secondary" className="bg-white/20 text-white">
-                    {age.years} years {age.months} months
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl md:text-3xl font-bold truncate">{member.full_name}</h1>
+                <div className="flex items-center gap-2 md:gap-4 mt-2 flex-wrap">
+                  <p className="text-white/80 text-sm md:text-base">{section?.display_name}</p>
+                  <Badge variant="secondary" className="bg-white/20 text-white text-xs md:text-sm">
+                    {age.years}y {age.months}m
                   </Badge>
                   {member.patrol && (
-                    <Badge variant="secondary" className="bg-white/20 text-white">
-                      {member.patrol} Patrol
+                    <Badge variant="secondary" className="bg-white/20 text-white text-xs md:text-sm">
+                      {member.patrol}
                     </Badge>
                   )}
-                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                  <div className={`flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium ${
                     parentAccountExists 
                       ? 'bg-green-500 text-white' 
                       : 'bg-red-500 text-white'
                   }`}>
                     {parentAccountExists ? (
                       <>
-                        <CheckCircle className="w-4 h-4" />
-                        Parent Portal Registered
+                        <CheckCircle className="w-3 h-3 md:w-4 md:h-4" />
+                        <span className="hidden sm:inline">Parent Portal Registered</span>
+                        <span className="sm:hidden">Registered</span>
                       </>
                     ) : (
                       <>
-                        <AlertCircle className="w-4 h-4" />
-                        Not Registered
+                        <AlertCircle className="w-3 h-3 md:w-4 md:h-4" />
+                        <span className="hidden sm:inline">Not Registered</span>
+                        <span className="sm:hidden">No Account</span>
                       </>
                     )}
                   </div>
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full md:w-auto">
               <Button 
                 onClick={() => setShowEditDialog(true)}
-                className="bg-white text-[#004851] hover:bg-gray-100"
+                className="bg-white text-[#004851] hover:bg-gray-100 flex-1 md:flex-none"
               >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
+                <Edit className="w-4 h-4 md:mr-2" />
+                <span className="hidden sm:inline">Edit</span>
               </Button>
               <Button
                 variant="outline"
@@ -249,9 +251,10 @@ export default function MemberDetail() {
                     });
                   }
                 }}
-                className="bg-white border-orange-300 text-orange-600 hover:bg-orange-50"
+                className="bg-white border-orange-300 text-orange-600 hover:bg-orange-50 flex-1 md:flex-none"
               >
-                Archive Member
+                <span className="hidden sm:inline">Archive Member</span>
+                <span className="sm:hidden">Archive</span>
               </Button>
             </div>
           </div>
@@ -261,30 +264,30 @@ export default function MemberDetail() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-white border grid grid-cols-3 md:inline-flex overflow-x-auto gap-1">
-            <TabsTrigger value="overview" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+          <TabsList className="bg-white border grid grid-cols-6 md:inline-flex">
+            <TabsTrigger value="overview" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
               <User className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Overview</span>
+              <span className="hidden md:inline text-sm">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="parents" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+            <TabsTrigger value="parents" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
               <Users className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Parents</span>
+              <span className="hidden md:inline text-sm">Parents</span>
             </TabsTrigger>
-            <TabsTrigger value="medical" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+            <TabsTrigger value="medical" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
               <Heart className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Medical</span>
+              <span className="hidden md:inline text-sm">Medical</span>
             </TabsTrigger>
-            <TabsTrigger value="badges" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+            <TabsTrigger value="badges" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
               <Award className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Badges</span>
+              <span className="hidden md:inline text-sm">Badges</span>
             </TabsTrigger>
-            <TabsTrigger value="attendance" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+            <TabsTrigger value="attendance" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
               <Calendar className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Attendance</span>
+              <span className="hidden md:inline text-sm">Attendance</span>
             </TabsTrigger>
-            <TabsTrigger value="notes" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4">
+            <TabsTrigger value="notes" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
               <FileText className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Notes</span>
+              <span className="hidden md:inline text-sm">Notes</span>
             </TabsTrigger>
           </TabsList>
 
