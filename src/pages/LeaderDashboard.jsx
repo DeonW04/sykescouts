@@ -238,14 +238,6 @@ export default function LeaderDashboard() {
       iconBg: 'bg-pink-100',
       iconColor: 'text-pink-600'
     },
-    { 
-      icon: Receipt, 
-      label: 'Receipts', 
-      page: 'ReceiptUploader',
-      gradient: 'from-emerald-500 to-emerald-600',
-      iconBg: 'bg-emerald-100',
-      iconColor: 'text-emerald-600'
-    },
   ];
 
   return (
@@ -371,10 +363,39 @@ export default function LeaderDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="grid lg:grid-cols-2 gap-6"
+          className="grid lg:grid-cols-2 gap-6 mb-6"
         >
           <UpcomingMeetings sections={sections} />
           <BadgesDue sections={sections} />
+        </motion.div>
+
+        {/* Receipt Upload Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+        >
+          <Card className="bg-gradient-to-r from-emerald-500 to-emerald-600 border-0 shadow-lg">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                    <Receipt className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-white">
+                    <h3 className="text-lg font-semibold">Upload Receipts</h3>
+                    <p className="text-white/90 text-sm">Submit your expenses for reimbursement</p>
+                  </div>
+                </div>
+                <Link to={createPageUrl('ReceiptUploader')}>
+                  <Button className="bg-white text-emerald-600 hover:bg-white/90">
+                    <Receipt className="w-4 h-4 mr-2" />
+                    Upload Receipt
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
     </div>
