@@ -213,9 +213,9 @@ export default function MeetingDetail() {
             Back to Programme
           </Button>
           
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div>
-              <h1 className="text-3xl font-bold">
+              <h1 className="text-2xl sm:text-3xl font-bold">
                 {new Date(date).toLocaleDateString('en-GB', { 
                   weekday: 'long', 
                   year: 'numeric', 
@@ -225,31 +225,31 @@ export default function MeetingDetail() {
               </h1>
               <p className="mt-1 text-white/80">{section?.display_name}</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 onClick={() => setFormData({ ...formData, published: !formData.published })}
-                className="bg-white/10 text-white border-white hover:bg-white/20"
+                className="bg-white/10 text-white border-white hover:bg-white/20 flex-1 sm:flex-none"
               >
                 {formData.published ? (
                   <>
-                    <Eye className="w-4 h-4 mr-2" />
-                    Published
+                    <Eye className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Published</span>
                   </>
                 ) : (
                   <>
-                    <EyeOff className="w-4 h-4 mr-2" />
-                    Draft
+                    <EyeOff className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Draft</span>
                   </>
                 )}
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={saveProgrammeMutation.isPending}
-                className="bg-[#7413dc] hover:bg-[#5c0fb0]"
+                className="bg-[#7413dc] hover:bg-[#5c0fb0] flex-1 sm:flex-none"
               >
-                <Save className="w-4 h-4 mr-2" />
-                Save Meeting
+                <Save className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Save Meeting</span>
               </Button>
             </div>
           </div>
@@ -258,32 +258,34 @@ export default function MeetingDetail() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="plan" className="space-y-6">
-          <TabsList className="bg-white border grid grid-cols-3 md:grid-cols-6 gap-1 md:gap-0">
-            <TabsTrigger value="plan" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4 py-2">
-              <Calendar className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Plan</span>
-            </TabsTrigger>
-            <TabsTrigger value="todo" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4 py-2">
-              <ListTodo className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">To Do</span>
-            </TabsTrigger>
-            <TabsTrigger value="attendance" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4 py-2">
-              <Users className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Attendance</span>
-            </TabsTrigger>
-            <TabsTrigger value="parent" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4 py-2">
-              <Eye className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Parent</span>
-            </TabsTrigger>
-            <TabsTrigger value="risk" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4 py-2">
-              <Shield className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Risk</span>
-            </TabsTrigger>
-            <TabsTrigger value="badges" className="flex flex-col md:flex-row items-center gap-1 md:gap-2 px-2 md:px-4 py-2">
-              <Award className="w-4 h-4 flex-shrink-0" />
-              <span className="text-xs md:text-sm">Badges</span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="bg-white border inline-flex min-w-full sm:grid sm:grid-cols-6 gap-1">
+              <TabsTrigger value="plan" className="flex flex-col items-center gap-1 px-3 py-2 whitespace-nowrap">
+                <Calendar className="w-4 h-4 flex-shrink-0" />
+                <span className="text-xs">Plan</span>
+              </TabsTrigger>
+              <TabsTrigger value="todo" className="flex flex-col items-center gap-1 px-3 py-2 whitespace-nowrap">
+                <ListTodo className="w-4 h-4 flex-shrink-0" />
+                <span className="text-xs">To Do</span>
+              </TabsTrigger>
+              <TabsTrigger value="attendance" className="flex flex-col items-center gap-1 px-3 py-2 whitespace-nowrap">
+                <Users className="w-4 h-4 flex-shrink-0" />
+                <span className="text-xs">Attend</span>
+              </TabsTrigger>
+              <TabsTrigger value="parent" className="flex flex-col items-center gap-1 px-3 py-2 whitespace-nowrap">
+                <Eye className="w-4 h-4 flex-shrink-0" />
+                <span className="text-xs">Parent</span>
+              </TabsTrigger>
+              <TabsTrigger value="risk" className="flex flex-col items-center gap-1 px-3 py-2 whitespace-nowrap">
+                <Shield className="w-4 h-4 flex-shrink-0" />
+                <span className="text-xs">Risk</span>
+              </TabsTrigger>
+              <TabsTrigger value="badges" className="flex flex-col items-center gap-1 px-3 py-2 whitespace-nowrap">
+                <Award className="w-4 h-4 flex-shrink-0" />
+                <span className="text-xs">Badges</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="todo" className="space-y-6">
             <TodoSection programmeId={existingProgramme?.id} />
@@ -319,9 +321,9 @@ export default function MeetingDetail() {
 
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <CardTitle>Activities</CardTitle>
-                  <Button onClick={handleAddActivity} size="sm" variant="outline">
+                  <Button onClick={handleAddActivity} size="sm" variant="outline" className="w-full sm:w-auto">
                     <Plus className="w-4 h-4 mr-2" />
                     Add Activity
                   </Button>
@@ -329,9 +331,9 @@ export default function MeetingDetail() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {formData.activities.map((activity, index) => (
-                  <div key={index} className="p-4 border rounded-lg space-y-3">
+                  <div key={index} className="p-3 sm:p-4 border rounded-lg space-y-3">
                     <div className="flex items-center justify-between mb-2">
-                      <Label>Activity {index + 1}</Label>
+                      <Label className="text-sm sm:text-base">Activity {index + 1}</Label>
                       {formData.activities.length > 1 && (
                         <Button
                           onClick={() => handleRemoveActivity(index)}
@@ -343,17 +345,17 @@ export default function MeetingDetail() {
                         </Button>
                       )}
                     </div>
-                    <div className="grid md:grid-cols-3 gap-4">
+                    <div className="grid gap-4 sm:grid-cols-3">
                       <div className="space-y-2">
-                        <Label>Time</Label>
+                        <Label className="text-sm">Time</Label>
                         <Input
                           value={activity.time}
                           onChange={(e) => handleActivityChange(index, 'time', e.target.value)}
                           placeholder="e.g., 6:15pm"
                         />
                       </div>
-                      <div className="md:col-span-2 space-y-2">
-                        <Label>Activity</Label>
+                      <div className="sm:col-span-2 space-y-2">
+                        <Label className="text-sm">Activity</Label>
                         <Input
                           value={activity.activity}
                           onChange={(e) => handleActivityChange(index, 'activity', e.target.value)}
@@ -402,10 +404,76 @@ export default function MeetingDetail() {
             
             <Card>
               <CardHeader>
-                <CardTitle>Mark Attendance</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">Mark Attendance</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
+                {/* Mobile View */}
+                <div className="md:hidden space-y-4">
+                  {members.map(member => {
+                    const status = getAttendanceStatus(member.id);
+                    return (
+                      <div key={member.id} className="p-4 border rounded-lg space-y-3 bg-gray-50">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 bg-[#7413dc] rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                            {member.full_name.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-medium">{member.full_name}</p>
+                            {member.patrol && (
+                              <p className="text-sm text-gray-500">{member.patrol}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant={status === 'present' ? 'default' : 'outline'}
+                            onClick={() => handleAttendanceChange(member.id, 'present')}
+                            className={`flex-1 ${status === 'present' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                          >
+                            Present
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={status === 'absent' ? 'default' : 'outline'}
+                            onClick={() => handleAttendanceChange(member.id, 'absent')}
+                            className={`flex-1 ${status === 'absent' ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                          >
+                            Absent
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={status === 'apologies' ? 'default' : 'outline'}
+                            onClick={() => handleAttendanceChange(member.id, 'apologies')}
+                            className={`flex-1 ${status === 'apologies' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}`}
+                          >
+                            Apologies
+                          </Button>
+                        </div>
+                        {actionsRequired.length > 0 && (
+                          <div className="space-y-2 pt-2 border-t">
+                            {actionsRequired.map(action => {
+                              const response = getActionResponse(action.id, member.id);
+                              return (
+                                <div key={action.id} className="flex justify-between items-center">
+                                  <span className="text-sm text-gray-600">{action.column_title}:</span>
+                                  {response ? (
+                                    <span className="text-sm font-medium text-gray-700">{response}</span>
+                                  ) : (
+                                    <span className="text-sm text-red-600">Awaiting...</span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop View */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full border-collapse">
                     <thead>
                       <tr className="border-b">

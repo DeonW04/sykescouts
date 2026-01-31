@@ -157,49 +157,42 @@ export default function EventDetail() {
             Back to Events
           </Button>
           
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold">{event.title}</h1>
-              <div className="flex items-center gap-4 mt-2 text-white/80">
-                <span>{format(new Date(event.start_date), 'EEEE, MMMM d, yyyy')}</span>
+          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold">{event.title}</h1>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-2 text-white/80 text-sm sm:text-base">
+                <span>{format(new Date(event.start_date), 'EEE, MMM d, yyyy')}</span>
                 {event.end_date && event.end_date !== event.start_date && (
-                  <span>to {format(new Date(event.end_date), 'EEEE, MMMM d, yyyy')}</span>
+                  <span>to {format(new Date(event.end_date), 'EEE, MMM d, yyyy')}</span>
                 )}
-                {event.location && <span>• {event.location}</span>}
-                {event.type === 'Camp' && <span>• {formData.nights_away_count} night{formData.nights_away_count !== 1 ? 's' : ''} away</span>}
+                {event.location && <span className="hidden sm:inline">• {event.location}</span>}
+                {event.type === 'Camp' && <span className="hidden sm:inline">• {formData.nights_away_count} night{formData.nights_away_count !== 1 ? 's' : ''} away</span>}
               </div>
+              {event.location && <div className="sm:hidden text-white/80 text-sm mt-1">{event.location}</div>}
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 onClick={togglePublished}
-                className="bg-white/10 text-white border-white hover:bg-white/20"
+                className="bg-white/10 text-white border-white hover:bg-white/20 flex-1 sm:flex-none"
               >
-                {event.published ? (
-                  <>
-                    <Eye className="w-4 h-4 mr-2" />
-                    Published
-                  </>
-                ) : (
-                  <>
-                    <EyeOff className="w-4 h-4 mr-2" />
-                    Draft
-                  </>
-                )}
+                <Eye className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{event.published ? 'Published' : 'Draft'}</span>
               </Button>
               <Button
                 onClick={() => setShowEditDialog(true)}
-                className="bg-white text-[#7413dc] hover:bg-gray-100"
+                className="bg-white text-[#7413dc] hover:bg-gray-100 flex-1 sm:flex-none"
               >
-                Edit Details
+                <span className="sm:hidden">Edit</span>
+                <span className="hidden sm:inline">Edit Details</span>
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={updateEventMutation.isPending}
-                className="bg-[#004851] hover:bg-[#003840]"
+                className="bg-[#004851] hover:bg-[#003840] flex-1 sm:flex-none"
               >
-                <Save className="w-4 h-4 mr-2" />
-                Save Plan
+                <Save className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Save Plan</span>
               </Button>
             </div>
           </div>
@@ -208,13 +201,15 @@ export default function EventDetail() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="details" className="space-y-6">
-          <TabsList className="bg-white border grid grid-cols-5">
-            <TabsTrigger value="details">Overview</TabsTrigger>
-            <TabsTrigger value="planning">Planning</TabsTrigger>
-            <TabsTrigger value="attendees">Attendees</TabsTrigger>
-            <TabsTrigger value="parent">Parent Portal</TabsTrigger>
-            <TabsTrigger value="badges">Badges</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="bg-white border inline-flex min-w-full sm:grid sm:grid-cols-5 gap-1">
+              <TabsTrigger value="details" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Overview</TabsTrigger>
+              <TabsTrigger value="planning" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Planning</TabsTrigger>
+              <TabsTrigger value="attendees" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Attendees</TabsTrigger>
+              <TabsTrigger value="parent" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Parent</TabsTrigger>
+              <TabsTrigger value="badges" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Badges</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="details" className="space-y-6">
             <Card>
@@ -260,16 +255,18 @@ export default function EventDetail() {
 
           <TabsContent value="planning" className="space-y-6">
             <Tabs defaultValue="schedule" className="space-y-6">
-              <TabsList className="bg-white border grid grid-cols-4">
-                <TabsTrigger value="schedule">Schedule</TabsTrigger>
-                <TabsTrigger value="todo">To Do</TabsTrigger>
-                <TabsTrigger value="risk">Risk</TabsTrigger>
-                <TabsTrigger value="equipment">Equipment</TabsTrigger>
-              </TabsList>
+              <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                <TabsList className="bg-white border inline-flex min-w-full sm:grid sm:grid-cols-4 gap-1">
+                  <TabsTrigger value="schedule" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Schedule</TabsTrigger>
+                  <TabsTrigger value="todo" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">To Do</TabsTrigger>
+                  <TabsTrigger value="risk" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Risk</TabsTrigger>
+                  <TabsTrigger value="equipment" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Equipment</TabsTrigger>
+                </TabsList>
+              </div>
 
               <TabsContent value="schedule" className="space-y-6">
                 <div className="flex justify-end mb-4">
-                  <Button onClick={handleAddDay} size="sm" variant="outline">
+                  <Button onClick={handleAddDay} size="sm" variant="outline" className="w-full sm:w-auto">
                     <Plus className="w-4 h-4 mr-2" />
                     Add Day
                   </Button>
@@ -278,12 +275,12 @@ export default function EventDetail() {
                 {formData.schedule_by_day.map((day, dayIndex) => (
                   <Card key={dayIndex}>
                     <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 flex-1">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
                           <Input
                             value={day.day_name}
                             onChange={(e) => handleDayNameChange(dayIndex, e.target.value)}
-                            className="max-w-xs font-semibold"
+                            className="max-w-full sm:max-w-xs font-semibold"
                             placeholder="Day name"
                           />
                           {formData.schedule_by_day.length > 1 && (
@@ -291,14 +288,14 @@ export default function EventDetail() {
                               onClick={() => handleRemoveDay(dayIndex)}
                               size="sm"
                               variant="ghost"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 w-full sm:w-auto"
                             >
                               <Trash2 className="w-4 h-4 mr-2" />
                               Remove Day
                             </Button>
                           )}
                         </div>
-                        <Button onClick={() => handleAddScheduleItem(dayIndex)} size="sm" variant="outline">
+                        <Button onClick={() => handleAddScheduleItem(dayIndex)} size="sm" variant="outline" className="w-full sm:w-auto">
                           <Plus className="w-4 h-4 mr-2" />
                           Add Item
                         </Button>
@@ -306,9 +303,9 @@ export default function EventDetail() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {day.items.map((item, itemIndex) => (
-                        <div key={itemIndex} className="p-4 border rounded-lg space-y-3 bg-gray-50">
+                        <div key={itemIndex} className="p-3 sm:p-4 border rounded-lg space-y-3 bg-gray-50">
                           <div className="flex items-center justify-between mb-2">
-                            <Label>Item {itemIndex + 1}</Label>
+                            <Label className="text-sm sm:text-base">Item {itemIndex + 1}</Label>
                             {day.items.length > 1 && (
                               <Button
                                 onClick={() => handleRemoveScheduleItem(dayIndex, itemIndex)}
@@ -320,17 +317,17 @@ export default function EventDetail() {
                               </Button>
                             )}
                           </div>
-                          <div className="grid md:grid-cols-3 gap-4">
+                          <div className="grid gap-4 sm:grid-cols-3">
                             <div className="space-y-2">
-                              <Label>Time</Label>
+                              <Label className="text-sm">Time</Label>
                               <Input
                                 value={item.time}
                                 onChange={(e) => handleScheduleChange(dayIndex, itemIndex, 'time', e.target.value)}
                                 placeholder="e.g., 9:00am"
                               />
                             </div>
-                            <div className="md:col-span-2 space-y-2">
-                              <Label>Activity</Label>
+                            <div className="sm:col-span-2 space-y-2">
+                              <Label className="text-sm">Activity</Label>
                               <Input
                                 value={item.activity}
                                 onChange={(e) => handleScheduleChange(dayIndex, itemIndex, 'activity', e.target.value)}
@@ -339,7 +336,7 @@ export default function EventDetail() {
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <Label>Notes</Label>
+                            <Label className="text-sm">Notes</Label>
                             <Textarea
                               value={item.notes}
                               onChange={(e) => handleScheduleChange(dayIndex, itemIndex, 'notes', e.target.value)}
@@ -363,42 +360,6 @@ export default function EventDetail() {
               </TabsContent>
 
               <TabsContent value="equipment" className="space-y-6">
-                {event.type === 'Camp' && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Nights Away</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <Label>Number of nights away</Label>
-                          <Input
-                            type="number"
-                            min="0"
-                            value={formData.nights_away_count}
-                            onChange={(e) => setFormData({ ...formData, nights_away_count: parseInt(e.target.value) || 0 })}
-                            className="mt-2 max-w-xs"
-                          />
-                          <p className="text-sm text-gray-500 mt-2">
-                            This will be added to each attendee's total nights away count when badges are awarded.
-                          </p>
-                        </div>
-                        {event.start_date && event.end_date && event.end_date !== event.start_date && (
-                          <p className="text-xs text-gray-400">
-                            Auto-calculated: {(() => {
-                              const start = new Date(event.start_date);
-                              const end = new Date(event.end_date);
-                              const diffTime = Math.abs(end - start);
-                              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                              return diffDays;
-                            })()} nights (edit above to override)
-                          </p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-                
                 <Card>
                   <CardHeader>
                     <CardTitle>Equipment List</CardTitle>
@@ -438,7 +399,42 @@ export default function EventDetail() {
             <EventParentPortalSection eventId={eventId} event={event} />
           </TabsContent>
 
-          <TabsContent value="badges">
+          <TabsContent value="badges" className="space-y-6">
+            {event.type === 'Camp' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Nights Away</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Number of nights away</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={formData.nights_away_count}
+                        onChange={(e) => setFormData({ ...formData, nights_away_count: parseInt(e.target.value) || 0 })}
+                        className="mt-2 max-w-xs"
+                      />
+                      <p className="text-sm text-gray-500 mt-2">
+                        This will be added to each attendee's total nights away count when badges are awarded.
+                      </p>
+                    </div>
+                    {event.start_date && event.end_date && event.end_date !== event.start_date && (
+                      <p className="text-xs text-gray-400">
+                        Auto-calculated: {(() => {
+                          const start = new Date(event.start_date);
+                          const end = new Date(event.end_date);
+                          const diffTime = Math.abs(end - start);
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          return diffDays;
+                        })()} nights (edit above to override)
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             <ProgrammeBadgeCriteriaSection programmeId={eventId} entityType="event" />
           </TabsContent>
 
