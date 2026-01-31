@@ -75,7 +75,7 @@ export default function ReceiptUploader() {
 
   const uploadMutation = useMutation({
     mutationFn: async (data) => {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: uploadFile });
       const receiptId = generateReceiptId();
       return base44.entities.Receipt.create({
         receipt_id: receiptId,
