@@ -20,31 +20,56 @@ export default function SendEmailDialog({ open, onClose, page }) {
     queryFn: async () => {
       // Fetch parent emails from members (accessible to leaders)
       const members = await base44.entities.Member.filter({ active: true });
-      const uniqueEmails = new Set();
+      const leaders = await base44.entities.Leader.filter({});
       const userMap = new Map();
       
+      // Add parents
       members.forEach(member => {
         if (member.parent_one_email) {
-          uniqueEmails.add(member.parent_one_email);
           if (!userMap.has(member.parent_one_email)) {
             userMap.set(member.parent_one_email, {
               id: `parent_${member.parent_one_email}`,
               email: member.parent_one_email,
               full_name: member.parent_one_name || 'Parent',
+              sections: [],
+              isLeader: false,
             });
+          }
+          if (member.section_id && !userMap.get(member.parent_one_email).sections.includes(member.section_id)) {
+            userMap.get(member.parent_one_email).sections.push(member.section_id);
           }
         }
         if (member.parent_two_email) {
-          uniqueEmails.add(member.parent_two_email);
           if (!userMap.has(member.parent_two_email)) {
             userMap.set(member.parent_two_email, {
               id: `parent_${member.parent_two_email}`,
               email: member.parent_two_email,
               full_name: member.parent_two_name || 'Parent',
+              sections: [],
+              isLeader: false,
             });
+          }
+          if (member.section_id && !userMap.get(member.parent_two_email).sections.includes(member.section_id)) {
+            userMap.get(member.parent_two_email).sections.push(member.section_id);
           }
         }
       });
+      
+      // Add leaders
+      for (const leader of leaders) {
+        if (leader.user_id) {
+          const leaderUser = await base44.entities.User.filter({ id: leader.user_id }).then(u => u[0]);
+          if (leaderUser && !userMap.has(leaderUser.email)) {
+            userMap.set(leaderUser.email, {
+              id: `leader_${leaderUser.email}`,
+              email: leaderUser.email,
+              full_name: leader.display_name || leaderUser.full_name || 'Leader',
+              sections: leader.section_ids || [],
+              isLeader: true,
+            });
+          }
+        }
+      }
       
       return Array.from(userMap.values());
     },
@@ -65,24 +90,8 @@ export default function SendEmailDialog({ open, onClose, page }) {
     queryFn: () => base44.entities.Section.filter({ active: true }),
   });
 
-  // Create a map of users with section info
-  const usersWithSections = allUsers.map(user => {
-    const parent = parents.find(p => p.user_id === user.id);
-    let userSections = [];
-    
-    if (parent) {
-      // Find members related to this parent
-      const relatedMembers = members.filter(m => 
-        m.parent_one_email === user.email || m.parent_two_email === user.email
-      );
-      userSections = [...new Set(relatedMembers.map(m => m.section_id))];
-    }
-
-    return {
-      ...user,
-      sections: userSections,
-    };
-  });
+  // Users already have section info from the query
+  const usersWithSections = allUsers;
 
   // Filter users
   const filteredUsers = usersWithSections.filter(user => {
@@ -184,14 +193,14 @@ export default function SendEmailDialog({ open, onClose, page }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] sm:max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>Send as Email</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Filters */}
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <div className="flex-1">
               <Input
                 placeholder="Search by name or email..."
@@ -201,7 +210,7 @@ export default function SendEmailDialog({ open, onClose, page }) {
               />
             </div>
             <Select value={sectionFilter} onValueChange={setSectionFilter}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filter by section" />
               </SelectTrigger>
               <SelectContent>
@@ -236,21 +245,29 @@ export default function SendEmailDialog({ open, onClose, page }) {
             ) : (
               <div className="divide-y">
                 {filteredUsers.map(user => (
-                  <div key={user.id} className="flex items-center gap-3 p-3 hover:bg-gray-50">
+                  <div key={user.id} className="flex items-start gap-2 sm:gap-3 p-3 hover:bg-gray-50">
                     <Checkbox
                       checked={selectedUsers.has(user.id)}
                       onCheckedChange={() => toggleUser(user.id)}
+                      className="mt-1 flex-shrink-0"
                     />
-                    <div className="flex-1">
-                      <p className="font-medium">{user.full_name}</p>
-                      <p className="text-sm text-gray-600">{user.email}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium truncate">{user.full_name}</p>
+                        {user.isLeader && (
+                          <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded flex-shrink-0">
+                            Leader
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 truncate">{user.email}</p>
                       {user.sections.length > 0 && (
-                        <div className="flex gap-1 mt-1">
+                        <div className="flex gap-1 mt-1 flex-wrap">
                           {user.sections.map(sectionId => {
                             const section = sections.find(s => s.id === sectionId);
                             return section ? (
                               <span key={sectionId} className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                                {section.name}
+                                {section.display_name || section.name}
                               </span>
                             ) : null;
                           })}
