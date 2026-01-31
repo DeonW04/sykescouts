@@ -53,14 +53,14 @@ export default function ReceiptManagement() {
     return section ? section.display_name : '';
   };
 
-  const filteredReceipts = receipts.filter(receipt => {
+  const filteredReceipts = (receipts || []).filter(receipt => {
     if (sectionFilter !== 'all' && receipt.section_id !== sectionFilter) return false;
     if (typeFilter === 'generic' && !receipt.is_generic_expense) return false;
     if (typeFilter === 'meeting' && receipt.is_generic_expense) return false;
     return true;
   });
 
-  const totalAmount = filteredReceipts.reduce((sum, r) => sum + r.amount, 0);
+  const totalAmount = filteredReceipts.reduce((sum, r) => sum + (r.amount || 0), 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -96,7 +96,7 @@ export default function ReceiptManagement() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Sections</SelectItem>
-                  {sections.map(section => (
+                  {(sections || []).map(section => (
                     <SelectItem key={section.id} value={section.id}>
                       {section.display_name}
                     </SelectItem>
