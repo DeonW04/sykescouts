@@ -21,6 +21,7 @@ import RiskAssessmentSection from '../components/meeting/RiskAssessmentSection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
 import LeaderNav from '../components/leader/LeaderNav';
 import MobileTabSelector from '../components/ui/mobile-tab-selector';
+import MobileTabCarousel from '../components/ui/mobile-tab-carousel';
 
 export default function EventDetail() {
   const navigate = useNavigate();
@@ -269,7 +270,7 @@ export default function EventDetail() {
           </TabsContent>
 
           <TabsContent value="planning" className="space-y-6">
-            <MobileTabSelector
+            <MobileTabCarousel
               tabs={[
                 { value: 'schedule', label: 'Schedule', icon: <Calendar /> },
                 { value: 'todo', label: 'To Do', icon: <ListTodo /> },

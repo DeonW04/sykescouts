@@ -15,12 +15,9 @@ export default function MobileTabSelector({ tabs, value, onValueChange }) {
                 {React.cloneElement(currentTab.icon, { className: "w-5 h-5 text-white" })}
               </div>
             )}
-            <div className="text-left flex-1">
-              <p className="text-xs text-gray-500 font-medium">Current Section</p>
-              <p className="text-base font-semibold text-gray-900">{currentTab?.label}</p>
-            </div>
+            <p className="text-base font-semibold text-gray-900 flex-1">{currentTab?.label}</p>
+            <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
           </div>
-          <ChevronDown className="w-5 h-5 text-gray-400" />
         </SelectTrigger>
         <SelectContent className="w-[var(--radix-select-trigger-width)]">
           {tabs.map((tab) => (
