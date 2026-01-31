@@ -319,27 +319,39 @@ export default function LeaderGallery() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <Card className="mb-6">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Upload Photos</CardTitle>
-            <div>
-              <input
-                type="file"
-                id="photo-upload"
-                accept="image/jpeg,image/png,image/webp"
-                multiple
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <Button asChild>
-                <label htmlFor="photo-upload" className="cursor-pointer">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Photos
-                </label>
-              </Button>
+        <input
+          type="file"
+          id="photo-upload"
+          accept="image/jpeg,image/png,image/webp"
+          multiple
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+        <label 
+          htmlFor="photo-upload" 
+          className="block mb-8 cursor-pointer group"
+        >
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-600 p-1 hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
+            <div className="bg-white rounded-xl p-8 md:p-12 text-center">
+              <div className="inline-flex items-center justify-center w-20 h-20 mb-4 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 group-hover:scale-110 transition-transform duration-300">
+                <Upload className="h-10 w-10 text-white" />
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                Upload Photos
+              </h2>
+              <p className="text-gray-600 text-lg mb-4">
+                Add photos from camps, events, and meetings
+              </p>
+              <div className="inline-flex items-center gap-2 text-purple-600 font-semibold text-lg">
+                <span>Click to select photos</span>
+                <Upload className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </div>
+              <p className="text-sm text-gray-500 mt-4">
+                Supports JPEG, PNG, WebP up to 10MB
+              </p>
             </div>
-          </CardHeader>
-        </Card>
+          </div>
+        </label>
 
         {/* Category Buttons */}
         <div className="grid grid-cols-3 gap-4 mb-8">
