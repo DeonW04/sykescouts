@@ -17,9 +17,9 @@ export default function ParentPortal() {
     queryFn: () => base44.entities.Member.filter({ active: true }),
   });
 
-  const { data: users = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => base44.entities.User.filter({}),
+  const { data: parents = [] } = useQuery({
+    queryKey: ['parents'],
+    queryFn: () => base44.entities.Parent.filter({}),
   });
 
   const sendInviteMutation = useMutation({
@@ -32,7 +32,7 @@ export default function ParentPortal() {
     },
     onSuccess: () => {
       toast.success('Invitation sent successfully!');
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['parents'] });
     },
     onError: (error) => {
       toast.error('Failed to send invitation: ' + error.message);
@@ -61,10 +61,21 @@ export default function ParentPortal() {
     return Math.round((completedFields / requiredFields.length) * 100);
   };
 
-  // Check if parent is registered
+  // Check if parent is registered (has a Parent entity record)
   const isParentRegistered = (email) => {
     if (!email) return false;
-    return users.some(user => user.email.toLowerCase() === email.toLowerCase());
+    // A parent is registered if they have a Parent entity created
+    // This is created when they complete registration in the parent portal
+    return parents.some(parent => {
+      const member = members.find(m => 
+        m.parent_one_email?.toLowerCase() === email.toLowerCase() ||
+        m.parent_two_email?.toLowerCase() === email.toLowerCase()
+      );
+      if (!member) return false;
+      return parent.user_id && members.some(m => 
+        m.parent_ids?.includes(parent.id)
+      );
+    });
   };
 
   // Calculate statistics
