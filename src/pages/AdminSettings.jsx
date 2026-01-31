@@ -8,13 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Users, Shield, Mail, Edit, Image, Upload, X, Award, Download } from 'lucide-react';
+import { Settings, Users, Shield, Mail, Edit, Image, Upload, X, Award, Download, Receipt } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ReceiptManagement from '../components/admin/ReceiptManagement';
 
 export default function AdminSettings() {
   const navigate = useNavigate();
@@ -336,6 +337,7 @@ export default function AdminSettings() {
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="images">Website Images</TabsTrigger>
             <TabsTrigger value="badges">Badge System</TabsTrigger>
+            <TabsTrigger value="receipts">Receipts</TabsTrigger>
             <TabsTrigger value="export">Data</TabsTrigger>
           </TabsList>
 
@@ -589,6 +591,10 @@ export default function AdminSettings() {
                 </Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="receipts">
+            <ReceiptManagement />
           </TabsContent>
 
           <TabsContent value="export">

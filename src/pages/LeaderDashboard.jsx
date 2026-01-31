@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, CheckSquare, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays } from 'lucide-react';
+import { Users, Calendar, Award, CheckSquare, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -367,6 +367,21 @@ export default function LeaderDashboard() {
         >
           <UpcomingMeetings sections={sections} />
           <BadgesDue sections={sections} />
+        </motion.div>
+
+        {/* Receipt Uploader Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="fixed bottom-6 right-6 z-50"
+        >
+          <Link to={createPageUrl('ReceiptUploader')}>
+            <Button className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg h-14 px-6 text-base">
+              <Receipt className="w-5 h-5 mr-2" />
+              Upload Receipt
+            </Button>
+          </Link>
         </motion.div>
       </div>
     </div>
