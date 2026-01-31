@@ -75,8 +75,12 @@ export default function ReceiptUploader() {
 
   const uploadMutation = useMutation({
     mutationFn: async (data) => {
+      if (!uploadFile) throw new Error('No file selected');
+      if (!leader?.id) throw new Error('Leader information not found');
+      
       const { file_url } = await base44.integrations.Core.UploadFile({ file: uploadFile });
       const receiptId = generateReceiptId();
+      
       return base44.entities.Receipt.create({
         receipt_id: receiptId,
         receipt_image_url: file_url,
@@ -85,7 +89,7 @@ export default function ReceiptUploader() {
         is_generic_expense: data.is_generic,
         notes: data.notes,
         leader_id: leader.id,
-        leader_name: user.full_name,
+        leader_name: leader.display_name || 'Admin',
         status: 'pending',
       });
     },
@@ -94,6 +98,9 @@ export default function ReceiptUploader() {
       toast.success('Receipt uploaded successfully');
       setShowUploadDialog(false);
       resetForm();
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to upload receipt');
     },
   });
 
