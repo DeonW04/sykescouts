@@ -45,7 +45,7 @@ export default function LeaderNav() {
       className="bg-white border-b border-gray-200 shadow-sm sticky top-20 z-40"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between md:h-16 py-3 md:py-0 gap-3 md:gap-0">
           <div className="hidden md:flex items-center gap-2">
             <Button
               variant="ghost"
@@ -66,7 +66,7 @@ export default function LeaderNav() {
             </Link>
           </div>
 
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center justify-center gap-2 md:gap-1">
             {navItems.map((item, index) => {
               const isActive = item.dropdown 
                 ? item.dropdown.some(sub => currentPage === sub.page)
