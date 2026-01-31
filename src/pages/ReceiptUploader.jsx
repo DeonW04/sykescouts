@@ -39,7 +39,7 @@ export default function ReceiptUploader() {
     queryFn: async () => {
       if (!user?.id) return null;
       const leaders = await base44.entities.Leader.filter({ user_id: user.id });
-      return leaders[0];
+      return leaders[0] || null;
     },
     enabled: !!user?.id,
   });
