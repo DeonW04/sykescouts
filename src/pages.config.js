@@ -99,6 +99,8 @@ import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
 import WeeklyMessage from './pages/WeeklyMessage';
 import WeeklyMessageList from './pages/WeeklyMessageList';
+import UploadReceipt from './pages/UploadReceipt';
+import ReceiptManagement from './pages/ReceiptManagement';
 import __Layout from './Layout.jsx';
 
 
@@ -155,6 +157,8 @@ export const PAGES = {
     "Volunteer": Volunteer,
     "WeeklyMessage": WeeklyMessage,
     "WeeklyMessageList": WeeklyMessageList,
+    "UploadReceipt": UploadReceipt,
+    "ReceiptManagement": ReceiptManagement,
 }
 
 export const pagesConfig = {
