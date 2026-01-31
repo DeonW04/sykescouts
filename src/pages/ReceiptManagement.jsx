@@ -42,11 +42,13 @@ export default function ReceiptManagement() {
   });
 
   const getProgrammeTitle = (programmeId) => {
+    if (!programmes || !programmeId) return 'Unknown';
     const programme = programmes.find(p => p.id === programmeId);
     return programme ? programme.title : 'Unknown';
   };
 
   const getSectionName = (sectionId) => {
+    if (!sections || !sectionId) return '';
     const section = sections.find(s => s.id === sectionId);
     return section ? section.display_name : '';
   };
