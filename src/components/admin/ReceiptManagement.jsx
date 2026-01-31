@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Edit, Trash2 } from 'lucide-react';
+import { Search, Edit, Trash2, Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,6 +17,7 @@ export default function ReceiptManagement() {
   const [selectedLeader, setSelectedLeader] = useState('all');
   const [statusDialog, setStatusDialog] = useState(null);
   const [editReceipt, setEditReceipt] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -111,45 +112,57 @@ export default function ReceiptManagement() {
           {sortedReceipts.map((receipt) => (
             <Card key={receipt.id}>
               <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <div className="flex items-center gap-3 flex-wrap flex-1 min-w-0">
-                    <Badge variant="outline" className="font-mono">
-                      {receipt.receipt_id}
-                    </Badge>
-                    <span className="font-semibold">£{receipt.value.toFixed(2)}</span>
-                    <span className="text-sm text-gray-600">{receipt.leader_name}</span>
-                    <Badge
-                      variant={receipt.status === 'reimbursed' ? 'default' : 'secondary'}
-                      className="cursor-pointer"
-                      onClick={() => setStatusDialog(receipt)}
-                    >
-                      {receipt.status === 'reimbursed' ? 'Reimbursed' : 'Pending'}
-                    </Badge>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setEditReceipt({ ...receipt })}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (confirm('Delete this receipt?')) {
-                          deleteMutation.mutate(receipt.id);
-                        }
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </Button>
-                  </div>
+                <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto_auto] gap-3 items-center">
+                  <Badge variant="outline" className="font-mono text-xs">
+                    {receipt.receipt_id}
+                  </Badge>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setImagePreview(receipt.receipt_image_url)}
+                    className="justify-start px-2 h-8"
+                  >
+                    <Eye className="w-4 h-4 mr-1" />
+                    <span className="text-xs">View</span>
+                  </Button>
+                  
+                  <span className="font-semibold text-sm whitespace-nowrap">£{receipt.value.toFixed(2)}</span>
+                  
+                  <Badge
+                    variant={receipt.status === 'reimbursed' ? 'default' : 'secondary'}
+                    className="cursor-pointer text-xs"
+                    onClick={() => setStatusDialog(receipt)}
+                  >
+                    {receipt.status === 'reimbursed' ? 'Reimbursed' : 'Pending'}
+                  </Badge>
+                  
+                  <span className="text-xs text-gray-600 whitespace-nowrap">
+                    {receipt.leader_name}
+                  </span>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setEditReceipt({ ...receipt })}
+                    className="h-8 w-8"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      if (confirm('Delete this receipt?')) {
+                        deleteMutation.mutate(receipt.id);
+                      }
+                    }}
+                    className="h-8 w-8"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
                 </div>
-                {receipt.notes && (
-                  <p className="text-sm text-gray-600 mt-2">{receipt.notes}</p>
-                )}
               </CardContent>
             </Card>
           ))}
@@ -234,6 +247,20 @@ export default function ReceiptManagement() {
                 Save Changes
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Image Preview Dialog */}
+      {imagePreview && (
+        <Dialog open={!!imagePreview} onOpenChange={() => setImagePreview(null)}>
+          <DialogContent className="max-w-[95vw] sm:max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Receipt Image</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <img src={imagePreview} alt="Receipt" className="w-full h-auto rounded-lg" />
+            </div>
           </DialogContent>
         </Dialog>
       )}
