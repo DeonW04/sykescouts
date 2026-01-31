@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Upload, Search, Edit, X } from 'lucide-react';
+import { Upload, Search, Edit, X, Image, Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -26,6 +26,7 @@ export default function ReceiptUploader() {
   const [searchTerm, setSearchTerm] = useState('');
   const [editReceipt, setEditReceipt] = useState(null);
   const [meetingOpen, setMeetingOpen] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -207,25 +208,36 @@ export default function ReceiptUploader() {
             {filteredReceipts.map((receipt) => (
               <Card key={receipt.id}>
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant="outline" className="font-mono">
-                          {receipt.receipt_id}
-                        </Badge>
-                        <span className="font-semibold">£{receipt.value.toFixed(2)}</span>
-                        <Badge variant={receipt.status === 'reimbursed' ? 'default' : 'secondary'}>
-                          {receipt.status === 'reimbursed' ? 'Reimbursed' : 'Pending'}
-                        </Badge>
-                      </div>
-                      {receipt.notes && (
-                        <p className="text-sm text-gray-600 mt-1 truncate">{receipt.notes}</p>
-                      )}
-                    </div>
+                  <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-3 items-center">
+                    <Badge variant="outline" className="font-mono text-xs">
+                      {receipt.receipt_id}
+                    </Badge>
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setImagePreview(receipt.receipt_image_url)}
+                      className="justify-start px-2 h-8"
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      <span className="text-xs">View</span>
+                    </Button>
+                    
+                    <span className="font-semibold text-sm whitespace-nowrap">£{receipt.value.toFixed(2)}</span>
+                    
+                    <Badge variant={receipt.status === 'reimbursed' ? 'default' : 'secondary'} className="text-xs">
+                      {receipt.status === 'reimbursed' ? 'Reimbursed' : 'Pending'}
+                    </Badge>
+                    
+                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                      {receipt.leader_name}
+                    </span>
+                    
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => setEditReceipt({ ...receipt })}
+                      className="h-8 w-8"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -392,6 +404,20 @@ export default function ReceiptUploader() {
               </Button>
               <Button onClick={handleUpdate} className="w-full sm:w-auto">Save Changes</Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Image Preview Dialog */}
+      {imagePreview && (
+        <Dialog open={!!imagePreview} onOpenChange={() => setImagePreview(null)}>
+          <DialogContent className="max-w-[95vw] sm:max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Receipt Image</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <img src={imagePreview} alt="Receipt" className="w-full h-auto rounded-lg" />
+            </div>
           </DialogContent>
         </Dialog>
       )}
