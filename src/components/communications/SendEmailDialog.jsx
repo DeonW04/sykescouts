@@ -18,8 +18,35 @@ export default function SendEmailDialog({ open, onClose, page }) {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      const users = await base44.entities.User.filter({ role: 'user' });
-      return users;
+      // Fetch parent emails from members (accessible to leaders)
+      const members = await base44.entities.Member.filter({ active: true });
+      const uniqueEmails = new Set();
+      const userMap = new Map();
+      
+      members.forEach(member => {
+        if (member.parent_one_email) {
+          uniqueEmails.add(member.parent_one_email);
+          if (!userMap.has(member.parent_one_email)) {
+            userMap.set(member.parent_one_email, {
+              id: `parent_${member.parent_one_email}`,
+              email: member.parent_one_email,
+              full_name: member.parent_one_name || 'Parent',
+            });
+          }
+        }
+        if (member.parent_two_email) {
+          uniqueEmails.add(member.parent_two_email);
+          if (!userMap.has(member.parent_two_email)) {
+            userMap.set(member.parent_two_email, {
+              id: `parent_${member.parent_two_email}`,
+              email: member.parent_two_email,
+              full_name: member.parent_two_name || 'Parent',
+            });
+          }
+        }
+      });
+      
+      return Array.from(userMap.values());
     },
   });
 
