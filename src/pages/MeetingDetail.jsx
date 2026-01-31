@@ -20,6 +20,7 @@ import BadgesSection from '../components/meeting/BadgesSection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
 import LeaderRotaSection from '../components/meeting/LeaderRotaSection';
 import LeaderNav from '../components/leader/LeaderNav';
+import MobileTabSelector from '../components/ui/mobile-tab-selector';
 
 export default function MeetingDetail() {
   const navigate = useNavigate();
@@ -28,6 +29,8 @@ export default function MeetingDetail() {
   const sectionId = urlParams.get('section_id');
   const date = urlParams.get('date');
   const termId = urlParams.get('term_id');
+
+  const [activeTab, setActiveTab] = useState('plan');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -257,32 +260,45 @@ export default function MeetingDetail() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="plan" className="space-y-6">
-          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="bg-white border inline-flex min-w-full sm:grid sm:grid-cols-6 gap-1">
-              <TabsTrigger value="plan" className="flex flex-col items-center gap-1 px-3 py-2 whitespace-nowrap">
-                <Calendar className="w-4 h-4 flex-shrink-0" />
-                <span className="text-xs">Plan</span>
+        <MobileTabSelector
+          tabs={[
+            { value: 'plan', label: 'Plan', icon: <Calendar /> },
+            { value: 'todo', label: 'To Do', icon: <ListTodo /> },
+            { value: 'attendance', label: 'Attendance', icon: <Users /> },
+            { value: 'parent', label: 'Parent Portal', icon: <Eye /> },
+            { value: 'risk', label: 'Risk Assessment', icon: <Shield /> },
+            { value: 'badges', label: 'Badges', icon: <Award /> },
+          ]}
+          value={activeTab}
+          onValueChange={setActiveTab}
+        />
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <div className="hidden md:block">
+            <TabsList className="bg-white border grid grid-cols-6">
+              <TabsTrigger value="plan" className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                <span>Plan</span>
               </TabsTrigger>
-              <TabsTrigger value="todo" className="flex flex-col items-center gap-1 px-3 py-2 whitespace-nowrap">
-                <ListTodo className="w-4 h-4 flex-shrink-0" />
-                <span className="text-xs">To Do</span>
+              <TabsTrigger value="todo" className="flex items-center gap-2">
+                <ListTodo className="w-4 h-4" />
+                <span>To Do</span>
               </TabsTrigger>
-              <TabsTrigger value="attendance" className="flex flex-col items-center gap-1 px-3 py-2 whitespace-nowrap">
-                <Users className="w-4 h-4 flex-shrink-0" />
-                <span className="text-xs">Attend</span>
+              <TabsTrigger value="attendance" className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                <span>Attendance</span>
               </TabsTrigger>
-              <TabsTrigger value="parent" className="flex flex-col items-center gap-1 px-3 py-2 whitespace-nowrap">
-                <Eye className="w-4 h-4 flex-shrink-0" />
-                <span className="text-xs">Parent</span>
+              <TabsTrigger value="parent" className="flex items-center gap-2">
+                <Eye className="w-4 h-4" />
+                <span>Parent</span>
               </TabsTrigger>
-              <TabsTrigger value="risk" className="flex flex-col items-center gap-1 px-3 py-2 whitespace-nowrap">
-                <Shield className="w-4 h-4 flex-shrink-0" />
-                <span className="text-xs">Risk</span>
+              <TabsTrigger value="risk" className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                <span>Risk</span>
               </TabsTrigger>
-              <TabsTrigger value="badges" className="flex flex-col items-center gap-1 px-3 py-2 whitespace-nowrap">
-                <Award className="w-4 h-4 flex-shrink-0" />
-                <span className="text-xs">Badges</span>
+              <TabsTrigger value="badges" className="flex items-center gap-2">
+                <Award className="w-4 h-4" />
+                <span>Badges</span>
               </TabsTrigger>
             </TabsList>
           </div>

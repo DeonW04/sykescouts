@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Upload, FileText, Trash2, Download, Save, Eye, EyeOff, Plus } from 'lucide-react';
+import { ArrowLeft, Upload, FileText, Trash2, Download, Save, Eye, EyeOff, Plus, Calendar, Users, Award, ListTodo, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
@@ -20,6 +20,7 @@ import EventAttendeesSection from '../components/events/EventAttendeesSection';
 import RiskAssessmentSection from '../components/meeting/RiskAssessmentSection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
 import LeaderNav from '../components/leader/LeaderNav';
+import MobileTabSelector from '../components/ui/mobile-tab-selector';
 
 export default function EventDetail() {
   const navigate = useNavigate();
@@ -27,6 +28,8 @@ export default function EventDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const eventId = urlParams.get('id');
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('details');
+  const [activePlanningTab, setActivePlanningTab] = useState('schedule');
   
   const [formData, setFormData] = useState({
     schedule_by_day: [
@@ -200,14 +203,26 @@ export default function EventDetail() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="details" className="space-y-6">
-          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="bg-white border inline-flex min-w-full sm:grid sm:grid-cols-5 gap-1">
-              <TabsTrigger value="details" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Overview</TabsTrigger>
-              <TabsTrigger value="planning" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Planning</TabsTrigger>
-              <TabsTrigger value="attendees" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Attendees</TabsTrigger>
-              <TabsTrigger value="parent" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Parent</TabsTrigger>
-              <TabsTrigger value="badges" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Badges</TabsTrigger>
+        <MobileTabSelector
+          tabs={[
+            { value: 'details', label: 'Overview', icon: <FileText /> },
+            { value: 'planning', label: 'Planning', icon: <Calendar /> },
+            { value: 'attendees', label: 'Attendees', icon: <Users /> },
+            { value: 'parent', label: 'Parent Portal', icon: <Eye /> },
+            { value: 'badges', label: 'Badges', icon: <Award /> },
+          ]}
+          value={activeTab}
+          onValueChange={setActiveTab}
+        />
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <div className="hidden md:block">
+            <TabsList className="bg-white border grid grid-cols-5">
+              <TabsTrigger value="details">Overview</TabsTrigger>
+              <TabsTrigger value="planning">Planning</TabsTrigger>
+              <TabsTrigger value="attendees">Attendees</TabsTrigger>
+              <TabsTrigger value="parent">Parent Portal</TabsTrigger>
+              <TabsTrigger value="badges">Badges</TabsTrigger>
             </TabsList>
           </div>
 
@@ -254,13 +269,24 @@ export default function EventDetail() {
           </TabsContent>
 
           <TabsContent value="planning" className="space-y-6">
-            <Tabs defaultValue="schedule" className="space-y-6">
-              <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                <TabsList className="bg-white border inline-flex min-w-full sm:grid sm:grid-cols-4 gap-1">
-                  <TabsTrigger value="schedule" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Schedule</TabsTrigger>
-                  <TabsTrigger value="todo" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">To Do</TabsTrigger>
-                  <TabsTrigger value="risk" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Risk</TabsTrigger>
-                  <TabsTrigger value="equipment" className="whitespace-nowrap px-4 py-2 text-xs sm:text-sm">Equipment</TabsTrigger>
+            <MobileTabSelector
+              tabs={[
+                { value: 'schedule', label: 'Schedule', icon: <Calendar /> },
+                { value: 'todo', label: 'To Do', icon: <ListTodo /> },
+                { value: 'risk', label: 'Risk Assessment', icon: <Shield /> },
+                { value: 'equipment', label: 'Equipment', icon: <FileText /> },
+              ]}
+              value={activePlanningTab}
+              onValueChange={setActivePlanningTab}
+            />
+
+            <Tabs value={activePlanningTab} onValueChange={setActivePlanningTab} className="space-y-6">
+              <div className="hidden md:block">
+                <TabsList className="bg-white border grid grid-cols-4">
+                  <TabsTrigger value="schedule">Schedule</TabsTrigger>
+                  <TabsTrigger value="todo">To Do</TabsTrigger>
+                  <TabsTrigger value="risk">Risk</TabsTrigger>
+                  <TabsTrigger value="equipment">Equipment</TabsTrigger>
                 </TabsList>
               </div>
 
