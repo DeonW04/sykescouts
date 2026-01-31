@@ -118,29 +118,29 @@ export default function LeaderBadges() {
       <LeaderNav />
       <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-3">
               <Award className="w-8 h-8" />
               <div>
-                <h1 className="text-3xl font-bold">Badge Tracking</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold">Badge Tracking</h1>
                 <p className="mt-1 text-white/80">Track progress and manage badges</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               <Button
                 onClick={() => navigate(createPageUrl('AwardBadges'))}
-                className="bg-green-600 hover:bg-green-700 text-white"
+                className="bg-green-600 hover:bg-green-700 text-white flex-1 sm:flex-none"
               >
-                <Award className="w-4 h-4 mr-2" />
-                Award Badges
+                <Award className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Award Badges</span>
               </Button>
               <Button
                 onClick={() => navigate(createPageUrl('BadgeStockManagement'))}
                 variant="outline"
-                className="bg-green-600 border-white text-white hover:bg-white/20"
+                className="bg-green-600 border-white text-white hover:bg-white/20 flex-1 sm:flex-none"
               >
-                <Package className="w-4 h-4 mr-2" />
-                Manage Stock
+                <Package className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Manage Stock</span>
               </Button>
             </div>
           </div>
@@ -148,7 +148,56 @@ export default function LeaderBadges() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card className="mb-6">
+        {/* Mobile Filters */}
+        <Card className="mb-6 md:hidden">
+          <CardContent className="p-4">
+            <details className="group">
+              <summary className="cursor-pointer list-none flex items-center justify-between">
+                <span className="font-medium">Filters & Search</span>
+                <span className="text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div className="mt-4 space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search badges..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={sectionFilter} onValueChange={setSectionFilter}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All sections" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Sections</SelectItem>
+                    {sections.map(section => (
+                      <SelectItem key={section.id} value={section.name}>
+                        {section.display_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="challenge">Challenge</SelectItem>
+                    <SelectItem value="activity">Activity</SelectItem>
+                    <SelectItem value="staged">Staged</SelectItem>
+                    <SelectItem value="core">Core</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </details>
+          </CardContent>
+        </Card>
+
+        {/* Desktop Filters */}
+        <Card className="mb-6 hidden md:block">
           <CardContent className="p-4">
             <div className="flex gap-4">
               <div className="flex-1 relative">

@@ -68,7 +68,7 @@ export default function SearchableEventSelect({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
+      <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[400px] md:w-[500px] p-0" align="start">
         <Command filter={(value, search) => {
           const item = items.find(i => i.id === value);
           if (!item) return 0;

@@ -123,8 +123,8 @@ export default function MonthlyNewsletter() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1">
               <div className="flex items-center gap-2">
                 {editTitle ? (
                   <Input
@@ -140,7 +140,7 @@ export default function MonthlyNewsletter() {
                   />
                 ) : (
                   <h1 
-                    className="text-3xl font-bold cursor-pointer hover:underline"
+                    className="text-2xl sm:text-3xl font-bold cursor-pointer hover:underline"
                     onClick={() => {
                       setNewTitle(page.title);
                       setEditTitle(true);
@@ -152,32 +152,32 @@ export default function MonthlyNewsletter() {
               </div>
               <p className="mt-2 text-white/80">Monthly Newsletter Editor</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
-                className="bg-white text-purple-600 hover:bg-purple-50"
+                className="bg-white text-purple-600 hover:bg-purple-50 flex-1 sm:flex-none"
                 onClick={() => setShowStats(true)}
               >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Analytics
+                <BarChart3 className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Analytics</span>
               </Button>
               {page.status === 'draft' && (
                 <Button
                   onClick={() => publishMutation.mutate()}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  className="bg-green-600 hover:bg-green-700 text-white flex-1 sm:flex-none"
                 >
                   Publish
                 </Button>
               )}
               <Button
                 onClick={() => setShowEmailDialog(true)}
-                className="bg-white text-purple-600 hover:bg-purple-50"
+                className="bg-white text-purple-600 hover:bg-purple-50 flex-1 sm:flex-none"
               >
-                <Mail className="w-4 h-4 mr-2" />
-                Send as Email
+                <Mail className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Send as Email</span>
               </Button>
               <Button
                 variant="outline"
-                className={`text-white border-white transition-all ${copied ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-white/10 hover:bg-white/20'}`}
+                className={`text-white border-white transition-all flex-1 sm:flex-none ${copied ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-white/10 hover:bg-white/20'}`}
                 onClick={() => {
                   navigator.clipboard.writeText(shareUrl);
                   setCopied(true);
@@ -185,8 +185,8 @@ export default function MonthlyNewsletter() {
                   setTimeout(() => setCopied(false), 2000);
                 }}
               >
-                <Copy className="w-4 h-4 mr-2" />
-                {copied ? 'Copied!' : 'Copy Link'}
+                <Copy className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{copied ? 'Copied!' : 'Copy Link'}</span>
               </Button>
             </div>
           </div>

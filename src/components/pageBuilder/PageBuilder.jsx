@@ -69,10 +69,10 @@ export default function PageBuilder({ blocks = [], onBlocksChange, pageType }) {
     if (!BlockComponent) return null;
 
     return (
-      <Card key={block.id} className="p-4 bg-white border-l-4 border-l-blue-500">
-        <div className="flex items-start gap-3">
-          <GripVertical className="w-5 h-5 text-gray-400 mt-1 cursor-grab" />
-          <div className="flex-1">
+      <Card key={block.id} className="p-3 sm:p-4 bg-white border-l-4 border-l-blue-500">
+        <div className="flex items-start gap-2 sm:gap-3">
+          <GripVertical className="w-5 h-5 text-gray-400 mt-1 cursor-grab flex-shrink-0" />
+          <div className="flex-1 min-w-0">
             <BlockComponent
               data={{ ...block.data, id: block.id }}
               onUpdate={(data) => updateBlock(block.id, data)}
@@ -83,7 +83,7 @@ export default function PageBuilder({ blocks = [], onBlocksChange, pageType }) {
           <Button
             variant="ghost"
             size="sm"
-            className="text-red-600 hover:bg-red-50"
+            className="text-red-600 hover:bg-red-50 flex-shrink-0"
             onClick={() => deleteBlock(block.id)}
           >
             <Trash2 className="w-4 h-4" />
@@ -103,20 +103,20 @@ export default function PageBuilder({ blocks = [], onBlocksChange, pageType }) {
 
       {/* Block Type Dialog */}
       <Dialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Add Block</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {blockTypes.map(type => (
               <Button
                 key={type.id}
                 variant="outline"
-                className="h-auto flex-col py-4"
+                className="h-auto flex-col py-4 text-xs sm:text-sm"
                 onClick={() => addBlock(type.id)}
               >
                 <span className="text-2xl mb-2">{type.icon}</span>
-                <span className="text-sm">{type.label}</span>
+                <span className="text-center">{type.label}</span>
               </Button>
             ))}
           </div>

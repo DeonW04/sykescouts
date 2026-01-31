@@ -112,8 +112,8 @@ Focus on practical, specific risks following Scouts UK safety standards. Conside
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid gap-6">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-1">Current Risk Assessments</h3>
                   <p className="text-sm text-gray-600">Access and manage your risk assessments</p>
@@ -121,7 +121,7 @@ Focus on practical, specific risks following Scouts UK safety standards. Conside
                 <Button
                   variant="outline"
                   onClick={() => navigate(createPageUrl('RiskAssessmentHistory'))}
-                  className="border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white"
+                  className="border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white w-full sm:w-auto"
                 >
                   View Current
                   <ArrowRight className="w-4 h-4 ml-2" />

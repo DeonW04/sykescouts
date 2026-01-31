@@ -112,9 +112,9 @@ export default function RiskAssessmentDetail() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Current
           </Button>
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">Edit Risk Assessment</h1>
-            <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold">Edit Risk Assessment</h1>
+            <div className="flex flex-wrap gap-2">
               <PDFGenerator assessment={formData} />
               <Button
                 variant="outline"
@@ -126,24 +126,24 @@ export default function RiskAssessmentDetail() {
                     });
                   }
                 }}
-                className="bg-white text-red-600 border-red-300 hover:bg-red-50"
+                className="bg-white text-red-600 border-red-300 hover:bg-red-50 flex-1 sm:flex-none"
               >
                 Delete
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={updateMutation.isPending}
-                className="bg-white text-[#7413dc] hover:bg-purple-50"
+                className="bg-white text-[#7413dc] hover:bg-purple-50 flex-1 sm:flex-none"
               >
                 {updateMutation.isPending ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
+                    <Loader2 className="w-4 h-4 sm:mr-2 animate-spin" />
+                    <span className="hidden sm:inline">Saving...</span>
                   </>
                 ) : (
                   <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Changes
+                    <Save className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Save Changes</span>
                   </>
                 )}
               </Button>
@@ -154,9 +154,9 @@ export default function RiskAssessmentDetail() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid gap-6 lg:grid-cols-3">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6 lg:col-span-2">
             {/* Metadata */}
             <Card>
               <CardHeader>
