@@ -579,13 +579,13 @@ export default function LeaderGallery() {
       </div>
 
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>Upload {selectedFiles.length} Photo{selectedFiles.length > 1 ? 's' : ''}</DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">Upload {selectedFiles.length} Photo{selectedFiles.length > 1 ? 's' : ''}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-4 gap-2">
-              {selectedFiles.slice(0, 3).map((file, idx) => (
+          <div className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {selectedFiles.slice(0, 2).map((file, idx) => (
                 <img
                   key={idx}
                   src={URL.createObjectURL(file)}
@@ -593,9 +593,9 @@ export default function LeaderGallery() {
                   className="w-full aspect-square object-cover rounded border"
                 />
               ))}
-              {selectedFiles.length > 3 && (
+              {selectedFiles.length > 2 && (
                 <div className="w-full aspect-square bg-gray-100 rounded border flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-600">+ {selectedFiles.length - 3} more</span>
+                  <span className="text-xs sm:text-sm font-medium text-gray-600">+ {selectedFiles.length - 2} more</span>
                 </div>
               )}
             </div>
@@ -734,11 +734,11 @@ export default function LeaderGallery() {
               </Label>
             </div>
 
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
+            <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+              <Button variant="outline" onClick={() => setShowUploadDialog(false)} className="w-full sm:w-auto">
                 Cancel
               </Button>
-              <Button onClick={handleUpload} disabled={uploading}>
+              <Button onClick={handleUpload} disabled={uploading} className="w-full sm:w-auto">
                 {uploading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
