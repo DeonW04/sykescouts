@@ -47,9 +47,16 @@ export default function MemberDetail() {
     enabled: !!member?.parent_ids?.length,
   });
 
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['all-users'],
-    queryFn: () => base44.entities.User.list(),
+  const { data: parentRegistration = {} } = useQuery({
+    queryKey: ['parent-registration', member?.parent_one_email, member?.parent_two_email],
+    queryFn: async () => {
+      if (!member) return {};
+      const emails = [member.parent_one_email, member.parent_two_email].filter(Boolean);
+      if (emails.length === 0) return {};
+      
+      const response = await base44.functions.invoke('checkParentRegistration', { emails });
+      return response.data.results || {};
+    },
     enabled: !!member,
   });
 
@@ -69,9 +76,9 @@ export default function MemberDetail() {
   });
 
   // Check if either parent has a registered account
-  const parentAccountExists = member && allUsers.length > 0 && (
-    (member.parent_one_email && allUsers.some(u => u.email === member.parent_one_email)) ||
-    (member.parent_two_email && allUsers.some(u => u.email === member.parent_two_email))
+  const parentAccountExists = member && (
+    (member.parent_one_email && parentRegistration[member.parent_one_email]) ||
+    (member.parent_two_email && parentRegistration[member.parent_two_email])
   );
 
   const calculateAge = (dob) => {
@@ -377,7 +384,7 @@ export default function MemberDetail() {
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <CardTitle>Parent One</CardTitle>
                   {member.parent_one_email && (
-                    allUsers.some(u => u.email === member.parent_one_email) ? (
+                    parentRegistration[member.parent_one_email] ? (
                       <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                         <CheckCircle className="w-3 h-3" />
                         Account Registered
@@ -403,7 +410,7 @@ export default function MemberDetail() {
                     <p className="text-sm text-gray-600">Phone</p>
                     <p className="font-medium">{member.parent_one_phone || 'Not provided'}</p>
                   </div>
-                  {member.parent_one_email && !allUsers.some(u => u.email === member.parent_one_email) && (
+                  {member.parent_one_email && !parentRegistration[member.parent_one_email] && (
                     <Button
                       size="sm"
                       onClick={async () => {
@@ -431,7 +438,7 @@ export default function MemberDetail() {
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <CardTitle>Parent Two</CardTitle>
                   {member.parent_two_email && (
-                    allUsers.some(u => u.email === member.parent_two_email) ? (
+                    parentRegistration[member.parent_two_email] ? (
                       <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                         <CheckCircle className="w-3 h-3" />
                         Registered
@@ -457,7 +464,7 @@ export default function MemberDetail() {
                     <p className="text-sm text-gray-600">Phone</p>
                     <p className="font-medium">{member.parent_two_phone || 'Not provided'}</p>
                   </div>
-                  {member.parent_two_email && !allUsers.some(u => u.email === member.parent_two_email) && (
+                  {member.parent_two_email && !parentRegistration[member.parent_two_email] && (
                     <Button
                       size="sm"
                       onClick={async () => {
