@@ -18,16 +18,20 @@ export default function SendEmailDialog({ open, onClose, page }) {
   const { data: allUsers = [] } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
+      // Fetch all registered users first
+      const registeredUsers = await base44.entities.User.filter({});
+      const registeredEmails = new Set(registeredUsers.map(u => u.email.toLowerCase()));
+      
       // Fetch parent emails from members (accessible to leaders)
       const members = await base44.entities.Member.filter({ active: true });
       const leaders = await base44.entities.Leader.filter({});
       const userMap = new Map();
       
-      // Add parents
+      // Add parents (only if they have a User account)
       members.forEach(member => {
-        if (member.parent_one_email) {
-          if (!userMap.has(member.parent_one_email)) {
-            userMap.set(member.parent_one_email, {
+        if (member.parent_one_email && registeredEmails.has(member.parent_one_email.toLowerCase())) {
+          if (!userMap.has(member.parent_one_email.toLowerCase())) {
+            userMap.set(member.parent_one_email.toLowerCase(), {
               id: `parent_${member.parent_one_email}`,
               email: member.parent_one_email,
               full_name: member.parent_one_name || 'Parent',
@@ -35,13 +39,13 @@ export default function SendEmailDialog({ open, onClose, page }) {
               isLeader: false,
             });
           }
-          if (member.section_id && !userMap.get(member.parent_one_email).sections.includes(member.section_id)) {
-            userMap.get(member.parent_one_email).sections.push(member.section_id);
+          if (member.section_id && !userMap.get(member.parent_one_email.toLowerCase()).sections.includes(member.section_id)) {
+            userMap.get(member.parent_one_email.toLowerCase()).sections.push(member.section_id);
           }
         }
-        if (member.parent_two_email) {
-          if (!userMap.has(member.parent_two_email)) {
-            userMap.set(member.parent_two_email, {
+        if (member.parent_two_email && registeredEmails.has(member.parent_two_email.toLowerCase())) {
+          if (!userMap.has(member.parent_two_email.toLowerCase())) {
+            userMap.set(member.parent_two_email.toLowerCase(), {
               id: `parent_${member.parent_two_email}`,
               email: member.parent_two_email,
               full_name: member.parent_two_name || 'Parent',
@@ -49,18 +53,18 @@ export default function SendEmailDialog({ open, onClose, page }) {
               isLeader: false,
             });
           }
-          if (member.section_id && !userMap.get(member.parent_two_email).sections.includes(member.section_id)) {
-            userMap.get(member.parent_two_email).sections.push(member.section_id);
+          if (member.section_id && !userMap.get(member.parent_two_email.toLowerCase()).sections.includes(member.section_id)) {
+            userMap.get(member.parent_two_email.toLowerCase()).sections.push(member.section_id);
           }
         }
       });
       
-      // Add leaders
+      // Add leaders (only if they have a User account)
       for (const leader of leaders) {
         if (leader.user_id) {
-          const leaderUser = await base44.entities.User.filter({ id: leader.user_id }).then(u => u[0]);
-          if (leaderUser && !userMap.has(leaderUser.email)) {
-            userMap.set(leaderUser.email, {
+          const leaderUser = registeredUsers.find(u => u.id === leader.user_id);
+          if (leaderUser && !userMap.has(leaderUser.email.toLowerCase())) {
+            userMap.set(leaderUser.email.toLowerCase(), {
               id: `leader_${leaderUser.email}`,
               email: leaderUser.email,
               full_name: leader.display_name || leaderUser.full_name || 'Leader',
