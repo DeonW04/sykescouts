@@ -207,8 +207,8 @@ export default function ReceiptUploader() {
           <div className="space-y-3">
             {filteredReceipts.map((receipt) => (
               <Card key={receipt.id}>
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-[auto_1fr_auto_auto_auto_auto] gap-3 items-center">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="grid grid-cols-[auto_1fr_auto_auto_auto] gap-2 sm:gap-3 items-center">
                     <Badge variant="outline" className="font-mono text-xs">
                       {receipt.receipt_id}
                     </Badge>
@@ -217,10 +217,10 @@ export default function ReceiptUploader() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setImagePreview(receipt.receipt_image_url)}
-                      className="justify-start px-2 h-8"
+                      className="justify-start px-1 sm:px-2 h-8"
                     >
-                      <Eye className="w-4 h-4 mr-1" />
-                      <span className="text-xs">View</span>
+                      <Eye className="w-4 h-4 sm:mr-1" />
+                      <span className="text-xs hidden sm:inline">View</span>
                     </Button>
                     
                     <span className="font-semibold text-sm whitespace-nowrap">£{receipt.value.toFixed(2)}</span>
@@ -228,10 +228,6 @@ export default function ReceiptUploader() {
                     <Badge variant={receipt.status === 'reimbursed' ? 'default' : 'secondary'} className="text-xs">
                       {receipt.status === 'reimbursed' ? 'Reimbursed' : 'Pending'}
                     </Badge>
-                    
-                    <span className="text-xs text-gray-500 whitespace-nowrap">
-                      {receipt.leader_name}
-                    </span>
                     
                     <Button
                       variant="ghost"
@@ -358,10 +354,8 @@ export default function ReceiptUploader() {
                 <Label>Receipt ID</Label>
                 <Input
                   value={editReceipt.receipt_id}
-                  onChange={(e) =>
-                    setEditReceipt({ ...editReceipt, receipt_id: e.target.value.slice(0, 4) })
-                  }
-                  maxLength={4}
+                  disabled
+                  className="bg-gray-100 cursor-not-allowed"
                 />
               </div>
               <div>
@@ -411,12 +405,12 @@ export default function ReceiptUploader() {
       {/* Image Preview Dialog */}
       {imagePreview && (
         <Dialog open={!!imagePreview} onOpenChange={() => setImagePreview(null)}>
-          <DialogContent className="max-w-[95vw] sm:max-w-3xl">
+          <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-auto">
             <DialogHeader>
               <DialogTitle>Receipt Image</DialogTitle>
             </DialogHeader>
             <div className="py-4">
-              <img src={imagePreview} alt="Receipt" className="w-full h-auto rounded-lg" />
+              <img src={imagePreview} alt="Receipt" className="w-full h-auto max-h-[70vh] object-contain rounded-lg" />
             </div>
           </DialogContent>
         </Dialog>

@@ -205,10 +205,8 @@ export default function ReceiptManagement() {
                 <Label>Receipt ID</Label>
                 <Input
                   value={editReceipt.receipt_id}
-                  onChange={(e) =>
-                    setEditReceipt({ ...editReceipt, receipt_id: e.target.value.slice(0, 4) })
-                  }
-                  maxLength={4}
+                  disabled
+                  className="bg-gray-100 cursor-not-allowed"
                 />
               </div>
               <div>
@@ -254,12 +252,12 @@ export default function ReceiptManagement() {
       {/* Image Preview Dialog */}
       {imagePreview && (
         <Dialog open={!!imagePreview} onOpenChange={() => setImagePreview(null)}>
-          <DialogContent className="max-w-[95vw] sm:max-w-3xl">
+          <DialogContent className="max-w-[95vw] sm:max-w-3xl max-h-[90vh] overflow-auto">
             <DialogHeader>
               <DialogTitle>Receipt Image</DialogTitle>
             </DialogHeader>
             <div className="py-4">
-              <img src={imagePreview} alt="Receipt" className="w-full h-auto rounded-lg" />
+              <img src={imagePreview} alt="Receipt" className="w-full h-auto max-h-[70vh] object-contain rounded-lg" />
             </div>
           </DialogContent>
         </Dialog>
