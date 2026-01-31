@@ -238,6 +238,14 @@ export default function LeaderDashboard() {
       iconBg: 'bg-pink-100',
       iconColor: 'text-pink-600'
     },
+    { 
+      icon: Receipt, 
+      label: 'Receipts', 
+      page: 'ReceiptUploader',
+      gradient: 'from-emerald-500 to-emerald-600',
+      iconBg: 'bg-emerald-100',
+      iconColor: 'text-emerald-600'
+    },
   ];
 
   return (
@@ -367,21 +375,6 @@ export default function LeaderDashboard() {
         >
           <UpcomingMeetings sections={sections} />
           <BadgesDue sections={sections} />
-        </motion.div>
-
-        {/* Receipt Uploader Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="fixed bottom-6 right-6 z-50"
-        >
-          <Link to={createPageUrl('ReceiptUploader')}>
-            <Button className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg h-14 px-6 text-base">
-              <Receipt className="w-5 h-5 mr-2" />
-              Upload Receipt
-            </Button>
-          </Link>
         </motion.div>
       </div>
     </div>
