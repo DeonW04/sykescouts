@@ -376,19 +376,19 @@ export default function LeaderDashboard() {
           transition={{ delay: 0.8 }}
         >
           <Card className="bg-gradient-to-r from-emerald-500 to-emerald-600 border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                    <Receipt className="w-6 h-6 text-white" />
+            <CardContent className="p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Receipt className="w-5 h-5 md:w-6 md:h-6 text-white" />
                   </div>
                   <div className="text-white">
-                    <h3 className="text-lg font-semibold">Upload Receipts</h3>
-                    <p className="text-white/90 text-sm">Submit your expenses for reimbursement</p>
+                    <h3 className="text-base md:text-lg font-semibold">Upload Receipts</h3>
+                    <p className="text-white/90 text-xs md:text-sm">Submit your expenses for reimbursement</p>
                   </div>
                 </div>
-                <Link to={createPageUrl('ReceiptUploader')}>
-                  <Button className="bg-white text-emerald-600 hover:bg-white/90">
+                <Link to={createPageUrl('ReceiptUploader')} className="w-full sm:w-auto">
+                  <Button className="bg-white text-emerald-600 hover:bg-white/90 w-full sm:w-auto">
                     <Receipt className="w-4 h-4 mr-2" />
                     Upload Receipt
                   </Button>

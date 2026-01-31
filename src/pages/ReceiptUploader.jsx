@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
+import LeaderNav from '../components/leader/LeaderNav';
 
 export default function ReceiptUploader() {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -163,12 +164,18 @@ export default function ReceiptUploader() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6">Receipt Uploader</h1>
+    <div className="min-h-screen bg-gray-50">
+      <LeaderNav />
+      <div className="bg-[#004851] text-white py-6 md:py-8 mb-6">
+        <div className="max-w-4xl mx-auto px-4">
+          <h1 className="text-2xl md:text-3xl font-bold">Receipt Uploader</h1>
+          <p className="mt-1 text-white/80 text-sm md:text-base">Submit your expenses for reimbursement</p>
+        </div>
+      </div>
+      <div className="max-w-4xl mx-auto px-4 md:px-6 pb-6">
 
-        <Button onClick={() => setShowUploadDialog(true)} className="w-full mb-6">
-          <Upload className="w-4 h-4 mr-2" />
+        <Button onClick={() => setShowUploadDialog(true)} className="w-full mb-6 h-12 text-base">
+          <Upload className="w-5 h-5 mr-2" />
           Upload Receipt
         </Button>
 
@@ -228,27 +235,29 @@ export default function ReceiptUploader() {
 
       {/* Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Upload Receipt</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 py-4">
             <div>
-              <Label>Receipt Image</Label>
+              <Label className="text-sm font-medium">Receipt Image</Label>
               <Input
                 type="file"
                 accept="image/*"
                 onChange={(e) => setUploadFile(e.target.files[0])}
+                className="mt-1.5"
               />
             </div>
             <div>
-              <Label>Value (£)</Label>
+              <Label className="text-sm font-medium">Value (£)</Label>
               <Input
                 type="number"
                 step="0.01"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="0.00"
+                className="mt-1.5"
               />
             </div>
             <div className="flex items-center space-x-2">
@@ -261,16 +270,18 @@ export default function ReceiptUploader() {
             </div>
             {!isGeneric && (
               <div>
-                <Label>Meeting</Label>
+                <Label className="text-sm font-medium">Meeting</Label>
                 <Popover open={meetingOpen} onOpenChange={setMeetingOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start">
-                      {selectedMeeting
-                        ? `${getSectionName(selectedMeeting)} - ${format(new Date(selectedMeeting.date), 'dd/MM/yyyy')}`
-                        : 'Select meeting...'}
+                    <Button variant="outline" className="w-full justify-start mt-1.5 h-10">
+                      <span className="truncate">
+                        {selectedMeeting
+                          ? `${getSectionName(selectedMeeting)} - ${format(new Date(selectedMeeting.date), 'dd/MM/yyyy')}`
+                          : 'Select meeting...'}
+                      </span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-full p-0">
+                  <PopoverContent className="w-[calc(100vw-2rem)] sm:w-full p-0" align="start">
                     <Command>
                       <CommandInput placeholder="Search meetings..." />
                       <CommandList>
@@ -283,6 +294,7 @@ export default function ReceiptUploader() {
                                 setSelectedMeeting(prog);
                                 setMeetingOpen(false);
                               }}
+                              className="text-sm"
                             >
                               {getSectionName(prog)} - {format(new Date(prog.date), 'dd/MM/yyyy')} - {prog.title}
                             </CommandItem>
@@ -295,19 +307,20 @@ export default function ReceiptUploader() {
               </div>
             )}
             <div>
-              <Label>Notes</Label>
+              <Label className="text-sm font-medium">Notes</Label>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Additional information..."
+                className="mt-1.5 min-h-20"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setShowUploadDialog(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button onClick={handleUpload} disabled={uploadMutation.isPending}>
+            <Button onClick={handleUpload} disabled={uploadMutation.isPending} className="w-full sm:w-auto">
               {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
             </Button>
           </DialogFooter>
@@ -317,11 +330,11 @@ export default function ReceiptUploader() {
       {/* Edit Dialog */}
       {editReceipt && (
         <Dialog open={!!editReceipt} onOpenChange={() => setEditReceipt(null)}>
-          <DialogContent>
+          <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Receipt</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 py-4">
               <div>
                 <Label>Receipt ID</Label>
                 <Input
@@ -359,17 +372,18 @@ export default function ReceiptUploader() {
                 />
               </div>
             </div>
-            <DialogFooter className="flex gap-2">
+            <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button
                 variant="destructive"
                 onClick={() => deleteMutation.mutate(editReceipt.id)}
+                className="w-full sm:w-auto"
               >
                 Delete
               </Button>
-              <Button variant="outline" onClick={() => setEditReceipt(null)}>
+              <Button variant="outline" onClick={() => setEditReceipt(null)} className="w-full sm:w-auto">
                 Cancel
               </Button>
-              <Button onClick={handleUpdate}>Save Changes</Button>
+              <Button onClick={handleUpdate} className="w-full sm:w-auto">Save Changes</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
