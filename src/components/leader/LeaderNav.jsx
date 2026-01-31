@@ -123,6 +123,16 @@ export default function LeaderNav() {
               );
             })}
           </nav>
+          
+          <Link to={createPageUrl('LeaderDashboard')} className="w-full md:hidden">
+            <Button
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2 text-gray-600 hover:text-gray-900 border-gray-300"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Leader Portal
+            </Button>
+          </Link>
         </div>
       </div>
     </motion.div>
