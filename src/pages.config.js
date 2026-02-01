@@ -90,6 +90,7 @@ import ParentGoldAward from './pages/ParentGoldAward';
 import ParentPortal from './pages/ParentPortal';
 import ParentProgramme from './pages/ParentProgramme';
 import Parents from './pages/Parents';
+import ReceiptUploader from './pages/ReceiptUploader';
 import RiskAssessmentDetail from './pages/RiskAssessmentDetail';
 import RiskAssessmentHistory from './pages/RiskAssessmentHistory';
 import RiskAssessments from './pages/RiskAssessments';
@@ -99,7 +100,6 @@ import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
 import WeeklyMessage from './pages/WeeklyMessage';
 import WeeklyMessageList from './pages/WeeklyMessageList';
-import ReceiptUploader from './pages/ReceiptUploader';
 import __Layout from './Layout.jsx';
 
 
@@ -147,6 +147,7 @@ export const PAGES = {
     "ParentPortal": ParentPortal,
     "ParentProgramme": ParentProgramme,
     "Parents": Parents,
+    "ReceiptUploader": ReceiptUploader,
     "RiskAssessmentDetail": RiskAssessmentDetail,
     "RiskAssessmentHistory": RiskAssessmentHistory,
     "RiskAssessments": RiskAssessments,
@@ -156,7 +157,6 @@ export const PAGES = {
     "Volunteer": Volunteer,
     "WeeklyMessage": WeeklyMessage,
     "WeeklyMessageList": WeeklyMessageList,
-    "ReceiptUploader": ReceiptUploader,
 }
 
 export const pagesConfig = {

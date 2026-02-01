@@ -17,7 +17,6 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 export default function JoinEnquiries() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('member');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
@@ -36,7 +35,7 @@ export default function JoinEnquiries() {
 
   const { data: enquiries = [] } = useQuery({
     queryKey: ['join-enquiries'],
-    queryFn: () => base44.entities.JoinEnquiry.filter({}),
+    queryFn: () => base44.entities.ChildRegistration.filter({}),
   });
 
   const { data: sections = [] } = useQuery({
@@ -46,10 +45,7 @@ export default function JoinEnquiries() {
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }) => 
-      base44.entities.JoinEnquiry.update(id, { 
-        status,
-        last_contacted: new Date().toISOString(),
-      }),
+      base44.entities.ChildRegistration.update(id, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['join-enquiries'] });
       toast.success('Status updated');
@@ -58,31 +54,33 @@ export default function JoinEnquiries() {
 
   const createMemberFromEnquiryMutation = useMutation({
     mutationFn: async (enquiry) => {
-      const formData = enquiry.form_data || {};
-      const childName = formData.child_name || enquiry.full_name || '';
+      const childName = enquiry.child_name || '';
       const nameParts = childName.split(' ');
       const firstName = nameParts[0] || '';
       const surname = nameParts.slice(1).join(' ') || '';
+      
+      // Find the section ID based on section_interest
+      const section = sections.find(s => s.name === enquiry.section_interest);
       
       const member = await base44.entities.Member.create({
         first_name: firstName,
         surname: surname,
         full_name: childName,
-        date_of_birth: formData.date_of_birth || '',
-        parent_one_name: formData.parent_name || enquiry.full_name,
+        date_of_birth: enquiry.date_of_birth,
+        parent_one_name: enquiry.parent_name,
         parent_one_email: enquiry.email,
         parent_one_phone: enquiry.phone,
-        address: formData.address || '',
-        medical_info: formData.medical_info || '',
-        allergies: formData.allergies || '',
-        dietary_requirements: formData.dietary_requirements || '',
+        address: enquiry.address || '',
+        medical_info: enquiry.medical_info || '',
+        photo_consent: enquiry.consent_photos || false,
+        section_id: section?.id || null,
         active: true,
         join_date: new Date().toISOString().split('T')[0],
+        notes: enquiry.additional_info || '',
       });
       
-      await base44.entities.JoinEnquiry.update(enquiry.id, {
-        created_member_id: member.id,
-        status: 'complete',
+      await base44.entities.ChildRegistration.update(enquiry.id, {
+        status: 'enrolled',
       });
       
       return member;
@@ -101,8 +99,7 @@ export default function JoinEnquiries() {
     if (user?.role === 'admin') return true;
     // Leaders can only see enquiries for their sections
     if (userLeader?.section_ids?.length > 0) {
-      const formData = e.form_data || {};
-      const sectionOfInterest = formData.section_interest || formData.section_id;
+      const sectionOfInterest = e.section_interest;
       if (sectionOfInterest) {
         const sectionId = sections.find(s => s.name === sectionOfInterest)?.id;
         return userLeader.section_ids.includes(sectionId);
@@ -113,36 +110,36 @@ export default function JoinEnquiries() {
   });
 
   const filteredEnquiries = accessibleEnquiries
-    .filter(e => e.enquiry_type === activeTab)
     .filter(e => {
       if (statusFilter !== 'all' && e.status !== statusFilter) return false;
-      if (searchTerm && !e.full_name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+      if (searchTerm) {
+        const search = searchTerm.toLowerCase();
+        return e.child_name?.toLowerCase().includes(search) || 
+               e.parent_name?.toLowerCase().includes(search) ||
+               e.email?.toLowerCase().includes(search);
+      }
       return true;
     });
 
   const stats = {
-    member: {
-      uncontacted: accessibleEnquiries.filter(e => e.enquiry_type === 'member' && e.status === 'uncontacted').length,
-      contacted: accessibleEnquiries.filter(e => e.enquiry_type === 'member' && e.status === 'contacted').length,
-      complete: accessibleEnquiries.filter(e => e.enquiry_type === 'member' && e.status === 'complete').length,
-    },
-    volunteer: {
-      uncontacted: accessibleEnquiries.filter(e => e.enquiry_type === 'volunteer' && e.status === 'uncontacted').length,
-      contacted: accessibleEnquiries.filter(e => e.enquiry_type === 'volunteer' && e.status === 'contacted').length,
-      complete: accessibleEnquiries.filter(e => e.enquiry_type === 'volunteer' && e.status === 'complete').length,
-    },
+    pending: accessibleEnquiries.filter(e => e.status === 'pending').length,
+    contacted: accessibleEnquiries.filter(e => e.status === 'contacted').length,
+    enrolled: accessibleEnquiries.filter(e => e.status === 'enrolled').length,
+    waitlist: accessibleEnquiries.filter(e => e.status === 'waitlist').length,
   };
 
   const statusBadgeColor = {
-    uncontacted: 'bg-yellow-100 text-yellow-800',
+    pending: 'bg-yellow-100 text-yellow-800',
     contacted: 'bg-blue-100 text-blue-800',
-    complete: 'bg-green-100 text-green-800',
+    enrolled: 'bg-green-100 text-green-800',
+    waitlist: 'bg-orange-100 text-orange-800',
   };
 
   const statusIcon = {
-    uncontacted: <AlertCircle className="w-4 h-4" />,
+    pending: <AlertCircle className="w-4 h-4" />,
     contacted: <Mail className="w-4 h-4" />,
-    complete: <CheckCircle className="w-4 h-4" />,
+    enrolled: <CheckCircle className="w-4 h-4" />,
+    waitlist: <Users className="w-4 h-4" />,
   };
 
   return (
@@ -163,30 +160,14 @@ export default function JoinEnquiries() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList>
-            <TabsTrigger value="member" className="flex items-center gap-2">
-              <UserPlus className="w-4 h-4" />
-              Member Enquiries ({stats.member.uncontacted + stats.member.contacted + stats.member.complete})
-            </TabsTrigger>
-            <TabsTrigger value="volunteer" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Volunteer Enquiries ({stats.volunteer.uncontacted + stats.volunteer.contacted + stats.volunteer.complete})
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
+        <div className="grid md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm">Uncontacted</p>
-                  <p className="text-2xl font-bold text-yellow-600">
-                    {activeTab === 'member' ? stats.member.uncontacted : stats.volunteer.uncontacted}
-                  </p>
+                  <p className="text-gray-600 text-sm">Pending</p>
+                  <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
                 </div>
                 <AlertCircle className="w-8 h-8 text-yellow-500 opacity-20" />
               </div>
@@ -198,9 +179,7 @@ export default function JoinEnquiries() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-600 text-sm">Contacted</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {activeTab === 'member' ? stats.member.contacted : stats.volunteer.contacted}
-                  </p>
+                  <p className="text-2xl font-bold text-blue-600">{stats.contacted}</p>
                 </div>
                 <Mail className="w-8 h-8 text-blue-500 opacity-20" />
               </div>
@@ -211,12 +190,22 @@ export default function JoinEnquiries() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-600 text-sm">Completed</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {activeTab === 'member' ? stats.member.complete : stats.volunteer.complete}
-                  </p>
+                  <p className="text-gray-600 text-sm">Enrolled</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.enrolled}</p>
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-500 opacity-20" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-600 text-sm">Waitlist</p>
+                  <p className="text-2xl font-bold text-orange-600">{stats.waitlist}</p>
+                </div>
+                <Users className="w-8 h-8 text-orange-500 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -238,9 +227,10 @@ export default function JoinEnquiries() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="uncontacted">Uncontacted</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="contacted">Contacted</SelectItem>
-                  <SelectItem value="complete">Complete</SelectItem>
+                  <SelectItem value="enrolled">Enrolled</SelectItem>
+                  <SelectItem value="waitlist">Waitlist</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -263,13 +253,16 @@ export default function JoinEnquiries() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-lg">{enquiry.full_name}</h3>
+                        <h3 className="font-semibold text-lg">{enquiry.child_name}</h3>
                         <Badge className={statusBadgeColor[enquiry.status]}>
                           <span className="mr-1">{statusIcon[enquiry.status]}</span>
                           {enquiry.status}
                         </Badge>
                       </div>
                       <div className="grid md:grid-cols-3 gap-3 text-sm text-gray-600 mb-3">
+                        <div>
+                          <span className="text-gray-500">Parent:</span> {enquiry.parent_name}
+                        </div>
                         <div className="flex items-center gap-2">
                           <Mail className="w-4 h-4" />
                           {enquiry.email}
@@ -280,9 +273,11 @@ export default function JoinEnquiries() {
                             {enquiry.phone}
                           </div>
                         )}
-                        <div className="text-xs text-gray-500">
-                          {new Date(enquiry.created_date).toLocaleDateString()}
-                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-gray-500">
+                        <span>Section: {enquiry.section_interest}</span>
+                        <span>•</span>
+                        <span>Submitted: {new Date(enquiry.created_date).toLocaleDateString()}</span>
                       </div>
                     </div>
                     <div className="flex gap-2 flex-wrap justify-end">
@@ -296,32 +291,32 @@ export default function JoinEnquiries() {
                       >
                         View Details
                       </Button>
-                      {activeTab === 'member' && enquiry.status !== 'complete' && (
+                      {enquiry.status === 'pending' && (
                         <Button
                           size="sm"
-                          className="bg-blue-600 hover:bg-blue-700"
+                          variant="outline"
                           onClick={() => updateStatusMutation.mutate({ id: enquiry.id, status: 'contacted' })}
                         >
                           Mark Contacted
                         </Button>
                       )}
-                      {activeTab === 'member' && enquiry.status !== 'complete' && !enquiry.created_member_id && (
-                        <Button
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={() => createMemberFromEnquiryMutation.mutate(enquiry)}
-                        >
-                          Create Member
-                        </Button>
-                      )}
-                      {enquiry.status !== 'complete' && (
-                        <Button
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={() => updateStatusMutation.mutate({ id: enquiry.id, status: 'complete' })}
-                        >
-                          Complete
-                        </Button>
+                      {(enquiry.status === 'pending' || enquiry.status === 'contacted') && (
+                        <>
+                          <Button
+                            size="sm"
+                            className="bg-orange-600 hover:bg-orange-700"
+                            onClick={() => updateStatusMutation.mutate({ id: enquiry.id, status: 'waitlist' })}
+                          >
+                            Add to Waitlist
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => createMemberFromEnquiryMutation.mutate(enquiry)}
+                          >
+                            Convert to Member
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -336,45 +331,96 @@ export default function JoinEnquiries() {
       <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{selectedEnquiry?.full_name}</DialogTitle>
+            <DialogTitle>{selectedEnquiry?.child_name}</DialogTitle>
           </DialogHeader>
           {selectedEnquiry && (
             <div className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Email</p>
-                  <p className="font-medium">{selectedEnquiry.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Phone</p>
-                  <p className="font-medium">{selectedEnquiry.phone || 'Not provided'}</p>
-                </div>
-              </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Status</p>
                 <Badge className={statusBadgeColor[selectedEnquiry.status]}>
+                  <span className="mr-1">{statusIcon[selectedEnquiry.status]}</span>
                   {selectedEnquiry.status}
                 </Badge>
               </div>
-              {selectedEnquiry.form_data && (
-                <div className="border-t pt-4">
-                  <p className="font-semibold mb-2">Form Responses</p>
-                  <div className="space-y-2 text-sm">
-                    {Object.entries(selectedEnquiry.form_data).map(([key, value]) => (
-                      <div key={key} className="flex justify-between">
-                        <span className="text-gray-600 capitalize">{key.replace(/_/g, ' ')}:</span>
-                        <span className="font-medium">{String(value)}</span>
-                      </div>
-                    ))}
+              <div className="border-t pt-4">
+                <p className="font-semibold mb-3">Child Details</p>
+                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600 mb-1">Full Name</p>
+                    <p className="font-medium">{selectedEnquiry.child_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 mb-1">Date of Birth</p>
+                    <p className="font-medium">{new Date(selectedEnquiry.date_of_birth).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 mb-1">Section Interest</p>
+                    <p className="font-medium capitalize">{selectedEnquiry.section_interest}</p>
                   </div>
                 </div>
-              )}
-              {selectedEnquiry.notes && (
+              </div>
+              <div className="border-t pt-4">
+                <p className="font-semibold mb-3">Parent/Guardian Details</p>
+                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600 mb-1">Name</p>
+                    <p className="font-medium">{selectedEnquiry.parent_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 mb-1">Email</p>
+                    <p className="font-medium">{selectedEnquiry.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600 mb-1">Phone</p>
+                    <p className="font-medium">{selectedEnquiry.phone || 'Not provided'}</p>
+                  </div>
+                  {selectedEnquiry.address && (
+                    <div className="md:col-span-2">
+                      <p className="text-gray-600 mb-1">Address</p>
+                      <p className="font-medium">{selectedEnquiry.address}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {selectedEnquiry.medical_info && (
                 <div className="border-t pt-4">
-                  <p className="font-semibold mb-2">Notes</p>
-                  <p className="text-sm">{selectedEnquiry.notes}</p>
+                  <p className="font-semibold mb-2">Medical Information</p>
+                  <p className="text-sm text-gray-700">{selectedEnquiry.medical_info}</p>
                 </div>
               )}
+              {selectedEnquiry.additional_info && (
+                <div className="border-t pt-4">
+                  <p className="font-semibold mb-2">Additional Information</p>
+                  <p className="text-sm text-gray-700">{selectedEnquiry.additional_info}</p>
+                </div>
+              )}
+              <div className="border-t pt-4">
+                <p className="text-sm text-gray-600">
+                  <strong>Photo Consent:</strong> {selectedEnquiry.consent_photos ? 'Yes' : 'No'}
+                </p>
+              </div>
+              <DialogFooter className="gap-2">
+                {(selectedEnquiry.status === 'pending' || selectedEnquiry.status === 'contacted') && (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        updateStatusMutation.mutate({ id: selectedEnquiry.id, status: 'waitlist' });
+                        setShowDetailDialog(false);
+                      }}
+                      className="bg-orange-600 hover:bg-orange-700 text-white"
+                    >
+                      Add to Waitlist
+                    </Button>
+                    <Button
+                      onClick={() => createMemberFromEnquiryMutation.mutate(selectedEnquiry)}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Convert to Member
+                    </Button>
+                  </>
+                )}
+              </DialogFooter>
             </div>
           )}
         </DialogContent>
