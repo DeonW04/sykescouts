@@ -301,22 +301,22 @@ export default function JoinEnquiries() {
                         </Button>
                       )}
                       {(enquiry.status === 'pending' || enquiry.status === 'contacted') && (
-                        <>
-                          <Button
-                            size="sm"
-                            className="bg-orange-600 hover:bg-orange-700"
-                            onClick={() => updateStatusMutation.mutate({ id: enquiry.id, status: 'waitlist' })}
-                          >
-                            Add to Waitlist
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700"
-                            onClick={() => createMemberFromEnquiryMutation.mutate(enquiry)}
-                          >
-                            Convert to Member
-                          </Button>
-                        </>
+                        <Button
+                          size="sm"
+                          className="bg-orange-600 hover:bg-orange-700"
+                          onClick={() => updateStatusMutation.mutate({ id: enquiry.id, status: 'waitlist' })}
+                        >
+                          Add to Waitlist
+                        </Button>
+                      )}
+                      {(enquiry.status === 'pending' || enquiry.status === 'contacted' || enquiry.status === 'waitlist') && (
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700"
+                          onClick={() => createMemberFromEnquiryMutation.mutate(enquiry)}
+                        >
+                          Convert to Member
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -401,24 +401,24 @@ export default function JoinEnquiries() {
               </div>
               <DialogFooter className="gap-2">
                 {(selectedEnquiry.status === 'pending' || selectedEnquiry.status === 'contacted') && (
-                  <>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        updateStatusMutation.mutate({ id: selectedEnquiry.id, status: 'waitlist' });
-                        setShowDetailDialog(false);
-                      }}
-                      className="bg-orange-600 hover:bg-orange-700 text-white"
-                    >
-                      Add to Waitlist
-                    </Button>
-                    <Button
-                      onClick={() => createMemberFromEnquiryMutation.mutate(selectedEnquiry)}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      Convert to Member
-                    </Button>
-                  </>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      updateStatusMutation.mutate({ id: selectedEnquiry.id, status: 'waitlist' });
+                      setShowDetailDialog(false);
+                    }}
+                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                  >
+                    Add to Waitlist
+                  </Button>
+                )}
+                {(selectedEnquiry.status === 'pending' || selectedEnquiry.status === 'contacted' || selectedEnquiry.status === 'waitlist') && (
+                  <Button
+                    onClick={() => createMemberFromEnquiryMutation.mutate(selectedEnquiry)}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Convert to Member
+                  </Button>
                 )}
               </DialogFooter>
             </div>
