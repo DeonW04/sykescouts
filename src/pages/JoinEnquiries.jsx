@@ -62,6 +62,8 @@ export default function JoinEnquiries() {
       // Find the section ID based on section_interest
       const section = sections.find(s => s.name === enquiry.section_interest);
       
+      const joinDate = new Date().toISOString().split('T')[0];
+      
       const member = await base44.entities.Member.create({
         first_name: firstName,
         surname: surname,
@@ -75,7 +77,8 @@ export default function JoinEnquiries() {
         photo_consent: enquiry.consent_photos || false,
         section_id: section?.id || null,
         active: true,
-        join_date: new Date().toISOString().split('T')[0],
+        join_date: joinDate,
+        scouting_start_date: joinDate,
         notes: enquiry.additional_info || '',
       });
       
