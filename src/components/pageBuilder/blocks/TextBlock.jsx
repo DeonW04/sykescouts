@@ -22,7 +22,7 @@ export default function TextBlock({ data, onUpdate, isEditing, setIsEditing, isP
      return (
        <div className="mb-4">
          <div className="prose prose-sm max-w-none">
-           <p className="text-gray-700">{text || 'Text content'}</p>
+           <p className="text-gray-700 whitespace-pre-wrap">{text || 'Text content'}</p>
          </div>
          {!isPreview && !isPublicView && (
            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)} className="mt-2">
