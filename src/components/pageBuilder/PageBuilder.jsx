@@ -10,12 +10,14 @@ import ImageBlock from './blocks/ImageBlock';
 import GalleryBlock from './blocks/GalleryBlock';
 import ActionRequiredBlock from './blocks/ActionRequiredBlock';
 import InteractiveBlock from './blocks/InteractiveBlock';
+import FileAttachmentBlock from './blocks/FileAttachmentBlock';
 
 const blockTypes = [
   { id: 'heading', label: 'Heading', icon: '📝' },
   { id: 'text', label: 'Text', icon: '📄' },
   { id: 'image', label: 'Image', icon: '🖼️' },
   { id: 'gallery', label: 'Gallery', icon: '🎨' },
+  { id: 'file_attachment', label: 'File Attachment', icon: '📎' },
   { id: 'action_required', label: 'Action Required', icon: '✅' },
   { id: 'interactive', label: 'Interactive', icon: '❓' },
 ];
@@ -25,6 +27,7 @@ const blockComponents = {
   text: TextBlock,
   image: ImageBlock,
   gallery: GalleryBlock,
+  file_attachment: FileAttachmentBlock,
   action_required: ActionRequiredBlock,
   interactive: InteractiveBlock,
 };
