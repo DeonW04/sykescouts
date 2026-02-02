@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserPlus, Users, Search, Pencil } from 'lucide-react';
+import { UserPlus, Users, Search, Pencil, Mail, Copy } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -134,6 +134,37 @@ export default function EventAttendeesSection({ eventId, event }) {
 
   const eventSections = sections.filter(s => event.section_ids?.includes(s.id));
 
+  const { data: leaders = [] } = useQuery({
+    queryKey: ['leaders'],
+    queryFn: () => base44.entities.Leader.list(),
+  });
+
+  const generateEmailList = () => {
+    const memberEmails = attendances
+      .map((attendance) => {
+        const member = allMembers.find(m => m.id === attendance.member_id);
+        return member ? [member.parent_one_email, member.parent_two_email].filter(Boolean) : [];
+      })
+      .flat();
+    
+    const leaderEmails = leaders
+      .filter(leader => leader.section_ids?.some(sid => event.section_ids?.includes(sid)))
+      .map(leader => {
+        const user = allMembers.find(m => m.user_id === leader.user_id);
+        return user?.email;
+      })
+      .filter(Boolean);
+    
+    const allEmails = [...new Set([...memberEmails, ...leaderEmails])];
+    return allEmails.join(', ');
+  };
+
+  const handleCopyEmails = () => {
+    const emailList = generateEmailList();
+    navigator.clipboard.writeText(emailList);
+    toast.success(`${emailList.split(', ').length} email addresses copied to clipboard`);
+  };
+
   const getActionResponse = (memberId, actionId) => {
     const response = actionResponses.find(
       r => r.member_id === memberId && r.action_required_id === actionId
@@ -227,10 +258,16 @@ export default function EventAttendeesSection({ eventId, event }) {
                 {attendances.length} member(s) invited to this event
               </p>
             </div>
-            <Button onClick={() => setShowAddDialog(true)}>
-              <UserPlus className="w-4 h-4 mr-2" />
-              Add Members
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleCopyEmails} variant="outline" size="sm">
+                <Mail className="w-4 h-4 mr-2" />
+                Copy Emails
+              </Button>
+              <Button onClick={() => setShowAddDialog(true)}>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Add Members
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
