@@ -9,6 +9,7 @@ import ImageBlock from '../components/pageBuilder/blocks/ImageBlock';
 import GalleryBlock from '../components/pageBuilder/blocks/GalleryBlock';
 import ActionRequiredBlock from '../components/pageBuilder/blocks/ActionRequiredBlock';
 import InteractiveBlock from '../components/pageBuilder/blocks/InteractiveBlock';
+import FileAttachmentBlock from '../components/pageBuilder/blocks/FileAttachmentBlock';
 
 export default function SharedPage() {
   const location = useLocation();
@@ -41,6 +42,7 @@ export default function SharedPage() {
     text: TextBlock,
     image: ImageBlock,
     gallery: GalleryBlock,
+    file_attachment: FileAttachmentBlock,
     action_required: ActionRequiredBlock,
     question: InteractiveBlock,
     poll: InteractiveBlock,
