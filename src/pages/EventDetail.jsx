@@ -232,14 +232,6 @@ export default function EventDetail() {
             >
               <Menu className="w-5 h-5" />
             </Button>
-            <Button
-              variant="ghost"
-              onClick={() => navigate(createPageUrl('LeaderEvents'))}
-              className="text-white hover:bg-white/10"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Back to Events</span>
-            </Button>
             <div className="lg:hidden flex-1 text-center font-semibold">
               {getSectionTitle()}
             </div>

@@ -16,6 +16,59 @@ export default function Layout({ children, currentPageName }) {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    // Format page name for browser title
+    const formatPageTitle = (pageName) => {
+      if (!pageName) return '40th Rochdale (Syke) Scouts';
+      
+      // Handle special cases
+      const specialCases = {
+        'Home': '40th Rochdale (Syke) Scouts',
+        'ParentDashboard': 'Parent Dashboard',
+        'LeaderDashboard': 'Leader Dashboard',
+        'LeaderMembers': 'Members',
+        'LeaderProgramme': 'Programme',
+        'LeaderEvents': 'Events',
+        'LeaderAttendance': 'Attendance',
+        'LeaderBadges': 'Badges',
+        'LeaderGallery': 'Gallery',
+        'MyChild': 'My Child',
+        'ParentProgramme': 'Programme',
+        'ParentEvents': 'Events',
+        'ParentBadges': 'Badges',
+        'ParentEventDetail': 'Event Details',
+        'ParentGoldAward': 'Gold Award',
+        'MemberDetail': 'Member Details',
+        'EventDetail': 'Event Details',
+        'MeetingDetail': 'Meeting Details',
+        'BadgeDetail': 'Badge Details',
+        'RiskAssessmentDetail': 'Risk Assessment',
+        'AdminSettings': 'Admin Settings',
+        'CompleteRegistration': 'Complete Registration',
+        'ArchivedMembers': 'Archived Members',
+        'BadgeStockManagement': 'Badge Stock',
+        'NightsAwayTracking': 'Nights Away Tracking',
+        'RiskAssessments': 'Risk Assessments',
+        'JoinEnquiries': 'Join Enquiries',
+        'SharedPage': 'Shared Page',
+      };
+      
+      if (specialCases[pageName]) {
+        return `${specialCases[pageName]} | 40th Rochdale (Syke) Scouts`;
+      }
+      
+      // Default: convert camelCase to Title Case
+      const formatted = pageName
+        .replace(/([A-Z])/g, ' $1')
+        .trim()
+        .replace(/^./, str => str.toUpperCase());
+      
+      return `${formatted} | 40th Rochdale (Syke) Scouts`;
+    };
+    
+    document.title = formatPageTitle(currentPageName);
+  }, [currentPageName]);
+
   const checkAuth = async () => {
     try {
       const isAuth = await base44.auth.isAuthenticated();
