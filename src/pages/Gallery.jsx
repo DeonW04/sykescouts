@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Loader2, ImageIcon, Calendar, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SEO from '../components/SEO';
 
 export default function Gallery() {
   const [view, setView] = useState('all'); // 'all', 'camps', 'events', 'meetings'
@@ -90,6 +91,12 @@ export default function Gallery() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+      <SEO 
+        title="Gallery | 40th Rochdale (Syke) Scouts"
+        description="View photos from our scout activities, camps, and events. See the adventures and fun at 40th Rochdale (Syke) Scouts in action!"
+        keywords="scout photos, scout gallery, rochdale scouts events, scout activities photos"
+        path="/Gallery"
+      />
       {/* Hero Header */}
       <div className="relative bg-gradient-to-br from-[#7413dc] to-[#004851] text-white py-12 overflow-hidden">
         <div className="absolute inset-0 opacity-10">

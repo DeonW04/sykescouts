@@ -15,6 +15,7 @@ import {
 import { CheckCircle, ArrowRight, Heart, Award, Users, Clock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import SEO from '../components/SEO';
 
 export default function Volunteer() {
   const [formData, setFormData] = useState({

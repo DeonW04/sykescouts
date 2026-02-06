@@ -20,6 +20,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import SEO from '../components/SEO';
 
 export default function Parents() {
   const infoCards = [
