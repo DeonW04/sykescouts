@@ -193,7 +193,7 @@ Our group is run by volunteers, and we’re always looking for adults who can he
                 allowFullScreen=""
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="Syke Methodist Church Location"
+                title="Syke Methodist Church"
               />
             </div>
           </motion.div>
