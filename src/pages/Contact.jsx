@@ -218,7 +218,7 @@ export default function Contact() {
               allowFullScreen=""
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Syke Methodist Church Location"
+              title="Syke Methodist Church"
             />
           </motion.div>
         </div>
