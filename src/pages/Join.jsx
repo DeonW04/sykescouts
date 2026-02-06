@@ -89,6 +89,12 @@ export default function Join() {
 
   return (
     <div className="min-h-screen">
+      <SEO 
+        title="Join Scouts | 40th Rochdale (Syke) Scouts"
+        description="Join 40th Rochdale (Syke) Scouts today! Register your child for Beavers, Cubs, or Scouts. Fun, adventure, and skills development for ages 6-14 in Rochdale."
+        keywords="join scouts rochdale, scout registration, enroll child scouts, beavers registration, cubs registration"
+        path="/Join"
+      />
       {/* Hero */}
       <section className="bg-[#004851] py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

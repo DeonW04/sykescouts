@@ -56,6 +56,12 @@ export default function Sections() {
 
   return (
     <div className="min-h-screen">
+      <SEO 
+        title="Our Sections | Beavers, Cubs & Scouts | 40th Rochdale (Syke)"
+        description="Discover our Beavers (6-8), Cubs (8-10½), and Scouts (10½-14) sections. Weekly meetings, camps, badges, and adventures for young people in Rochdale."
+        keywords="beavers scouts, cubs scouts, scouts section, youth activities rochdale, children groups rochdale"
+        path="/Sections"
+      />
       {/* Hero */}
       <section className="bg-[#004851] py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

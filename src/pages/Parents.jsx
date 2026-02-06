@@ -82,6 +82,12 @@ export default function Parents() {
 
   return (
     <div className="min-h-screen">
+      <SEO 
+        title="Parent Information | 40th Rochdale (Syke) Scouts"
+        description="Everything parents need to know about 40th Rochdale (Syke) Scouts. FAQs, what to expect, meeting times, and how to get involved."
+        keywords="parent information scouts, scout parent guide, what to expect scouts, scouts faq rochdale"
+        path="/Parents"
+      />
       {/* Hero */}
       <section className="bg-[#004851] py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

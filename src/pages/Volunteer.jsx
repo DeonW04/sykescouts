@@ -101,6 +101,12 @@ export default function Volunteer() {
 
   return (
     <div className="min-h-screen">
+      <SEO 
+        title="Volunteer With Us | 40th Rochdale (Syke) Scouts"
+        description="Become a volunteer with 40th Rochdale (Syke) Scouts. No experience needed! Help make a difference in young people's lives. Full training and support provided."
+        keywords="volunteer scouts rochdale, scout leader volunteer, help scouts, volunteer youth group, become scout leader"
+        path="/Volunteer"
+      />
       {/* Hero */}
       <section className="bg-[#004851] py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

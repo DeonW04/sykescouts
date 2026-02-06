@@ -4,6 +4,7 @@ import { createPageUrl } from '../utils';
 import { Button } from '@/components/ui/button';
 import { MapPin, Clock, Users, Award, Heart, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
+import SEO from '../components/SEO';
 
 export default function About() {
   const [websiteImages, setWebsiteImages] = React.useState([]);
@@ -49,6 +50,12 @@ export default function About() {
 
   return (
     <div className="min-h-screen">
+      <SEO 
+        title="About Us | 40th Rochdale (Syke) Scouts"
+        description="Learn about 40th Rochdale (Syke) Scouts. We're a dedicated volunteer-run scout group helping young people develop skills for life through adventure and friendship."
+        keywords="about syke scouts, rochdale scouts, volunteer scouts, scout values, scout group history"
+        path="/About"
+      />
       {/* Hero */}
       <section className="bg-[#004851] py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

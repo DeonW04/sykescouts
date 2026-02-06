@@ -5,6 +5,7 @@ import { Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { Toaster } from 'sonner';
+import { HelmetProvider } from 'react-helmet-async';
 
 export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -146,7 +147,7 @@ export default function Layout({ children, currentPageName }) {
   }
 
   const navLinks = [
-    { name: 'Home', page: 'Home' },
+    { name: 'Home', page: '/', isRoot: true },
     { name: 'About Us', page: 'About' },
     { name: 'Our Sections', page: 'Sections' },
     { name: 'Parents', page: 'Parents' },
@@ -155,8 +156,9 @@ export default function Layout({ children, currentPageName }) {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <style>{`
+    <HelmetProvider>
+      <div className="min-h-screen flex flex-col bg-white">
+        <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800&display=swap');
         * {
           font-family: 'Nunito Sans', sans-serif !important;
@@ -168,7 +170,7 @@ export default function Layout({ children, currentPageName }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
-            <Link to={createPageUrl('Home')} className="flex items-center">
+            <Link to="/" className="flex items-center">
               <img 
                 src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png" 
                 alt="40th Rochdale (Syke) Scouts" 
@@ -181,9 +183,9 @@ export default function Layout({ children, currentPageName }) {
               {navLinks.map((link) => (
                 <Link
                   key={link.page}
-                  to={createPageUrl(link.page)}
+                  to={link.isRoot ? link.page : createPageUrl(link.page)}
                   className={`text-sm font-medium transition-colors hover:text-[#7413dc] ${
-                    currentPageName === link.page ? 'text-[#7413dc]' : 'text-gray-700'
+                    (link.isRoot && currentPageName === 'Home') || currentPageName === link.page ? 'text-[#7413dc]' : 'text-gray-700'
                   }`}
                 >
                   {link.name}
@@ -242,10 +244,10 @@ export default function Layout({ children, currentPageName }) {
               {navLinks.map((link) => (
                 <Link
                   key={link.page}
-                  to={createPageUrl(link.page)}
+                  to={link.isRoot ? link.page : createPageUrl(link.page)}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`py-2 text-base font-medium ${
-                    currentPageName === link.page ? 'text-[#7413dc]' : 'text-gray-700'
+                    (link.isRoot && currentPageName === 'Home') || currentPageName === link.page ? 'text-[#7413dc]' : 'text-gray-700'
                   }`}
                 >
                   {link.name}
@@ -298,14 +300,14 @@ export default function Layout({ children, currentPageName }) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Logo & Description */}
             <div className="md:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
+              <Link to="/" className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-[#7413dc] rounded-full flex items-center justify-center">
                   <svg viewBox="0 0 100 100" className="w-6 h-6 text-white fill-current">
                     <path d="M50 10 L60 40 L90 40 L65 60 L75 90 L50 70 L25 90 L35 60 L10 40 L40 40 Z" />
                   </svg>
                 </div>
                 <span className="text-lg font-bold">40th Rochdale (Syke) Scouts</span>
-              </div>
+              </Link>
               <p className="text-gray-400 text-sm max-w-md">
                 We help young people gain skills for life through adventure, outdoor activities, and community involvement.
               </p>
@@ -353,5 +355,6 @@ export default function Layout({ children, currentPageName }) {
         </div>
       </footer>
     </div>
+    </HelmetProvider>
   );
 }
