@@ -186,7 +186,7 @@ Our group is run by volunteers, and we’re always looking for adults who can he
           >
             <div className="aspect-video rounded-2xl overflow-hidden shadow-lg">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2365.0234567890123!2d-2.1234567890123456!3d53.61234567890123!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487bb7d1c1c1c1c1%3A0x1c1c1c1c1c1c1c1c!2sSyke%20Methodist%20Church!5e0!3m2!1sen!2suk!4v1234567890123!5m2!1sen!2suk"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2067.750593194814!2d-2.157421029994334!3d53.63814087185271!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487bbf001add47e9%3A0x250cbb2c42e3f300!2sSyke%20Scout%20Group!5e1!3m2!1sen!2suk!4v1770370159006!5m2!1sen!2suk"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
