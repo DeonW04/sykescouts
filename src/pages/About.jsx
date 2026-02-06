@@ -175,6 +175,28 @@ Our group is run by volunteers, and we’re always looking for adults who can he
               </ul>
             </motion.div>
           </div>
+
+          {/* Map */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="mt-12 max-w-4xl mx-auto"
+          >
+            <div className="aspect-video rounded-2xl overflow-hidden shadow-lg">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2365.0234567890123!2d-2.1234567890123456!3d53.61234567890123!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487bb7d1c1c1c1c1%3A0x1c1c1c1c1c1c1c1c!2sSyke%20Methodist%20Church!5e0!3m2!1sen!2suk!4v1234567890123!5m2!1sen!2suk"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Syke Methodist Church Location"
+              />
+            </div>
+          </motion.div>
         </div>
       </section>
 
