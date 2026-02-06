@@ -51,16 +51,12 @@ export default function Parents() {
       answer: 'Your child should wear their scout uniform and bring a water bottle. For outdoor activities, appropriate clothing and footwear will be communicated in advance. We recommend labelling all items with your child\'s name.',
     },
     {
-      question: 'How much does it cost?',
-      answer: 'We charge a termly subscription which covers insurance, badges, and weekly running costs. Additional costs may apply for camps, trips, and special activities. We try to keep costs affordable and can discuss payment options if needed.',
-    },
-    {
       question: 'What if my child has additional needs?',
       answer: 'Scouts is open to all young people. We work with parents to ensure every child can participate fully. Please speak to us about your child\'s needs so we can make appropriate arrangements.',
     },
     {
       question: 'Do parents need to stay during meetings?',
-      answer: 'For Squirrels (ages 4-6), parents are often asked to help or stay nearby. For Beavers, Cubs, and Scouts, parents don\'t need to stay but are always welcome. Drop-off and pick-up times are strictly observed.',
+      answer: 'For Beavers, Cubs, and Scouts, parents don\'t need to stay but are always welcome to join in and help out! Drop-off and pick-up times are strictly observed.',
     },
     {
       question: 'What about trips and camps?',
@@ -77,8 +73,7 @@ export default function Parents() {
   ];
 
   const checklist = [
-    'Complete the joining form with accurate medical information',
-    'Set up subscription payments',
+    'Complete the joining form with accurate information',
     'Purchase uniform essentials (we\'ll advise what you need)',
     'Join our parent communication group',
     'Mark key dates in your calendar',
