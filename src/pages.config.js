@@ -100,6 +100,7 @@ import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
 import WeeklyMessage from './pages/WeeklyMessage';
 import WeeklyMessageList from './pages/WeeklyMessageList';
+import ImportBadges from './pages/ImportBadges';
 import __Layout from './Layout.jsx';
 
 
@@ -157,6 +158,7 @@ export const PAGES = {
     "Volunteer": Volunteer,
     "WeeklyMessage": WeeklyMessage,
     "WeeklyMessageList": WeeklyMessageList,
+    "ImportBadges": ImportBadges,
 }
 
 export const pagesConfig = {

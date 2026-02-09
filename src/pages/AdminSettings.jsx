@@ -573,24 +573,48 @@ export default function AdminSettings() {
           </TabsContent>
 
           <TabsContent value="badges">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="w-5 h-5" />
-                  Badge System Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-gray-600">Manage the badge structure and definitions for your sections.</p>
-                <Button
-                  onClick={() => navigate(createPageUrl('ManageBadges'))}
-                  className="bg-[#7413dc] hover:bg-[#5c0fb0]"
-                >
-                  <Award className="w-4 h-4 mr-2" />
-                  Manage Badges
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="w-5 h-5" />
+                    Badge System Management
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-gray-600">Manage the badge structure and definitions for your sections.</p>
+                  <Button
+                    onClick={() => navigate(createPageUrl('ManageBadges'))}
+                    className="bg-[#7413dc] hover:bg-[#5c0fb0]"
+                  >
+                    <Award className="w-4 h-4 mr-2" />
+                    Manage Badges
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="border-purple-200 bg-purple-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-purple-900">
+                    <Upload className="w-5 h-5" />
+                    Import Badges from CSV
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-gray-600">
+                    Import badge definitions, modules, and requirements from CSV files. 
+                    Use AI to generate the CSV files from the Scouts UK website.
+                  </p>
+                  <Button
+                    onClick={() => navigate(createPageUrl('ImportBadges'))}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Import Badges
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="receipts">
