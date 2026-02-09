@@ -19,6 +19,7 @@ Please create a CSV file with the following columns:
 - section (lowercase: beavers, cubs, scouts, explorers, squirrels)
 - category (always "challenge" for this export)
 - description (Brief badge description)
+- badge_completion_rule (How badge is completed: "all_modules", "one_module", or "custom". Use "all_modules" if all modules must be completed, "one_module" if only one module needs completing)
 - module_name (Name of each requirement group/module)
 - module_order (Display order of the module, starting from 1)
 - module_completion_rule (Either "all_required" or "x_of_n_required")
@@ -36,8 +37,8 @@ Rules:
 7. Keep requirement_text concise but complete
 
 Example rows:
-"Adventure Challenge Badge","cubs","challenge","Complete adventurous activities","Adventure Activities",1,"x_of_n_required",4,"Take part in a campfire or outdoor cooking activity",1
-"Adventure Challenge Badge","cubs","challenge","Complete adventurous activities","Adventure Activities",1,"x_of_n_required",4,"Go on a nature walk and identify plants or animals",2
+"Adventure Challenge Badge","cubs","challenge","Complete adventurous activities","all_modules","Adventure Activities",1,"x_of_n_required",4,"Take part in a campfire or outdoor cooking activity",1
+"Adventure Challenge Badge","cubs","challenge","Complete adventurous activities","all_modules","Adventure Activities",1,"x_of_n_required",4,"Go on a nature walk and identify plants or animals",2
 
 Please search the Scouts UK website for the official badge requirements and create this CSV file.`,
 
@@ -48,6 +49,7 @@ Please create a CSV file with the following columns:
 - section (lowercase: beavers, cubs, scouts, explorers, squirrels)
 - category (always "activity" for this export)
 - description (Brief badge description)
+- badge_completion_rule (How badge is completed: "all_modules", "one_module", or "custom". Most activity badges use "all_modules")
 - module_name (Name of each requirement group - most activity badges have one module called "Requirements")
 - module_order (Display order of the module, starting from 1)
 - module_completion_rule (Either "all_required" or "x_of_n_required")
@@ -65,8 +67,8 @@ Rules:
 7. Keep requirement_text concise but complete
 
 Example rows:
-"Artist Activity Badge","cubs","activity","Explore art and creativity","Requirements",1,"x_of_n_required",4,"Create a painting using different techniques",1
-"Artist Activity Badge","cubs","activity","Explore art and creativity","Requirements",1,"x_of_n_required",4,"Make a sculpture from clay or other materials",2
+"Artist Activity Badge","cubs","activity","Explore art and creativity","all_modules","Requirements",1,"x_of_n_required",4,"Create a painting using different techniques",1
+"Artist Activity Badge","cubs","activity","Explore art and creativity","all_modules","Requirements",1,"x_of_n_required",4,"Make a sculpture from clay or other materials",2
 
 Please search the Scouts UK website for the official badge requirements and create this CSV file.`,
 
@@ -81,6 +83,7 @@ Please create a CSV file with the following columns:
 - section (lowercase: beavers, cubs, scouts, explorers, squirrels, or "all" if it applies across sections)
 - category (always "staged" for this export)
 - description (Brief description of what this stage covers)
+- badge_completion_rule (How badge is completed: "all_modules", "one_module", or "custom". Most staged badges use "all_modules")
 - module_name (Name of each requirement group/module)
 - module_order (Display order of the module, starting from 1)
 - module_completion_rule (Either "all_required" or "x_of_n_required")
@@ -98,9 +101,9 @@ Rules:
 7. Keep requirement_text concise but complete
 
 Example rows:
-"Swimmer Stage 1","Swimmer",1,"all","staged","Learn basic water confidence and swimming skills","Skills",1,"all_required",,"Jump into the water safely",1
-"Swimmer Stage 1","Swimmer",1,"all","staged","Learn basic water confidence and swimming skills","Skills",1,"all_required",,"Submerge face in water",2
-"Swimmer Stage 2","Swimmer",2,"all","staged","Develop swimming technique and distance","Skills",1,"all_required",,"Swim 10 metres on front",1
+"Swimmer Stage 1","Swimmer",1,"all","staged","Learn basic water confidence and swimming skills","all_modules","Skills",1,"all_required",,"Jump into the water safely",1
+"Swimmer Stage 1","Swimmer",1,"all","staged","Learn basic water confidence and swimming skills","all_modules","Skills",1,"all_required",,"Submerge face in water",2
+"Swimmer Stage 2","Swimmer",2,"all","staged","Develop swimming technique and distance","all_modules","Skills",1,"all_required",,"Swim 10 metres on front",1
 
 Please search the Scouts UK website for the official staged badge requirements and create this CSV file.`
 };
@@ -148,6 +151,7 @@ export default function ImportBadges() {
               section: row.section,
               category: row.category,
               description: row.description,
+              badge_completion_rule: row.badge_completion_rule || 'all_modules',
               badge_family: row.badge_family || null,
               stage_number: row.stage_number ? parseInt(row.stage_number) : null,
               image_url: null,

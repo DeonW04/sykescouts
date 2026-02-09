@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
           description: badge.description,
           image_url: badge.image_url,
           active: true,
-          completion_rule: 'all_modules'
+          completion_rule: badge.badge_completion_rule || 'all_modules'
         };
 
         // Add staged badge fields if applicable
