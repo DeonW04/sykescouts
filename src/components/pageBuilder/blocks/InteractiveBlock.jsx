@@ -4,10 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit2, Check, Plus, Trash2 } from 'lucide-react';
+import { Edit2, Check, Plus, Trash2, CheckCircle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 
 export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditing, pageId, pageType, isPublicView }) {
   const queryClient = useQueryClient();
@@ -20,6 +21,7 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
   const [childName, setChildName] = useState('');
   const [answer, setAnswer] = useState('');
   const [selectedOptions, setSelectedOptions] = useState([]);
+  const [submitted, setSubmitted] = useState(false);
 
   const addOption = () => {
     if (newOption.trim()) {
@@ -97,6 +99,7 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
       queryClient.invalidateQueries({ queryKey: ['block-responses', pageId] });
       
       toast.success('✅ Response submitted successfully!');
+      setSubmitted(true);
       setChildName('');
       setAnswer('');
       setSelectedOptions([]);
@@ -116,6 +119,29 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
 
   // Public view (on shared page)
   if (isPublicView) {
+    if (submitted) {
+      return (
+        <div className="bg-gradient-to-br from-green-50 to-white border-2 border-green-200 rounded-xl p-8 shadow-lg">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", duration: 0.6 }}
+            className="flex flex-col items-center justify-center text-center"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: [0, 1.2, 1] }}
+              transition={{ duration: 0.5, times: [0, 0.6, 1] }}
+            >
+              <CheckCircle className="w-20 h-20 text-green-600 mb-4" />
+            </motion.div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Thank you for your response!</h3>
+            <p className="text-gray-600">Your response has been recorded successfully.</p>
+          </motion.div>
+        </div>
+      );
+    }
+
     return (
       <div className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-xl p-6 shadow-lg">
         <h3 className="text-xl font-bold text-gray-900 mb-4">{question}</h3>
