@@ -72,27 +72,11 @@ export default function SharedPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
-      {/* Header Bar */}
-      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img 
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png" 
-                alt="40th Rochdale (Syke) Scouts" 
-                className="h-12 w-auto"
-              />
-              <span className="text-lg font-bold text-gray-900 hidden sm:inline">40th Rochdale (Syke) Scouts</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-3xl mx-auto px-4 py-12">
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="inline-block px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full mb-4">
-            <p className="text-sm font-semibold">Shared Update</p>
+            <p className="text-sm font-semibold">40th Rochdale (Syke) Scouts</p>
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-2">{page.title}</h1>
           {page.description && (
