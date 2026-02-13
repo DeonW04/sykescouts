@@ -11,10 +11,10 @@ import SEO from '../components/SEO';
 
 export default function Gallery() {
   const urlParams = new URLSearchParams(window.location.search);
-  const viewType = urlParams.get('view'); // 'Camp', 'Event', or 'Meeting'
+  const viewParam = urlParams.get('view'); // 'camp', 'event', or 'meeting'
   const itemId = urlParams.get('id');
   
-  const [view, setView] = useState('all'); // 'all', 'camps', 'events', 'meetings'
+  const [view, setView] = useState(viewParam || 'all');
   const [selectedItem, setSelectedItem] = useState(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
@@ -47,22 +47,22 @@ export default function Gallery() {
 
   // Handle URL-based viewing
   React.useEffect(() => {
-    if (viewType && itemId) {
-      if (viewType === 'Camp' || viewType === 'Event') {
+    if (itemId) {
+      if (viewParam === 'camp' || viewParam === 'event') {
         const event = events.find(e => e.id === itemId);
         if (event) {
           setSelectedItem(event);
-          setView(event.type === 'Camp' ? 'camps' : 'events');
         }
-      } else if (viewType === 'Meeting') {
+      } else if (viewParam === 'meeting') {
         const meeting = programmes.find(p => p.id === itemId);
         if (meeting) {
           setSelectedItem(meeting);
-          setView('meetings');
         }
       }
+    } else {
+      setSelectedItem(null);
     }
-  }, [viewType, itemId, events, programmes]);
+  }, [itemId, viewParam, events, programmes]);
 
   // Get unique camps, events, and meetings
   const camps = [...new Map(
@@ -149,6 +149,7 @@ export default function Gallery() {
             onClick={() => {
               setView('camps');
               setSelectedItem(null);
+              window.history.pushState({}, '', createPageUrl('Gallery') + '?view=camp');
             }}
             className={`relative overflow-hidden rounded-2xl p-8 text-center transition-all ${
               view === 'camps' 
@@ -175,6 +176,7 @@ export default function Gallery() {
             onClick={() => {
               setView('events');
               setSelectedItem(null);
+              window.history.pushState({}, '', createPageUrl('Gallery') + '?view=event');
             }}
             className={`relative overflow-hidden rounded-2xl p-8 text-center transition-all ${
               view === 'events' 
@@ -199,6 +201,7 @@ export default function Gallery() {
             onClick={() => {
               setView('meetings');
               setSelectedItem(null);
+              window.history.pushState({}, '', createPageUrl('Gallery') + '?view=meeting');
             }}
             className={`relative overflow-hidden rounded-2xl p-8 text-center transition-all ${
               view === 'meetings' 
@@ -225,7 +228,10 @@ export default function Gallery() {
           <Button
             variant="outline"
             className="mb-6"
-            onClick={() => setSelectedItem(null)}
+            onClick={() => {
+              setSelectedItem(null);
+              window.history.pushState({}, '', createPageUrl('Gallery') + `?view=${viewParam}`);
+            }}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to {view === 'camps' ? 'Camps' : view === 'events' ? 'Events' : 'Meetings'}
@@ -303,7 +309,10 @@ export default function Gallery() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer"
-                onClick={() => setSelectedItem(camp)}
+                onClick={() => {
+                  setSelectedItem(camp);
+                  window.history.pushState({}, '', createPageUrl('Gallery') + `?view=camp&id=${camp.id}`);
+                }}
               >
                 {getItemPhoto(camp, 'camp') ? (
                   <img
@@ -331,7 +340,10 @@ export default function Gallery() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer"
-                onClick={() => setSelectedItem(event)}
+                onClick={() => {
+                  setSelectedItem(event);
+                  window.history.pushState({}, '', createPageUrl('Gallery') + `?view=event&id=${event.id}`);
+                }}
               >
                 {getItemPhoto(event, 'event') ? (
                   <img
@@ -359,7 +371,10 @@ export default function Gallery() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer"
-                onClick={() => setSelectedItem(meeting)}
+                onClick={() => {
+                  setSelectedItem(meeting);
+                  window.history.pushState({}, '', createPageUrl('Gallery') + `?view=meeting&id=${meeting.id}`);
+                }}
               >
                 {getItemPhoto(meeting, 'meeting') ? (
                   <img

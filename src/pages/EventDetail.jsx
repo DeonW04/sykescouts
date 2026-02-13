@@ -271,7 +271,7 @@ export default function EventDetail() {
               ) : (
                 <Button
                   variant="outline"
-                  onClick={() => navigate(createPageUrl('Gallery') + `?view=${event.type}&id=${event.id}`)}
+                  onClick={() => navigate(createPageUrl('Gallery') + `?view=${event.type === 'Camp' ? 'camp' : 'event'}&id=${event.id}`)}
                   className="bg-white/10 text-white border-white/30 hover:bg-white/20 min-h-[44px]"
                 >
                   <Image className="w-4 h-4 sm:mr-2" />
