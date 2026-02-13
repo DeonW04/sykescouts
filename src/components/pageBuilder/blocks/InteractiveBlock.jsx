@@ -20,6 +20,7 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
   const [childName, setChildName] = useState('');
   const [answer, setAnswer] = useState('');
   const [selectedOptions, setSelectedOptions] = useState([]);
+  const [submitted, setSubmitted] = useState(false);
 
   const addOption = () => {
     if (newOption.trim()) {
@@ -97,9 +98,7 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
       queryClient.invalidateQueries({ queryKey: ['block-responses', pageId] });
       
       toast.success('✅ Response submitted successfully!');
-      setChildName('');
-      setAnswer('');
-      setSelectedOptions([]);
+      setSubmitted(true);
     } catch (error) {
       console.error('Submit error:', error);
       toast.error('Failed to save response: ' + error.message);
@@ -116,6 +115,23 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
 
   // Public view (on shared page)
   if (isPublicView) {
+    // Show success state after submission
+    if (submitted) {
+      return (
+        <div className="bg-gradient-to-br from-green-50 to-white border-2 border-green-200 rounded-xl p-8 shadow-lg">
+          <div className="flex flex-col items-center justify-center text-center space-y-4">
+            <div className="relative">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center animate-bounce">
+                <Check className="w-10 h-10 text-green-600" />
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900">Thank you for your response!</h3>
+            <p className="text-gray-600">Your answer has been recorded successfully.</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-xl p-6 shadow-lg">
         <h3 className="text-xl font-bold text-gray-900 mb-4">{question}</h3>
