@@ -106,7 +106,7 @@ export default function WeeklyMessage() {
     );
   }
 
-  const shareUrl = `https://testsite.sykescouts.org/sharedpage?id=${page.page_id}`;
+  const shareUrl = `https://sykescouts.org/sharedpage?id=${page.page_id}`;
 
   return (
     <div className="min-h-screen bg-gray-50">

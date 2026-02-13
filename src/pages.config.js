@@ -96,11 +96,11 @@ import RiskAssessmentDetail from './pages/RiskAssessmentDetail';
 import RiskAssessmentHistory from './pages/RiskAssessmentHistory';
 import RiskAssessments from './pages/RiskAssessments';
 import Sections from './pages/Sections';
-import SharedPage from './pages/SharedPage';
 import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
 import WeeklyMessage from './pages/WeeklyMessage';
 import WeeklyMessageList from './pages/WeeklyMessageList';
+import SharedPage from './pages/SharedPage';
 import __Layout from './Layout.jsx';
 
 
@@ -154,11 +154,11 @@ export const PAGES = {
     "RiskAssessmentHistory": RiskAssessmentHistory,
     "RiskAssessments": RiskAssessments,
     "Sections": Sections,
-    "SharedPage": SharedPage,
     "StagedBadgeDetail": StagedBadgeDetail,
     "Volunteer": Volunteer,
     "WeeklyMessage": WeeklyMessage,
     "WeeklyMessageList": WeeklyMessageList,
+    "SharedPage": SharedPage,
 }
 
 export const pagesConfig = {
