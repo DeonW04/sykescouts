@@ -11,8 +11,8 @@ import SEO from '../components/SEO';
 
 export default function Gallery() {
   const urlParams = new URLSearchParams(window.location.search);
-  const pathSegments = window.location.pathname.split('/').filter(Boolean);
-  const eventIdFromUrl = pathSegments[pathSegments.indexOf('Event') + 1] || null;
+  const viewType = urlParams.get('view'); // 'Camp', 'Event', or 'Meeting'
+  const itemId = urlParams.get('id');
   
   const [view, setView] = useState('all'); // 'all', 'camps', 'events', 'meetings'
   const [selectedItem, setSelectedItem] = useState(null);
@@ -45,16 +45,24 @@ export default function Gallery() {
 
   const isLoading = eventsLoading || photosLoading || programmesLoading;
 
-  // Handle URL-based event viewing
+  // Handle URL-based viewing
   React.useEffect(() => {
-    if (eventIdFromUrl && events.length > 0) {
-      const event = events.find(e => e.id === eventIdFromUrl);
-      if (event) {
-        setSelectedItem(event);
-        setView(event.type === 'Camp' ? 'camps' : 'events');
+    if (viewType && itemId) {
+      if (viewType === 'Camp' || viewType === 'Event') {
+        const event = events.find(e => e.id === itemId);
+        if (event) {
+          setSelectedItem(event);
+          setView(event.type === 'Camp' ? 'camps' : 'events');
+        }
+      } else if (viewType === 'Meeting') {
+        const meeting = programmes.find(p => p.id === itemId);
+        if (meeting) {
+          setSelectedItem(meeting);
+          setView('meetings');
+        }
       }
     }
-  }, [eventIdFromUrl, events]);
+  }, [viewType, itemId, events, programmes]);
 
   // Get unique camps, events, and meetings
   const camps = [...new Map(

@@ -274,7 +274,7 @@ export default function LeaderEvents() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => navigate(createPageUrl('Gallery') + `/Event/${event.id}`)}
+                                onClick={() => navigate(createPageUrl('Gallery') + `?view=${event.type}&id=${event.id}`)}
                                 className="whitespace-nowrap"
                               >
                                 <Image className="w-3.5 h-3.5 mr-1.5" />
