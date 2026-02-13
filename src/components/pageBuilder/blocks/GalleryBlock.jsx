@@ -21,11 +21,24 @@ export default function GalleryBlock({ data, onUpdate, isEditing, setIsEditing, 
   };
 
   if (!isEditing) {
+    const getGridClass = () => {
+      if (images.length === 2) return 'grid-cols-2';
+      if (images.length === 3) return 'grid-cols-3';
+      return 'grid-cols-4';
+    };
+
+    const getImageClass = () => {
+      if (images.length === 2 || images.length === 3) {
+        return 'w-full h-auto object-contain rounded';
+      }
+      return 'w-full h-24 object-cover rounded';
+    };
+
     return (
       <div className="flex items-start justify-between gap-2">
-        <div className="grid grid-cols-4 gap-2 w-full">
+        <div className={`grid ${getGridClass()} gap-2 w-full`}>
           {images.map((img, idx) => (
-            <img key={idx} src={img} alt={`Gallery ${idx}`} className="w-full h-24 object-cover rounded" />
+            <img key={idx} src={img} alt={`Gallery ${idx}`} className={getImageClass()} />
           ))}
         </div>
         {!isPublicView && (
