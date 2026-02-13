@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Plus, MapPin, Users, ChevronRight } from 'lucide-react';
+import { Calendar, Plus, MapPin, Users, ChevronRight, FileText, Image } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Badge } from '@/components/ui/badge';
@@ -77,8 +77,20 @@ export default function LeaderEvents() {
     );
   }
 
-  const upcomingEvents = events.filter(e => new Date(e.start_date) >= new Date());
-  const pastEvents = events.filter(e => new Date(e.start_date) < new Date());
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const upcomingEvents = events.filter(e => {
+    const endDate = e.end_date ? new Date(e.end_date) : new Date(e.start_date);
+    endDate.setHours(23, 59, 59, 999);
+    return endDate >= today;
+  });
+  
+  const pastEvents = events.filter(e => {
+    const endDate = e.end_date ? new Date(e.end_date) : new Date(e.start_date);
+    endDate.setHours(23, 59, 59, 999);
+    return endDate < today;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
@@ -228,15 +240,12 @@ export default function LeaderEvents() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                     >
-                      <Card 
-                        className="group h-full hover:shadow-lg transition-all cursor-pointer bg-white/60 backdrop-blur-sm"
-                        onClick={() => navigate(createPageUrl('EventDetail') + `?id=${event.id}`)}
-                      >
+                      <Card className="h-full bg-white/60 backdrop-blur-sm">
                         <CardHeader>
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1 min-w-0">
                               <Badge variant="outline" className="mb-2 capitalize">{event.type}</Badge>
-                              <CardTitle className="text-lg mb-2 group-hover:text-[#7413dc] transition-colors line-clamp-1">
+                              <CardTitle className="text-lg mb-2 line-clamp-1">
                                 {event.title}
                               </CardTitle>
                               <div className="flex flex-col gap-1.5 text-sm text-gray-500">
@@ -252,7 +261,26 @@ export default function LeaderEvents() {
                                 )}
                               </div>
                             </div>
-                            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#7413dc] group-hover:translate-x-1 transition-all flex-shrink-0" />
+                            <div className="flex flex-col gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => navigate(createPageUrl('EventDetail') + `?id=${event.id}`)}
+                                className="whitespace-nowrap"
+                              >
+                                <FileText className="w-3.5 h-3.5 mr-1.5" />
+                                Details
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => navigate(createPageUrl('Gallery') + `/Event/${event.id}`)}
+                                className="whitespace-nowrap"
+                              >
+                                <Image className="w-3.5 h-3.5 mr-1.5" />
+                                Gallery
+                              </Button>
+                            </div>
                           </div>
                         </CardHeader>
                       </Card>

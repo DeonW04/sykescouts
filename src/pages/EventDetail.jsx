@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, FileText, Trash2, Save, Eye, Plus, Calendar, Users, Award, ListTodo, Shield, Menu, X, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowLeft, FileText, Trash2, Save, Eye, Plus, Calendar, Users, Award, ListTodo, Shield, Menu, X, DollarSign, TrendingUp, TrendingDown, Image } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
@@ -191,6 +191,15 @@ export default function EventDetail() {
   }
 
   const eventSections = sections.filter(s => event.section_ids?.includes(s.id));
+  
+  // Check if event is in the past
+  const isPastEvent = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = event.end_date ? new Date(event.end_date) : new Date(event.start_date);
+    endDate.setHours(23, 59, 59, 999);
+    return endDate < today;
+  };
 
   const navigationItems = [
     { id: 'overview', label: 'Overview', icon: FileText },
@@ -250,28 +259,39 @@ export default function EventDetail() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-              <Button
-                variant="outline"
-                onClick={togglePublished}
-                className="bg-white/10 text-white border-white/30 hover:bg-white/20 min-h-[44px]"
-              >
-                <Eye className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">{event.published ? 'Published' : 'Draft'}</span>
-              </Button>
+              {!isPastEvent() ? (
+                <Button
+                  variant="outline"
+                  onClick={togglePublished}
+                  className="bg-white/10 text-white border-white/30 hover:bg-white/20 min-h-[44px]"
+                >
+                  <Eye className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">{event.published ? 'Published' : 'Draft'}</span>
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(createPageUrl('Gallery') + `/Event/${event.id}`)}
+                  className="bg-white/10 text-white border-white/30 hover:bg-white/20 min-h-[44px]"
+                >
+                  <Image className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Gallery</span>
+                </Button>
+              )}
               <Button
                 onClick={() => setShowEditDialog(true)}
-                className="bg-white text-blue-700 hover:bg-gray-100 min-h-[44px]"
+                className={`${isPastEvent() ? 'bg-gray-400 text-gray-700 hover:bg-gray-500' : 'bg-white text-blue-700 hover:bg-gray-100'} min-h-[44px]`}
               >
                 <span className="sm:hidden">Edit</span>
-                <span className="hidden sm:inline">Edit Details</span>
+                <span className="hidden sm:inline">Edit Details {isPastEvent() && '(Not Recommended)'}</span>
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={updateEventMutation.isPending}
-                className="bg-green-600 hover:bg-green-700 text-white min-h-[44px]"
+                className={`${isPastEvent() ? 'bg-gray-400 hover:bg-gray-500' : 'bg-green-600 hover:bg-green-700'} text-white min-h-[44px]`}
               >
                 <Save className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Save Changes</span>
+                <span className="hidden sm:inline">Save {isPastEvent() && '(Not Recommended)'}</span>
               </Button>
             </div>
           </div>
