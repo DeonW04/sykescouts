@@ -32,6 +32,7 @@ export default function EventDetail() {
   const [showFinancialDialog, setShowFinancialDialog] = useState(false);
   const [financialType, setFinancialType] = useState('expense');
   const [financialForm, setFinancialForm] = useState({ description: '', amount: '', date: '' });
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const [formData, setFormData] = useState({
     schedule_by_day: [
@@ -92,6 +93,17 @@ export default function EventDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event'] });
       toast.success('Event updated');
+    },
+  });
+
+  const deleteEventMutation = useMutation({
+    mutationFn: () => base44.entities.Event.delete(eventId),
+    onSuccess: () => {
+      toast.success('Event deleted');
+      navigate(createPageUrl('LeaderEvents'));
+    },
+    onError: () => {
+      toast.error('Failed to delete event');
     },
   });
 
@@ -415,6 +427,18 @@ export default function EventDetail() {
                   );
                 })}
               </nav>
+              
+              {/* Delete Event Section */}
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <Button
+                  onClick={() => setShowDeleteDialog(true)}
+                  variant="outline"
+                  className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Event
+                </Button>
+              </div>
             </div>
           </aside>
 
@@ -889,6 +913,43 @@ export default function EventDetail() {
         sections={sections}
         editEvent={event}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Delete Event?</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-700 mb-2">
+              Are you sure you want to delete <strong>{event.title}</strong>?
+            </p>
+            <p className="text-sm text-gray-600">
+              This action cannot be undone. All associated data including attendance records, documents, and photos will be permanently removed.
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              className="min-h-[44px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                deleteEventMutation.mutate();
+                setShowDeleteDialog(false);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white min-h-[44px]"
+              disabled={deleteEventMutation.isPending}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Event
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
