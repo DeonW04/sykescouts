@@ -61,21 +61,25 @@ export default function ParentPortal() {
     return Math.round((completedFields / requiredFields.length) * 100);
   };
 
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      try {
+        return await base44.entities.User.filter({});
+      } catch {
+        return [];
+      }
+    },
+  });
+
   // Check if parent is registered (has a Parent entity record)
   const isParentRegistered = (email) => {
     if (!email) return false;
-    // A parent is registered if they have a Parent entity created
-    // This is created when they complete registration in the parent portal
-    return parents.some(parent => {
-      const member = members.find(m => 
-        m.parent_one_email?.toLowerCase() === email.toLowerCase() ||
-        m.parent_two_email?.toLowerCase() === email.toLowerCase()
-      );
-      if (!member) return false;
-      return parent.user_id && members.some(m => 
-        m.parent_ids?.includes(parent.id)
-      );
-    });
+    // Find user by email
+    const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    if (!user) return false;
+    // Check if they have completed onboarding and have a Parent entity
+    return user.onboarding_complete && parents.some(p => p.user_id === user.id);
   };
 
   // Calculate statistics

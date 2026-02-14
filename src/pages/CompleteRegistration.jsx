@@ -201,6 +201,18 @@ export default function CompleteRegistration() {
         });
       }
 
+      // Create Parent entity record for portal tracking
+      const existingParent = await base44.entities.Parent.filter({ user_id: user.id });
+      if (existingParent.length === 0) {
+        await base44.entities.Parent.create({
+          user_id: user.id,
+          phone: childForm.parent_one_phone || '',
+          emergency_contact_name: childForm.emergency_contact_name,
+          emergency_contact_phone: childForm.emergency_contact_phone,
+          emergency_contact_relationship: childForm.emergency_contact_relationship,
+        });
+      }
+
       // Mark onboarding as complete
       await base44.auth.updateMe({ onboarding_complete: true });
 

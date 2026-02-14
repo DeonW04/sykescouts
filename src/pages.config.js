@@ -67,6 +67,7 @@ import Home from './pages/Home';
 import ImportBadges from './pages/ImportBadges';
 import Join from './pages/Join';
 import JoinEnquiries from './pages/JoinEnquiries';
+import JoiningInBadgeDetail from './pages/JoiningInBadgeDetail';
 import LeaderAttendance from './pages/LeaderAttendance';
 import LeaderBadges from './pages/LeaderBadges';
 import LeaderDashboard from './pages/LeaderDashboard';
@@ -101,7 +102,6 @@ import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
 import WeeklyMessage from './pages/WeeklyMessage';
 import WeeklyMessageList from './pages/WeeklyMessageList';
-import JoiningInBadgeDetail from './pages/JoiningInBadgeDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -126,6 +126,7 @@ export const PAGES = {
     "ImportBadges": ImportBadges,
     "Join": Join,
     "JoinEnquiries": JoinEnquiries,
+    "JoiningInBadgeDetail": JoiningInBadgeDetail,
     "LeaderAttendance": LeaderAttendance,
     "LeaderBadges": LeaderBadges,
     "LeaderDashboard": LeaderDashboard,
@@ -160,7 +161,6 @@ export const PAGES = {
     "Volunteer": Volunteer,
     "WeeklyMessage": WeeklyMessage,
     "WeeklyMessageList": WeeklyMessageList,
-    "JoiningInBadgeDetail": JoiningInBadgeDetail,
 }
 
 export const pagesConfig = {
