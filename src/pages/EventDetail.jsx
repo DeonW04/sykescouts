@@ -377,6 +377,18 @@ export default function EventDetail() {
                 );
               })}
             </nav>
+            
+            {/* Delete Event Section - Mobile */}
+            <div className="p-4 border-t border-gray-200">
+              <Button
+                onClick={() => setShowDeleteDialog(true)}
+                variant="outline"
+                className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 min-h-[44px]"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Event
+              </Button>
+            </div>
           </div>
         </div>
       )}
