@@ -45,7 +45,7 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
 
   const submitResponse = async () => {
     if (!childName.trim()) {
-      toast.error('Please enter child name');
+      toast.error('Please enter your childs name');
       return;
     }
 
@@ -148,9 +148,9 @@ export default function InteractiveBlock({ data, onUpdate, isEditing, setIsEditi
         
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Child's Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Your Child's Name</label>
             <Input
-              placeholder="Enter child's name"
+              placeholder="Enter your child's name"
               value={childName}
               onChange={(e) => setChildName(e.target.value)}
               className="bg-white"
