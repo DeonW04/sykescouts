@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Loader2, ImageIcon, Calendar, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createPageUrl } from '../utils';
 import SEO from '../components/SEO';
 
 export default function Gallery() {
