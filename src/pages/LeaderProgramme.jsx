@@ -16,6 +16,7 @@ export default function LeaderProgramme() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [isLeader, setIsLeader] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [showNewTermDialog, setShowNewTermDialog] = useState(false);
   const [showAllTermsDialog, setShowAllTermsDialog] = useState(false);
   const [editingTerm, setEditingTerm] = useState(null);
@@ -27,14 +28,18 @@ export default function LeaderProgramme() {
   }, []);
 
   const loadUserData = async () => {
-    const currentUser = await base44.auth.me();
-    setUser(currentUser);
-    
-    if (currentUser.role === 'admin') {
-      setIsLeader(true);
-    } else {
-      const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
-      setIsLeader(leaders.length > 0);
+    try {
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+      
+      if (currentUser.role === 'admin') {
+        setIsLeader(true);
+      } else {
+        const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
+        setIsLeader(leaders.length > 0);
+      }
+    } finally {
+      setCheckingAuth(false);
     }
   };
 
@@ -134,6 +139,14 @@ export default function LeaderProgramme() {
     const dateStr = meeting.date.toISOString().split('T')[0];
     navigate(createPageUrl('MeetingDetail') + `?section_id=${currentTerm.section_id}&date=${dateStr}&term_id=${currentTerm.id}`);
   };
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   if (!user || !isLeader) {
     return (
