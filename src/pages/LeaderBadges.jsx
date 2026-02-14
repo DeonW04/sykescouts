@@ -271,6 +271,24 @@ export default function LeaderBadges() {
                           }
                         });
                         displayBadges = Array.from(familyMap.values());
+                      } else if (category === 'activity') {
+                        // Filter out individual Joining In awards, then sort A-Z
+                        const nonJoiningIn = categoryBadges.filter(b => !b.name.includes('Joining In Award'));
+                        const joiningInBadges = categoryBadges.filter(b => b.name.includes('Joining In Award'));
+                        
+                        // Create a placeholder for Joining In Awards if any exist
+                        const joiningInPlaceholder = joiningInBadges.length > 0 ? [{
+                          id: 'joining-in-awards',
+                          name: 'Joining In Awards',
+                          section: 'all',
+                          category: 'activity',
+                          image_url: joiningInBadges[0].image_url,
+                          isJoiningInPlaceholder: true
+                        }] : [];
+                        
+                        displayBadges = [...nonJoiningIn, ...joiningInPlaceholder].sort((a, b) => 
+                          a.name.localeCompare(b.name)
+                        );
                       } else {
                         displayBadges = categoryBadges;
                       }
@@ -281,7 +299,8 @@ export default function LeaderBadges() {
                           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {displayBadges.map(badge => {
                               const isStaged = badge.category === 'staged';
-                              const stats = getBadgeStats(badge.id);
+                              const isJoiningIn = badge.isJoiningInPlaceholder;
+                              const stats = !isJoiningIn ? getBadgeStats(badge.id) : null;
 
                               return (
                                 <Card key={badge.id} className="hover:shadow-lg transition-shadow">
@@ -306,7 +325,16 @@ export default function LeaderBadges() {
                                     </div>
                                   </CardHeader>
                                   <CardContent>
-                                  {isStaged ? (
+                                  {isJoiningIn ? (
+                                    <Button
+                                      variant="outline"
+                                      className="w-full"
+                                      onClick={() => navigate(createPageUrl('JoiningInBadgeDetail'))}
+                                    >
+                                      <Award className="w-4 h-4 mr-2" />
+                                      View All Stages
+                                    </Button>
+                                  ) : isStaged ? (
                                     <Button
                                       variant="outline"
                                       className="w-full"

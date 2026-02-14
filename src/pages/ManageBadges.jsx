@@ -195,17 +195,39 @@ export default function ManageBadges() {
           if (categoryBadges.length === 0) return null;
 
           // For staged badges, only show family badges (stage_number = null)
-          const displayBadges = category === 'staged' 
-            ? categoryBadges.filter(b => b.stage_number === null)
-            : categoryBadges;
+          // For activity badges, sort A-Z and consolidate Joining In Awards
+          let displayBadges;
+          if (category === 'staged') {
+            displayBadges = categoryBadges.filter(b => b.stage_number === null);
+          } else if (category === 'activity') {
+            const nonJoiningIn = categoryBadges.filter(b => !b.name.includes('Joining In Award'));
+            const joiningInBadges = categoryBadges.filter(b => b.name.includes('Joining In Award'));
+            
+            // Create placeholder for Joining In Awards
+            const joiningInPlaceholder = joiningInBadges.length > 0 ? [{
+              id: 'joining-in-awards',
+              name: 'Joining In Awards',
+              section: 'all',
+              category: 'activity',
+              image_url: joiningInBadges[0].image_url,
+              description: `Manage all ${joiningInBadges.length} Joining In Award stages`,
+              isJoiningInPlaceholder: true
+            }] : [];
+            
+            displayBadges = [...nonJoiningIn, ...joiningInPlaceholder].sort((a, b) => 
+              a.name.localeCompare(b.name)
+            );
+          } else {
+            displayBadges = categoryBadges;
+          }
           
           return (
             <div key={category} className="mb-8">
               <h2 className="text-2xl font-bold mb-4 capitalize">{category} Badges</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayBadges.map(badge => {
-                  
                   const isStaged = badge.category === 'staged';
+                  const isJoiningIn = badge.isJoiningInPlaceholder;
                   const familyBadges = isStaged ? categoryBadges.filter(b => b.badge_family_id === badge.badge_family_id && b.stage_number !== null) : [badge];
 
                   return (
@@ -232,7 +254,16 @@ export default function ManageBadges() {
                               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600 mb-4">{badge.description}</p>
-                {isStaged ? (
+                {isJoiningIn ? (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => navigate(createPageUrl('JoiningInBadgeDetail'))}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Manage All Stages
+                  </Button>
+                ) : isStaged ? (
                   <div className="space-y-2">
                     <Button
                       variant="outline"

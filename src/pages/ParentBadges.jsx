@@ -314,13 +314,56 @@ export default function ParentBadges() {
     })
     .sort((a, b) => b.progress.percentage - a.progress.percentage);
 
-  // Group by category
+  // Group by category and sort activity badges A-Z
   const badgesByCategory = filteredBadges.reduce((acc, bp) => {
     const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
     if (!acc[category]) acc[category] = [];
     acc[category].push(bp);
     return acc;
   }, {});
+
+  // Sort activity badges alphabetically
+  if (badgesByCategory.activity) {
+    badgesByCategory.activity.sort((a, b) => {
+      const nameA = a.type === 'family' ? a.family.name : a.badge.name;
+      const nameB = b.type === 'family' ? b.family.name : b.badge.name;
+      return nameA.localeCompare(nameB);
+    });
+  }
+
+  // Consolidate Joining In Awards
+  if (badgesByCategory.activity) {
+    const joiningInBadges = badgesByCategory.activity.filter(bp => 
+      bp.type === 'single' && bp.badge.name.includes('Joining In Award')
+    );
+    const nonJoiningIn = badgesByCategory.activity.filter(bp => 
+      !(bp.type === 'single' && bp.badge.name.includes('Joining In Award'))
+    );
+    
+    if (joiningInBadges.length > 0) {
+      // Create placeholder
+      const placeholder = {
+        type: 'joining_in',
+        badge: {
+          ...joiningInBadges[0].badge,
+          name: 'Joining In Awards',
+          id: 'joining-in-awards'
+        },
+        progress: {
+          completed: 0,
+          total: 0,
+          percentage: 0,
+          isCompleted: false
+        },
+        joiningInBadges
+      };
+      badgesByCategory.activity = [...nonJoiningIn, placeholder].sort((a, b) => {
+        const nameA = a.type === 'family' ? a.family.name : a.badge.name;
+        const nameB = b.type === 'family' ? b.family.name : b.badge.name;
+        return nameA.localeCompare(nameB);
+      });
+    }
+  }
 
   const categoryOrder = ['challenge', 'activity', 'staged', 'core'];
   const sortedCategories = Object.keys(badgesByCategory).sort((a, b) => 
@@ -510,7 +553,13 @@ export default function ParentBadges() {
                        transition={{ delay: idx * 0.05 }}
                      >
                        <Card 
-                         onClick={() => setSelectedBadge(bp)}
+                         onClick={() => {
+                           if (bp.type === 'joining_in') {
+                             navigate(createPageUrl('JoiningInBadgeDetail'));
+                           } else {
+                             setSelectedBadge(bp);
+                           }
+                         }}
                          className="cursor-pointer hover:shadow-xl transition-all hover:scale-105"
                        >
                          <CardContent className="p-6">
