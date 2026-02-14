@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Edit2, Check, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageSelector from '../ImageSelector';
 
 export default function GalleryBlock({ data, onUpdate, isEditing, setIsEditing, isPublicView }) {
   const [images, setImages] = useState(data.images || []);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   const removeImage = (url) => {
     setImages(images.filter(img => img !== url));
@@ -35,18 +38,39 @@ export default function GalleryBlock({ data, onUpdate, isEditing, setIsEditing, 
     };
 
     return (
-      <div className="flex items-start justify-between gap-2">
-        <div className={`grid ${getGridClass()} gap-2 w-full`}>
-          {images.map((img, idx) => (
-            <img key={idx} src={img} alt={`Gallery ${idx}`} className={getImageClass()} />
-          ))}
+      <>
+        <div className="flex items-start justify-between gap-2">
+          <div className={`grid ${getGridClass()} gap-2 w-full`}>
+            {images.map((img, idx) => (
+              <img 
+                key={idx} 
+                src={img} 
+                alt={`Gallery ${idx}`} 
+                className={`${getImageClass()} cursor-pointer hover:opacity-90 transition-opacity`}
+                onClick={() => {
+                  setLightboxImage(img);
+                  setLightboxOpen(true);
+                }}
+              />
+            ))}
+          </div>
+          {!isPublicView && (
+            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
+              <Edit2 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
-        {!isPublicView && (
-          <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
-            <Edit2 className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
+
+        <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+          <DialogContent className="max-w-4xl p-0">
+            <img
+              src={lightboxImage}
+              alt="Full size"
+              className="w-full max-h-[90vh] object-contain"
+            />
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 
