@@ -127,15 +127,8 @@ export default function LeaderProgramme() {
     enabled: !!currentTerm,
   });
 
-  const handleMeetingClick = (meeting, isPast, programme) => {
+  const handleMeetingClick = (meeting) => {
     if (meeting.isHalfTerm) return;
-    
-    // If it's a past meeting and has photos, go to gallery
-    if (isPast && programme?.id) {
-      navigate(createPageUrl('Gallery') + `?view=meeting&id=${programme.id}`);
-      return;
-    }
-    
     const dateStr = meeting.date.toISOString().split('T')[0];
     navigate(createPageUrl('MeetingDetail') + `?section_id=${currentTerm.section_id}&date=${dateStr}&term_id=${currentTerm.id}`);
   };
@@ -224,7 +217,7 @@ export default function LeaderProgramme() {
               )}
               <CardContent className="pt-0">
                 <Button
-                  onClick={() => handleMeetingClick(nextMeeting, false, programme)}
+                  onClick={() => handleMeetingClick(nextMeeting)}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   {programme ? 'View Details' : 'Plan Meeting'}
@@ -341,7 +334,7 @@ export default function LeaderProgramme() {
                     transition={{ delay: index * 0.03 }}
                   >
                     <Card 
-                      onClick={() => handleMeetingClick(meeting, isPast, programme)}
+                      onClick={() => handleMeetingClick(meeting)}
                       className={`group cursor-pointer hover:shadow-xl transition-all duration-300 border-l-4 ${
                         programme?.published 
                           ? 'border-l-green-500 bg-gradient-to-r from-green-50/50 to-white' 
@@ -375,11 +368,7 @@ export default function LeaderProgramme() {
                               <p className="text-gray-400 italic">Not planned yet - click to add</p>
                             )}
                           </div>
-                          {isPast && programme ? (
-                            <Image className="w-5 h-5 text-gray-400 group-hover:text-[#7413dc] transition-colors" />
-                          ) : (
-                            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-[#7413dc] group-hover:translate-x-1 transition-all" />
-                          )}
+                          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-[#7413dc] group-hover:translate-x-1 transition-all" />
                         </div>
                       </CardContent>
                     </Card>
