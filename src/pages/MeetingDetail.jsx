@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Save, Calendar, Users, Award, Eye, EyeOff, Plus, Trash2, ListTodo, Shield, AlertCircle, Upload, FileText } from 'lucide-react';
+import { ArrowLeft, Save, Calendar, Users, Award, Eye, EyeOff, Plus, Trash2, ListTodo, Shield, AlertCircle, Upload, FileText, Image } from 'lucide-react';
 import { toast } from 'sonner';
 import TodoSection from '../components/meeting/TodoSection';
 import ParentPortalSection from '../components/meeting/ParentPortalSection';
@@ -202,6 +202,15 @@ export default function MeetingDetail() {
     return response?.response || null;
   };
 
+  // Check if meeting is in the past (day after)
+  const isPastMeeting = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const meetingDate = new Date(date);
+    meetingDate.setHours(23, 59, 59, 999);
+    return meetingDate < today;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <LeaderNav />
@@ -229,30 +238,41 @@ export default function MeetingDetail() {
               <p className="mt-1 text-white/80">{section?.display_name}</p>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
-              <Button
-                variant="outline"
-                onClick={() => setFormData({ ...formData, published: !formData.published })}
-                className="bg-white/10 text-white border-white hover:bg-white/20 flex-1 sm:flex-none"
-              >
-                {formData.published ? (
-                  <>
-                    <Eye className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Published</span>
-                  </>
-                ) : (
-                  <>
-                    <EyeOff className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Draft</span>
-                  </>
-                )}
-              </Button>
+              {isPastMeeting() ? (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(createPageUrl('Gallery') + `?view=meeting&id=${existingProgramme?.id}`)}
+                  className="bg-white/10 text-white border-white/30 hover:bg-white/20 flex-1 sm:flex-none"
+                >
+                  <Image className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Gallery</span>
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => setFormData({ ...formData, published: !formData.published })}
+                  className="bg-white/10 text-white border-white hover:bg-white/20 flex-1 sm:flex-none"
+                >
+                  {formData.published ? (
+                    <>
+                      <Eye className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Published</span>
+                    </>
+                  ) : (
+                    <>
+                      <EyeOff className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Draft</span>
+                    </>
+                  )}
+                </Button>
+              )}
               <Button
                 onClick={handleSave}
                 disabled={saveProgrammeMutation.isPending}
-                className="bg-[#7413dc] hover:bg-[#5c0fb0] flex-1 sm:flex-none"
+                className={`${isPastMeeting() ? 'bg-gray-400 hover:bg-gray-500' : 'bg-[#7413dc] hover:bg-[#5c0fb0]'} flex-1 sm:flex-none`}
               >
                 <Save className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Save Meeting</span>
+                <span className="hidden sm:inline">Save {isPastMeeting() && '(Not Recommended)'}</span>
               </Button>
             </div>
           </div>
