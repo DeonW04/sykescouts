@@ -12,13 +12,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Search, Plus, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
+import { useSectionContext } from '../components/leader/SectionContext';
 
 export default function LeaderMembers() {
-  const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [leaderSections, setLeaderSections] = useState([]);
+  const { selectedSection, availableSections, isAdmin } = useSectionContext();
   const [searchTerm, setSearchTerm] = useState('');
-  const [sectionFilter, setSectionFilter] = useState('all');
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [sending, setSending] = useState(false);
   const [inviteForm, setInviteForm] = useState({
@@ -32,24 +30,6 @@ export default function LeaderMembers() {
     child_dob: '',
   });
 
-  React.useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
-    const currentUser = await base44.auth.me();
-    setUser(currentUser);
-    
-    if (currentUser.role === 'admin') {
-      setIsAdmin(true);
-    } else {
-      const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
-      if (leaders.length > 0) {
-        setLeaderSections(leaders[0].section_ids || []);
-      }
-    }
-  };
-
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
     queryFn: () => base44.entities.Section.filter({ active: true }),
@@ -58,12 +38,11 @@ export default function LeaderMembers() {
   const { data: allMembers = [], isLoading, refetch: refetchMembers } = useQuery({
     queryKey: ['members'],
     queryFn: () => base44.entities.Member.filter({ active: true }),
-    enabled: !!user,
   });
 
-  const members = isAdmin 
-    ? allMembers 
-    : allMembers.filter(m => leaderSections.includes(m.section_id));
+  const members = selectedSection 
+    ? allMembers.filter(m => m.section_id === selectedSection)
+    : allMembers;
 
   const calculateAge = (dob) => {
     const birthDate = new Date(dob);
@@ -90,8 +69,7 @@ export default function LeaderMembers() {
   const filteredMembers = members
     .filter(member => {
       const matchesSearch = member.full_name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesSection = sectionFilter === 'all' || member.section_id === sectionFilter;
-      return matchesSearch && matchesSection;
+      return matchesSearch;
     })
     .sort((a, b) => {
       const ageA = new Date(a.date_of_birth).getTime();
@@ -269,19 +247,6 @@ export default function LeaderMembers() {
                   />
                 </div>
               </div>
-              <Select value={sectionFilter} onValueChange={setSectionFilter}>
-                <SelectTrigger className="w-full md:w-48">
-                  <SelectValue placeholder="All Sections" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sections</SelectItem>
-                  {sections.map(section => (
-                    <SelectItem key={section.id} value={section.id}>
-                      {section.display_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </CardContent>
         </Card>
@@ -298,8 +263,8 @@ export default function LeaderMembers() {
               <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No members found</h3>
               <p className="text-gray-600">
-                {searchTerm || sectionFilter !== 'all' 
-                  ? 'Try adjusting your filters' 
+                {searchTerm 
+                  ? 'Try adjusting your search' 
                   : 'Get started by adding your first member'}
               </p>
             </CardContent>

@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { Toaster } from 'sonner';
 import { HelmetProvider } from 'react-helmet-async';
+import { SectionProvider } from './components/leader/SectionContext';
+import SectionSelector from './components/leader/SectionSelector';
 
 export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -156,8 +158,9 @@ export default function Layout({ children, currentPageName }) {
   ];
 
   return (
-    <HelmetProvider>
-      <div className="min-h-screen flex flex-col bg-white">
+    <SectionProvider>
+      <HelmetProvider>
+        <div className="min-h-screen flex flex-col bg-white">
         <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800&display=swap');
         * {
@@ -289,6 +292,11 @@ export default function Layout({ children, currentPageName }) {
         )}
       </header>
 
+      {/* Section Selector for Leaders */}
+      {user && (isLeader || user.role === 'admin') && leaderPages.includes(currentPageName) && (
+        <SectionSelector />
+      )}
+
       {/* Main Content */}
       <main className="flex-1">
         {children}
@@ -354,7 +362,8 @@ export default function Layout({ children, currentPageName }) {
           </div>
         </div>
       </footer>
-    </div>
-    </HelmetProvider>
+      </div>
+      </HelmetProvider>
+    </SectionProvider>
   );
 }
