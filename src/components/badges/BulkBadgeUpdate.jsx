@@ -129,8 +129,8 @@ export default function BulkBadgeUpdate() {
     }
     
     // Only show activity, core, staged, and challenge badges
-    const allowedTypes = ['activity', 'core', 'staged', 'challenge'];
-    if (!allowedTypes.includes(b.type?.toLowerCase())) {
+    const allowedCategories = ['activity', 'core', 'staged', 'challenge'];
+    if (!allowedCategories.includes(b.category?.toLowerCase())) {
       return false;
     }
     
@@ -147,8 +147,8 @@ export default function BulkBadgeUpdate() {
     }
     
     // Only show activity, core, staged, and challenge badges
-    const allowedTypes = ['activity', 'core', 'staged', 'challenge'];
-    if (!allowedTypes.includes(b.type?.toLowerCase())) {
+    const allowedCategories = ['activity', 'core', 'staged', 'challenge'];
+    if (!allowedCategories.includes(b.category?.toLowerCase())) {
       return false;
     }
     
@@ -301,7 +301,7 @@ export default function BulkBadgeUpdate() {
                     />
                     <div className="flex-1">
                       <p className="font-medium">{badge.name}</p>
-                      <p className="text-sm text-gray-500 capitalize">{badge.type}</p>
+                      <p className="text-sm text-gray-500 capitalize">{badge.category}</p>
                     </div>
                   </div>
                 );
@@ -349,7 +349,7 @@ export default function BulkBadgeUpdate() {
                   className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
                 >
                   <p className="font-medium">{badge.name}</p>
-                  <p className="text-sm text-gray-500 capitalize">{badge.type}</p>
+                  <p className="text-sm text-gray-500 capitalize">{badge.category}</p>
                 </div>
               ))}
             </div>
@@ -458,7 +458,7 @@ export default function BulkBadgeUpdate() {
                   {selectedBadges.map(badge => (
                     <div key={badge.id} className="p-3 border rounded-lg">
                       <p className="font-medium">{badge.name}</p>
-                      <p className="text-sm text-gray-500 capitalize">{badge.type}</p>
+                      <p className="text-sm text-gray-500 capitalize">{badge.category}</p>
                     </div>
                   ))}
                 </div>
