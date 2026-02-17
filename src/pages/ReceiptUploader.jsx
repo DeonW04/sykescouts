@@ -23,6 +23,7 @@ export default function ReceiptUploader() {
   const [isGeneric, setIsGeneric] = useState(false);
   const [notes, setNotes] = useState('');
   const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [selectedSection, setSelectedSection] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [editReceipt, setEditReceipt] = useState(null);
   const [meetingOpen, setMeetingOpen] = useState(false);
@@ -44,6 +45,9 @@ export default function ReceiptUploader() {
     },
     enabled: !!user?.id,
   });
+
+  const leaderSections = user?.role === 'admin' ? sections.map(s => s.id) : (leader?.section_ids || []);
+  const accessibleProgrammes = programmes.filter(p => leaderSections.includes(p.section_id));
 
   const { data: receipts = [], isLoading } = useQuery({
     queryKey: ['myReceipts', leader?.id],
@@ -87,6 +91,7 @@ export default function ReceiptUploader() {
         receipt_image_url: file_url,
         value: parseFloat(data.value),
         meeting_id: data.meeting_id,
+        section_id: data.section_id,
         is_generic_expense: data.is_generic,
         notes: data.notes,
         leader_id: leader.id,
@@ -129,6 +134,7 @@ export default function ReceiptUploader() {
     setIsGeneric(false);
     setNotes('');
     setSelectedMeeting(null);
+    setSelectedSection('');
   };
 
   const handleUpload = () => {
@@ -140,9 +146,16 @@ export default function ReceiptUploader() {
       toast.error('Please select a meeting or mark as generic expense');
       return;
     }
+    
+    let sectionId = selectedSection;
+    if (!isGeneric && selectedMeeting) {
+      sectionId = selectedMeeting.section_id;
+    }
+    
     uploadMutation.mutate({
       value,
       meeting_id: isGeneric ? null : selectedMeeting?.id,
+      section_id: sectionId || null,
       is_generic: isGeneric,
       notes,
     });
@@ -302,7 +315,7 @@ export default function ReceiptUploader() {
                       <CommandList>
                         <CommandEmpty>No meetings found</CommandEmpty>
                         <CommandGroup>
-                          {programmes.map((prog) => (
+                          {accessibleProgrammes.map((prog) => (
                             <CommandItem
                               key={prog.id}
                               onSelect={() => {
@@ -319,6 +332,23 @@ export default function ReceiptUploader() {
                     </Command>
                   </PopoverContent>
                 </Popover>
+              </div>
+            )}
+            {isGeneric && (
+              <div>
+                <Label className="text-sm font-medium">Section (Optional)</Label>
+                <Select value={selectedSection} onValueChange={setSelectedSection}>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue placeholder="Select section..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sections.filter(s => leaderSections.includes(s.id)).map(section => (
+                      <SelectItem key={section.id} value={section.id}>
+                        {section.display_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
             <div>
