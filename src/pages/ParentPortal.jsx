@@ -61,25 +61,31 @@ export default function ParentPortal() {
     return Math.round((completedFields / requiredFields.length) * 100);
   };
 
-  const { data: users = [] } = useQuery({
-    queryKey: ['users'],
+  const { data: parentRegistration = {} } = useQuery({
+    queryKey: ['parent-registration', members],
     queryFn: async () => {
-      try {
-        return await base44.entities.User.filter({});
-      } catch {
-        return [];
-      }
+      if (!members || members.length === 0) return {};
+      
+      // Collect all parent emails
+      const allEmails = [];
+      members.forEach(member => {
+        if (member.parent_one_email) allEmails.push(member.parent_one_email);
+        if (member.parent_two_email) allEmails.push(member.parent_two_email);
+      });
+      
+      const uniqueEmails = [...new Set(allEmails)].filter(Boolean);
+      if (uniqueEmails.length === 0) return {};
+      
+      const response = await base44.functions.invoke('checkParentRegistration', { emails: uniqueEmails });
+      return response.data.results || {};
     },
+    enabled: members.length > 0,
   });
 
-  // Check if parent is registered (has a Parent entity record)
+  // Check if parent is registered
   const isParentRegistered = (email) => {
     if (!email) return false;
-    // Find user by email
-    const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-    if (!user) return false;
-    // Check if they have completed onboarding and have a Parent entity
-    return user.onboarding_complete && parents.some(p => p.user_id === user.id);
+    return parentRegistration[email] === true;
   };
 
   // Calculate statistics
