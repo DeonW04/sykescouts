@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Users, UserCheck, UserX, AlertTriangle, Mail, CheckCircle } from 'lucide-react';
+import { Users, UserCheck, UserX, AlertTriangle, Mail, CheckCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
 
 export default function ParentPortal() {
   const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
 
   const { data: members = [] } = useQuery({
     queryKey: ['members'],
@@ -61,31 +62,29 @@ export default function ParentPortal() {
     return Math.round((completedFields / requiredFields.length) * 100);
   };
 
-  const { data: parentRegistration = {} } = useQuery({
-    queryKey: ['parent-registration', members],
-    queryFn: async () => {
-      if (!members || members.length === 0) return {};
-      
-      // Collect all parent emails
-      const allEmails = [];
-      members.forEach(member => {
-        if (member.parent_one_email) allEmails.push(member.parent_one_email);
-        if (member.parent_two_email) allEmails.push(member.parent_two_email);
-      });
-      
-      const uniqueEmails = [...new Set(allEmails)].filter(Boolean);
-      if (uniqueEmails.length === 0) return {};
-      
-      const response = await base44.functions.invoke('checkParentRegistration', { emails: uniqueEmails });
-      return response.data.results || {};
-    },
-    enabled: members.length > 0,
+  const { data: registrationCache = [] } = useQuery({
+    queryKey: ['parent-registration-cache'],
+    queryFn: () => base44.entities.ParentRegistrationCache.filter({}),
   });
 
-  // Check if parent is registered
+  // Check if parent is registered from cache
   const isParentRegistered = (email) => {
     if (!email) return false;
-    return parentRegistration[email] === true;
+    const cached = registrationCache.find(r => r.email.toLowerCase() === email.toLowerCase());
+    return cached?.is_registered === true;
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await base44.functions.invoke('refreshParentRegistration');
+      queryClient.invalidateQueries({ queryKey: ['parent-registration-cache'] });
+      toast.success('Registration status refreshed');
+    } catch (error) {
+      toast.error('Failed to refresh: ' + error.message);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   // Calculate statistics
@@ -112,12 +111,23 @@ export default function ParentPortal() {
       <LeaderNav />
       <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Users className="w-8 h-8" />
-            <div>
-              <h1 className="text-3xl font-bold">Parent Portal Management</h1>
-              <p className="mt-1 text-white/80">Track parent registrations and data completion</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Users className="w-8 h-8" />
+              <div>
+                <h1 className="text-3xl font-bold">Parent Portal Management</h1>
+                <p className="mt-1 text-white/80">Track parent registrations and data completion</p>
+              </div>
             </div>
+            <Button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              variant="outline"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh Status
+            </Button>
           </div>
         </div>
       </div>
