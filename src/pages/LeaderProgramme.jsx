@@ -335,7 +335,7 @@ export default function LeaderProgramme() {
           setShowNewTermDialog(open);
           if (!open) setEditingTerm(null);
         }}
-        sections={sections}
+        sections={sections.filter(s => s.id === selectedSection)}
         editTerm={editingTerm}
       />
 
@@ -343,7 +343,7 @@ export default function LeaderProgramme() {
         open={showAllTermsDialog}
         onOpenChange={setShowAllTermsDialog}
         terms={terms}
-        sections={sections}
+        sections={sections.filter(s => s.id === selectedSection)}
         onSelectTerm={setSelectedTerm}
         onCreateNew={() => {
           setEditingTerm(null);
