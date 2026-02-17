@@ -121,17 +121,39 @@ export default function BulkBadgeUpdate() {
   // Filter badges for by-member mode
   const filteredBadges = badgeDefinitions.filter(b => {
     if (!selectedMember) return false;
-    const memberSection = members.find(m => m.id === selectedMember.id)?.section_id;
+    
+    // Exclude special badges
+    const excludedBadges = ['gold award', 'nights away', 'hikes away'];
+    if (excludedBadges.some(excluded => b.name?.toLowerCase().includes(excluded))) {
+      return false;
+    }
+    
+    // Only show activity, core, staged, and challenge badges
+    const allowedTypes = ['activity', 'core', 'staged', 'challenge'];
+    if (!allowedTypes.includes(b.type?.toLowerCase())) {
+      return false;
+    }
+    
     const matchesSearch = b.name?.toLowerCase().includes(badgeSearch.toLowerCase());
-    const matchesSection = !memberSection || b.section === 'all' || 
-      badgeDefinitions.find(bd => bd.id === b.id)?.section === memberSection;
-    return matchesSearch && matchesSection;
+    return matchesSearch;
   });
 
   // Filter badges for by-badge mode
-  const filteredBadgesByBadge = badgeDefinitions.filter(b =>
-    b.name?.toLowerCase().includes(badgeSearchByBadge.toLowerCase())
-  );
+  const filteredBadgesByBadge = badgeDefinitions.filter(b => {
+    // Exclude special badges
+    const excludedBadges = ['gold award', 'nights away', 'hikes away'];
+    if (excludedBadges.some(excluded => b.name?.toLowerCase().includes(excluded))) {
+      return false;
+    }
+    
+    // Only show activity, core, staged, and challenge badges
+    const allowedTypes = ['activity', 'core', 'staged', 'challenge'];
+    if (!allowedTypes.includes(b.type?.toLowerCase())) {
+      return false;
+    }
+    
+    return b.name?.toLowerCase().includes(badgeSearchByBadge.toLowerCase());
+  });
 
   // Filter members for by-badge mode
   const filteredMembersByBadge = members.filter(m =>
