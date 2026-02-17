@@ -45,32 +45,64 @@ export default function BulkBadgeUpdate() {
     queryFn: () => base44.entities.MemberBadgeProgress.filter({}),
   });
 
+  const { data: badgeModules = [] } = useQuery({
+    queryKey: ['badge-modules'],
+    queryFn: () => base44.entities.BadgeModule.filter({}),
+  });
+
+  const { data: badgeRequirements = [] } = useQuery({
+    queryKey: ['badge-requirements'],
+    queryFn: () => base44.entities.BadgeRequirement.filter({}),
+  });
+
   const completeBadgesMutation = useMutation({
     mutationFn: async ({ memberIds, badgeIds }) => {
       const results = [];
+      const today = new Date().toISOString().split('T')[0];
+      
       for (const memberId of memberIds) {
         for (const badgeId of badgeIds) {
-          // Check if progress already exists
+          // Get all modules and requirements for this badge
+          const modules = badgeModules.filter(m => m.badge_id === badgeId);
+          
+          for (const module of modules) {
+            const requirements = badgeRequirements.filter(r => r.module_id === module.id);
+            
+            // Complete all requirements in this module
+            for (const requirement of requirements) {
+              await base44.entities.MemberRequirementProgress.create({
+                member_id: memberId,
+                badge_id: badgeId,
+                module_id: module.id,
+                requirement_id: requirement.id,
+                completion_count: requirement.required_completions || 1,
+                completed: true,
+                completed_date: today,
+                source: 'manual',
+              });
+            }
+          }
+          
+          // Update or create badge progress
           const existing = badgeProgress.find(
             bp => bp.member_id === memberId && bp.badge_id === badgeId
           );
           
           if (existing) {
-            // Update to completed
             await base44.entities.MemberBadgeProgress.update(existing.id, {
               status: 'completed',
-              completed_date: new Date().toISOString().split('T')[0],
+              completed_date: today,
             });
           } else {
-            // Create new completed badge
             await base44.entities.MemberBadgeProgress.create({
               member_id: memberId,
               badge_id: badgeId,
               status: 'completed',
-              started_date: new Date().toISOString().split('T')[0],
-              completed_date: new Date().toISOString().split('T')[0],
+              started_date: today,
+              completed_date: today,
             });
           }
+          
           results.push({ memberId, badgeId, success: true });
         }
       }
@@ -78,6 +110,7 @@ export default function BulkBadgeUpdate() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['badge-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['req-progress'] });
       toast.success('Badges completed successfully!');
       handleReset();
     },

@@ -64,6 +64,11 @@ export default function BadgesTab({ memberId }) {
   const badgesWithProgress = uniqueBadgeIds.map(badgeId => {
     const badge = badges.find(b => b.id === badgeId);
     if (!badge) return null;
+    
+    // Exclude special badges and only show activity, core, staged, and challenge
+    const allowedCategories = ['activity', 'core', 'staged', 'challenge'];
+    if (!allowedCategories.includes(badge.category?.toLowerCase())) return null;
+    
     const progress = getBadgeProgress(badgeId);
     if (progress.total === 0) return null;
     return { badge, progress };
