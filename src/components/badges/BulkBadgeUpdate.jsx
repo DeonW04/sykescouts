@@ -136,6 +136,13 @@ export default function BulkBadgeUpdate() {
     
     const matchesSearch = b.name?.toLowerCase().includes(badgeSearch.toLowerCase());
     return matchesSearch;
+  }).sort((a, b) => {
+    // Sort by category first
+    if (a.category !== b.category) {
+      return a.category.localeCompare(b.category);
+    }
+    // Then sort alphabetically by name
+    return a.name.localeCompare(b.name);
   });
 
   // Filter badges for by-badge mode
@@ -153,6 +160,13 @@ export default function BulkBadgeUpdate() {
     }
     
     return b.name?.toLowerCase().includes(badgeSearchByBadge.toLowerCase());
+  }).sort((a, b) => {
+    // Sort by category first
+    if (a.category !== b.category) {
+      return a.category.localeCompare(b.category);
+    }
+    // Then sort alphabetically by name
+    return a.name.localeCompare(b.name);
   });
 
   // Filter members for by-badge mode
