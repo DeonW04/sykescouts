@@ -31,6 +31,11 @@ export default function ReceiptManagement() {
     queryFn: () => base44.entities.Leader.filter({}),
   });
 
+  const { data: sections = [] } = useQuery({
+    queryKey: ['sections'],
+    queryFn: () => base44.entities.Section.filter({}),
+  });
+
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }) => base44.entities.Receipt.update(id, { status }),
     onSuccess: () => {
@@ -137,9 +142,16 @@ export default function ReceiptManagement() {
                     {receipt.status === 'reimbursed' ? 'Reimbursed' : 'Pending'}
                   </Badge>
                   
-                  <span className="text-xs text-gray-600 whitespace-nowrap">
-                    {receipt.leader_name}
-                  </span>
+                  <div className="flex flex-col items-start">
+                    <span className="text-xs text-gray-600 whitespace-nowrap">
+                      {receipt.leader_name}
+                    </span>
+                    {receipt.section_id && (
+                      <span className="text-xs text-gray-500">
+                        {sections.find(s => s.id === receipt.section_id)?.display_name || ''}
+                      </span>
+                    )}
+                  </div>
                   
                   <Button
                     variant="ghost"
