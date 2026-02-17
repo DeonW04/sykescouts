@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReceiptManagement from '../components/admin/ReceiptManagement';
+import BulkBadgeUpdate from '../components/badges/BulkBadgeUpdate';
 
 export default function AdminSettings() {
   const navigate = useNavigate();
@@ -590,6 +591,22 @@ export default function AdminSettings() {
                     <Award className="w-4 h-4 mr-2" />
                     Manage Badges
                   </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="border-green-200 bg-green-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-green-900">
+                    <Award className="w-5 h-5" />
+                    Bulk Badge Completion
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 mb-4">
+                    Manually complete badges in bulk for members. Choose to award multiple badges to one member,
+                    or one badge to multiple members.
+                  </p>
+                  <BulkBadgeUpdate />
                 </CardContent>
               </Card>
 
