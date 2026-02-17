@@ -46,9 +46,6 @@ export default function ReceiptUploader() {
     enabled: !!user?.id,
   });
 
-  const leaderSections = user?.role === 'admin' ? sections.map(s => s.id) : (leader?.section_ids || []);
-  const accessibleProgrammes = programmes.filter(p => leaderSections.includes(p.section_id));
-
   const { data: receipts = [], isLoading } = useQuery({
     queryKey: ['myReceipts', leader?.id],
     queryFn: async () => {
@@ -68,6 +65,9 @@ export default function ReceiptUploader() {
     queryKey: ['sections'],
     queryFn: () => base44.entities.Section.filter({}),
   });
+
+  const leaderSections = user?.role === 'admin' ? sections.map(s => s.id) : (leader?.section_ids || []);
+  const accessibleProgrammes = programmes.filter(p => leaderSections.includes(p.section_id));
 
   const generateReceiptId = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -342,7 +342,7 @@ export default function ReceiptUploader() {
                     <SelectValue placeholder="Select section..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {sections.filter(s => leaderSections.includes(s.id)).map(section => (
+                    {sections.filter(s => user?.role === 'admin' || leader?.section_ids?.includes(s.id)).map(section => (
                       <SelectItem key={section.id} value={section.id}>
                         {section.display_name}
                       </SelectItem>
