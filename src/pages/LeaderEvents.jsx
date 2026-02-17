@@ -11,71 +11,30 @@ import { format } from 'date-fns';
 import NewEventDialog from '../components/events/NewEventDialog';
 import { motion } from 'framer-motion';
 import LeaderNav from '../components/leader/LeaderNav';
+import { useSectionContext } from '../components/leader/SectionContext';
 
 export default function LeaderEvents() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [isLeader, setIsLeader] = useState(false);
+  const { selectedSection } = useSectionContext();
   const [showNewDialog, setShowNewDialog] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
 
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
-    const currentUser = await base44.auth.me();
-    setUser(currentUser);
-    
-    if (currentUser.role === 'admin') {
-      setIsLeader(true);
-    } else {
-      const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
-      setIsLeader(leaders.length > 0);
-    }
-  };
-
   const { data: sections = [] } = useQuery({
-    queryKey: ['sections', user],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      if (user.role === 'admin') {
-        return base44.entities.Section.filter({ active: true });
-      } else {
-        const leaders = await base44.entities.Leader.filter({ user_id: user.id });
-        if (leaders.length === 0) return [];
-        
-        const leader = leaders[0];
-        const allSections = await base44.entities.Section.filter({ active: true });
-        return allSections.filter(s => leader.section_ids?.includes(s.id));
-      }
-    },
-    enabled: !!user,
+    queryKey: ['sections'],
+    queryFn: () => base44.entities.Section.filter({ active: true }),
   });
 
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ['events', sections],
+    queryKey: ['events', selectedSection],
     queryFn: async () => {
-      if (sections.length === 0) return [];
-      const sectionIds = sections.map(s => s.id);
+      if (!selectedSection) return [];
       const allEvents = await base44.entities.Event.filter({});
       return allEvents
-        .filter(e => e.section_ids?.some(sid => sectionIds.includes(sid)))
+        .filter(e => e.section_ids?.includes(selectedSection))
         .sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
     },
-    enabled: sections.length > 0,
+    enabled: !!selectedSection,
   });
-
-  if (!user || !isLeader) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="p-8">
-          <p className="text-gray-600">Access denied. Leaders only.</p>
-        </Card>
-      </div>
-    );
-  }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -299,7 +258,7 @@ export default function LeaderEvents() {
           setShowNewDialog(open);
           if (!open) setEditingEvent(null);
         }}
-        sections={sections}
+        sections={sections.filter(s => s.id === selectedSection)}
         editEvent={editingEvent}
       />
     </div>

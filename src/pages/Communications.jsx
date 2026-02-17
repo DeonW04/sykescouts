@@ -14,6 +14,7 @@ export default function Communications() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [timeFilter, setTimeFilter] = useState('month');
+  const [sectionFilter, setSectionFilter] = useState('all');
 
   const { data: pages = [] } = useQuery({
     queryKey: ['communication-pages'],
@@ -38,6 +39,11 @@ export default function Communications() {
   const { data: enquiries = [] } = useQuery({
     queryKey: ['join-enquiries'],
     queryFn: () => base44.entities.JoinEnquiry.filter({}),
+  });
+
+  const { data: sections = [] } = useQuery({
+    queryKey: ['sections'],
+    queryFn: () => base44.entities.Section.filter({ active: true }),
   });
 
   // Calculate stats - members with at least one registered parent
@@ -91,7 +97,9 @@ export default function Communications() {
     return pages.filter(p => {
       if (!p.published_date) return false;
       const pubDate = new Date(p.published_date);
-      return pubDate >= startDate;
+      const matchesDate = pubDate >= startDate;
+      const matchesSection = sectionFilter === 'all' || p.section_id === sectionFilter;
+      return matchesDate && matchesSection;
     });
   };
 
@@ -250,7 +258,22 @@ export default function Communications() {
         {/* Recent Pages */}
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Recent Communications</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Recent Communications</CardTitle>
+              <Select value={sectionFilter} onValueChange={setSectionFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by section" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sections</SelectItem>
+                  {sections.map(section => (
+                    <SelectItem key={section.id} value={section.id}>
+                      {section.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             {pages.length === 0 ? (

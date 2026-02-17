@@ -11,68 +11,35 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import LeaderNav from '../components/leader/LeaderNav';
+import { useSectionContext } from '../components/leader/SectionContext';
 
 export default function LeaderProgramme() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [isLeader, setIsLeader] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const { selectedSection } = useSectionContext();
   const [showNewTermDialog, setShowNewTermDialog] = useState(false);
   const [showAllTermsDialog, setShowAllTermsDialog] = useState(false);
   const [editingTerm, setEditingTerm] = useState(null);
   const [selectedTerm, setSelectedTerm] = useState(null);
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
-    try {
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
-      
-      if (currentUser.role === 'admin') {
-        setIsLeader(true);
-      } else {
-        const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
-        setIsLeader(leaders.length > 0);
-      }
-    } finally {
-      setCheckingAuth(false);
-    }
-  };
-
   const { data: sections = [] } = useQuery({
-    queryKey: ['sections', user],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      if (user.role === 'admin') {
-        return base44.entities.Section.filter({ active: true });
-      } else {
-        const leaders = await base44.entities.Leader.filter({ user_id: user.id });
-        if (leaders.length === 0) return [];
-        
-        const leader = leaders[0];
-        const allSections = await base44.entities.Section.filter({ active: true });
-        return allSections.filter(s => leader.section_ids?.includes(s.id));
-      }
-    },
-    enabled: !!user,
+    queryKey: ['sections'],
+    queryFn: () => base44.entities.Section.filter({ active: true }),
   });
 
   const { data: terms = [], isLoading } = useQuery({
-    queryKey: ['terms', sections],
+    queryKey: ['terms', selectedSection],
     queryFn: async () => {
-      if (sections.length === 0) return [];
-      const sectionIds = sections.map(s => s.id);
-      const allTerms = await base44.entities.Term.filter({ active: true });
-      return allTerms.filter(t => sectionIds.includes(t.section_id)).sort((a, b) => 
+      if (!selectedSection) return [];
+      const allTerms = await base44.entities.Term.filter({ 
+        active: true, 
+        section_id: selectedSection 
+      });
+      return allTerms.sort((a, b) => 
         new Date(b.start_date) - new Date(a.start_date)
       );
     },
-    enabled: sections.length > 0,
+    enabled: !!selectedSection,
   });
 
   // Determine current term
@@ -132,24 +99,6 @@ export default function LeaderProgramme() {
     const dateStr = meeting.date.toISOString().split('T')[0];
     navigate(createPageUrl('MeetingDetail') + `?section_id=${currentTerm.section_id}&date=${dateStr}&term_id=${currentTerm.id}`);
   };
-
-  if (checkingAuth) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  if (!user || !isLeader) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="p-8">
-          <p className="text-gray-600">Access denied. Leaders only.</p>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
