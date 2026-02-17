@@ -26,15 +26,14 @@ Deno.serve(async (req) => {
     }
 
     // Check registration status for all emails
-    const response = await base44.functions.invoke('checkParentRegistration', { emails: uniqueEmails });
-    const results = response.data.results || {};
+    const allUsers = await base44.asServiceRole.entities.User.filter({});
     
     // Update cache for each email
     const now = new Date().toISOString();
     let updated = 0;
     
     for (const email of uniqueEmails) {
-      const isRegistered = results[email] === true;
+      const isRegistered = allUsers.some(u => u.email?.toLowerCase() === email.toLowerCase());
       
       // Check if cache record exists
       const existingCache = await base44.asServiceRole.entities.ParentRegistrationCache.filter({ email });
