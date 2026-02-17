@@ -22,6 +22,11 @@ export default function WeeklyMessageList() {
     queryFn: () => base44.entities.CommunicationPage.filter({ type: 'weekly_message' }),
   });
 
+  const { data: sections = [] } = useQuery({
+    queryKey: ['sections'],
+    queryFn: () => base44.entities.Section.filter({ active: true }),
+  });
+
   const deletePageMutation = useMutation({
     mutationFn: (id) => base44.entities.CommunicationPage.delete(id),
     onSuccess: () => {
@@ -143,7 +148,7 @@ export default function WeeklyMessageList() {
                           {page.status}
                         </Badge>
                       </div>
-                      <div className="grid md:grid-cols-3 gap-3 text-sm text-gray-600">
+                      <div className="grid md:grid-cols-4 gap-3 text-sm text-gray-600">
                         <div>
                           {page.published_date ? new Date(page.published_date).toLocaleDateString() : 'Not published'}
                         </div>
@@ -153,6 +158,9 @@ export default function WeeklyMessageList() {
                         </div>
                         <div>
                           Created {new Date(page.created_date).toLocaleDateString()}
+                        </div>
+                        <div>
+                          {page.section_id ? sections.find(s => s.id === page.section_id)?.display_name || 'Unknown section' : 'All sections'}
                         </div>
                       </div>
                     </div>

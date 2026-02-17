@@ -27,6 +27,12 @@ export default function MonthlyNewsletter() {
   const [showResponses, setShowResponses] = useState(false);
   const [selectedBlockId, setSelectedBlockId] = useState(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [selectedSection, setSelectedSection] = useState('');
+
+  const { data: sections = [] } = useQuery({
+    queryKey: ['sections'],
+    queryFn: () => base44.entities.Section.filter({ active: true }),
+  });
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -238,6 +244,34 @@ export default function MonthlyNewsletter() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Section Selector */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium text-gray-700">Section (Optional):</label>
+              <Select 
+                value={selectedSection || page?.section_id || ''} 
+                onValueChange={(value) => {
+                  setSelectedSection(value);
+                  updatePageMutation.mutate({ section_id: value || null });
+                }}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Select section..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>None</SelectItem>
+                  {sections.map(section => (
+                    <SelectItem key={section.id} value={section.id}>
+                      {section.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Editor */}
         {/* Header Bar Configuration */}
