@@ -34,6 +34,7 @@ export default function EventDetail() {
   const [financialType, setFinancialType] = useState('expense');
   const [financialForm, setFinancialForm] = useState({ description: '', amount: '', date: '' });
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showAwardNightsDialog, setShowAwardNightsDialog] = useState(false);
   
   const [formData, setFormData] = useState({
     schedule_by_day: [
