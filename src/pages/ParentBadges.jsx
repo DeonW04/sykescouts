@@ -279,46 +279,29 @@ export default function ParentBadges() {
     family.stages.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
   });
 
-  // Create unified badge list for display
+  // Create unified badge list for display (exclude nights/hikes/joiningIn — shown in bottom strip)
   const allAvailableBadges = [
     ...nonStagedBadges.map(badge => {
       const progress = getBadgeProgress(badge.id);
       const isCompleted = badgeProgress.some(p => p.member_id === child.id && p.badge_id === badge.id && p.status === 'completed');
-      
-      return {
-        type: 'single',
-        badge,
-        progress: {
-          ...progress,
-          isCompleted
-        }
-      };
+      return { type: 'single', badge, progress: { ...progress, isCompleted } };
     }),
     ...Object.values(stagedFamilies).map(family => {
-      // Calculate overall family progress
       let totalReqs = 0;
       let completedReqs = 0;
-      let anyStageCompleted = false;
-      
       family.stages.forEach(stage => {
         const stageProgress = getBadgeProgress(stage.id);
         totalReqs += stageProgress.total;
         completedReqs += stageProgress.completed;
-        
-        if (badgeProgress.some(p => p.member_id === child.id && p.badge_id === stage.id && p.status === 'completed')) {
-          anyStageCompleted = true;
-        }
       });
-      
       return {
         type: 'family',
         family,
-        badge: family.stages[0], // Use first stage for image
+        badge: family.stages[0],
         progress: {
-          completed: completedReqs,
-          total: totalReqs,
+          completed: completedReqs, total: totalReqs,
           percentage: totalReqs > 0 ? Math.round((completedReqs / totalReqs) * 100) : 0,
-          isCompleted: false // Families are never "completed" in this view
+          isCompleted: false
         }
       };
     })
