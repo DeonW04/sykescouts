@@ -638,6 +638,72 @@ export default function AdminSettings() {
             </div>
           </TabsContent>
 
+          <TabsContent value="gallery">
+            {(() => {
+              const totalPhotos = galleryPhotos.length;
+              const sectionCounts = sections.map(section => ({
+                name: section.display_name,
+                count: galleryPhotos.filter(p => p.section_id === section.id).length,
+              })).filter(s => s.count > 0);
+              const groupWideCOunt = galleryPhotos.filter(p => p.section_id === 'all').length;
+              if (groupWideCOunt > 0) sectionCounts.push({ name: 'Group-wide', count: groupWideCOunt });
+
+              const COLORS = ['#7413dc', '#004851', '#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#14b8a6'];
+
+              return (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="border-l-4 border-l-[#7413dc]">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">Total Photos</p>
+                            <p className="text-3xl font-bold text-[#7413dc]">{totalPhotos}</p>
+                          </div>
+                          <Camera className="w-8 h-8 text-[#7413dc]" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    {sectionCounts.map((s, i) => (
+                      <Card key={s.name} style={{ borderLeftColor: COLORS[i % COLORS.length] }} className="border-l-4">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm text-gray-600 mb-1">{s.name}</p>
+                              <p className="text-3xl font-bold">{s.count}</p>
+                            </div>
+                            <Camera className="w-8 h-8 text-gray-400" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {sectionCounts.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <PieChart className="w-5 h-5" />
+                          Photos by Section
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <RechartsPieChart>
+                            <Pie data={sectionCounts} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name} ${Math.round(percent * 100)}%`}>
+                              {sectionCounts.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                            </Pie>
+                            <Tooltip />
+                          </RechartsPieChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              );
+            })()}
+          </TabsContent>
+
           <TabsContent value="receipts">
             <ReceiptManagement />
           </TabsContent>
