@@ -57,6 +57,37 @@ export default function BadgeDetail() {
     queryFn: () => base44.entities.MemberBadgeProgress.filter({ badge_id: badgeId }),
   });
 
+  const setCountMutation = useMutation({
+    mutationFn: async ({ memberId, reqId, newCount }) => {
+      const existing = progress.find(p => p.member_id === memberId && p.requirement_id === reqId);
+      const req = requirements.find(r => r.id === reqId);
+      const requiredCount = req?.required_completions || 1;
+      const clamped = Math.max(0, Math.min(newCount, requiredCount));
+      const isComplete = clamped >= requiredCount;
+      if (clamped === 0) {
+        if (existing) return base44.entities.MemberRequirementProgress.delete(existing.id);
+        return;
+      }
+      if (existing) {
+        return base44.entities.MemberRequirementProgress.update(existing.id, {
+          completion_count: clamped, completed: isComplete,
+          completed_date: isComplete ? new Date().toISOString().split('T')[0] : null,
+          source: 'manual',
+        });
+      }
+      return base44.entities.MemberRequirementProgress.create({
+        member_id: memberId, badge_id: badgeId, module_id: req.module_id,
+        requirement_id: reqId, completion_count: clamped, completed: isComplete,
+        completed_date: isComplete ? new Date().toISOString().split('T')[0] : null,
+        source: 'manual',
+      });
+    },
+    onSuccess: (_, variables) => {
+      setEditingCount(null);
+      toggleReqMutation.options.onSuccess(null, { memberId: variables.memberId, reqId: variables.reqId });
+    },
+  });
+
   const toggleReqMutation = useMutation({
     mutationFn: async ({ memberId, reqId, increment }) => {
       const existing = progress.find(p => p.member_id === memberId && p.requirement_id === reqId);
