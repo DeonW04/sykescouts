@@ -118,7 +118,7 @@ export default function GenerateIdeasModal({ sectionId, section, activeTab, user
     }
     const calendarContext = months.join(', ');
 
-    const onlyNonBadge = !selectedBadgeIds.length && includeNonBadge;
+    const badgeListForMatching = relevantBadges.slice(0, 30).map(b => `${b.id}|${b.name}`).join('\n');
 
     return `You are an expert Scout leader helping plan ${typeLabel} for the ${sectionDisplay} section (age group: ${section?.age_range || 'unknown'}).
 
@@ -145,23 +145,30 @@ CALENDAR AWARENESS — CRITICAL:
 PARAMETERS:
 - Date range: ${dateFrom} to ${dateTo}
 - Focus badges: ${selectedBadgeIds.length > 0 ? targetBadges.map(b => b.name).join(', ') : 'All relevant badges'}
-- ${includeNonBadge && selectedBadgeIds.length === 0 ? 'Generate ONLY non-badge general activity ideas — do NOT link any ideas to badges' : `Include non-badge general activity ideas: ${includeNonBadge ? 'YES (mix badge and non-badge ideas)' : 'NO — every idea must link to a badge'}`}
+- Non-badge ideas: ${includeNonBadge ? 'YES — include general activity ideas, but still include 1-2 badge-focused ideas in the mix' : 'NO — every idea must link to a badge'}
 - Type: ${activeTab === 'meeting' ? 'Meeting programme activities' : 'Events/camps/day trips'}
 
-For each idea, provide practical, hands-on activities suitable for ${sectionDisplay}. Consider what materials are needed, how it fits into a ${activeTab === 'meeting' ? '90-minute meeting' : 'full day/weekend event'}, and which specific badge requirements it fulfils.
+INCIDENTAL BADGE COVERAGE — IMPORTANT:
+Even for general non-badge activities, think about whether the activity naturally covers any badge criteria. 
+For example, a campfire cooking session might incidentally cover parts of the Chef badge or Outdoor badge even if not designed around it.
+Use the badge list below to identify incidental matches (use the ID before the | character):
+${badgeListForMatching}
 
-${onlyNonBadge ? 'IMPORTANT: Since only non-badge ideas are requested, set badgeIds and badgeNames to empty arrays for ALL ideas.' : ''}
+For each idea also suggest what resources/equipment would be needed (craft supplies, venue, outdoor kit, printed materials, etc.) so leaders can plan ahead.
 
-Return ONLY a valid JSON array of exactly 6 objects with these fields:
+Return a JSON object with an "ideas" array of exactly 6 objects with these fields:
 - title: string (short, catchy title)
 - description: string (2-3 sentences, practical detail)
-- badgeIds: array of badge definition IDs from the list above (empty array if general)
-- badgeNames: array of badge names (for display)
+- badgeIds: array of badge IDs this activity is DESIGNED around (empty if general)
+- badgeNames: array of badge names this activity is DESIGNED around
+- incidentalBadgeIds: array of badge IDs this activity might INCIDENTALLY cover (even if not the focus)
+- incidentalBadgeNames: array of badge names this activity might incidentally cover
 - suggestedWeek: string (e.g. "Week of 10 Mar" or specific date)
 - type: "${activeTab}"
 - rationale: string (one sentence: why this is good for this group right now, mention any relevant calendar event/date)
+- resources: string (comma-separated list of materials, equipment or venue needed)
 
-Example format: [{"title":"...", "description":"...", "badgeIds":[], "badgeNames":[], "suggestedWeek":"...", "type":"${activeTab}", "rationale":"..."}]`;
+Example: {"ideas": [{"title":"...", "description":"...", "badgeIds":[], "badgeNames":[], "incidentalBadgeIds":[], "incidentalBadgeNames":[], "suggestedWeek":"...", "type":"${activeTab}", "rationale":"...", "resources":"..."}]}`;
   };
 
   const handleGenerate = async () => {
