@@ -652,31 +652,42 @@ export default function BadgeDetail() {
                                   <div className="flex flex-col items-center gap-1">
                                     <div className="flex items-center gap-1">
                                       <button
-                                        onClick={() => toggleReqMutation.mutate({
-                                          memberId: member.id,
-                                          reqId: req.id,
-                                          increment: false,
-                                        })}
+                                        onClick={() => toggleReqMutation.mutate({ memberId: member.id, reqId: req.id, increment: false })}
                                         className="w-5 h-5 rounded bg-gray-200 hover:bg-gray-300 text-xs font-bold"
                                         disabled={reqProgress.currentCount === 0}
-                                      >
-                                        -
-                                      </button>
-                                      <span className={`text-xs font-bold min-w-[2rem] ${
-                                        reqProgress.isComplete ? 'text-green-600' : 'text-gray-700'
-                                      }`}>
-                                        {reqProgress.currentCount}/{reqProgress.requiredCount}
-                                      </span>
+                                      >-</button>
+                                      {editingCount?.memberId === member.id && editingCount?.reqId === req.id ? (
+                                        <input
+                                          type="number"
+                                          min={0}
+                                          max={reqProgress.requiredCount}
+                                          autoFocus
+                                          value={editingCount.value}
+                                          onChange={(e) => setEditingCount({ ...editingCount, value: e.target.value })}
+                                          onBlur={() => {
+                                            const val = parseInt(editingCount.value, 10);
+                                            if (!isNaN(val)) setCountMutation.mutate({ memberId: member.id, reqId: req.id, newCount: val });
+                                            else setEditingCount(null);
+                                          }}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') e.target.blur();
+                                            if (e.key === 'Escape') setEditingCount(null);
+                                          }}
+                                          className="w-10 text-center text-xs font-bold border border-blue-400 rounded focus:outline-none"
+                                        />
+                                      ) : (
+                                        <button
+                                          onClick={() => setEditingCount({ memberId: member.id, reqId: req.id, value: reqProgress.currentCount })}
+                                          className={`text-xs font-bold min-w-[2rem] cursor-pointer hover:underline ${reqProgress.isComplete ? 'text-green-600' : 'text-gray-700'}`}
+                                          title="Click to set value"
+                                        >
+                                          {reqProgress.currentCount}/{reqProgress.requiredCount}
+                                        </button>
+                                      )}
                                       <button
-                                        onClick={() => toggleReqMutation.mutate({
-                                          memberId: member.id,
-                                          reqId: req.id,
-                                          increment: true,
-                                        })}
+                                        onClick={() => toggleReqMutation.mutate({ memberId: member.id, reqId: req.id, increment: true })}
                                         className="w-5 h-5 rounded bg-green-500 hover:bg-green-600 text-white text-xs font-bold"
-                                      >
-                                        +
-                                      </button>
+                                      >+</button>
                                     </div>
                                     {reqProgress.isComplete && (
                                       <CheckCircle className="w-3 h-3 text-green-600" />
