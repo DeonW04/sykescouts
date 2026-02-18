@@ -359,6 +359,25 @@ export default function LeaderGallery() {
           </div>
         </label>
 
+        {/* Section Filter */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <button
+            onClick={() => { setSelectedSection('all'); setSelectedItem(null); }}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedSection === 'all' ? 'bg-[#004851] text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'}`}
+          >
+            All Sections
+          </button>
+          {sections.map(s => (
+            <button
+              key={s.id}
+              onClick={() => { setSelectedSection(s.id); setSelectedItem(null); setView('all'); }}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all capitalize ${selectedSection === s.id ? 'bg-[#7413dc] text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'}`}
+            >
+              {s.display_name}
+            </button>
+          ))}
+        </div>
+
         {/* Category Buttons */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <Button
