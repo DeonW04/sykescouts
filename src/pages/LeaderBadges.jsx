@@ -371,18 +371,23 @@ export default function LeaderBadges() {
                                         className="space-y-3 cursor-pointer"
                                         onClick={() => navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`)}
                                       >
-                                        <div>
-                                          <div className="flex justify-between text-sm mb-1">
-                                            <span className="text-gray-600">Section Completion</span>
-                                            <span className="font-medium">{stats.percentComplete}%</span>
-                                          </div>
-                                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                            <div
-                                              className="h-full bg-[#7413dc] transition-all"
-                                              style={{ width: `${stats.percentComplete}%` }}
-                                            />
-                                          </div>
-                                        </div>
+                                         <div>
+                                           <div className="text-sm mb-1 text-gray-600">Section Completion</div>
+                                           <div className="h-3 bg-gray-100 rounded-full overflow-hidden flex">
+                                             <div
+                                               className="h-full bg-[#7413dc] transition-all"
+                                               style={{ width: `${stats.totalMembers > 0 ? Math.round((stats.completedCount / stats.totalMembers) * 100) : 0}%` }}
+                                             />
+                                             <div
+                                               className="h-full bg-blue-400 transition-all"
+                                               style={{ width: `${stats.totalMembers > 0 ? Math.round((stats.inProgressCount / stats.totalMembers) * 100) : 0}%` }}
+                                             />
+                                           </div>
+                                           <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                                             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#7413dc] inline-block" />{stats.completedCount} done</span>
+                                             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />{stats.inProgressCount} in progress</span>
+                                           </div>
+                                         </div>
 
                                         <div className="grid grid-cols-2 gap-2 text-center mb-3">
                                           <div className="bg-green-50 rounded-lg p-2">
