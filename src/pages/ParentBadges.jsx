@@ -734,9 +734,12 @@ export default function ParentBadges() {
                     </div>
                   </DialogHeader>
 
-                  <Tabs defaultValue={`stage-${selectedBadge.family.stages[0].id}`} className="mt-4">
-                    <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${selectedBadge.family.stages.length}, 1fr)` }}>
-                      {selectedBadge.family.stages.map((stage, idx) => {
+                  {(() => {
+                    const realStages = selectedBadge.family.stages.filter(s => s.stage_number != null && s.stage_number !== '');
+                    return (
+                  <Tabs defaultValue={`stage-${realStages[0]?.id}`} className="mt-4">
+                    <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${realStages.length}, 1fr)` }}>
+                      {realStages.map((stage, idx) => {
                         const stageCompleted = badgeProgress.some(p => 
                           p.member_id === child.id && 
                           p.badge_id === stage.id && 
