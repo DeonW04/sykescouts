@@ -580,7 +580,7 @@ export default function BadgeDetail() {
                   {relevantMembers.map((member, memberIdx) => {
                     const memberProgress = getMemberProgress(member.id);
                     const isComplete = memberProgress.isComplete;
-                    const isNearlyDone = memberProgress.completed >= memberProgress.total - 1 && !isComplete;
+                    const isNearlyDone = memberProgress.percentage > 80 && !isComplete;
 
                     return (
                       <tr 
