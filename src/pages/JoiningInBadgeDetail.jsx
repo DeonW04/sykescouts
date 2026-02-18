@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, ArrowLeft, Users } from 'lucide-react';
+import { Award, ArrowLeft, User, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import LeaderNav from '../components/leader/LeaderNav';
+import { differenceInMonths, differenceInYears } from 'date-fns';
 
 export default function JoiningInBadgeDetail() {
   const navigate = useNavigate();
@@ -23,52 +24,67 @@ export default function JoiningInBadgeDetail() {
     queryFn: () => base44.entities.Member.filter({ active: true }),
   });
 
-  const { data: allProgress = [] } = useQuery({
-    queryKey: ['badge-progress'],
-    queryFn: () => base44.entities.MemberBadgeProgress.filter({}),
-  });
-
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
     queryFn: () => base44.entities.Section.filter({ active: true }),
   });
 
-  // Get all Joining In Award badges sorted by the numeric value in their name
+  // Get all Joining In Award badges sorted by year number
   const joiningInBadges = allBadges
-    .filter(b => b.name.includes('Joining In Award'))
+    .filter(b => b.name.toLowerCase().includes('joining in award'))
     .sort((a, b) => {
-      // Extract numbers from names like "1 year Joining In Award"
       const numA = parseInt(a.name.match(/\d+/)?.[0] || '0');
       const numB = parseInt(b.name.match(/\d+/)?.[0] || '0');
       return numA - numB;
     });
 
-  const getBadgeStats = (badgeId) => {
-    const badge = allBadges.find(b => b.id === badgeId);
-    
-    const relevantMembers = members.filter(m => {
-      return badge?.section === 'all' || m.section_id === sections.find(s => s.name === badge?.section)?.id;
-    });
+  // For each member, calculate their years in scouting and which badge they currently have / are working towards
+  const getMemberProgress = (member) => {
+    const startDate = member.scouting_start_date || member.join_date;
+    if (!startDate) return null;
 
-    const memberProgress = allProgress.filter(p => 
-      p.badge_id === badgeId && 
-      relevantMembers.some(m => m.id === p.member_id)
-    );
+    const now = new Date();
+    const start = new Date(startDate);
+    const totalMonths = differenceInMonths(now, start);
+    const completedYears = Math.floor(totalMonths / 12);
+    const monthsIntoCurrentYear = totalMonths % 12;
+    const progressPercent = Math.round((monthsIntoCurrentYear / 12) * 100);
 
-    const completedCount = memberProgress.filter(p => p.status === 'completed').length;
-    const inProgressCount = memberProgress.filter(p => p.status === 'in_progress').length;
+    // Current badge = the one for completedYears (e.g. completed 2 years → "2 year Joining In Award")
+    const currentBadge = joiningInBadges.find(b => {
+      const num = parseInt(b.name.match(/\d+/)?.[0] || '0');
+      return num === completedYears;
+    }) || null;
 
-    const percentComplete = relevantMembers.length > 0 
-      ? Math.round((completedCount / relevantMembers.length) * 100) 
-      : 0;
+    // Next badge
+    const nextBadge = joiningInBadges.find(b => {
+      const num = parseInt(b.name.match(/\d+/)?.[0] || '0');
+      return num === completedYears + 1;
+    }) || null;
 
-    return { 
-      completedCount, 
-      inProgressCount, 
-      percentComplete, 
-      totalMembers: relevantMembers.length
+    return {
+      completedYears,
+      monthsIntoCurrentYear,
+      progressPercent,
+      currentBadge,
+      nextBadge,
+      startDate,
     };
   };
+
+  // Sort members oldest first
+  const sortedMembers = [...members].sort((a, b) =>
+    new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime()
+  );
+
+  const membersWithProgress = sortedMembers
+    .map(m => ({ member: m, progress: getMemberProgress(m) }))
+    .filter(({ progress }) => progress !== null);
+
+  const membersWithoutDate = sortedMembers.filter(m => !m.scouting_start_date && !m.join_date);
+
+  const getSectionName = (sectionId) =>
+    sections.find(s => s.id === sectionId)?.display_name || '';
 
   if (badgesLoading) {
     return (
@@ -84,7 +100,7 @@ export default function JoiningInBadgeDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       <LeaderNav />
-      
+
       <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Button
@@ -101,89 +117,113 @@ export default function JoiningInBadgeDetail() {
             </div>
             <div>
               <h1 className="text-3xl font-bold">Joining In Awards</h1>
-              <p className="text-green-100 mt-1">Time-based membership badges for all sections</p>
+              <p className="text-green-100 mt-1">1 award per year of scouting — based on movement join date</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Card className="mb-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        {/* Badge levels overview */}
+        <Card>
           <CardHeader>
-            <CardTitle>About Joining In Awards</CardTitle>
+            <CardTitle>Award Levels</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600">
-              Joining In Awards celebrate a young person's time in Scouts. They're awarded after a young person 
-              completes each year of their Scouting journey. These awards recognize commitment and are available 
-              for all sections.
-            </p>
+            {joiningInBadges.length === 0 ? (
+              <p className="text-gray-500">No Joining In Award badges found in the system.</p>
+            ) : (
+              <div className="flex flex-wrap gap-4">
+                {joiningInBadges.map(b => (
+                  <div key={b.id} className="flex flex-col items-center gap-1 text-center">
+                    <img src={b.image_url} alt={b.name} className="w-16 h-16 object-contain rounded-lg" />
+                    <span className="text-xs text-gray-600 max-w-[72px]">{b.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {joiningInBadges.map(badge => {
-            const stats = getBadgeStats(badge.id);
-            
-            return (
-              <Card 
-                key={badge.id} 
-                className="hover:shadow-lg transition-shadow cursor-pointer"
-                onClick={() => navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`)}
-              >
-                <CardHeader>
-                  <div className="flex flex-col">
-                    <img
-                      src={badge.image_url}
-                      alt={badge.name}
-                      className="w-full h-28 rounded-lg object-contain mb-3"
-                    />
-                    <div>
-                      <CardTitle className="text-lg">{badge.name}</CardTitle>
-                      <div className="flex gap-2 mt-1">
-                        <Badge variant="outline">All Sections</Badge>
-                        <Badge variant="outline">Activity</Badge>
+        {/* Member progress table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Member Progress
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {membersWithProgress.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No members with a scouting start date recorded.</p>
+            ) : (
+              <div className="space-y-4">
+                {membersWithProgress.map(({ member, progress }) => (
+                  <div key={member.id} className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                      {/* Member info */}
+                      <div className="min-w-[180px]">
+                        <p className="font-semibold">{member.full_name}</p>
+                        <p className="text-xs text-gray-500">{getSectionName(member.section_id)}</p>
+                        <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {progress.completedYears} yr{progress.completedYears !== 1 ? 's' : ''} {progress.monthsIntoCurrentYear} mo
+                        </p>
+                      </div>
+
+                      {/* Current badge */}
+                      <div className="min-w-[120px] flex items-center gap-2">
+                        {progress.currentBadge ? (
+                          <>
+                            <img src={progress.currentBadge.image_url} alt={progress.currentBadge.name} className="w-10 h-10 object-contain rounded" />
+                            <div>
+                              <p className="text-xs font-medium text-gray-700">Current</p>
+                              <p className="text-xs text-gray-500">{progress.currentBadge.name}</p>
+                            </div>
+                          </>
+                        ) : (
+                          <Badge variant="outline" className="text-gray-400">No award yet</Badge>
+                        )}
+                      </div>
+
+                      {/* Progress to next */}
+                      <div className="flex-1">
+                        {progress.nextBadge ? (
+                          <>
+                            <div className="flex justify-between text-xs text-gray-600 mb-1">
+                              <span>Progress to: <span className="font-medium">{progress.nextBadge.name}</span></span>
+                              <span>{progress.monthsIntoCurrentYear}/12 months</span>
+                            </div>
+                            <Progress value={progress.progressPercent} className="h-2" />
+                          </>
+                        ) : (
+                          <span className="text-xs text-green-600 font-medium">✓ All available awards earned</span>
+                        )}
                       </div>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-600">Completion</span>
-                        <span className="font-medium">{stats.percentComplete}%</span>
-                      </div>
-                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#7413dc] transition-all"
-                          style={{ width: `${stats.percentComplete}%` }}
-                        />
-                      </div>
-                    </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-                    <div className="grid grid-cols-2 gap-2 text-center">
-                      <div className="bg-green-50 rounded-lg p-2">
-                        <div className="text-xl font-bold text-green-700">{stats.completedCount}</div>
-                        <div className="text-xs text-green-600">Completed</div>
-                      </div>
-                      <div className="bg-blue-50 rounded-lg p-2">
-                        <div className="text-xl font-bold text-blue-700">{stats.inProgressCount}</div>
-                        <div className="text-xs text-blue-600">In Progress</div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {joiningInBadges.length === 0 && (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600">No Joining In Awards found</p>
+        {/* Members without dates */}
+        {membersWithoutDate.length > 0 && (
+          <Card className="border-amber-200 bg-amber-50">
+            <CardHeader>
+              <CardTitle className="text-amber-800 text-base">Members Missing Scouting Start Date</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-amber-700 mb-3">
+                These members don't have a scouting start date recorded. Add it in their member profile to track Joining In Awards.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {membersWithoutDate.map(m => (
+                  <Badge key={m.id} variant="outline" className="text-amber-800 border-amber-300">{m.full_name}</Badge>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
