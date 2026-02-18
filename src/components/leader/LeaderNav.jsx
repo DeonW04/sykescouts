@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { Users, Calendar, Award, Mail, Settings, ArrowLeft, Image, ShieldAlert, ChevronDown, UserCheck, CalendarDays, Lightbulb } from 'lucide-react';
+import { Users, Calendar, Award, Mail, Settings, ArrowLeft, Image, ShieldAlert, ChevronDown, UserCheck, CalendarDays, Lightbulb, Package, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { base44 } from '@/api/base44Client';
 
 export default function LeaderNav() {
   const navigate = useNavigate();
