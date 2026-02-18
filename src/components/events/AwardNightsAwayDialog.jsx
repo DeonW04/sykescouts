@@ -60,9 +60,10 @@ export default function AwardNightsAwayDialog({ open, onOpenChange, event, defau
         await base44.entities.NightsAwayLog.create({
           member_id: memberId,
           event_id: event.id,
-          event_name: event.title,
+          notes: event.title,
           nights_count: nights,
-          log_date: new Date().toISOString().split('T')[0],
+          start_date: event.start_date ? event.start_date.split('T')[0] : new Date().toISOString().split('T')[0],
+          end_date: event.end_date ? event.end_date.split('T')[0] : undefined,
         });
       }));
     },
