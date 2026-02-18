@@ -64,6 +64,7 @@ import Gallery from './pages/Gallery';
 import GoldAwardDetail from './pages/GoldAwardDetail';
 import HikesAwayBadgeDetail from './pages/HikesAwayBadgeDetail';
 import Home from './pages/Home';
+import IdeasBoard from './pages/IdeasBoard';
 import ImportBadges from './pages/ImportBadges';
 import Join from './pages/Join';
 import JoinEnquiries from './pages/JoinEnquiries';
@@ -102,7 +103,6 @@ import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
 import WeeklyMessage from './pages/WeeklyMessage';
 import WeeklyMessageList from './pages/WeeklyMessageList';
-import IdeasBoard from './pages/IdeasBoard';
 import __Layout from './Layout.jsx';
 
 
@@ -124,6 +124,7 @@ export const PAGES = {
     "GoldAwardDetail": GoldAwardDetail,
     "HikesAwayBadgeDetail": HikesAwayBadgeDetail,
     "Home": Home,
+    "IdeasBoard": IdeasBoard,
     "ImportBadges": ImportBadges,
     "Join": Join,
     "JoinEnquiries": JoinEnquiries,
@@ -162,7 +163,6 @@ export const PAGES = {
     "Volunteer": Volunteer,
     "WeeklyMessage": WeeklyMessage,
     "WeeklyMessageList": WeeklyMessageList,
-    "IdeasBoard": IdeasBoard,
 }
 
 export const pagesConfig = {

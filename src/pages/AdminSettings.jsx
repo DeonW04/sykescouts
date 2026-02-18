@@ -875,24 +875,26 @@ export default function AdminSettings() {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label>Default Section</Label>
-              <Select
-                value={editForm.default_section_id || '__none__'}
-                onValueChange={(v) => setEditForm({ ...editForm, default_section_id: v === '__none__' ? '' : v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="No default" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">No default</SelectItem>
-                  {sections.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">Which section this user sees first when they log in</p>
-            </div>
+            {(editForm.user_type === 'leader' || editForm.user_type === 'admin') && (
+              <div className="space-y-2">
+                <Label>Default Section</Label>
+                <Select
+                  value={editForm.default_section_id || '__none__'}
+                  onValueChange={(v) => setEditForm({ ...editForm, default_section_id: v === '__none__' ? '' : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="No default" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">No default</SelectItem>
+                    {sections.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">Which section this user sees first when they log in</p>
+              </div>
+            )}
 
             <Button
               onClick={handleSaveUser}

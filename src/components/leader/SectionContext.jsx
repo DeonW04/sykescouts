@@ -25,12 +25,12 @@ export const SectionProvider = ({ children }) => {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
+      const defaultId = currentUser.default_section_id;
 
       if (currentUser.role === 'admin') {
         const allSections = await base44.entities.Section.filter({ active: true });
         setAvailableSections(allSections);
-        if (!selectedSection && allSections.length > 0) {
-          const defaultId = currentUser.default_section_id;
+        if (allSections.length > 0) {
           const defaultExists = defaultId && allSections.find(s => s.id === defaultId);
           setSelectedSection(defaultExists ? defaultId : allSections[0].id);
         }
@@ -40,8 +40,7 @@ export const SectionProvider = ({ children }) => {
           const sections = await base44.entities.Section.filter({ active: true });
           const leaderSections = sections.filter(s => leaders[0].section_ids.includes(s.id));
           setAvailableSections(leaderSections);
-          if (!selectedSection && leaderSections.length > 0) {
-            const defaultId = currentUser.default_section_id;
+          if (leaderSections.length > 0) {
             const defaultExists = defaultId && leaderSections.find(s => s.id === defaultId);
             setSelectedSection(defaultExists ? defaultId : leaderSections[0].id);
           }
