@@ -337,10 +337,11 @@ export default function AdminSettings() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="bg-white border">
+          <TabsList className="bg-white border flex-wrap">
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="images">Website Images</TabsTrigger>
             <TabsTrigger value="badges">Badge System</TabsTrigger>
+            <TabsTrigger value="gallery">Gallery Stats</TabsTrigger>
             <TabsTrigger value="receipts">Receipts</TabsTrigger>
             <TabsTrigger value="export">Data</TabsTrigger>
           </TabsList>
