@@ -152,8 +152,9 @@ export default function Gallery() {
         <div className="flex flex-wrap justify-center gap-3 mb-8">
           {[
             { id: 'all', label: 'All Sections' },
-            ...sections
-              .filter(s => ['beavers', 'cubs', 'scouts'].includes(s.name))
+            ...['beavers', 'cubs', 'scouts']
+              .map(name => sections.find(s => s.name === name))
+              .filter(Boolean)
               .map(s => ({ id: s.id, label: s.display_name })),
           ].map(opt => (
             <button
