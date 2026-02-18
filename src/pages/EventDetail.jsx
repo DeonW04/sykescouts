@@ -854,6 +854,18 @@ export default function EventDetail() {
                             })()} nights (edit above to override)
                           </p>
                         )}
+                        <div className="pt-4 border-t mt-4">
+                          <Button
+                            onClick={() => setShowAwardNightsDialog(true)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white min-h-[44px]"
+                          >
+                            <Award className="w-4 h-4 mr-2" />
+                            Award Nights Away to Attendees
+                          </Button>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Opens the attendance register so you can assign and award nights away to individual attendees.
+                          </p>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
