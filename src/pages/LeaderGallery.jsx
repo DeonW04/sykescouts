@@ -73,28 +73,33 @@ export default function LeaderGallery() {
     },
   });
 
+  // Filter photos by selected section (include 'all' section photos in every section's view)
+  const sectionFilteredPhotos = selectedSection === 'all'
+    ? allPhotos
+    : allPhotos.filter(p => p.section_id === selectedSection || p.section_id === 'all');
+
   // Get unique camps, events, and meetings - sorted by date
   const camps = [...new Map(
-    allPhotos
+    sectionFilteredPhotos
       .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp'))
       .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
   ).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
 
   const regularEvents = [...new Map(
-    allPhotos
+    sectionFilteredPhotos
       .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'Camp'))
       .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
   ).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
 
   const meetings = [...new Map(
-    allPhotos
+    sectionFilteredPhotos
       .filter(p => p.programme_id)
       .map(p => [p.programme_id, programmes.find(pr => pr.id === p.programme_id)])
   ).values()].filter(Boolean).sort((a, b) => new Date(b.date) - new Date(a.date));
 
   // Manual entries grouped by name+date
   const manualEntries = [...new Map(
-    allPhotos
+    sectionFilteredPhotos
       .filter(p => p.manual_event_name)
       .map(p => [`${p.manual_event_name}-${p.manual_date || 'no-date'}`, {
         id: `${p.manual_event_name}-${p.manual_date || 'no-date'}`,
@@ -113,17 +118,17 @@ export default function LeaderGallery() {
   const getDisplayPhotos = () => {
     if (selectedItem) {
       if (selectedItem.isManual) {
-        return allPhotos.filter(p => 
+        return sectionFilteredPhotos.filter(p => 
           p.manual_event_name === selectedItem.title && 
           (p.manual_date || 'no-date') === (selectedItem.date || 'no-date')
         );
       }
-      return allPhotos.filter(p => 
+      return sectionFilteredPhotos.filter(p => 
         p.event_id === selectedItem.id || 
         p.programme_id === selectedItem.id
       );
     }
-    return allPhotos;
+    return sectionFilteredPhotos;
   };
 
   const displayPhotos = getDisplayPhotos();
