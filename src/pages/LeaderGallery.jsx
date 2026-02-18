@@ -115,6 +115,29 @@ export default function LeaderGallery() {
     updatePhotosMutation.mutate({ photos, updates: editAlbumForm });
   };
 
+  const deleteAlbumMutation = useMutation({
+    mutationFn: async (photos) => {
+      for (const photo of photos) {
+        await base44.entities.EventPhoto.delete(photo.id);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['all-photos']);
+      toast.success('Album deleted');
+      setEditAlbumDialog(false);
+    },
+  });
+
+  const handleDeleteAlbum = () => {
+    if (!window.confirm('Delete this album and all its photos? This cannot be undone.')) return;
+    const photos = allPhotos.filter(p => {
+      if (editAlbumItem.isManual) return p.manual_event_name === editAlbumItem.title && (p.manual_date || 'no-date') === (editAlbumItem.date || 'no-date');
+      if (editAlbumItem.itemType === 'meeting') return p.programme_id === editAlbumItem.id;
+      return p.event_id === editAlbumItem.id;
+    });
+    deleteAlbumMutation.mutate(photos);
+  };
+
   // Filter photos by selected section (include 'all' section photos in every section's view)
   const sectionFilteredPhotos = selectedSection === 'all'
     ? allPhotos
