@@ -712,6 +712,7 @@ export default function LeaderGallery() {
                   <SelectValue placeholder="Select section..." />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">All Sections (Group Event)</SelectItem>
                   {sections.map(section => (
                     <SelectItem key={section.id} value={section.id}>
                       {section.display_name}
@@ -719,6 +720,9 @@ export default function LeaderGallery() {
                   ))}
                 </SelectContent>
               </Select>
+              {uploadForm.section_id === 'all' && (
+                <p className="text-xs text-blue-600 mt-1">These photos will appear in all sections' galleries.</p>
+              )}
             </div>
 
             <div>
