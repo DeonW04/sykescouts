@@ -32,13 +32,18 @@ export default function Gallery() {
     queryFn: () => base44.entities.Programme.list('-date'),
   });
 
-  const { data: allPhotos = [], isLoading: photosLoading } = useQuery({
+  const { data: rawPhotos = [], isLoading: photosLoading } = useQuery({
     queryKey: ['public-photos'],
     queryFn: async () => {
       const photos = await base44.entities.EventPhoto.filter({});
       return photos.filter(p => p.is_public === true || p.visible_to === 'parents' || p.visible_to === 'public');
     },
   });
+
+  // Section-filtered photos: 'all' section photos always included
+  const allPhotos = selectedSection === 'all'
+    ? rawPhotos
+    : rawPhotos.filter(p => p.section_id === selectedSection || p.section_id === 'all');
 
   const { data: sections = [] } = useQuery({
     queryKey: ['active-sections'],
