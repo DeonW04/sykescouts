@@ -44,6 +44,8 @@ export default function NightsAwayTracking() {
     queryFn: () => base44.entities.Event.filter({ type: 'Camp' }),
   });
 
+  const NIGHTS_THRESHOLDS = [1, 2, 3, 4, 5, 10, 15, 20, 35, 50];
+
   const addLogMutation = useMutation({
     mutationFn: async (data) => {
       const user = await base44.auth.me();
@@ -52,15 +54,40 @@ export default function NightsAwayTracking() {
         verified_by: user.email,
       });
 
-      // Update member's total nights
-      const member = members.find(m => m.id === data.member_id);
-      await base44.entities.Member.update(data.member_id, {
-        total_nights_away: (member?.total_nights_away || 0) + data.nights_count
-      });
+      // Fetch fresh member data
+      const freshMembers = await base44.entities.Member.filter({ id: data.member_id });
+      const member = freshMembers[0];
+      const previousTotal = member?.total_nights_away || 0;
+      const newTotal = previousTotal + data.nights_count;
+
+      await base44.entities.Member.update(data.member_id, { total_nights_away: newTotal });
+
+      // Check if any thresholds newly crossed
+      const [nightsAwayBadges, existingAwards] = await Promise.all([
+        base44.entities.BadgeDefinition.filter({ badge_family_id: 'nights_away' }),
+        base44.entities.MemberBadgeAward.filter({ member_id: data.member_id }),
+      ]);
+      const today = new Date().toISOString().split('T')[0];
+      for (const threshold of NIGHTS_THRESHOLDS) {
+        if (previousTotal < threshold && newTotal >= threshold) {
+          const badge = nightsAwayBadges.find(b => b.stage_number === threshold);
+          if (badge && !existingAwards.some(a => a.badge_id === badge.id)) {
+            await base44.entities.MemberBadgeAward.create({
+              member_id: data.member_id,
+              badge_id: badge.id,
+              completed_date: today,
+              awarded_date: today,
+              award_status: 'pending',
+              notes: `Auto-awarded for reaching ${threshold} nights away`,
+            });
+          }
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nightsaway'] });
       queryClient.invalidateQueries({ queryKey: ['members'] });
+      queryClient.invalidateQueries({ queryKey: ['awards'] });
       setShowDialog(false);
       setSelectedMember('');
       setFormData({
