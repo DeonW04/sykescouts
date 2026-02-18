@@ -577,11 +577,7 @@ export default function LeaderGallery() {
                 onClick={() => setSelectedItem(camp)}
               >
                 {getItemPhoto(camp, 'camp') ? (
-                  <img
-                    src={getItemPhoto(camp, 'camp')}
-                    alt={camp.title}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={getItemPhoto(camp, 'camp')} alt={camp.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                     <ImageIcon className="w-16 h-16 text-gray-400" />
@@ -591,6 +587,12 @@ export default function LeaderGallery() {
                   <h3 className="font-bold text-lg mb-1 text-center">{camp.title}</h3>
                   <p className="text-sm">{getItemPhotoCount(camp, 'camp')} photos</p>
                 </div>
+                <button
+                  onClick={(e) => handleEditAlbum(e, camp, 'camp')}
+                  className="absolute top-2 right-2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
               </div>
             ))}
             
@@ -601,11 +603,7 @@ export default function LeaderGallery() {
                 onClick={() => setSelectedItem(event)}
               >
                 {getItemPhoto(event, 'event') ? (
-                  <img
-                    src={getItemPhoto(event, 'event')}
-                    alt={event.title}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={getItemPhoto(event, 'event')} alt={event.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                     <ImageIcon className="w-16 h-16 text-gray-400" />
@@ -615,6 +613,12 @@ export default function LeaderGallery() {
                   <h3 className="font-bold text-lg mb-1 text-center">{event.title}</h3>
                   <p className="text-sm">{getItemPhotoCount(event, 'event')} photos</p>
                 </div>
+                <button
+                  onClick={(e) => handleEditAlbum(e, event, 'event')}
+                  className="absolute top-2 right-2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
               </div>
             ))}
             
@@ -625,11 +629,7 @@ export default function LeaderGallery() {
                 onClick={() => setSelectedItem(meeting)}
               >
                 {getItemPhoto(meeting, 'meeting') ? (
-                  <img
-                    src={getItemPhoto(meeting, 'meeting')}
-                    alt={meeting.title}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={getItemPhoto(meeting, 'meeting')} alt={meeting.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                     <ImageIcon className="w-16 h-16 text-gray-400" />
@@ -639,6 +639,12 @@ export default function LeaderGallery() {
                   <h3 className="font-bold text-lg mb-1 text-center">{meeting.title}</h3>
                   <p className="text-sm">{getItemPhotoCount(meeting, 'meeting')} photos</p>
                 </div>
+                <button
+                  onClick={(e) => handleEditAlbum(e, meeting, 'meeting')}
+                  className="absolute top-2 right-2 bg-white/90 hover:bg-white text-gray-800 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
               </div>
             ))}
           </div>
