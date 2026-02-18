@@ -196,13 +196,16 @@ export default function ParentPortal() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card
+            className="cursor-pointer hover:shadow-md transition-shadow border-red-100 hover:border-red-300"
+            onClick={() => setShowMissingDataModal(true)}
+          >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Missing Important Data</p>
                   <p className="text-3xl font-bold text-red-600">{stats.missingImportantData}</p>
-                  <p className="text-xs text-gray-500 mt-1">members incomplete</p>
+                  <p className="text-xs text-red-400 mt-1 font-medium">Click to view →</p>
                 </div>
                 <AlertTriangle className="w-12 h-12 text-red-500 opacity-20" />
               </div>
