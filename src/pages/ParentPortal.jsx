@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Users, UserCheck, UserX, AlertTriangle, Mail, CheckCircle, RefreshCw } from 'lucide-react';
+import { Users, UserCheck, UserX, AlertTriangle, Mail, CheckCircle, RefreshCw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function ParentPortal() {
   const queryClient = useQueryClient();
