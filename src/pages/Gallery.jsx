@@ -20,6 +20,7 @@ export default function Gallery() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxPhoto, setLightboxPhoto] = useState(null);
   const [displayCount, setDisplayCount] = useState(30);
+  const [selectedSection, setSelectedSection] = useState('all');
 
   const { data: events = [], isLoading: eventsLoading } = useQuery({
     queryKey: ['all-events'],
