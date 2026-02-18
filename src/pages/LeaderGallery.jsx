@@ -566,10 +566,11 @@ export default function LeaderGallery() {
                 } ${selectedPhotos.includes(photo.id) ? 'ring-4 ring-purple-600' : ''}`}
                 onClick={() => selectMode && handlePhotoSelect(photo.id)}
               >
-                <img
+                <LazyImage
                   src={photo.file_url}
                   alt={photo.caption || ''}
-                  className="w-full aspect-square object-cover"
+                  className="w-full aspect-square"
+                  loadFull={false}
                 />
                 {selectMode && (
                   <div className="absolute top-2 right-2">
@@ -601,7 +602,7 @@ export default function LeaderGallery() {
                 onClick={() => setSelectedItem(camp)}
               >
                 {getItemPhoto(camp, 'camp') ? (
-                  <img src={getItemPhoto(camp, 'camp')} alt={camp.title} className="w-full h-full object-cover" />
+                  <LazyImage src={getItemPhoto(camp, 'camp')} alt={camp.title} className="w-full h-full" />
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                     <ImageIcon className="w-16 h-16 text-gray-400" />
@@ -627,7 +628,7 @@ export default function LeaderGallery() {
                 onClick={() => setSelectedItem(event)}
               >
                 {getItemPhoto(event, 'event') ? (
-                  <img src={getItemPhoto(event, 'event')} alt={event.title} className="w-full h-full object-cover" />
+                  <LazyImage src={getItemPhoto(event, 'event')} alt={event.title} className="w-full h-full" />
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                     <ImageIcon className="w-16 h-16 text-gray-400" />
@@ -653,7 +654,7 @@ export default function LeaderGallery() {
                 onClick={() => setSelectedItem(meeting)}
               >
                 {getItemPhoto(meeting, 'meeting') ? (
-                  <img src={getItemPhoto(meeting, 'meeting')} alt={meeting.title} className="w-full h-full object-cover" />
+                  <LazyImage src={getItemPhoto(meeting, 'meeting')} alt={meeting.title} className="w-full h-full" />
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                     <ImageIcon className="w-16 h-16 text-gray-400" />
