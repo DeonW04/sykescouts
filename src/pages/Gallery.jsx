@@ -303,11 +303,10 @@ export default function Gallery() {
                       setLightboxOpen(true);
                     }}
                   >
-                    <img
-                      src={photo.thumbnail_url || photo.file_url}
+                    <LazyImage
+                      src={photo.file_url}
                       alt={photo.caption || ''}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      loading="lazy"
+                      className="w-full h-full group-hover:scale-110 transition-transform duration-500"
                     />
                     {photo.caption && (
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
@@ -346,10 +345,10 @@ export default function Gallery() {
                 }}
               >
                 {getItemPhoto(camp, 'camp') ? (
-                  <img
+                  <LazyImage
                     src={getItemPhoto(camp, 'camp')}
                     alt={camp.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full group-hover:scale-110 transition-transform duration-500"
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
@@ -377,10 +376,10 @@ export default function Gallery() {
                 }}
               >
                 {getItemPhoto(event, 'event') ? (
-                  <img
+                  <LazyImage
                     src={getItemPhoto(event, 'event')}
                     alt={event.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full group-hover:scale-110 transition-transform duration-500"
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
@@ -408,10 +407,10 @@ export default function Gallery() {
                 }}
               >
                 {getItemPhoto(meeting, 'meeting') ? (
-                  <img
+                  <LazyImage
                     src={getItemPhoto(meeting, 'meeting')}
                     alt={meeting.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full group-hover:scale-110 transition-transform duration-500"
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
