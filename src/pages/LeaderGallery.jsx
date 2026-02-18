@@ -779,8 +779,14 @@ export default function LeaderGallery() {
             <div>
               <Label>Visibility</Label>
               <Select
-                value={uploadForm.visible_to}
-                onValueChange={(value) => setUploadForm({ ...uploadForm, visible_to: value })}
+                value={uploadForm.is_public ? 'public' : uploadForm.visible_to}
+                onValueChange={(value) => {
+                  if (value === 'public') {
+                    setUploadForm({ ...uploadForm, visible_to: 'parents', is_public: true });
+                  } else {
+                    setUploadForm({ ...uploadForm, visible_to: value, is_public: false });
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -788,21 +794,9 @@ export default function LeaderGallery() {
                 <SelectContent>
                   <SelectItem value="leaders">Leaders Only</SelectItem>
                   <SelectItem value="parents">Parents & Leaders</SelectItem>
+                  <SelectItem value="public">Public Gallery</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="is-public"
-                checked={uploadForm.is_public}
-                onChange={(e) => setUploadForm({ ...uploadForm, is_public: e.target.checked })}
-                className="rounded"
-              />
-              <Label htmlFor="is-public" className="cursor-pointer">
-                Show in public gallery
-              </Label>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
