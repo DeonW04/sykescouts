@@ -54,6 +54,7 @@ export default function Layout({ children, currentPageName }) {
         'RiskAssessments': 'Risk Assessments',
         'JoinEnquiries': 'Join Enquiries',
         'SharedPage': 'Shared Page',
+        'IdeasBoard': 'Ideas Board',
       };
       
       if (specialCases[pageName]) {
