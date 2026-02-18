@@ -305,16 +305,23 @@ Example format: [{"title":"...", "description":"...", "badgeIds":[], "badgeNames
             </div>
 
             {/* Non-badge ideas */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <Checkbox
-                checked={includeNonBadge}
-                onCheckedChange={v => setIncludeNonBadge(!!v)}
-              />
-              <div>
-                <p className="text-sm font-medium text-gray-700">Include non-badge ideas</p>
-                <p className="text-xs text-gray-400">Generate fun general scouting activities not tied to badges</p>
-              </div>
-            </label>
+            <div className="border rounded-lg p-3 bg-gray-50 space-y-2">
+              <p className="text-xs font-semibold uppercase text-gray-500 tracking-wide">Non-badge ideas</p>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <Checkbox
+                  checked={includeNonBadge}
+                  onCheckedChange={v => setIncludeNonBadge(!!v)}
+                />
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Include non-badge ideas</p>
+                  <p className="text-xs text-gray-400">
+                    {selectedBadgeIds.length === 0 && includeNonBadge
+                      ? 'No badges selected — all ideas will be non-badge general activities'
+                      : 'Mix in fun general scouting activities not tied to badges'}
+                  </p>
+                </div>
+              </label>
+            </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t">
               <Button variant="outline" onClick={onClose}>Cancel</Button>
