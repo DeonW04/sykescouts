@@ -27,23 +27,23 @@ export const SectionProvider = ({ children }) => {
       setUser(currentUser);
 
       if (currentUser.role === 'admin') {
-        // Admin can see all sections
         const allSections = await base44.entities.Section.filter({ active: true });
         setAvailableSections(allSections);
-        // Set first section as default if none selected
         if (!selectedSection && allSections.length > 0) {
-          setSelectedSection(allSections[0].id);
+          const defaultId = currentUser.default_section_id;
+          const defaultExists = defaultId && allSections.find(s => s.id === defaultId);
+          setSelectedSection(defaultExists ? defaultId : allSections[0].id);
         }
       } else {
-        // Non-admin leader - get their assigned sections
         const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
         if (leaders.length > 0 && leaders[0].section_ids?.length > 0) {
           const sections = await base44.entities.Section.filter({ active: true });
           const leaderSections = sections.filter(s => leaders[0].section_ids.includes(s.id));
           setAvailableSections(leaderSections);
-          // Set first section as default if none selected
           if (!selectedSection && leaderSections.length > 0) {
-            setSelectedSection(leaderSections[0].id);
+            const defaultId = currentUser.default_section_id;
+            const defaultExists = defaultId && leaderSections.find(s => s.id === defaultId);
+            setSelectedSection(defaultExists ? defaultId : leaderSections[0].id);
           }
         }
       }
