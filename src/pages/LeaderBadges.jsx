@@ -287,13 +287,13 @@ export default function LeaderBadges() {
                       if (categoryBadges.length === 0) return null;
 
                       // For staged badges, group by family and show one badge per family
+                      // Also group Nights Away, Hikes Away, and Joining In as families in activity
                       let displayBadges;
                       if (category === 'staged') {
                         const familyMap = new Map();
                         categoryBadges.forEach(badge => {
                           const familyId = badge.badge_family_id;
                           if (familyId && !familyMap.has(familyId)) {
-                            // Find the first stage or use current badge
                             const firstStage = categoryBadges
                               .filter(b => b.badge_family_id === familyId)
                               .sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0))[0];
@@ -302,23 +302,37 @@ export default function LeaderBadges() {
                         });
                         displayBadges = Array.from(familyMap.values());
                       } else if (category === 'activity') {
-                        // Filter out individual Joining In awards, then sort A-Z
-                        const nonJoiningIn = categoryBadges.filter(b => !b.name.includes('Joining In Award'));
                         const joiningInBadges = categoryBadges.filter(b => b.name.includes('Joining In Award'));
-                        
-                        // Create a placeholder for Joining In Awards if any exist
+                        const nightsAwayBadges = categoryBadges.filter(b => b.name.toLowerCase().includes('nights away'));
+                        const hikesAwayBadges = categoryBadges.filter(b => b.name.toLowerCase().includes('hikes away'));
+                        const otherBadges = categoryBadges.filter(b =>
+                          !b.name.includes('Joining In Award') &&
+                          !b.name.toLowerCase().includes('nights away') &&
+                          !b.name.toLowerCase().includes('hikes away')
+                        );
+
                         const joiningInPlaceholder = joiningInBadges.length > 0 ? [{
-                          id: 'joining-in-awards',
-                          name: 'Joining In Awards',
-                          section: 'all',
-                          category: 'activity',
-                          image_url: joiningInBadges[0].image_url,
+                          id: 'joining-in-awards', name: 'Joining In Awards', section: 'all',
+                          category: 'activity', image_url: joiningInBadges[0].image_url,
                           isJoiningInPlaceholder: true
                         }] : [];
-                        
-                        displayBadges = [...nonJoiningIn, ...joiningInPlaceholder].sort((a, b) => 
-                          a.name.localeCompare(b.name)
-                        );
+                        const nightsAwayPlaceholder = nightsAwayBadges.length > 0 ? [{
+                          id: 'nights-away-family', name: 'Nights Away',
+                          section: nightsAwayBadges[0].section, category: 'activity',
+                          image_url: nightsAwayBadges[0].image_url,
+                          badge_family_id: nightsAwayBadges[0].badge_family_id,
+                          isNightsAwayFamily: true
+                        }] : [];
+                        const hikesAwayPlaceholder = hikesAwayBadges.length > 0 ? [{
+                          id: 'hikes-away-family', name: 'Hikes Away',
+                          section: hikesAwayBadges[0].section, category: 'activity',
+                          image_url: hikesAwayBadges[0].image_url,
+                          badge_family_id: hikesAwayBadges[0].badge_family_id,
+                          isHikesAwayFamily: true
+                        }] : [];
+
+                        displayBadges = [...otherBadges, ...joiningInPlaceholder, ...nightsAwayPlaceholder, ...hikesAwayPlaceholder]
+                          .sort((a, b) => a.name.localeCompare(b.name));
                       } else {
                         displayBadges = categoryBadges;
                       }
