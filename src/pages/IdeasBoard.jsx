@@ -40,6 +40,17 @@ export default function IdeasBoard() {
   const queryClient = useQueryClient();
   const boardRef = useRef(null);
 
+  const { data: leaderRecord } = useQuery({
+    queryKey: ['leaderRecord', user?.id],
+    queryFn: async () => {
+      const leaders = await base44.entities.Leader.filter({ user_id: user.id });
+      return leaders[0] || null;
+    },
+    enabled: !!user?.id,
+  });
+
+  const displayName = leaderRecord?.display_name || user?.full_name || 'Unknown';
+
   const [activeTab, setActiveTab] = useState('meeting');
   const [selectedIdea, setSelectedIdea] = useState(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
