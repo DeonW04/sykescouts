@@ -346,6 +346,9 @@ export default function LeaderBadges() {
                               const isJoiningIn = badge.isJoiningInPlaceholder;
                               const stats = !isJoiningIn ? getBadgeStats(badge.id) : null;
 
+                              const isNightsAwayFamily = badge.isNightsAwayFamily;
+                              const isHikesAwayFamily = badge.isHikesAwayFamily;
+
                               return (
                                 <Card key={badge.id} className="hover:shadow-lg transition-shadow">
                                   <CardHeader>
@@ -369,7 +372,17 @@ export default function LeaderBadges() {
                                     </div>
                                   </CardHeader>
                                   <CardContent>
-                                  {isJoiningIn ? (
+                                  {isNightsAwayFamily ? (
+                                    <Button variant="outline" className="w-full"
+                                      onClick={() => navigate(createPageUrl('NightsAwayBadgeDetail'))}>
+                                      <Award className="w-4 h-4 mr-2" />View All Stages
+                                    </Button>
+                                  ) : isHikesAwayFamily ? (
+                                    <Button variant="outline" className="w-full"
+                                      onClick={() => navigate(createPageUrl('HikesAwayBadgeDetail'))}>
+                                      <Award className="w-4 h-4 mr-2" />View All Stages
+                                    </Button>
+                                  ) : isJoiningIn ? (
                                     <Button
                                       variant="outline"
                                       className="w-full"
