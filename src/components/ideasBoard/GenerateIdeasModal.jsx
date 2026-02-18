@@ -65,6 +65,12 @@ export default function GenerateIdeasModal({ sectionId, section, activeTab, user
     enabled: !!sectionId,
   });
 
+  const { data: existingIdeas = [] } = useQuery({
+    queryKey: ['programmeIdeas', sectionId],
+    queryFn: () => base44.entities.ProgrammeIdea.filter({ section_id: sectionId }),
+    enabled: !!sectionId,
+  });
+
   // Badges relevant to section
   const sectionName = section?.name?.toLowerCase() || '';
   const relevantBadges = allBadgeDefs.filter(b =>
