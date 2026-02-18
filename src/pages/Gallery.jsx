@@ -9,6 +9,7 @@ import { Loader2, ImageIcon, Calendar, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPageUrl } from '../utils';
 import SEO from '../components/SEO';
+import LazyImage from '../components/gallery/LazyImage';
 
 export default function Gallery() {
   const urlParams = new URLSearchParams(window.location.search);

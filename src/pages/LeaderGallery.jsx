@@ -12,6 +12,7 @@ import { Upload, Trash2, Loader2, ImageIcon, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import SearchableEventSelect from '../components/gallery/SearchableEventSelect';
+import LazyImage from '../components/gallery/LazyImage';
 
 export default function LeaderGallery() {
   const [uploading, setUploading] = useState(false);
