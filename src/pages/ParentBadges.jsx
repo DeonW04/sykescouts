@@ -332,40 +332,6 @@ export default function ParentBadges() {
     });
   }
 
-  // Consolidate Joining In Awards
-  if (badgesByCategory.activity) {
-    const joiningInBadges = badgesByCategory.activity.filter(bp => 
-      bp.type === 'single' && bp.badge.name.includes('Joining In Award')
-    );
-    const nonJoiningIn = badgesByCategory.activity.filter(bp => 
-      !(bp.type === 'single' && bp.badge.name.includes('Joining In Award'))
-    );
-    
-    if (joiningInBadges.length > 0) {
-      // Create placeholder
-      const placeholder = {
-        type: 'joining_in',
-        badge: {
-          ...joiningInBadges[0].badge,
-          name: 'Joining In Awards',
-          id: 'joining-in-awards'
-        },
-        progress: {
-          completed: 0,
-          total: 0,
-          percentage: 0,
-          isCompleted: false
-        },
-        joiningInBadges
-      };
-      badgesByCategory.activity = [...nonJoiningIn, placeholder].sort((a, b) => {
-        const nameA = a.type === 'family' ? a.family.name : a.badge.name;
-        const nameB = b.type === 'family' ? b.family.name : b.badge.name;
-        return nameA.localeCompare(nameB);
-      });
-    }
-  }
-
   const categoryOrder = ['challenge', 'activity', 'staged', 'core'];
   const sortedCategories = Object.keys(badgesByCategory).sort((a, b) => 
     categoryOrder.indexOf(a) - categoryOrder.indexOf(b)
