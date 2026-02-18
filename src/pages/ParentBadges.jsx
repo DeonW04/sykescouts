@@ -646,6 +646,7 @@ export default function ParentBadges() {
             </div>
           </div>
         )}
+      </div>
 
       {/* Badge Detail Dialog */}
       <Dialog open={!!selectedBadge} onOpenChange={(open) => !open && setSelectedBadge(null)}>
