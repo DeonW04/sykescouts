@@ -324,7 +324,7 @@ export default function BadgeDetail() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"
+          className="flex flex-wrap gap-3 mb-8"
         >
           <Button
             variant="outline"
@@ -335,26 +335,20 @@ export default function BadgeDetail() {
                 navigate(createPageUrl('EditBadgeStructure') + `?id=${badge.id}`);
               }
             }}
-            className="h-auto py-4 flex-col gap-2"
           >
-            <Edit className="w-5 h-5" />
-            <span>{badge.category === 'staged' ? 'Stages' : 'Structure'}</span>
+            <Edit className="w-4 h-4 mr-2" />
+            {badge.category === 'staged' ? 'Manage Stages' : 'Edit Structure'}
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => setStockDialog(badge)}
-            className="h-auto py-4 flex-col gap-2"
-          >
-            <Package className="w-5 h-5" />
-            <span>Stock</span>
+          <Button variant="outline" onClick={() => setStockDialog(badge)}>
+            <Package className="w-4 h-4 mr-2" />
+            Manage Stock
           </Button>
           <Button
             variant="outline"
             onClick={() => navigate(createPageUrl('ManageBadges'))}
-            className="h-auto py-4 flex-col gap-2"
           >
-            <Edit className="w-5 h-5" />
-            <span>Edit</span>
+            <Edit className="w-4 h-4 mr-2" />
+            Edit Badge
           </Button>
           <Button
             variant="outline"
@@ -366,10 +360,10 @@ export default function BadgeDetail() {
                 });
               }
             }}
-            className="h-auto py-4 flex-col gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
           >
-            <Trash2 className="w-5 h-5" />
-            <span>Delete</span>
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete
           </Button>
         </motion.div>
 
