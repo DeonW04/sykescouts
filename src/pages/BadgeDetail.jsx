@@ -374,50 +374,28 @@ export default function BadgeDetail() {
           transition={{ delay: 0.1 }}
           className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8"
         >
-          <Card className="border-l-4 border-l-blue-500">
+          <Card className="md:col-span-4 border-l-4 border-l-[#7413dc]">
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Members</p>
-                  <p className="text-2xl font-bold text-gray-900">{relevantMembers.length}</p>
+              <div className="flex items-center gap-6 mb-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full bg-[#7413dc] inline-block" />
+                  <span className="text-sm text-gray-700 font-medium">{completedCount} completed</span>
                 </div>
-                <Users className="w-8 h-8 text-blue-500" />
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full bg-blue-400 inline-block" />
+                  <span className="text-sm text-gray-700 font-medium">{inProgressCount} in progress</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full bg-gray-200 border border-gray-300 inline-block" />
+                  <span className="text-sm text-gray-700 font-medium">{notStartedCount} not started</span>
+                </div>
+                <span className="ml-auto text-sm text-gray-500">{relevantMembers.length} members total</span>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-green-500">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Completed</p>
-                  <p className="text-2xl font-bold text-green-600">{completedCount}</p>
-                </div>
-                <CheckCircle className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-orange-500">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">In Progress</p>
-                  <p className="text-2xl font-bold text-orange-600">{inProgressCount}</p>
-                </div>
-                <TrendingUp className="w-8 h-8 text-orange-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-gray-400">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Not Started</p>
-                  <p className="text-2xl font-bold text-gray-600">{notStartedCount}</p>
-                </div>
-                <Circle className="w-8 h-8 text-gray-400" />
+              <div className="h-5 bg-gray-100 rounded-full overflow-hidden flex">
+                {relevantMembers.length > 0 && <>
+                  <div className="h-full bg-[#7413dc]" style={{ width: `${(completedCount / relevantMembers.length) * 100}%` }} />
+                  <div className="h-full bg-blue-400" style={{ width: `${(inProgressCount / relevantMembers.length) * 100}%` }} />
+                </>}
               </div>
             </CardContent>
           </Card>
