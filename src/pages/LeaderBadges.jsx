@@ -135,21 +135,22 @@ export default function LeaderBadges() {
               </div>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
-              <Button
-                onClick={() => navigate(createPageUrl('AwardBadges'))}
-                className="bg-green-600 hover:bg-green-700 text-white flex-1 sm:flex-none"
-              >
-                <Award className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Award Badges</span>
-              </Button>
-              <Button
-                onClick={() => navigate(createPageUrl('BadgeStockManagement'))}
-                variant="outline"
-                className="bg-green-600 border-white text-white hover:bg-white/20 flex-1 sm:flex-none"
-              >
-                <Package className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Manage Stock</span>
-              </Button>
+              <div className="flex rounded-lg overflow-hidden border border-white/30">
+                <button
+                  onClick={() => setViewMode('badge')}
+                  className={`px-3 py-2 text-sm font-medium flex items-center gap-1.5 ${viewMode === 'badge' ? 'bg-white text-green-700' : 'text-white hover:bg-white/20'}`}
+                >
+                  <Grid className="w-4 h-4" />
+                  <span className="hidden sm:inline">By Badge</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('member')}
+                  className={`px-3 py-2 text-sm font-medium flex items-center gap-1.5 ${viewMode === 'member' ? 'bg-white text-green-700' : 'text-white hover:bg-white/20'}`}
+                >
+                  <LayoutList className="w-4 h-4" />
+                  <span className="hidden sm:inline">By Member</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
