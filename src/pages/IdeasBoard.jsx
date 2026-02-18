@@ -6,10 +6,10 @@ import { Sparkles, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSectionContext } from '../components/leader/SectionContext';
 import LeaderNav from '../components/leader/LeaderNav';
-import PostItNote from '../components/ideasBoard/PostItNote';
-import IdeaDetailPanel from '../components/ideasBoard/IdeaDetailPanel';
-import GenerateIdeasModal from '../components/ideasBoard/GenerateIdeasModal';
-import NewIdeaDialog from '../components/ideasBoard/NewIdeaDialog';
+import PostItNote from '../components/ideasBoard/PostItNote.jsx';
+import IdeaDetailPanel from '../components/ideasBoard/IdeaDetailPanel.jsx';
+import GenerateIdeasModal from '../components/ideasBoard/GenerateIdeasModal.jsx';
+import NewIdeaDialog from '../components/ideasBoard/NewIdeaDialog.jsx';
 
 const POSTIT_COLORS = [
   'bg-yellow-200', 'bg-pink-200', 'bg-blue-200', 'bg-green-200',
