@@ -755,12 +755,11 @@ export default function ParentBadges() {
                       })}
                     </TabsList>
 
-                    {selectedBadge.family.stages.map(stage => (
+                    {realStages.map(stage => (
                       <TabsContent key={stage.id} value={`stage-${stage.id}`} className="space-y-6 mt-4">
                         {stage.description && (
                           <p className="text-gray-600 text-sm">{stage.description}</p>
                         )}
-                        
                         {getBadgeModules(stage.id).map(module => {
                           const moduleReqs = getModuleRequirements(module.id);
                           return (
@@ -789,6 +788,7 @@ export default function ParentBadges() {
                       </TabsContent>
                     ))}
                   </Tabs>
+                  );})()}
                 </>
               )}
             </>
