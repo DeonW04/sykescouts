@@ -76,13 +76,19 @@ export default function LeaderBadges() {
     });
 
     // Count members with progress records
-    const memberProgress = allProgress.filter(p => 
+    const memberBadgeProgress = allProgress.filter(p => 
       p.badge_id === badgeId && 
       relevantMembers.some(m => m.id === p.member_id)
     );
 
-    const completedCount = memberProgress.filter(p => p.status === 'completed').length;
-    const inProgressCount = memberProgress.filter(p => p.status === 'in_progress').length;
+    const completedCount = memberBadgeProgress.filter(p => p.status === 'completed').length;
+
+    // In Progress: members that have at least 1 individual requirement done, but badge not completed
+    const inProgressCount = relevantMembers.filter(m => {
+      const isCompleted = memberBadgeProgress.some(p => p.member_id === m.id && p.status === 'completed');
+      if (isCompleted) return false;
+      return requirementProgress.some(p => p.member_id === m.id && p.badge_id === badgeId && p.completed);
+    }).length;
 
     const percentComplete = relevantMembers.length > 0 
       ? Math.round((completedCount / relevantMembers.length) * 100) 
