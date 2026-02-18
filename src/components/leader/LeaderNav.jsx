@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { Users, Calendar, Award, Mail, Settings, ArrowLeft, Image, ShieldAlert, ChevronDown, UserCheck, CalendarDays } from 'lucide-react';
+import { Users, Calendar, Award, Mail, Settings, ArrowLeft, Image, ShieldAlert, ChevronDown, UserCheck, CalendarDays, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -26,9 +26,10 @@ export default function LeaderNav() {
       label: 'Programme', 
       color: 'bg-purple-500',
       dropdown: [
-        { label: 'Weekly Meetings', page: 'LeaderProgramme', icon: Calendar },
-        { label: 'Events', page: 'LeaderEvents', icon: CalendarDays }
-      ]
+          { label: 'Weekly Meetings', page: 'LeaderProgramme', icon: Calendar },
+          { label: 'Events', page: 'LeaderEvents', icon: CalendarDays },
+          { label: 'Ideas Board', page: 'IdeasBoard', icon: Lightbulb }
+        ]
     },
     { icon: ShieldAlert, label: 'Risk', page: 'RiskAssessments', color: 'bg-orange-500' },
     { icon: Award, label: 'Badges', page: 'LeaderBadges', color: 'bg-green-500' },
