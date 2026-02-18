@@ -744,77 +744,14 @@ export default function ParentBadges() {
 
               {/* Staged Badge Family */}
               {selectedBadge.type === 'family' && (
-                <>
-                  <DialogHeader>
-                    <div className="flex items-center gap-4">
-                      <img
-                        src={selectedBadge.badge.image_url}
-                        alt={selectedBadge.family.name}
-                        className="w-20 h-20 rounded-lg"
-                      />
-                      <div>
-                        <DialogTitle className="text-2xl">{selectedBadge.family.name}</DialogTitle>
-                        <Badge className="mt-1 capitalize">Staged Badge</Badge>
-                      </div>
-                    </div>
-                  </DialogHeader>
-
-                  {(() => {
-                    const realStages = selectedBadge.family.stages.filter(s => s.stage_number != null && s.stage_number !== '');
-                    return (
-                  <Tabs defaultValue={`stage-${realStages[0]?.id}`} className="mt-4">
-                    <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${realStages.length}, 1fr)` }}>
-                      {realStages.map((stage, idx) => {
-                        const stageCompleted = badgeProgress.some(p => 
-                          p.member_id === child.id && 
-                          p.badge_id === stage.id && 
-                          p.status === 'completed'
-                        );
-                        
-                        return (
-                          <TabsTrigger key={stage.id} value={`stage-${stage.id}`} className="gap-2">
-                            Stage {stage.stage_number}
-                            {stageCompleted && <CheckCircle className="w-4 h-4 text-green-600" />}
-                          </TabsTrigger>
-                        );
-                      })}
-                    </TabsList>
-
-                    {realStages.map(stage => (
-                      <TabsContent key={stage.id} value={`stage-${stage.id}`} className="space-y-6 mt-4">
-                        {stage.description && (
-                          <p className="text-gray-600 text-sm">{stage.description}</p>
-                        )}
-                        {getBadgeModules(stage.id).map(module => {
-                          const moduleReqs = getModuleRequirements(module.id);
-                          return (
-                            <div key={module.id} className="border-l-4 border-[#7413dc] pl-4">
-                              <h3 className="font-bold text-lg mb-3">{module.name}</h3>
-                              <div className="space-y-2">
-                                {moduleReqs.map((req, idx) => {
-                                  const completed = isRequirementCompleted(req.id);
-                                  return (
-                                    <div key={req.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50">
-                                      {completed ? (
-                                        <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                                      ) : (
-                                        <Circle className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
-                                      )}
-                                      <span className={`text-sm ${completed ? 'text-gray-900 font-medium' : 'text-gray-600'}`}>
-                                        <span className="font-semibold">{idx + 1}.</span> {req.text}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </TabsContent>
-                    ))}
-                  </Tabs>
-                  );})()}
-                </>
+                <StagedFamilyDialog
+                  selectedBadge={selectedBadge}
+                  child={child}
+                  badgeProgress={badgeProgress}
+                  getBadgeModules={getBadgeModules}
+                  getModuleRequirements={getModuleRequirements}
+                  isRequirementCompleted={isRequirementCompleted}
+                />
               )}
             </>
           )}
