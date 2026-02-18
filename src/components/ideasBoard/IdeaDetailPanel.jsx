@@ -91,7 +91,7 @@ export default function IdeaDetailPanel({ idea, sectionId, onClose, onUpdate, on
 
           {badgeDefs.length > 0 && (
             <div>
-              <h3 className="text-xs font-semibold uppercase text-gray-400 tracking-wide mb-2">Related Badges</h3>
+              <h3 className="text-xs font-semibold uppercase text-gray-400 tracking-wide mb-2">Badge Focus</h3>
               <div className="flex flex-wrap gap-2">
                 {badgeDefs.map(b => (
                   <span key={b.id} className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
@@ -99,6 +99,26 @@ export default function IdeaDetailPanel({ idea, sectionId, onClose, onUpdate, on
                   </span>
                 ))}
               </div>
+            </div>
+          )}
+
+          {idea.incidental_badge_names?.length > 0 && (
+            <div>
+              <h3 className="text-xs font-semibold uppercase text-gray-400 tracking-wide mb-2">Might Also Cover</h3>
+              <div className="flex flex-wrap gap-2">
+                {idea.incidental_badge_names.map((name, i) => (
+                  <span key={i} className="bg-amber-50 text-amber-700 text-xs px-2 py-1 rounded-full font-medium border border-amber-200">
+                    ✨ {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {idea.resources && (
+            <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+              <h3 className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">Resources & Equipment</h3>
+              <p className="text-sm text-blue-800 leading-relaxed">🎒 {idea.resources}</p>
             </div>
           )}
 
