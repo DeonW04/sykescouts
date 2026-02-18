@@ -225,36 +225,54 @@ export default function ParentBadges() {
     b.category !== 'special'
   );
 
-  // Group staged badges by family (but keep nights away and hikes away separate)
+  // Special family badges to be shown in bottom strip
+  const specialFamilyNames = ['nights away', 'hikes away', 'joining in award'];
+  const isSpecialFamily = (badge) =>
+    specialFamilyNames.some(n => badge.name.toLowerCase().includes(n));
+
+  // Group staged badges by family; exclude nights/hikes/joining-in (handled separately)
   const stagedFamilies = {};
   const nonStagedBadges = [];
-  
+  const nightsAwayBadges = [];
+  const hikesAwayBadges = [];
+  const joiningInBadges = [];
+
   allSectionBadges.forEach(badge => {
-    if (badge.category === 'staged' && badge.badge_family_id) {
-      // Check if this is a nights away or hikes away badge
-      const isNightsOrHikes = badge.name.toLowerCase().includes('nights away') || 
-                              badge.name.toLowerCase().includes('hikes away');
-      
-      if (isNightsOrHikes) {
-        // Treat as separate badge, not part of family
-        nonStagedBadges.push(badge);
-      } else {
-        // Group by family
-        if (!stagedFamilies[badge.badge_family_id]) {
-          stagedFamilies[badge.badge_family_id] = {
-            familyId: badge.badge_family_id,
-            name: badge.name.replace(/Stage \d+/i, '').trim(),
-            category: badge.category,
-            section: badge.section,
-            stages: []
-          };
-        }
-        stagedFamilies[badge.badge_family_id].stages.push(badge);
+    if (badge.name.toLowerCase().includes('nights away')) {
+      nightsAwayBadges.push(badge);
+    } else if (badge.name.toLowerCase().includes('hikes away')) {
+      hikesAwayBadges.push(badge);
+    } else if (badge.name.toLowerCase().includes('joining in award')) {
+      joiningInBadges.push(badge);
+    } else if (badge.category === 'staged' && badge.badge_family_id) {
+      if (!stagedFamilies[badge.badge_family_id]) {
+        stagedFamilies[badge.badge_family_id] = {
+          familyId: badge.badge_family_id,
+          name: badge.name.replace(/Stage \d+/i, '').trim(),
+          category: badge.category,
+          section: badge.section,
+          stages: []
+        };
       }
+      stagedFamilies[badge.badge_family_id].stages.push(badge);
     } else {
       nonStagedBadges.push(badge);
     }
   });
+
+  // Sort special family badges by stage number
+  nightsAwayBadges.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
+  hikesAwayBadges.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
+  joiningInBadges.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
+
+  // Find highest earned badge in a family list
+  const getHighestEarnedInFamily = (familyBadges) => {
+    const earned = familyBadges.filter(fb =>
+      badgeProgress.some(p => p.member_id === child.id && p.badge_id === fb.id && p.status === 'completed')
+    );
+    if (earned.length === 0) return null;
+    return earned.reduce((highest, b) => (b.stage_number || 0) > (highest.stage_number || 0) ? b : highest);
+  };
 
   // Sort stages within families
   Object.values(stagedFamilies).forEach(family => {
