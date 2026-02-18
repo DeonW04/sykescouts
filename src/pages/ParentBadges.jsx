@@ -587,7 +587,6 @@ export default function ParentBadges() {
             ))
           )}
         </div>
-      </div>
 
         {/* Special Family Badges Strip */}
         {(nightsAwayBadges.length > 0 || hikesAwayBadges.length > 0 || joiningInBadges.length > 0) && (
