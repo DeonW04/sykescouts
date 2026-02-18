@@ -236,7 +236,7 @@ export default function LeaderGallery() {
     if (selectedFiles.length === 0 || !user) return;
 
     if (!uploadForm.section_id) {
-      toast.error('Please select a section');
+      toast.error('Please select a section (or "All Sections" for group events)');
       return;
     }
 
