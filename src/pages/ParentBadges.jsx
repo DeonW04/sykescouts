@@ -589,6 +589,66 @@ export default function ParentBadges() {
         </div>
       </div>
 
+        {/* Special Family Badges Strip */}
+        {(nightsAwayBadges.length > 0 || hikesAwayBadges.length > 0 || joiningInBadges.length > 0) && (
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-1 w-12 bg-gradient-to-r from-blue-600 to-transparent rounded-full"></div>
+              <h2 className="text-3xl font-bold">Activity Awards</h2>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { label: 'Nights Away', family: nightsAwayBadges, emptyText: 'No Nights Away badge earned yet', page: 'NightsAwayBadgeDetail' },
+                { label: 'Hikes Away', family: hikesAwayBadges, emptyText: 'No Hikes Away badge earned yet', page: 'HikesAwayBadgeDetail' },
+                { label: 'Joining In Awards', family: joiningInBadges, emptyText: 'No Joining In Award earned yet', page: 'JoiningInBadgeDetail' },
+              ].map(({ label, family, emptyText, page }) => {
+                if (family.length === 0) return null;
+                const highestEarned = getHighestEarnedInFamily(family);
+                return (
+                  <motion.div key={label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                    <Card
+                      className="cursor-pointer hover:shadow-xl transition-all hover:scale-[1.02]"
+                      onClick={() => navigate(createPageUrl(page))}
+                    >
+                      <CardContent className="p-6 text-center">
+                        <h3 className="font-bold text-lg mb-4 text-gray-800">{label}</h3>
+                        {highestEarned ? (
+                          <div className="space-y-3">
+                            <img
+                              src={highestEarned.image_url}
+                              alt={highestEarned.name}
+                              className="w-24 h-24 mx-auto rounded-lg"
+                            />
+                            <div>
+                              <p className="font-semibold text-sm">{highestEarned.name}</p>
+                              {highestEarned.stage_number && (
+                                <p className="text-xs text-gray-500">Stage {highestEarned.stage_number}</p>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-center gap-1">
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                              <span className="text-xs text-green-700 font-medium">Highest earned</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-3 py-4">
+                            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                              <Award className="w-10 h-10 text-gray-400" />
+                            </div>
+                            <p className="text-gray-500 text-sm">{emptyText}</p>
+                          </div>
+                        )}
+                        <p className="text-xs text-[#7413dc] mt-3 font-medium">View all stages →</p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Badge Detail Dialog */}
       <Dialog open={!!selectedBadge} onOpenChange={(open) => !open && setSelectedBadge(null)}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
