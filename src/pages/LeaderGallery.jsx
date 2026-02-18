@@ -36,6 +36,7 @@ export default function LeaderGallery() {
   const [selectedPhotos, setSelectedPhotos] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState(null);
   const [filteredProgrammes, setFilteredProgrammes] = useState(null);
+  const [selectedSection, setSelectedSection] = useState('all');
 
   const queryClient = useQueryClient();
 
