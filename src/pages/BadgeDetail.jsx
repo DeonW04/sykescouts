@@ -231,24 +231,46 @@ export default function BadgeDetail() {
     return completedReqs.length === moduleReqs.length;
   };
 
+  // Progress based on individual requirements, respecting x_of_n modules
   const getMemberProgress = (memberId) => {
-    const completedModules = modules.filter(m => isModuleComplete(memberId, m)).length;
-    const totalModules = modules.length;
-    
+    let totalRequired = 0;
+    let totalCompleted = 0;
+
+    modules.forEach(module => {
+      const moduleReqs = requirements.filter(r => r.module_id === module.id);
+      const completedReqs = progress.filter(
+        p => p.member_id === memberId && p.module_id === module.id && p.completed
+      );
+
+      if (module.completion_rule === 'x_of_n_required') {
+        const needed = module.required_count || moduleReqs.length;
+        totalRequired += needed;
+        totalCompleted += Math.min(completedReqs.length, needed);
+      } else {
+        totalRequired += moduleReqs.length;
+        totalCompleted += completedReqs.length;
+      }
+    });
+
+    const allModulesComplete = modules.length > 0 && modules.every(m => isModuleComplete(memberId, m));
+    const hasAnyProgress = totalCompleted > 0;
+
     return {
-      completed: completedModules,
-      total: totalModules,
-      percentage: Math.round((completedModules / totalModules) * 100) || 0,
-      isComplete: completedModules === totalModules,
+      completed: totalCompleted,
+      total: totalRequired,
+      percentage: totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0,
+      isComplete: allModulesComplete,
+      hasAnyProgress,
     };
   };
 
   const completedCount = relevantMembers.filter(m => getMemberProgress(m.id).isComplete).length;
   const inProgressCount = relevantMembers.filter(m => {
     const prog = getMemberProgress(m.id);
-    return prog.completed > 0 && !prog.isComplete;
+    // At least 1 individual requirement done, not fully complete
+    return prog.hasAnyProgress && !prog.isComplete;
   }).length;
-  const notStartedCount = relevantMembers.filter(m => getMemberProgress(m.id).completed === 0).length;
+  const notStartedCount = relevantMembers.filter(m => !getMemberProgress(m.id).hasAnyProgress).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
