@@ -707,12 +707,18 @@ export default function LeaderGallery() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setEditAlbumDialog(false)}>Cancel</Button>
-              <Button onClick={handleSaveAlbumEdit} disabled={updatePhotosMutation.isPending}>
-                {updatePhotosMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                Save Changes
+            <div className="flex justify-between gap-2 pt-2">
+              <Button variant="destructive" onClick={handleDeleteAlbum} disabled={deleteAlbumMutation.isPending}>
+                {deleteAlbumMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+                Delete Album
               </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setEditAlbumDialog(false)}>Cancel</Button>
+                <Button onClick={handleSaveAlbumEdit} disabled={updatePhotosMutation.isPending}>
+                  {updatePhotosMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Save Changes
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
