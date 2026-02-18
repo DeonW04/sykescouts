@@ -82,9 +82,37 @@ export default function BadgeDetail() {
         source: 'manual',
       });
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       setEditingCount(null);
-      toggleReqMutation.options.onSuccess(null, { memberId: variables.memberId, reqId: variables.reqId });
+      await queryClient.invalidateQueries({ queryKey: ['req-progress'] });
+      const updatedProgress = await base44.entities.MemberRequirementProgress.filter({ badge_id: badgeId, member_id: variables.memberId });
+      let allModulesComplete = true;
+      for (const module of modules) {
+        const moduleReqs = requirements.filter(r => r.module_id === module.id);
+        const completedReqs = updatedProgress.filter(p => p.module_id === module.id && p.completed);
+        if (module.completion_rule === 'x_of_n_required') {
+          if (completedReqs.length < (module.required_count || moduleReqs.length)) { allModulesComplete = false; break; }
+        } else {
+          if (completedReqs.length < moduleReqs.length) { allModulesComplete = false; break; }
+        }
+      }
+      const existingBadgeProgress = badgeProgress.find(bp => bp.member_id === variables.memberId);
+      if (allModulesComplete) {
+        if (existingBadgeProgress) {
+          if (existingBadgeProgress.status !== 'completed') await base44.entities.MemberBadgeProgress.update(existingBadgeProgress.id, { status: 'completed', completion_date: new Date().toISOString().split('T')[0] });
+        } else {
+          await base44.entities.MemberBadgeProgress.create({ member_id: variables.memberId, badge_id: badgeId, status: 'completed', completion_date: new Date().toISOString().split('T')[0] });
+        }
+        const existingAward = await base44.entities.MemberBadgeAward.filter({ member_id: variables.memberId, badge_id: badgeId });
+        if (existingAward.length === 0) {
+          await base44.entities.MemberBadgeAward.create({ member_id: variables.memberId, badge_id: badgeId, completed_date: new Date().toISOString().split('T')[0], award_status: 'pending' });
+          toast.success('Badge completed! Ready to award.');
+        }
+      } else {
+        if (existingBadgeProgress && existingBadgeProgress.status === 'completed') await base44.entities.MemberBadgeProgress.update(existingBadgeProgress.id, { status: 'in_progress', completion_date: null });
+        else if (!existingBadgeProgress && updatedProgress.length > 0) await base44.entities.MemberBadgeProgress.create({ member_id: variables.memberId, badge_id: badgeId, status: 'in_progress' });
+      }
+      queryClient.invalidateQueries({ queryKey: ['badge-progress'] });
     },
   });
 
