@@ -51,7 +51,9 @@ export default function AwardNightsAwayDialog({ open, onOpenChange, event, defau
       })).filter(x => x.nights > 0);
 
       await Promise.all(toAward.map(async ({ memberId, nights }) => {
-        const member = allMembers.find(m => m.id === memberId);
+        // Fetch fresh member data to avoid stale cache issues
+        const freshMembers = await base44.entities.Member.filter({ id: memberId });
+        const member = freshMembers[0];
         if (!member) return;
         const current = member.total_nights_away || 0;
         await base44.entities.Member.update(memberId, {
