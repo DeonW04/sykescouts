@@ -334,12 +334,15 @@ export default function LeaderDashboard() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="center">
                     {action.dropdown.map((subItem) => (
-                      <DropdownMenuItem key={subItem.page} asChild>
-                        <Link to={createPageUrl(subItem.page)} className="flex items-center gap-2 cursor-pointer">
-                          <subItem.icon className="w-4 h-4" />
-                          {subItem.label}
-                        </Link>
-                      </DropdownMenuItem>
+                      <React.Fragment key={subItem.page}>
+                        {subItem.separator && <DropdownMenuSeparator />}
+                        <DropdownMenuItem asChild>
+                          <Link to={createPageUrl(subItem.page)} className="flex items-center gap-2 cursor-pointer">
+                            <subItem.icon className="w-4 h-4" />
+                            {subItem.label}
+                          </Link>
+                        </DropdownMenuItem>
+                      </React.Fragment>
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
