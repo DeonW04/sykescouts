@@ -37,6 +37,9 @@ export default function LeaderGallery() {
   const [filteredEvents, setFilteredEvents] = useState(null);
   const [filteredProgrammes, setFilteredProgrammes] = useState(null);
   const [selectedSection, setSelectedSection] = useState('all');
+  const [editAlbumDialog, setEditAlbumDialog] = useState(false);
+  const [editAlbumItem, setEditAlbumItem] = useState(null);
+  const [editAlbumForm, setEditAlbumForm] = useState({ section_id: '', visible_to: '' });
 
   const queryClient = useQueryClient();
 
