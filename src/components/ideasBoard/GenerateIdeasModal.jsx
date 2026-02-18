@@ -247,6 +247,9 @@ Example: {"ideas": [{"title":"...", "description":"...", "badgeIds":[], "badgeNa
         title: idea.title,
         description: idea.description,
         badge_ids: idea.badgeIds || [],
+        incidental_badge_ids: idea.incidentalBadgeIds || [],
+        incidental_badge_names: idea.incidentalBadgeNames || [],
+        resources: idea.resources || '',
         suggested_week: idea.suggestedWeek,
         ai_rationale: idea.rationale,
         source: 'ai_generated',
@@ -396,6 +399,22 @@ Example: {"ideas": [{"title":"...", "description":"...", "badgeIds":[], "badgeNa
                           <span className="text-xs text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full mt-2 inline-block">
                             🌟 General Scouting
                           </span>
+                        )}
+
+                        {idea.incidentalBadgeNames?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {idea.incidentalBadgeNames.map((name, i) => (
+                              <span key={i} className="bg-amber-50 text-amber-700 text-xs px-2 py-0.5 rounded-full border border-amber-200">
+                                ✨ {name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {idea.resources && (
+                          <p className="text-xs text-gray-500 mt-2 bg-gray-50 rounded px-2 py-1">
+                            🎒 <span className="font-medium">Resources:</span> {idea.resources}
+                          </p>
                         )}
 
                         {idea.rationale && (
