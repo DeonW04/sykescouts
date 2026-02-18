@@ -615,7 +615,7 @@ export default function ParentBadges() {
       </div>
 
       {/* Badge Detail Dialog */}
-      <Dialog open={!!selectedBadge} onOpenChange={(open) => !open && setSelectedBadge(null)}>
+      <Dialog open={!!selectedBadge} onOpenChange={(open) => !open && setSelectedBadge(null)}> 
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           {selectedBadge && (
             <>
