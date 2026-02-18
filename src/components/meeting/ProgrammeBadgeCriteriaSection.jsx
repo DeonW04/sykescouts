@@ -397,16 +397,6 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
                       </div>
 
                       <div className="flex justify-end gap-2 mt-6">
-                        <div className="flex items-center gap-3 flex-1">
-                          <Checkbox
-                            id="hike-away"
-                            checked={countsAsHikeAway}
-                            onCheckedChange={setCountsAsHikeAway}
-                          />
-                          <label htmlFor="hike-away" className="text-sm cursor-pointer">
-                            Counts as hike away
-                          </label>
-                        </div>
                         <Button variant="outline" onClick={() => setShowDialog(false)}>
                           Cancel
                         </Button>
