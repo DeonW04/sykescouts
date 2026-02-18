@@ -111,6 +111,12 @@ export default function GenerateIdeasModal({ sectionId, section, activeTab, user
     // Rejected titles
     const rejectedTitles = rejectedIdeas.map(r => r.title).join(', ') || 'None';
 
+    // Existing ideas already on the board
+    const existingTitles = existingIdeas
+      .filter(i => i.status === 'active')
+      .map(i => i.title)
+      .join(', ') || 'None';
+
     const typeLabel = activeTab === 'meeting' ? 'weekly meeting programme ideas' : 'scouting events or camps';
 
     // Build calendar context for the date range
