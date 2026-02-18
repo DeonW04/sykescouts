@@ -933,6 +933,13 @@ export default function EventDetail() {
         </DialogContent>
       </Dialog>
 
+      <AwardNightsAwayDialog
+        open={showAwardNightsDialog}
+        onOpenChange={setShowAwardNightsDialog}
+        event={event}
+        defaultNights={formData.nights_away_count}
+      />
+
       <NewEventDialog
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
