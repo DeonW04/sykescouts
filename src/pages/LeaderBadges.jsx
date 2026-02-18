@@ -5,17 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Award, Plus, Search, Users, TrendingUp, Package, AlertTriangle } from 'lucide-react';
+import { Award, Plus, Search, Users, TrendingUp, Package, AlertTriangle, LayoutList, Grid } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Badge } from '@/components/ui/badge';
 import LeaderNav from '../components/leader/LeaderNav';
+import MemberBadgeView from '../components/badges/MemberBadgeView';
 
 export default function LeaderBadges() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [sectionFilter, setSectionFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [viewMode, setViewMode] = useState('badge'); // 'badge' | 'member'
 
   const { data: allBadges = [], isLoading } = useQuery({
     queryKey: ['badges'],
