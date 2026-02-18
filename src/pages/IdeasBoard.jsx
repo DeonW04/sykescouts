@@ -98,7 +98,7 @@ export default function IdeasBoard() {
       rotation,
       color,
       added_by_id: user?.id,
-      added_by_name: user?.full_name,
+      added_by_name: displayName,
       source: 'manual',
       status: 'active',
     });
