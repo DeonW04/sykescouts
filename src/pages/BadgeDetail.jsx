@@ -623,7 +623,7 @@ export default function BadgeDetail() {
                               />
                             </div>
                             <div className="text-xs text-gray-500 font-medium">
-                              {memberProgress.completed} / {memberProgress.total} modules
+                              {memberProgress.completed} / {memberProgress.total} criteria
                             </div>
                           </div>
                         </td>
