@@ -302,20 +302,13 @@ export default function LeaderBadges() {
                         });
                         displayBadges = Array.from(familyMap.values());
                       } else if (category === 'activity') {
-                        const joiningInBadges = categoryBadges.filter(b => b.name.includes('Joining In Award'));
                         const nightsAwayBadges = categoryBadges.filter(b => b.name.toLowerCase().includes('nights away'));
                         const hikesAwayBadges = categoryBadges.filter(b => b.name.toLowerCase().includes('hikes away'));
                         const otherBadges = categoryBadges.filter(b =>
-                          !b.name.includes('Joining In Award') &&
                           !b.name.toLowerCase().includes('nights away') &&
                           !b.name.toLowerCase().includes('hikes away')
                         );
 
-                        const joiningInPlaceholder = joiningInBadges.length > 0 ? [{
-                          id: 'joining-in-awards', name: 'Joining In Awards', section: 'all',
-                          category: 'activity', image_url: joiningInBadges[0].image_url,
-                          isJoiningInPlaceholder: true
-                        }] : [];
                         const nightsAwayPlaceholder = nightsAwayBadges.length > 0 ? [{
                           id: 'nights-away-family', name: 'Nights Away',
                           section: nightsAwayBadges[0].section, category: 'activity',
@@ -331,7 +324,7 @@ export default function LeaderBadges() {
                           isHikesAwayFamily: true
                         }] : [];
 
-                        displayBadges = [...otherBadges, ...joiningInPlaceholder, ...nightsAwayPlaceholder, ...hikesAwayPlaceholder]
+                        displayBadges = [...otherBadges, ...nightsAwayPlaceholder, ...hikesAwayPlaceholder]
                           .sort((a, b) => a.name.localeCompare(b.name));
                       } else {
                         displayBadges = categoryBadges;
