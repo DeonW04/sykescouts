@@ -217,7 +217,7 @@ export default function MemberBadgeView({ sectionFilter }) {
   const filteredMembers = members.filter(m => {
     if (sectionFilter === 'all') return true;
     return m.section_id === sections.find(s => s.name === sectionFilter)?.id;
-  }).sort((a, b) => a.full_name.localeCompare(b.full_name));
+  }).sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime());
 
   const getBadgeProgressForMember = (memberId, badgeId) => {
     const badgeModules = modules.filter(m => m.badge_id === badgeId);
