@@ -157,6 +157,27 @@ export default function LeaderBadges() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Member view */}
+        {viewMode === 'member' && (
+          <div>
+            <div className="mb-4 flex items-center gap-3">
+              <Select value={sectionFilter} onValueChange={setSectionFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="All sections" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sections</SelectItem>
+                  {sections.map(section => (
+                    <SelectItem key={section.id} value={section.name}>{section.display_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <MemberBadgeView sectionFilter={sectionFilter} />
+          </div>
+        )}
+
+        {viewMode === 'badge' && <>
         {/* Mobile Filters */}
         <Card className="mb-6 md:hidden">
           <CardContent className="p-4">
