@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, CheckSquare, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt } from 'lucide-react';
+import { Users, Calendar, Award, CheckSquare, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt, Lightbulb } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -203,7 +203,8 @@ export default function LeaderDashboard() {
       iconColor: 'text-purple-600',
       dropdown: [
         { label: 'Weekly Meetings', page: 'LeaderProgramme', icon: Calendar },
-        { label: 'Events', page: 'LeaderEvents', icon: CalendarDays }
+        { label: 'Events', page: 'LeaderEvents', icon: CalendarDays },
+        { label: 'Ideas Board', page: 'IdeasBoard', icon: Lightbulb }
       ]
     },
     { 
