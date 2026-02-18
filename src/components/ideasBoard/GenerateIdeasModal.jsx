@@ -107,9 +107,22 @@ export default function GenerateIdeasModal({ sectionId, section, activeTab, user
 
     const typeLabel = activeTab === 'meeting' ? 'weekly meeting programme ideas' : 'scouting events or camps';
 
+    // Build calendar context for the date range
+    const fromDate = new Date(dateFrom);
+    const toDate = new Date(dateTo);
+    const months = [];
+    const cur = new Date(fromDate);
+    while (cur <= toDate) {
+      months.push(cur.toLocaleString('en-GB', { month: 'long', year: 'numeric' }));
+      cur.setMonth(cur.getMonth() + 1);
+    }
+    const calendarContext = months.join(', ');
+
+    const onlyNonBadge = !selectedBadgeIds.length && includeNonBadge;
+
     return `You are an expert Scout leader helping plan ${typeLabel} for the ${sectionDisplay} section (age group: ${section?.age_range || 'unknown'}).
 
-Generate 6 creative, age-appropriate ${typeLabel} for the date range ${dateFrom} to ${dateTo}.
+Generate 6 creative, age-appropriate ${typeLabel} for the date range ${dateFrom} to ${dateTo} (covering: ${calendarContext}).
 
 BADGE CRITERIA AVAILABLE FOR THIS SECTION:
 ${badgeSummary || 'See general scouting badge curriculum'}
@@ -123,13 +136,21 @@ ${programmeSummary}
 PREVIOUSLY REJECTED IDEAS (do NOT suggest these again):
 ${rejectedTitles}
 
+CALENDAR AWARENESS — CRITICAL:
+- Consider UK public holidays, school holidays, and seasonal events that fall within ${dateFrom} to ${dateTo}.
+- Check for relevant "International Day of..." observances (e.g. World Environment Day, International Day of Forests, World Space Week, etc.) that fall in this period.
+- Check for UK seasonal events, religious observances, and awareness days that could inspire themed activities.
+- Where an idea is inspired by a specific date or event, mention it in the rationale.
+
 PARAMETERS:
 - Date range: ${dateFrom} to ${dateTo}
 - Focus badges: ${selectedBadgeIds.length > 0 ? targetBadges.map(b => b.name).join(', ') : 'All relevant badges'}
-- Include non-badge general activity ideas: ${includeNonBadge ? 'YES' : 'NO'}
+- ${includeNonBadge && selectedBadgeIds.length === 0 ? 'Generate ONLY non-badge general activity ideas — do NOT link any ideas to badges' : `Include non-badge general activity ideas: ${includeNonBadge ? 'YES (mix badge and non-badge ideas)' : 'NO — every idea must link to a badge'}`}
 - Type: ${activeTab === 'meeting' ? 'Meeting programme activities' : 'Events/camps/day trips'}
 
 For each idea, provide practical, hands-on activities suitable for ${sectionDisplay}. Consider what materials are needed, how it fits into a ${activeTab === 'meeting' ? '90-minute meeting' : 'full day/weekend event'}, and which specific badge requirements it fulfils.
+
+${onlyNonBadge ? 'IMPORTANT: Since only non-badge ideas are requested, set badgeIds and badgeNames to empty arrays for ALL ideas.' : ''}
 
 Return ONLY a valid JSON array of exactly 6 objects with these fields:
 - title: string (short, catchy title)
@@ -138,7 +159,7 @@ Return ONLY a valid JSON array of exactly 6 objects with these fields:
 - badgeNames: array of badge names (for display)
 - suggestedWeek: string (e.g. "Week of 10 Mar" or specific date)
 - type: "${activeTab}"
-- rationale: string (one sentence: why this is good for this group right now)
+- rationale: string (one sentence: why this is good for this group right now, mention any relevant calendar event/date)
 
 Example format: [{"title":"...", "description":"...", "badgeIds":[], "badgeNames":[], "suggestedWeek":"...", "type":"${activeTab}", "rationale":"..."}]`;
   };

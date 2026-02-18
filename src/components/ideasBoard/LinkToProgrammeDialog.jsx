@@ -11,8 +11,12 @@ export default function LinkToProgrammeDialog({ idea, sectionId, onClose, onLink
   const [selected, setSelected] = useState(null);
 
   const { data: meetings = [] } = useQuery({
-    queryKey: ['unpublishedMeetings', sectionId],
-    queryFn: () => base44.entities.Programme.filter({ section_id: sectionId, published: false }),
+    queryKey: ['allMeetings', sectionId],
+    queryFn: async () => {
+      const all = await base44.entities.Programme.filter({ section_id: sectionId });
+      // Return all that are not yet published — covers both no-date and future unpublished
+      return all.filter(m => !m.published);
+    },
   });
 
   const filtered = meetings.filter(m =>
