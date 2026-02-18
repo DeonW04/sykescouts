@@ -218,10 +218,15 @@ export default function LeaderDashboard() {
     { 
       icon: Award, 
       label: 'Badges', 
-      page: 'LeaderBadges',
       gradient: 'from-green-500 to-green-600',
       iconBg: 'bg-green-100',
-      iconColor: 'text-green-600'
+      iconColor: 'text-green-600',
+      dropdown: [
+        { label: 'Badge Tracking', page: 'LeaderBadges', icon: Award },
+        { label: 'Due Badges', page: 'AwardBadges', icon: TrendingUp },
+        { label: 'Badge Stock', page: 'BadgeStockManagement', icon: Package },
+        ...(user?.role === 'admin' ? [{ label: 'Manage Badges', page: 'ManageBadges', icon: Settings, separator: true }] : []),
+      ]
     },
     { 
       icon: Mail, 
