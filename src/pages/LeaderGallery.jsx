@@ -651,6 +651,50 @@ export default function LeaderGallery() {
         )}
       </div>
 
+      {/* Edit Album Dialog */}
+      <Dialog open={editAlbumDialog} onOpenChange={setEditAlbumDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Album</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Section</Label>
+              <Select value={editAlbumForm.section_id} onValueChange={(v) => setEditAlbumForm({ ...editAlbumForm, section_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Select section..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sections (Group Event)</SelectItem>
+                  {sections.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Visibility</Label>
+              <Select
+                value={editAlbumForm.visible_to === 'public' || (editAlbumForm.is_public) ? 'public' : editAlbumForm.visible_to}
+                onValueChange={(v) => setEditAlbumForm({ ...editAlbumForm, visible_to: v === 'public' ? 'parents' : v, is_public: v === 'public' })}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="leaders">Leaders Only</SelectItem>
+                  <SelectItem value="parents">Parents & Leaders</SelectItem>
+                  <SelectItem value="public">Public Gallery</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEditAlbumDialog(false)}>Cancel</Button>
+              <Button onClick={handleSaveAlbumEdit} disabled={updatePhotosMutation.isPending}>
+                {updatePhotosMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
           <DialogHeader>
