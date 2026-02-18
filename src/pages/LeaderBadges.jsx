@@ -469,6 +469,7 @@ export default function LeaderBadges() {
                     })}
                   </div>
                 )}
+        </>}
       </div>
     </div>
   );
