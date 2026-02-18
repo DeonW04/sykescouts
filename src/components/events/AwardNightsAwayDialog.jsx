@@ -43,6 +43,8 @@ export default function AwardNightsAwayDialog({ open, onOpenChange, event, defau
     .filter(({ member }) => !!member)
     .sort((a, b) => new Date(a.member.date_of_birth).getTime() - new Date(b.member.date_of_birth).getTime());
 
+  const NIGHTS_THRESHOLDS = [1, 2, 3, 4, 5, 10, 15, 20, 35, 50];
+
   const awardMutation = useMutation({
     mutationFn: async () => {
       const toAward = selectedMembers.map(memberId => ({
@@ -50,23 +52,53 @@ export default function AwardNightsAwayDialog({ open, onOpenChange, event, defau
         nights: parseInt(memberNights[memberId]) || 0,
       })).filter(x => x.nights > 0);
 
+      // Fetch badge definitions and existing awards once
+      const [nightsAwayBadges, existingAwards] = await Promise.all([
+        base44.entities.BadgeDefinition.filter({ badge_family_id: 'nights_away' }),
+        base44.entities.MemberBadgeAward.filter({}),
+      ]);
+
+      const today = new Date().toISOString().split('T')[0];
+
       await Promise.all(toAward.map(async ({ memberId, nights }) => {
         // Fetch fresh member data to avoid stale cache issues
         const freshMembers = await base44.entities.Member.filter({ id: memberId });
         const member = freshMembers[0];
         if (!member) return;
-        const current = member.total_nights_away || 0;
-        await base44.entities.Member.update(memberId, {
-          total_nights_away: current + nights,
-        });
+        const previousTotal = member.total_nights_away || 0;
+        const newTotal = previousTotal + nights;
+
+        await base44.entities.Member.update(memberId, { total_nights_away: newTotal });
+
         await base44.entities.NightsAwayLog.create({
           member_id: memberId,
           event_id: event.id,
           notes: event.title,
           nights_count: nights,
-          start_date: event.start_date ? event.start_date.split('T')[0] : new Date().toISOString().split('T')[0],
+          start_date: event.start_date ? event.start_date.split('T')[0] : today,
           end_date: event.end_date ? event.end_date.split('T')[0] : undefined,
         });
+
+        // Check if any thresholds have been newly crossed
+        const memberExistingAwards = existingAwards.filter(a => a.member_id === memberId);
+        for (const threshold of NIGHTS_THRESHOLDS) {
+          if (previousTotal < threshold && newTotal >= threshold) {
+            const badge = nightsAwayBadges.find(b => b.stage_number === threshold);
+            if (badge) {
+              const alreadyAwarded = memberExistingAwards.some(a => a.badge_id === badge.id);
+              if (!alreadyAwarded) {
+                await base44.entities.MemberBadgeAward.create({
+                  member_id: memberId,
+                  badge_id: badge.id,
+                  completed_date: today,
+                  awarded_date: today,
+                  award_status: 'pending',
+                  notes: `Auto-awarded for reaching ${threshold} nights away`,
+                });
+              }
+            }
+          }
+        }
       }));
     },
     onSuccess: () => {
