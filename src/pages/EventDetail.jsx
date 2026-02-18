@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import NewEventDialog from '../components/events/NewEventDialog';
+import AwardNightsAwayDialog from '../components/events/AwardNightsAwayDialog';
 import TodoSection from '../components/meeting/TodoSection';
 import EventParentPortalSection from '../components/events/EventParentPortalSection';
 import EventAttendeesSection from '../components/events/EventAttendeesSection';
