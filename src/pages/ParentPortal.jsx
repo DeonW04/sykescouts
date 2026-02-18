@@ -13,6 +13,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 export default function ParentPortal() {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
+  const [showMissingDataModal, setShowMissingDataModal] = useState(false);
+
+  const REQUIRED_FIELDS = [
+    { key: 'date_of_birth', label: 'Date of birth' },
+    { key: 'parent_one_name', label: 'Parent one name' },
+    { key: 'parent_one_email', label: 'Parent one email' },
+    { key: 'parent_one_phone', label: 'Parent one phone' },
+    { key: 'emergency_contact_name', label: 'Emergency contact name' },
+    { key: 'emergency_contact_phone', label: 'Emergency contact phone' },
+    { key: 'emergency_contact_relationship', label: 'Emergency contact relationship' },
+  ];
+
+  const getMissingFields = (member) => {
+    return REQUIRED_FIELDS.filter(f => {
+      const val = member[f.key];
+      return val === null || val === undefined || val === '';
+    }).map(f => f.label);
+  };
 
   const { data: members = [] } = useQuery({
     queryKey: ['members'],
