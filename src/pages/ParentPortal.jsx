@@ -336,6 +336,40 @@ export default function ParentPortal() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Missing Data Modal */}
+      <Dialog open={showMissingDataModal} onOpenChange={setShowMissingDataModal}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" />
+              Members with Missing Data
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            {members
+              .map(m => ({ member: m, missing: getMissingFields(m) }))
+              .filter(({ missing }) => missing.length > 0)
+              .sort((a, b) => (a.member.full_name || '').localeCompare(b.member.full_name || ''))
+              .map(({ member, missing }) => (
+                <div key={member.id} className="border rounded-lg p-4">
+                  <p className="font-semibold text-gray-800 mb-2">{member.full_name}</p>
+                  <ul className="space-y-1">
+                    {missing.map(field => (
+                      <li key={field} className="flex items-center gap-2 text-sm text-red-600">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
+                        {field}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            {members.filter(m => getMissingFields(m).length > 0).length === 0 && (
+              <p className="text-center text-gray-500 py-4">All members have complete data! 🎉</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
