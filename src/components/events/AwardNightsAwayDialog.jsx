@@ -103,6 +103,7 @@ export default function AwardNightsAwayDialog({ open, onOpenChange, event, defau
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['members'] });
+      queryClient.invalidateQueries({ queryKey: ['awards'] });
       toast.success(`Nights away awarded to ${selectedMembers.length} member(s)`);
       onOpenChange(false);
     },
