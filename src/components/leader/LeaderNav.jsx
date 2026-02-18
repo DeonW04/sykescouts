@@ -38,7 +38,17 @@ export default function LeaderNav() {
         ]
     },
     { icon: ShieldAlert, label: 'Risk', page: 'RiskAssessments', color: 'bg-orange-500' },
-    { icon: Award, label: 'Badges', page: 'LeaderBadges', color: 'bg-green-500' },
+    { 
+      icon: Award, 
+      label: 'Badges', 
+      color: 'bg-green-500',
+      dropdown: [
+        { label: 'Badge Tracking', page: 'LeaderBadges', icon: Award },
+        { label: 'Due Badges', page: 'AwardBadges', icon: TrendingUp },
+        { label: 'Badge Stock', page: 'BadgeStockManagement', icon: Package },
+        ...(isAdmin ? [{ label: 'Manage Badges', page: 'ManageBadges', icon: Settings, separator: true }] : []),
+      ]
+    },
     { icon: Mail, label: 'Communications', page: 'Communications', color: 'bg-teal-500' },
     { icon: Image, label: 'Gallery', page: 'LeaderGallery', color: 'bg-pink-500' },
   ];
