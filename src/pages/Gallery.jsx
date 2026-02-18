@@ -148,6 +148,28 @@ export default function Gallery() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Section Filter */}
+        <div className="flex flex-wrap justify-center gap-3 mb-8">
+          {[
+            { id: 'all', label: 'All Sections' },
+            ...sections
+              .filter(s => ['beavers', 'cubs', 'scouts'].includes(s.name))
+              .map(s => ({ id: s.id, label: s.display_name })),
+          ].map(opt => (
+            <button
+              key={opt.id}
+              onClick={() => { setSelectedSection(opt.id); setSelectedItem(null); }}
+              className={`px-5 py-2 rounded-full font-medium text-sm transition-all ${
+                selectedSection === opt.id
+                  ? 'bg-[#7413dc] text-white shadow-lg'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:border-[#7413dc] hover:text-[#7413dc]'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
         {/* Category Icons */}
         <div className="grid grid-cols-3 gap-6 mb-10">
           <motion.button
