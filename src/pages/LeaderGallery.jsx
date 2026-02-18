@@ -76,6 +76,45 @@ export default function LeaderGallery() {
     },
   });
 
+  const updatePhotosMutation = useMutation({
+    mutationFn: async ({ photos, updates }) => {
+      for (const photo of photos) {
+        await base44.entities.EventPhoto.update(photo.id, updates);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['all-photos']);
+      toast.success('Album updated');
+      setEditAlbumDialog(false);
+    },
+  });
+
+  const handleEditAlbum = (e, item, type) => {
+    e.stopPropagation();
+    setEditAlbumItem({ ...item, itemType: type });
+    // Get photos for this album to read current settings
+    const photos = allPhotos.filter(p => {
+      if (item.isManual) return p.manual_event_name === item.title && (p.manual_date || 'no-date') === (item.date || 'no-date');
+      if (type === 'meeting') return p.programme_id === item.id;
+      return p.event_id === item.id;
+    });
+    const firstPhoto = photos[0];
+    setEditAlbumForm({
+      section_id: firstPhoto?.section_id || '',
+      visible_to: firstPhoto?.visible_to || 'parents',
+    });
+    setEditAlbumDialog(true);
+  };
+
+  const handleSaveAlbumEdit = () => {
+    const photos = allPhotos.filter(p => {
+      if (editAlbumItem.isManual) return p.manual_event_name === editAlbumItem.title && (p.manual_date || 'no-date') === (editAlbumItem.date || 'no-date');
+      if (editAlbumItem.itemType === 'meeting') return p.programme_id === editAlbumItem.id;
+      return p.event_id === editAlbumItem.id;
+    });
+    updatePhotosMutation.mutate({ photos, updates: editAlbumForm });
+  };
+
   // Filter photos by selected section (include 'all' section photos in every section's view)
   const sectionFilteredPhotos = selectedSection === 'all'
     ? allPhotos
