@@ -157,10 +157,18 @@ CALENDAR AWARENESS — CRITICAL:
 - Check for UK seasonal events, religious observances, and awareness days that could inspire themed activities.
 - Where an idea is inspired by a specific date or event, mention it in the rationale.
 
+IDEA MIX — CRITICAL, follow this exactly:
+${includeNonBadge
+  ? `- Generate exactly 4 or 5 NON-BADGE general activity ideas (fun scouting activities NOT linked to any badge). These must have empty badgeIds and badgeNames arrays.
+- Generate exactly 1 or 2 BADGE-FOCUSED ideas that are specifically designed to work towards a badge. These should have badgeIds and badgeNames populated.
+- So roughly 75% non-badge, 25% badge-focused out of 6 ideas total.`
+  : `- ALL 6 ideas must be badge-focused — every idea must link to at least one badge. badgeIds and badgeNames must be populated for every idea.`
+}
+- For ALL ideas (badge or non-badge), still check for INCIDENTAL badge coverage and populate incidentalBadgeIds/incidentalBadgeNames where relevant.
+
 PARAMETERS:
 - Date range: ${dateFrom} to ${dateTo}
 - Focus badges: ${selectedBadgeIds.length > 0 ? targetBadges.map(b => b.name).join(', ') : 'All relevant badges'}
-- Non-badge ideas: ${includeNonBadge ? 'YES — include general activity ideas, but still include 1-2 badge-focused ideas in the mix' : 'NO — every idea must link to a badge'}
 - Type: ${activeTab === 'meeting' ? 'Meeting programme activities' : 'Events/camps/day trips'}
 
 INCIDENTAL BADGE COVERAGE — IMPORTANT:
