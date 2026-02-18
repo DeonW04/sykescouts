@@ -238,7 +238,7 @@ export default function MeetingDetail() {
               <p className="mt-1 text-white/80">{section?.display_name}</p>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
-              {isPastMeeting() ? (
+              {isPastMeeting() && (
                 <Button
                   variant="outline"
                   onClick={() => navigate(createPageUrl('Gallery') + `?view=meeting&id=${existingProgramme?.id}`)}
@@ -247,25 +247,24 @@ export default function MeetingDetail() {
                   <Image className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Gallery</span>
                 </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  onClick={() => setFormData({ ...formData, published: !formData.published })}
-                  className="bg-white/10 text-white border-white hover:bg-white/20 flex-1 sm:flex-none"
-                >
-                  {formData.published ? (
-                    <>
-                      <Eye className="w-4 h-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Published</span>
-                    </>
-                  ) : (
-                    <>
-                      <EyeOff className="w-4 h-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Draft</span>
-                    </>
-                  )}
-                </Button>
               )}
+              <Button
+                variant="outline"
+                onClick={() => setFormData({ ...formData, published: !formData.published })}
+                className="bg-white/10 text-white border-white hover:bg-white/20 flex-1 sm:flex-none"
+              >
+                {formData.published ? (
+                  <>
+                    <Eye className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Published</span>
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Draft</span>
+                  </>
+                )}
+              </Button>
               <Button
                 onClick={handleSave}
                 disabled={saveProgrammeMutation.isPending}
