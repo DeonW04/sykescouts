@@ -347,7 +347,7 @@ export default function LeaderBadges() {
                             {displayBadges.map(badge => {
                               const isStaged = badge.category === 'staged';
                               const isJoiningIn = badge.isJoiningInPlaceholder;
-                              const isFamilyPlaceholder = badge.isNightsAwayFamily || badge.isHikesAwayFamily || isJoiningIn;
+                              const isFamilyPlaceholder = badge.isNightsAwayFamily || badge.isHikesAwayFamily || isJoiningIn || isJoiningIn;
                               const stats = !isFamilyPlaceholder ? getBadgeStats(badge.id) : null;
 
                               const isNightsAwayFamily = badge.isNightsAwayFamily;
