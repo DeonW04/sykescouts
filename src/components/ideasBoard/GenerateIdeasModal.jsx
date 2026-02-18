@@ -148,6 +148,9 @@ ${programmeSummary}
 PREVIOUSLY REJECTED IDEAS (do NOT suggest these again):
 ${rejectedTitles}
 
+IDEAS ALREADY ON THE BOARD (do NOT suggest anything similar to these — be creative and different):
+${existingTitles}
+
 CALENDAR AWARENESS — CRITICAL:
 - Consider UK public holidays, school holidays, and seasonal events that fall within ${dateFrom} to ${dateTo}.
 - Check for relevant "International Day of..." observances (e.g. World Environment Day, International Day of Forests, World Space Week, etc.) that fall in this period.
