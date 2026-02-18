@@ -73,6 +73,7 @@ export default function ParentPortal() {
       'emergency_contact_relationship',
     ];
 
+
     const completedFields = requiredFields.filter(field => {
       const value = member[field];
       return value !== null && value !== undefined && value !== '';
