@@ -20,6 +20,7 @@ export default function BadgeDetail() {
   const queryClient = useQueryClient();
   const [stockDialog, setStockDialog] = useState(null);
   const [editingCount, setEditingCount] = useState(null); // { memberId, reqId, value }
+  const [confirmUncheck, setConfirmUncheck] = useState(null); // { memberId, reqId, memberName }
   const urlParams = new URLSearchParams(window.location.search);
   const badgeId = urlParams.get('id');
 
