@@ -102,20 +102,38 @@ export default function NightsAwayTracking() {
     },
   });
 
+  const { data: nightsAwayBadgeDefsAll = [] } = useQuery({
+    queryKey: ['nights-away-badge-defs'],
+    queryFn: () => base44.entities.BadgeDefinition.filter({ badge_family_id: 'nights_away' }),
+  });
+
   const deleteLogMutation = useMutation({
     mutationFn: async (log) => {
       await base44.entities.NightsAwayLog.delete(log.id);
 
-      // Update member's total nights
-      const member = members.find(m => m.id === log.member_id);
-      await base44.entities.Member.update(log.member_id, {
-        total_nights_away: Math.max(0, (member?.total_nights_away || 0) - log.nights_count)
-      });
+      // Recalculate total from remaining logs
+      const remainingLogs = await base44.entities.NightsAwayLog.filter({ member_id: log.member_id });
+      const newTotal = remainingLogs.reduce((sum, l) => sum + (l.nights_count || 0), 0);
+
+      await base44.entities.Member.update(log.member_id, { total_nights_away: newTotal });
+
+      // Remove any badge awards for thresholds the member no longer meets
+      const existingAwards = await base44.entities.MemberBadgeAward.filter({ member_id: log.member_id });
+      for (const badge of nightsAwayBadgeDefsAll) {
+        const threshold = badge.stage_number;
+        if (threshold && newTotal < threshold) {
+          const award = existingAwards.find(a => a.badge_id === badge.id);
+          if (award) {
+            await base44.entities.MemberBadgeAward.delete(award.id);
+          }
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nightsaway'] });
       queryClient.invalidateQueries({ queryKey: ['members'] });
-      toast.success('Log deleted');
+      queryClient.invalidateQueries({ queryKey: ['awards'] });
+      toast.success('Log deleted and totals recalculated');
     },
   });
 
