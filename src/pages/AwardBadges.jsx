@@ -26,6 +26,7 @@ export default function AwardBadges() {
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [manualAwardBadge, setManualAwardBadge] = useState(null);
   const [checkingJoiningIn, setCheckingJoiningIn] = useState(false);
+  const [awardingDialog, setAwardingDialog] = useState(false); // 'loading' | 'success' | false
 
   useEffect(() => {
     loadUser();
