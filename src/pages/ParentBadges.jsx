@@ -193,8 +193,29 @@ export default function ParentBadges() {
     );
   }
 
-  // Completed badges (either pending award or awarded)
-  const completedBadges = badgeProgress.filter(p => p.member_id === child.id && p.status === 'completed');
+  // Derive badge completion from actual requirement progress (source of truth)
+  const isBadgeComplete = (badgeId) => {
+    const badgeModules = modules.filter(m => m.badge_id === badgeId);
+    if (badgeModules.length === 0) {
+      // Fall back to DB record if no modules defined
+      return badgeProgress.some(p => p.member_id === child.id && p.badge_id === badgeId && p.status === 'completed');
+    }
+    for (const mod of badgeModules) {
+      const modReqs = requirements.filter(r => r.module_id === mod.id);
+      const completedReqs = reqProgress.filter(p => p.member_id === child.id && p.module_id === mod.id && p.completed);
+      if (mod.completion_rule === 'x_of_n_required') {
+        if (completedReqs.length < (mod.required_count || modReqs.length)) return false;
+      } else {
+        if (completedReqs.length < modReqs.length) return false;
+      }
+    }
+    return true;
+  };
+
+  // Completed badges (either pending award or awarded) — use requirement truth + DB record as fallback
+  const completedBadges = badges
+    .filter(b => isBadgeComplete(b.id))
+    .map(b => ({ badge_id: b.id, member_id: child.id, status: 'completed' }));
 
   // Group staged badges by family
   const stagedBadgeFamilies = badges
