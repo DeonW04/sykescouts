@@ -531,23 +531,18 @@ export default function ParentBadges() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 lg:grid-cols-5 gap-3">
               {earnedNonStaged.map(progress => {
                 const badge = badges.find(b => b.id === progress.badge_id);
                 if (!badge) return null;
-                
                 return (
-                  <motion.div key={progress.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+                  <motion.div key={progress.badge_id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
                     <Card className="bg-green-50 border-green-200 hover:shadow-lg transition-shadow">
-                      <CardContent className="p-6 text-center">
-                        <img
-                          src={badge.image_url}
-                          alt={badge.name}
-                          className="w-24 h-24 mx-auto rounded-lg mb-3"
-                        />
-                        <h3 className="font-semibold text-sm">{badge.name}</h3>
-                        <div className="flex items-center justify-center gap-1 mt-2">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
+                      <CardContent className="p-3 text-center">
+                        <img src={badge.image_url} alt={badge.name} className="w-full aspect-square object-contain rounded-lg mb-2" />
+                        <h3 className="font-semibold text-xs leading-tight">{badge.name}</h3>
+                        <div className="flex items-center justify-center gap-1 mt-1">
+                          <CheckCircle className="w-3 h-3 text-green-600" />
                           <span className="text-xs text-green-700">Earned</span>
                         </div>
                       </CardContent>
@@ -555,25 +550,19 @@ export default function ParentBadges() {
                   </motion.div>
                 );
               })}
-
               {/* Staged Badge Families - Highest Stage */}
               {Object.entries(stagedBadgeFamilies).map(([familyId, family]) => {
                 const highestStage = getHighestCompletedStage(familyId);
                 if (!highestStage) return null;
-
                 return (
                   <motion.div key={familyId} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
                     <Card className="bg-green-50 border-green-200 hover:shadow-lg transition-shadow">
-                      <CardContent className="p-6 text-center">
-                        <img
-                          src={highestStage.image_url}
-                          alt={highestStage.name}
-                          className="w-24 h-24 mx-auto rounded-lg mb-3"
-                        />
-                        <h3 className="font-semibold text-sm">{family.name}</h3>
-                        <p className="text-xs text-gray-600">Stage {highestStage.stage_number}</p>
-                        <div className="flex items-center justify-center gap-1 mt-2">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
+                      <CardContent className="p-3 text-center">
+                        <img src={highestStage.image_url} alt={highestStage.name} className="w-full aspect-square object-contain rounded-lg mb-2" />
+                        <h3 className="font-semibold text-xs leading-tight">{family.name}</h3>
+                        <p className="text-xs text-gray-500">Stage {highestStage.stage_number}</p>
+                        <div className="flex items-center justify-center gap-1 mt-1">
+                          <CheckCircle className="w-3 h-3 text-green-600" />
                           <span className="text-xs text-green-700">Earned</span>
                         </div>
                       </CardContent>
