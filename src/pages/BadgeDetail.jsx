@@ -88,7 +88,7 @@ export default function BadgeDetail() {
       setEditingCount(null);
       await queryClient.invalidateQueries({ queryKey: ['req-progress'] });
       const updatedProgress = await base44.entities.MemberRequirementProgress.filter({ badge_id: badgeId, member_id: variables.memberId });
-      let allModulesComplete = true;
+      let allModulesComplete = modules.length > 0;
       for (const module of modules) {
         const moduleReqs = requirements.filter(r => r.module_id === module.id);
         const completedReqs = updatedProgress.filter(p => p.module_id === module.id && p.completed);
@@ -98,7 +98,9 @@ export default function BadgeDetail() {
           if (completedReqs.length < moduleReqs.length) { allModulesComplete = false; break; }
         }
       }
-      const existingBadgeProgress = badgeProgress.find(bp => bp.member_id === variables.memberId);
+      // Always fetch fresh badge progress to avoid stale state
+      const freshBadgeProgress = await base44.entities.MemberBadgeProgress.filter({ badge_id: badgeId, member_id: variables.memberId });
+      const existingBadgeProgress = freshBadgeProgress[0];
       if (allModulesComplete) {
         if (existingBadgeProgress) {
           if (existingBadgeProgress.status !== 'completed') await base44.entities.MemberBadgeProgress.update(existingBadgeProgress.id, { status: 'completed', completion_date: new Date().toISOString().split('T')[0] });
