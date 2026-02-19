@@ -361,10 +361,11 @@ export default function ParentBadges() {
   hikesAwayBadges.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
   joiningInBadges.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
 
-  // Find highest earned badge in a family list
+  // Find highest earned badge in a family list — checks both MemberBadgeProgress and MemberBadgeAward
   const getHighestEarnedInFamily = (familyBadges) => {
     const earned = familyBadges.filter(fb =>
-      badgeProgress.some(p => p.member_id === child.id && p.badge_id === fb.id && p.status === 'completed')
+      badgeProgress.some(p => p.member_id === child.id && p.badge_id === fb.id && p.status === 'completed') ||
+      awards.some(a => a.member_id === child.id && a.badge_id === fb.id)
     );
     if (earned.length === 0) return null;
     return earned.reduce((highest, b) => (b.stage_number || 0) > (highest.stage_number || 0) ? b : highest);
