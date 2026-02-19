@@ -753,12 +753,30 @@ export default function ParentBadges() {
               joiningInYears = (now - start) / (1000 * 60 * 60 * 24 * 365.25);
             }
 
+            const highestInDialog = getHighestEarnedInFamily(family);
+
             return (
               <>
                 <DialogHeader>
-                  <DialogTitle className="text-2xl">{title}</DialogTitle>
+                  <div className="flex items-center gap-4 mb-2">
+                    {highestInDialog ? (
+                      <img src={highestInDialog.image_url} alt={highestInDialog.name} className="w-16 h-16 rounded-lg object-contain flex-shrink-0" />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Award className="w-8 h-8 text-gray-400" />
+                      </div>
+                    )}
+                    <div>
+                      <DialogTitle className="text-2xl">{title}</DialogTitle>
+                      {highestInDialog && (
+                        <p className="text-sm text-green-600 font-medium flex items-center gap-1 mt-1">
+                          <CheckCircle className="w-4 h-4" /> Highest: {highestInDialog.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </DialogHeader>
-                <div className="space-y-6 mt-4">
+                <div className="space-y-6 mt-2">
                   {/* Summary */}
                   {totalCount !== null && (
                     <Card className="bg-blue-50 border-blue-200">
@@ -791,7 +809,8 @@ export default function ParentBadges() {
                     <h3 className="font-bold text-lg mb-3">Badge Stages</h3>
                     <div className="space-y-3">
                       {family.map(badge => {
-                        const isEarned = awards.some(a => a.member_id === child.id && a.badge_id === badge.id);
+                        const isEarned = badgeProgress.some(p => p.member_id === child.id && p.badge_id === badge.id && p.status === 'completed')
+                          || awards.some(a => a.member_id === child.id && a.badge_id === badge.id);
                         const threshold = badge.stage_number;
                         return (
                           <div key={badge.id} className={`flex items-center gap-4 p-3 rounded-lg border ${isEarned ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
