@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { Moon } from 'lucide-react';
+import { Moon, Loader2 } from 'lucide-react';
 
 export default function AwardNightsAwayDialog({ open, onOpenChange, event, defaultNights }) {
   const queryClient = useQueryClient();
