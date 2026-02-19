@@ -343,9 +343,12 @@ export default function NightsAwayTracking() {
             <Button variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
             <Button
               onClick={() => addLogMutation.mutate({ ...formData, member_id: selectedMember })}
-              disabled={!selectedMember || !formData.start_date || !formData.location}
+              disabled={!selectedMember || !formData.start_date || !formData.location || addLogMutation.isPending}
             >
-              Log Nights Away
+              {addLogMutation.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : null}
+              {addLogMutation.isPending ? 'Logging...' : 'Log Nights Away'}
             </Button>
           </DialogFooter>
         </DialogContent>
