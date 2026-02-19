@@ -160,6 +160,7 @@ export default function AwardBadges() {
         proceed: user.role === 'admin',
       });
     } else {
+      setAwardingDialog('loading');
       awardBadgesMutation.mutate(selectedAwards);
     }
   };
