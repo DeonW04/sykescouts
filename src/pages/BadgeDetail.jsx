@@ -175,7 +175,7 @@ export default function BadgeDetail() {
         member_id: variables.memberId 
       });
       
-      let allModulesComplete = true;
+      let allModulesComplete = modules.length > 0;
       for (const module of modules) {
         const moduleReqs = requirements.filter(r => r.module_id === module.id);
         const completedReqs = updatedProgress.filter(p => p.module_id === module.id && p.completed);
@@ -186,7 +186,9 @@ export default function BadgeDetail() {
         }
       }
       
-      const existingBadgeProgress = badgeProgress.find(bp => bp.member_id === variables.memberId);
+      // Always fetch fresh badge progress to avoid stale state
+      const freshBadgeProgress = await base44.entities.MemberBadgeProgress.filter({ badge_id: badgeId, member_id: variables.memberId });
+      const existingBadgeProgress = freshBadgeProgress[0];
       
       if (allModulesComplete) {
         if (existingBadgeProgress) {
@@ -202,13 +204,11 @@ export default function BadgeDetail() {
           toast.success('Badge completed! Ready to award.');
         }
       } else {
-        // Not complete — downgrade progress and remove award if it existed
         if (existingBadgeProgress && existingBadgeProgress.status === 'completed') {
           await base44.entities.MemberBadgeProgress.update(existingBadgeProgress.id, { status: 'in_progress', completion_date: null });
         } else if (!existingBadgeProgress && updatedProgress.length > 0) {
           await base44.entities.MemberBadgeProgress.create({ member_id: variables.memberId, badge_id: badgeId, status: 'in_progress' });
         }
-        // Remove badge award if it exists (member is no longer eligible)
         if (variables.removingAward) {
           const existingAwards = await base44.entities.MemberBadgeAward.filter({ member_id: variables.memberId, badge_id: badgeId });
           for (const award of existingAwards) {
