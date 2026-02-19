@@ -297,6 +297,36 @@ export default function BadgeDetail() {
     };
   };
 
+  // Check if unchecking a requirement would cause the badge to become incomplete
+  const wouldRemoveBadge = (memberId, reqId) => {
+    const req = requirements.find(r => r.id === reqId);
+    if (!req) return false;
+    const module = modules.find(m => m.id === req.module_id);
+    if (!module) return false;
+    // Is badge currently complete?
+    const currentlyComplete = getMemberProgress(memberId).isComplete;
+    if (!currentlyComplete) return false;
+    // Check if removing this req makes the module incomplete
+    const moduleReqs = requirements.filter(r => r.module_id === module.id);
+    const completedReqs = progress.filter(p => p.member_id === memberId && p.module_id === module.id && p.completed && p.requirement_id !== reqId);
+    let moduleWillBeComplete;
+    if (module.completion_rule === 'x_of_n_required') {
+      moduleWillBeComplete = completedReqs.length >= (module.required_count || moduleReqs.length);
+    } else {
+      moduleWillBeComplete = completedReqs.length >= moduleReqs.length;
+    }
+    return !moduleWillBeComplete;
+  };
+
+  const handleUncheckReq = (memberId, reqId) => {
+    if (wouldRemoveBadge(memberId, reqId)) {
+      const member = relevantMembers.find(m => m.id === memberId);
+      setConfirmUncheck({ memberId, reqId, memberName: member?.full_name || 'this member' });
+    } else {
+      toggleReqMutation.mutate({ memberId, reqId, increment: false });
+    }
+  };
+
   const completedCount = relevantMembers.filter(m => getMemberProgress(m.id).isComplete).length;
   const inProgressCount = relevantMembers.filter(m => {
     const prog = getMemberProgress(m.id);
