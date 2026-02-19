@@ -470,6 +470,61 @@ export default function AwardBadges() {
         </DialogContent>
       </Dialog>
 
+      {/* Awarding progress dialog */}
+      <Dialog open={!!awardingDialog} onOpenChange={() => {}}>
+        <DialogContent className="max-w-sm text-center [&>button]:hidden">
+          <div className="flex flex-col items-center gap-6 py-8">
+            <AnimatePresence mode="wait">
+              {awardingDialog === 'loading' && (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="flex flex-col items-center gap-4"
+                >
+                  <div className="relative w-20 h-20 flex items-center justify-center">
+                    <div className="absolute inset-0 rounded-full border-4 border-purple-100" />
+                    <Loader2 className="w-10 h-10 text-[#7413dc] animate-spin" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900">Awarding Badges...</p>
+                    <p className="text-sm text-gray-500 mt-1">Please wait a moment</p>
+                  </div>
+                </motion.div>
+              )}
+              {awardingDialog === 'success' && (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="flex flex-col items-center gap-4"
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+                    className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center"
+                  >
+                    <motion.div
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                    >
+                      <CheckCircle className="w-10 h-10 text-green-600" />
+                    </motion.div>
+                  </motion.div>
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900">Badges Awarded!</p>
+                    <p className="text-sm text-gray-500 mt-1">All done successfully</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <ManualAwardDialog
         badge={manualAwardBadge}
         open={!!manualAwardBadge}
