@@ -237,15 +237,34 @@ export default function MemberBadgeView({ sectionFilter }) {
     return { completed: totalCompleted, total: totalRequired, pct: totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0 };
   };
 
+  const isBadgeActuallyComplete = (memberId, badgeId) => {
+    const badgeModules = modules.filter(m => m.badge_id === badgeId);
+    if (badgeModules.length === 0) return false;
+    for (const mod of badgeModules) {
+      const modReqs = requirements.filter(r => r.module_id === mod.id);
+      const completedReqs = reqProgress.filter(p => p.member_id === memberId && p.module_id === mod.id && p.completed);
+      if (mod.completion_rule === 'x_of_n_required') {
+        if (completedReqs.length < (mod.required_count || modReqs.length)) return false;
+      } else {
+        if (completedReqs.length < modReqs.length) return false;
+      }
+    }
+    return true;
+  };
+
   const getCompletedBadgesForMember = (memberId) => {
-    return badgeProgress.filter(p => p.member_id === memberId && p.status === 'completed')
+    // Use actual requirement progress as source of truth, fall back to badge progress record
+    const fromReqs = badges.filter(b => isBadgeActuallyComplete(memberId, b.id));
+    const fromRecord = badgeProgress.filter(p => p.member_id === memberId && p.status === 'completed')
       .map(p => badges.find(b => b.id === p.badge_id))
       .filter(Boolean);
+    // Merge both sources (deduplicated)
+    const allIds = new Set([...fromReqs.map(b => b.id), ...fromRecord.map(b => b.id)]);
+    return badges.filter(b => allIds.has(b.id));
   };
 
   const getInProgressBadgesForMember = (memberId) => {
-    // Badges with at least one requirement completed but not badge-level completed
-    const completedBadgeIds = new Set(badgeProgress.filter(p => p.member_id === memberId && p.status === 'completed').map(p => p.badge_id));
+    const completedBadgeIds = new Set(getCompletedBadgesForMember(memberId).map(b => b.id));
     const badgesWithProgress = [...new Set(reqProgress.filter(p => p.member_id === memberId && p.completed).map(p => p.badge_id))];
     return badgesWithProgress
       .filter(bid => !completedBadgeIds.has(bid))
