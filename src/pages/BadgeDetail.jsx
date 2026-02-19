@@ -757,6 +757,33 @@ export default function BadgeDetail() {
         </motion.div>
       </div>
 
+      {/* Confirm un-award dialog */}
+      <Dialog open={!!confirmUncheck} onOpenChange={(open) => !open && setConfirmUncheck(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-orange-600">
+              <AlertTriangle className="w-5 h-5" />
+              Remove Badge Award?
+            </DialogTitle>
+            <DialogDescription>
+              Unticking this requirement means <strong>{confirmUncheck?.memberName}</strong> will no longer meet the criteria for this badge. Their badge award will be removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setConfirmUncheck(null)}>Cancel</Button>
+            <Button
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+              onClick={() => {
+                toggleReqMutation.mutate({ memberId: confirmUncheck.memberId, reqId: confirmUncheck.reqId, increment: false, removingAward: true });
+                setConfirmUncheck(null);
+              }}
+            >
+              Yes, Remove Award
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <StockManagementDialog
         badge={stockDialog}
         open={!!stockDialog}
