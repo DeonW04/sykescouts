@@ -634,6 +634,94 @@ export default function ParentBadges() {
             </div>
           </div>
         )}
+        {/* In Progress Badges */}
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="h-1 w-12 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
+              <h2 className="text-3xl font-bold">In Progress</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-gray-500" />
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="challenge">Challenge</SelectItem>
+                  <SelectItem value="activity">Activity</SelectItem>
+                  <SelectItem value="staged">Staged</SelectItem>
+                  <SelectItem value="core">Core</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {filteredInProgress.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <p className="text-gray-500 text-sm">No badges in progress</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-3 lg:grid-cols-5 gap-3">
+              {filteredInProgress.map((bp, idx) => {
+                const displayName = bp.type === 'family' ? bp.family.name : bp.badge.name;
+                const displayImage = bp.badge.image_url;
+                return (
+                  <motion.div key={bp.type === 'family' ? bp.family.familyId : bp.badge.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }}>
+                    <Card onClick={() => setSelectedBadge(bp)} className="cursor-pointer hover:shadow-xl transition-all hover:scale-105">
+                      <CardContent className="p-3 text-center">
+                        <img src={displayImage} alt={displayName} className="w-full aspect-square object-contain rounded-lg mb-2" />
+                        <h3 className="font-semibold text-xs leading-tight mb-2">{displayName}</h3>
+                        <Progress value={bp.progress.percentage} className="h-1.5 mb-1" />
+                        <span className="text-xs text-gray-500">{bp.progress.percentage}%</span>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Badges to Work Towards (not started) */}
+        <div>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-1 w-12 bg-gradient-to-r from-purple-600 to-transparent rounded-full"></div>
+            <h2 className="text-3xl font-bold">Badges to Work Towards</h2>
+          </div>
+          {filteredNotStarted.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Award className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">No more badges to start!</p>
+              </CardContent>
+            </Card>
+          ) : (
+            sortedNotStartedCategories.map(category => (
+              <div key={category} className="mb-8">
+                <h3 className="text-lg font-bold capitalize mb-3 text-gray-700">{category} Badges</h3>
+                <div className="grid grid-cols-3 lg:grid-cols-5 gap-3">
+                  {notStartedByCategory[category].map((bp, idx) => {
+                    const displayName = bp.type === 'family' ? bp.family.name : bp.badge.name;
+                    const displayImage = bp.badge.image_url;
+                    return (
+                      <motion.div key={bp.type === 'family' ? bp.family.familyId : bp.badge.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }}>
+                        <Card onClick={() => setSelectedBadge(bp)} className="cursor-pointer hover:shadow-xl transition-all hover:scale-105">
+                          <CardContent className="p-3 text-center">
+                            <img src={displayImage} alt={displayName} className="w-full aspect-square object-contain rounded-lg mb-2 opacity-80" />
+                            <h3 className="font-semibold text-xs leading-tight">{displayName}</h3>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* Activity Awards Dialog (Nights Away / Hikes Away / Joining In) */}
