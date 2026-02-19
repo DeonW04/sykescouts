@@ -271,17 +271,21 @@ export default function BadgeDetail() {
 
     modules.forEach(module => {
       const moduleReqs = requirements.filter(r => r.module_id === module.id);
-      const completedReqs = progress.filter(
-        p => p.member_id === memberId && p.module_id === module.id && p.completed
-      );
 
       if (module.completion_rule === 'x_of_n_required') {
         const needed = module.required_count || moduleReqs.length;
         totalRequired += needed;
+        const completedReqs = progress.filter(p => p.member_id === memberId && p.module_id === module.id && p.completed);
         totalCompleted += Math.min(completedReqs.length, needed);
       } else {
-        totalRequired += moduleReqs.length;
-        totalCompleted += completedReqs.length;
+        // Sum up partial progress for each requirement
+        moduleReqs.forEach(req => {
+          const requiredCount = req.required_completions || 1;
+          const reqProg = progress.find(p => p.member_id === memberId && p.requirement_id === req.id);
+          const currentCount = reqProg?.completion_count || 0;
+          totalRequired += requiredCount;
+          totalCompleted += Math.min(currentCount, requiredCount);
+        });
       }
     });
 
