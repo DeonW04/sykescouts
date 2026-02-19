@@ -224,14 +224,19 @@ export default function MemberBadgeView({ sectionFilter }) {
     let totalRequired = 0, totalCompleted = 0;
     badgeModules.forEach(mod => {
       const modReqs = requirements.filter(r => r.module_id === mod.id);
-      const completed = reqProgress.filter(p => p.member_id === memberId && p.module_id === mod.id && p.completed);
       if (mod.completion_rule === 'x_of_n_required') {
         const needed = mod.required_count || modReqs.length;
         totalRequired += needed;
+        const completed = reqProgress.filter(p => p.member_id === memberId && p.module_id === mod.id && p.completed);
         totalCompleted += Math.min(completed.length, needed);
       } else {
-        totalRequired += modReqs.length;
-        totalCompleted += completed.length;
+        // Sum partial progress per requirement (handles multi-completion reqs)
+        modReqs.forEach(req => {
+          const requiredCount = req.required_completions || 1;
+          const reqProg = reqProgress.find(p => p.member_id === memberId && p.requirement_id === req.id);
+          totalRequired += requiredCount;
+          totalCompleted += Math.min(reqProg?.completion_count || 0, requiredCount);
+        });
       }
     });
     return { completed: totalCompleted, total: totalRequired, pct: totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0 };
