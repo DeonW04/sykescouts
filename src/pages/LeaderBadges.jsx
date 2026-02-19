@@ -70,6 +70,21 @@ export default function LeaderBadges() {
     return matchesSearch && matchesSection && matchesCategory;
   });
 
+  const isMemberBadgeComplete = (memberId, badgeId) => {
+    const badgeModules = requirements.length > 0 
+      ? [...new Set(requirements.filter(r => r.badge_id === badgeId).map(r => r.module_id))]
+      : [];
+    // Fall back to DB record if no requirement data
+    if (badgeModules.length === 0) {
+      return allProgress.some(p => p.member_id === memberId && p.badge_id === badgeId && p.status === 'completed');
+    }
+    // Use requirementProgress as source of truth
+    const badgeReqs = requirements.filter(r => r.badge_id === badgeId);
+    // Group by module — need module data for completion rules
+    return allProgress.some(p => p.member_id === memberId && p.badge_id === badgeId && p.status === 'completed')
+      || requirementProgress.filter(p => p.member_id === memberId && p.badge_id === badgeId && p.completed).length === badgeReqs.length && badgeReqs.length > 0;
+  };
+
   const getBadgeStats = (badgeId) => {
     const badge = badges.find(b => b.id === badgeId);
     
@@ -77,15 +92,17 @@ export default function LeaderBadges() {
       return badge?.section === 'all' || m.section_id === sections.find(s => s.name === badge?.section)?.id;
     });
 
-    // Count members with progress records
+    // Count completed: use DB badge progress record (kept in sync by BadgeDetail mutations)
     const memberBadgeProgress = allProgress.filter(p => 
       p.badge_id === badgeId && 
       relevantMembers.some(m => m.id === p.member_id)
     );
 
-    const completedCount = memberBadgeProgress.filter(p => p.status === 'completed').length;
+    const completedCount = relevantMembers.filter(m =>
+      memberBadgeProgress.some(p => p.member_id === m.id && p.status === 'completed')
+    ).length;
 
-    // In Progress: members that have at least 1 individual requirement done, but badge not completed
+    // In Progress: at least 1 individual requirement done, but badge not completed
     const inProgressCount = relevantMembers.filter(m => {
       const isCompleted = memberBadgeProgress.some(p => p.member_id === m.id && p.status === 'completed');
       if (isCompleted) return false;
