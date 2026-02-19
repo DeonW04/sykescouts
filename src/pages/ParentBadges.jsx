@@ -291,11 +291,24 @@ export default function ParentBadges() {
     );
   };
 
-  // Earned badges - show non-staged + highest stage of staged
-  const earnedNonStaged = completedBadges.filter(p => {
-    const badge = badges.find(b => b.id === p.badge_id);
-    return badge && badge.category !== 'staged' && !badge.is_chief_scout_award;
-  });
+  // Check if a badge has been started (any req progress) but not completed
+  const isBadgeInProgress = (badgeId) => {
+    if (isBadgeComplete(badgeId)) return false;
+    return reqProgress.some(p => p.member_id === child.id && p.badge_id === badgeId && p.completed);
+  };
+
+  // Earned badges ordered: challenge → activity → staged (non-staged, non-chief-scout)
+  const earnedByCategory = ['challenge', 'activity', 'staged', 'core', 'special'];
+  const earnedNonStaged = completedBadges
+    .filter(p => {
+      const badge = badges.find(b => b.id === p.badge_id);
+      return badge && badge.category !== 'staged' && !badge.is_chief_scout_award;
+    })
+    .sort((a, b) => {
+      const ba = badges.find(x => x.id === a.badge_id);
+      const bb = badges.find(x => x.id === b.badge_id);
+      return (earnedByCategory.indexOf(ba?.category) ?? 99) - (earnedByCategory.indexOf(bb?.category) ?? 99);
+    });
 
   // Get child's section name
   const childSectionRecord = sections.find(s => s.id === child.section_id);
