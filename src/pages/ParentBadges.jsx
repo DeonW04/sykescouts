@@ -294,7 +294,7 @@ export default function ParentBadges() {
   // Earned badges - show non-staged + highest stage of staged
   const earnedNonStaged = completedBadges.filter(p => {
     const badge = badges.find(b => b.id === p.badge_id);
-    return badge && badge.category !== 'staged';
+    return badge && badge.category !== 'staged' && !badge.is_chief_scout_award;
   });
 
   // Get child's section name
