@@ -411,10 +411,18 @@ export default function ParentBadges() {
   const incompleteBadges = allAvailableBadges.filter(bp => !bp.progress.isCompleted && bp.progress.percentage < 100);
 
   // In-progress: challenge badges always go here + any badge with progress > 0
+  // Sort: challenge → activity → staged → core, then by % desc within each
   const inProgressBadges = incompleteBadges.filter(bp => {
     const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
     return category === 'challenge' || bp.progress.inProgress;
-  }).sort((a, b) => b.progress.percentage - a.progress.percentage);
+  }).sort((a, b) => {
+    const catA = a.type === 'family' ? a.family.category : a.badge.category;
+    const catB = b.type === 'family' ? b.family.category : b.badge.category;
+    const catOrder = ['challenge', 'activity', 'staged', 'core'];
+    const catDiff = catOrder.indexOf(catA) - catOrder.indexOf(catB);
+    if (catDiff !== 0) return catDiff;
+    return b.progress.percentage - a.progress.percentage;
+  });
 
   // Not started: non-challenge badges with 0 progress
   const notStartedBadges = incompleteBadges.filter(bp => {
