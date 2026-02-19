@@ -332,7 +332,7 @@ export default function AwardBadges() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto overflow-y-auto max-h-[55vh]">
                 <table className="w-full">
                   <thead className="border-b">
                     <tr>
