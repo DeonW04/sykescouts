@@ -368,9 +368,10 @@ export default function ParentBadges() {
     })
   ];
 
-  // Filter and sort
+  // Filter and sort — exclude 100% completed badges from "to work towards"
   const filteredBadges = allAvailableBadges
     .filter(bp => {
+      if (bp.progress.isCompleted || bp.progress.percentage >= 100) return false;
       const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
       return filterType === 'all' || category === filterType;
     })
