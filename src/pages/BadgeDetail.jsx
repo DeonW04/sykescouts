@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Award, CheckCircle, Circle, Info, Target, Users, TrendingUp, Edit, Trash2, Package } from 'lucide-react';
+import { ArrowLeft, Award, CheckCircle, Circle, Info, Target, Users, TrendingUp, Edit, Trash2, Package, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
