@@ -592,7 +592,7 @@ export default function ParentBadges() {
               <div className="h-1 w-12 bg-gradient-to-r from-blue-600 to-transparent rounded-full"></div>
               <h2 className="text-3xl font-bold">Activity Awards</h2>
             </div>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-3 gap-3 md:gap-6">
               {[
                 { label: 'Nights Away', family: nightsAwayBadges, emptyText: 'No Nights Away badge earned yet', key: 'nights' },
                 { label: 'Hikes Away', family: hikesAwayBadges, emptyText: 'No Hikes Away badge earned yet', key: 'hikes' },
