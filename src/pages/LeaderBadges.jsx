@@ -358,9 +358,14 @@ export default function LeaderBadges() {
                                   <CardHeader>
                                     <div className="flex flex-col">
                                       <img
-                                        src={badge.image_url}
-                                        alt={badge.name}
-                                        className="w-full h-28 rounded-lg object-contain mb-3"
+                                       src={badge.image_url}
+                                       alt={badge.name}
+                                       className={`w-full h-28 rounded-lg object-contain mb-3 ${!isFamilyPlaceholder && !badge.is_chief_scout_award ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                                       onClick={() => {
+                                         if (!isFamilyPlaceholder && !badge.is_chief_scout_award) {
+                                           navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`);
+                                         }
+                                       }}
                                       />
                                       <div>
                                         <CardTitle className="text-lg">{badge.name}</CardTitle>
