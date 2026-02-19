@@ -457,8 +457,9 @@ export default function AwardBadges() {
             {confirmDialog?.proceed && (
               <Button
                 onClick={() => {
-                  awardBadgesMutation.mutate(selectedAwards);
                   setConfirmDialog(null);
+                  setAwardingDialog('loading');
+                  awardBadgesMutation.mutate(selectedAwards);
                 }}
                 className="bg-orange-600 hover:bg-orange-700"
               >
