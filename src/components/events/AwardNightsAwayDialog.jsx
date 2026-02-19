@@ -182,8 +182,12 @@ export default function AwardNightsAwayDialog({ open, onOpenChange, event, defau
             disabled={selectedMembers.length === 0 || awardMutation.isPending}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
-            <Moon className="w-4 h-4 mr-2" />
-            Award Nights Away
+            {awardMutation.isPending ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Moon className="w-4 h-4 mr-2" />
+            )}
+            {awardMutation.isPending ? 'Logging...' : 'Award Nights Away'}
           </Button>
         </DialogFooter>
       </DialogContent>
