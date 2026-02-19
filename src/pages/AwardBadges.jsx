@@ -103,7 +103,8 @@ export default function AwardBadges() {
       queryClient.invalidateQueries({ queryKey: ['awards'] });
       queryClient.invalidateQueries({ queryKey: ['badge-stock'] });
       setSelectedAwards([]);
-      toast.success('Badges awarded successfully');
+      setAwardingDialog('success');
+      setTimeout(() => setAwardingDialog(false), 2000);
     },
   });
 
