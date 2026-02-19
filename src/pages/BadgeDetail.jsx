@@ -728,11 +728,13 @@ export default function BadgeDetail() {
                                   <div className="flex justify-center relative">
                                     <Checkbox
                                       checked={reqProgress.isComplete}
-                                      onCheckedChange={(checked) => toggleReqMutation.mutate({
-                                        memberId: member.id,
-                                        reqId: req.id,
-                                        increment: checked,
-                                      })}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          toggleReqMutation.mutate({ memberId: member.id, reqId: req.id, increment: true });
+                                        } else {
+                                          handleUncheckReq(member.id, req.id);
+                                        }
+                                      }}
                                       className={reqProgress.isComplete ? 'border-green-500 data-[state=checked]:bg-green-500' : ''}
                                     />
                                     {reqIdx === 0 && moduleComplete && (
