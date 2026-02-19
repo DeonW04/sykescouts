@@ -603,38 +603,38 @@ export default function ParentBadges() {
                 return (
                   <motion.div key={label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                     <Card
-                      className="cursor-pointer hover:shadow-xl transition-all hover:scale-[1.02]"
+                      className="cursor-pointer hover:shadow-xl transition-all hover:scale-[1.02] h-full"
                       onClick={() => setActivityDialog(key)}
                     >
-                      <CardContent className="p-6 text-center">
-                        <h3 className="font-bold text-lg mb-4 text-gray-800">{label}</h3>
+                      <CardContent className="p-3 md:p-6 text-center">
+                        <h3 className="font-bold text-xs md:text-lg mb-2 md:mb-4 text-gray-800">{label}</h3>
                         {highestEarned ? (
-                          <div className="space-y-3">
+                          <div className="space-y-1 md:space-y-3">
                             <img
                               src={highestEarned.image_url}
                               alt={highestEarned.name}
-                              className="w-24 h-24 mx-auto rounded-lg"
+                              className="w-14 h-14 md:w-24 md:h-24 mx-auto rounded-lg object-contain"
                             />
                             <div>
-                              <p className="font-semibold text-sm">{highestEarned.name}</p>
+                              <p className="font-semibold text-xs leading-tight">{highestEarned.name}</p>
                               {highestEarned.stage_number && (
                                 <p className="text-xs text-gray-500">Stage {highestEarned.stage_number}</p>
                               )}
                             </div>
                             <div className="flex items-center justify-center gap-1">
-                              <CheckCircle className="w-4 h-4 text-green-600" />
+                              <CheckCircle className="w-3 h-3 text-green-600" />
                               <span className="text-xs text-green-700 font-medium">Highest earned</span>
                             </div>
                           </div>
                         ) : (
-                          <div className="space-y-3 py-4">
-                            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
-                              <Award className="w-10 h-10 text-gray-400" />
+                          <div className="space-y-2 py-2">
+                            <div className="w-12 h-12 md:w-20 md:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                              <Award className="w-6 h-6 md:w-10 md:h-10 text-gray-400" />
                             </div>
-                            <p className="text-gray-500 text-sm">{emptyText}</p>
+                            <p className="text-gray-500 text-xs">{emptyText}</p>
                           </div>
                         )}
-                        <p className="text-xs text-[#7413dc] mt-3 font-medium">View all stages →</p>
+                        <p className="text-xs text-[#7413dc] mt-2 font-medium">View →</p>
                       </CardContent>
                     </Card>
                   </motion.div>
