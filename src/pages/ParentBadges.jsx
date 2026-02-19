@@ -677,6 +677,120 @@ export default function ParentBadges() {
         )}
       </div>
 
+      {/* Activity Awards Dialog (Nights Away / Hikes Away / Joining In) */}
+      <Dialog open={!!activityDialog} onOpenChange={(open) => !open && setActivityDialog(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {activityDialog && (() => {
+            const isNights = activityDialog === 'nights';
+            const isHikes = activityDialog === 'hikes';
+            const isJoining = activityDialog === 'joining';
+            const family = isNights ? nightsAwayBadges : isHikes ? hikesAwayBadges : joiningInBadges;
+            const title = isNights ? 'Nights Away' : isHikes ? 'Hikes Away' : 'Joining In Awards';
+            const totalCount = isNights ? totalNightsAway : isHikes ? totalHikesAway : null;
+            const unit = isNights ? 'nights' : isHikes ? 'hikes' : null;
+
+            // For joining in: calculate years in scouting
+            let joiningInYears = null;
+            if (isJoining && child.scouting_start_date) {
+              const start = new Date(child.scouting_start_date);
+              const now = new Date();
+              joiningInYears = (now - start) / (1000 * 60 * 60 * 24 * 365.25);
+            }
+
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="text-2xl">{title}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6 mt-4">
+                  {/* Summary */}
+                  {totalCount !== null && (
+                    <Card className="bg-blue-50 border-blue-200">
+                      <CardContent className="p-6 text-center">
+                        <p className="text-sm text-gray-600 mb-1">Total {unit === 'nights' ? 'Nights Away' : 'Hikes'}</p>
+                        <p className="text-5xl font-bold text-blue-600">{totalCount}</p>
+                        <p className="text-gray-600 mt-1 capitalize">{unit}</p>
+                      </CardContent>
+                    </Card>
+                  )}
+                  {isJoining && (
+                    <Card className="bg-purple-50 border-purple-200">
+                      <CardContent className="p-6 text-center">
+                        <p className="text-sm text-gray-600 mb-1">Time in Scouting</p>
+                        {child.scouting_start_date ? (
+                          <>
+                            <p className="text-5xl font-bold text-purple-600">{joiningInYears.toFixed(1)}</p>
+                            <p className="text-gray-600 mt-1">years</p>
+                            <p className="text-xs text-gray-500 mt-2">Since {new Date(child.scouting_start_date).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</p>
+                          </>
+                        ) : (
+                          <p className="text-gray-500">Start date not recorded</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Badge stages */}
+                  <div>
+                    <h3 className="font-bold text-lg mb-3">Badge Stages</h3>
+                    <div className="space-y-3">
+                      {family.map(badge => {
+                        const isEarned = awards.some(a => a.member_id === child.id && a.badge_id === badge.id);
+                        const threshold = badge.stage_number;
+                        return (
+                          <div key={badge.id} className={`flex items-center gap-4 p-3 rounded-lg border ${isEarned ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+                            <img src={badge.image_url} alt={badge.name} className={`w-14 h-14 rounded-lg object-contain ${!isEarned ? 'opacity-40 grayscale' : ''}`} />
+                            <div className="flex-1">
+                              <p className="font-semibold text-sm">{badge.name}</p>
+                              {threshold && (
+                                <p className="text-xs text-gray-500">
+                                  {isNights || isHikes ? `${threshold} ${unit}` : `${threshold} year${threshold !== 1 ? 's' : ''}`}
+                                </p>
+                              )}
+                            </div>
+                            {isEarned ? (
+                              <div className="flex items-center gap-1 text-green-600">
+                                <CheckCircle className="w-5 h-5" />
+                                <span className="text-xs font-medium">Earned</span>
+                              </div>
+                            ) : (
+                              <div className="text-gray-400">
+                                <Circle className="w-5 h-5" />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Nights Away log if applicable */}
+                  {isNights && nightsAwayLogs.filter(l => l.member_id === child.id).length > 0 && (
+                    <div>
+                      <h3 className="font-bold text-lg mb-3">Camp History</h3>
+                      <div className="space-y-2">
+                        {nightsAwayLogs
+                          .filter(l => l.member_id === child.id)
+                          .sort((a, b) => new Date(b.start_date) - new Date(a.start_date))
+                          .map(log => (
+                            <div key={log.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                              <div>
+                                <p className="font-medium text-sm">{log.location || 'Camp'}</p>
+                                <p className="text-xs text-gray-500">{new Date(log.start_date).toLocaleDateString('en-GB')}</p>
+                              </div>
+                              <Badge variant="secondary">{log.nights_count} night{log.nights_count !== 1 ? 's' : ''}</Badge>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
       {/* Badge Detail Dialog */}
       <Dialog open={!!selectedBadge} onOpenChange={(open) => !open && setSelectedBadge(null)}> 
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
