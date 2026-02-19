@@ -80,6 +80,7 @@ export default function ParentBadges() {
   const [user, setUser] = useState(null);
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [filterType, setFilterType] = useState('all');
+  const [activityDialog, setActivityDialog] = useState(null); // 'nights' | 'hikes' | 'joining'
 
   useEffect(() => {
     loadUserData();
