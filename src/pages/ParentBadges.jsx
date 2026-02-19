@@ -375,12 +375,13 @@ export default function ParentBadges() {
     family.stages.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
   });
 
-  // Create unified badge list for display (exclude nights/hikes/joiningIn — shown in bottom strip)
+  // Create unified badge list for display (exclude nights/hikes/joiningIn — shown separately)
   const allAvailableBadges = [
     ...nonStagedBadges.map(badge => {
       const progress = getBadgeProgress(badge.id);
       const isCompleted = isBadgeComplete(badge.id);
-      return { type: 'single', badge, progress: { ...progress, isCompleted } };
+      const inProgress = isBadgeInProgress(badge.id);
+      return { type: 'single', badge, progress: { ...progress, isCompleted, inProgress } };
     }),
     ...Object.values(stagedFamilies).map(family => {
       let totalReqs = 0;
@@ -390,6 +391,7 @@ export default function ParentBadges() {
         totalReqs += stageProgress.total;
         completedReqs += stageProgress.completed;
       });
+      const inProgress = family.stages.some(s => isBadgeInProgress(s.id));
       return {
         type: 'family',
         family,
@@ -397,40 +399,57 @@ export default function ParentBadges() {
         progress: {
           completed: completedReqs, total: totalReqs,
           percentage: totalReqs > 0 ? Math.round((completedReqs / totalReqs) * 100) : 0,
-          isCompleted: false
+          isCompleted: false,
+          inProgress
         }
       };
     })
   ];
 
-  // Filter and sort — exclude 100% completed badges from "to work towards"
-  const filteredBadges = allAvailableBadges
-    .filter(bp => {
-      if (bp.progress.isCompleted || bp.progress.percentage >= 100) return false;
-      const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
-      return filterType === 'all' || category === filterType;
-    })
-    .sort((a, b) => b.progress.percentage - a.progress.percentage);
+  // Exclude completed badges
+  const incompleteBadges = allAvailableBadges.filter(bp => !bp.progress.isCompleted && bp.progress.percentage < 100);
 
-  // Group by category and sort activity badges A-Z
-  const badgesByCategory = filteredBadges.reduce((acc, bp) => {
+  // In-progress: challenge badges always go here + any badge with progress > 0
+  const inProgressBadges = incompleteBadges.filter(bp => {
+    const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
+    return category === 'challenge' || bp.progress.inProgress;
+  }).sort((a, b) => b.progress.percentage - a.progress.percentage);
+
+  // Not started: non-challenge badges with 0 progress
+  const notStartedBadges = incompleteBadges.filter(bp => {
+    const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
+    return category !== 'challenge' && !bp.progress.inProgress;
+  });
+
+  // Filter by filterType
+  const filteredInProgress = inProgressBadges.filter(bp => {
+    const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
+    return filterType === 'all' || category === filterType;
+  });
+
+  const filteredNotStarted = notStartedBadges.filter(bp => {
+    const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
+    return filterType === 'all' || category === filterType;
+  });
+
+  // Group not-started by category, activity sorted A-Z
+  const categoryOrder = ['challenge', 'activity', 'staged', 'core'];
+  const notStartedByCategory = filteredNotStarted.reduce((acc, bp) => {
     const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
     if (!acc[category]) acc[category] = [];
     acc[category].push(bp);
     return acc;
   }, {});
 
-  // Sort activity badges alphabetically
-  if (badgesByCategory.activity) {
-    badgesByCategory.activity.sort((a, b) => {
+  if (notStartedByCategory.activity) {
+    notStartedByCategory.activity.sort((a, b) => {
       const nameA = a.type === 'family' ? a.family.name : a.badge.name;
       const nameB = b.type === 'family' ? b.family.name : b.badge.name;
       return nameA.localeCompare(nameB);
     });
   }
 
-  const categoryOrder = ['challenge', 'activity', 'staged', 'core'];
-  const sortedCategories = Object.keys(badgesByCategory).sort((a, b) => 
+  const sortedNotStartedCategories = Object.keys(notStartedByCategory).sort((a, b) =>
     categoryOrder.indexOf(a) - categoryOrder.indexOf(b)
   );
 
