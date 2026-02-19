@@ -294,7 +294,9 @@ export default function ParentBadges() {
   // Check if a badge has been started (any req progress) but not completed
   const isBadgeInProgress = (badgeId) => {
     if (isBadgeComplete(badgeId)) return false;
-    return reqProgress.some(p => p.member_id === child.id && p.badge_id === badgeId && p.completed);
+    const badgeMods = modules.filter(m => m.badge_id === badgeId);
+    const moduleIds = badgeMods.map(m => m.id);
+    return reqProgress.some(p => p.member_id === child.id && moduleIds.includes(p.module_id) && p.completed);
   };
 
   // Earned badges ordered: challenge → activity → staged (non-staged, non-chief-scout)
