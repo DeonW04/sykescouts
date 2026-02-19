@@ -626,17 +626,17 @@ export default function ParentBadges() {
             </div>
             <div className="grid md:grid-cols-3 gap-6">
               {[
-                { label: 'Nights Away', family: nightsAwayBadges, emptyText: 'No Nights Away badge earned yet', page: 'NightsAwayBadgeDetail' },
-                { label: 'Hikes Away', family: hikesAwayBadges, emptyText: 'No Hikes Away badge earned yet', page: 'HikesAwayBadgeDetail' },
-                { label: 'Joining In Awards', family: joiningInBadges, emptyText: 'No Joining In Award earned yet', page: 'JoiningInBadgeDetail' },
-              ].map(({ label, family, emptyText, page }) => {
+                { label: 'Nights Away', family: nightsAwayBadges, emptyText: 'No Nights Away badge earned yet', key: 'nights' },
+                { label: 'Hikes Away', family: hikesAwayBadges, emptyText: 'No Hikes Away badge earned yet', key: 'hikes' },
+                { label: 'Joining In Awards', family: joiningInBadges, emptyText: 'No Joining In Award earned yet', key: 'joining' },
+              ].map(({ label, family, emptyText, key }) => {
                 if (family.length === 0) return null;
                 const highestEarned = getHighestEarnedInFamily(family);
                 return (
                   <motion.div key={label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                     <Card
                       className="cursor-pointer hover:shadow-xl transition-all hover:scale-[1.02]"
-                      onClick={() => navigate(createPageUrl(page))}
+                      onClick={() => setActivityDialog(key)}
                     >
                       <CardContent className="p-6 text-center">
                         <h3 className="font-bold text-lg mb-4 text-gray-800">{label}</h3>
