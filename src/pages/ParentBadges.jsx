@@ -242,18 +242,18 @@ export default function ParentBadges() {
 
     badgeModules.forEach(module => {
       const moduleReqs = requirements.filter(r => r.module_id === module.id);
-      const completedReqs = reqProgress.filter(p => 
-        p.member_id === child.id && 
-        moduleReqs.some(r => r.id === p.requirement_id) && 
-        p.completed
-      );
-
       if (module.completion_rule === 'x_of_n_required') {
-        totalRequired += module.required_count || moduleReqs.length;
-        totalCompleted += Math.min(completedReqs.length, module.required_count || moduleReqs.length);
+        const needed = module.required_count || moduleReqs.length;
+        totalRequired += needed;
+        const completedReqs = reqProgress.filter(p => p.member_id === child.id && p.module_id === module.id && p.completed);
+        totalCompleted += Math.min(completedReqs.length, needed);
       } else {
-        totalRequired += moduleReqs.length;
-        totalCompleted += completedReqs.length;
+        moduleReqs.forEach(req => {
+          const requiredCount = req.required_completions || 1;
+          const reqProg = reqProgress.find(p => p.member_id === child.id && p.requirement_id === req.id);
+          totalRequired += requiredCount;
+          totalCompleted += Math.min(reqProg?.completion_count || 0, requiredCount);
+        });
       }
     });
 
