@@ -366,7 +366,7 @@ export default function ParentBadges() {
   const allAvailableBadges = [
     ...nonStagedBadges.map(badge => {
       const progress = getBadgeProgress(badge.id);
-      const isCompleted = badgeProgress.some(p => p.member_id === child.id && p.badge_id === badge.id && p.status === 'completed');
+      const isCompleted = isBadgeComplete(badge.id);
       return { type: 'single', badge, progress: { ...progress, isCompleted } };
     }),
     ...Object.values(stagedFamilies).map(family => {
