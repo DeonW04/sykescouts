@@ -126,6 +126,7 @@ export default function StagedBadgeDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <LeaderNav />
       <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Button
