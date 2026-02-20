@@ -166,88 +166,31 @@ export default function StagedBadgeDetail() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-3 lg:grid-cols-5 gap-3">
             {stageBadges.map(badge => {
               const stats = getBadgeStats(badge.id);
-
               return (
-                <Card 
-                  key={badge.id} 
+                <Card
+                  key={badge.id}
                   className="hover:shadow-lg transition-shadow cursor-pointer"
                   onClick={() => navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`)}
                 >
-                  <CardHeader>
-                    <div className="flex flex-col">
-                      <img
-                        src={badge.image_url}
-                        alt={badge.name}
-                        className="w-full h-28 rounded-lg object-contain mb-3"
-                      />
-                      <div>
-                        <CardTitle className="text-lg">
-                          Stage {badge.stage_number}
-                        </CardTitle>
-                        <p className="text-sm text-gray-600 mt-1">{badge.description}</p>
+                  <CardContent className="p-3 text-center">
+                    <img
+                      src={badge.image_url}
+                      alt={badge.name}
+                      className="w-full aspect-square object-contain rounded-lg mb-2"
+                    />
+                    <h3 className="font-semibold text-xs leading-tight">Stage {badge.stage_number}</h3>
+                    <div className="mt-2">
+                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden flex mb-1">
+                        <div className="h-full bg-[#7413dc]" style={{ width: `${stats.totalMembers > 0 ? Math.round((stats.completedCount / stats.totalMembers) * 100) : 0}%` }} />
+                        <div className="h-full bg-blue-400" style={{ width: `${stats.totalMembers > 0 ? Math.round((stats.inProgressCount / stats.totalMembers) * 100) : 0}%` }} />
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-gray-600">Completion</span>
-                          <span className="font-medium">{stats.percentComplete}%</span>
-                        </div>
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-[#7413dc] transition-all"
-                            style={{ width: `${stats.percentComplete}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 text-center mb-3">
-                        <div className="bg-green-50 rounded-lg p-2">
-                          <div className="text-xl font-bold text-green-700">{stats.completedCount}</div>
-                          <div className="text-xs text-green-600">Completed</div>
-                        </div>
-                        <div className="bg-blue-50 rounded-lg p-2">
-                          <div className="text-xl font-bold text-blue-700">{stats.inProgressCount}</div>
-                          <div className="text-xs text-blue-600">In Progress</div>
-                        </div>
-                      </div>
-
+                      <span className="text-xs text-gray-500">{stats.completedCount} done · {stats.inProgressCount} in progress</span>
                       {stats.dueCount > 0 && (
-                        <div className={`p-2 rounded-lg flex items-center justify-between ${
-                          stats.outOfStock ? 'bg-red-50' : stats.lowStock ? 'bg-orange-50' : 'bg-purple-50'
-                        }`}>
-                          <div className="flex items-center gap-2">
-                            <Award className={`w-4 h-4 ${
-                              stats.outOfStock ? 'text-red-600' : stats.lowStock ? 'text-orange-600' : 'text-purple-600'
-                            }`} />
-                            <span className={`text-sm font-medium ${
-                              stats.outOfStock ? 'text-red-700' : stats.lowStock ? 'text-orange-700' : 'text-purple-700'
-                            }`}>
-                              {stats.dueCount} due
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Package className={`w-4 h-4 ${
-                              stats.outOfStock ? 'text-red-600' : stats.lowStock ? 'text-orange-600' : 'text-gray-600'
-                            }`} />
-                            <span className={`text-xs ${
-                              stats.outOfStock ? 'text-red-600 font-bold' : stats.lowStock ? 'text-orange-600' : 'text-gray-600'
-                            }`}>
-                              {stats.currentStock}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      {stats.outOfStock && stats.dueCount > 0 && (
-                        <div className="flex items-center gap-1 mt-2 text-xs text-red-600">
-                          <AlertTriangle className="w-3 h-3" />
-                          Out of stock!
+                        <div className={`mt-1 text-xs font-medium ${stats.outOfStock ? 'text-red-600' : stats.lowStock ? 'text-orange-600' : 'text-purple-600'}`}>
+                          {stats.dueCount} to award {stats.outOfStock ? '⚠ No stock' : ''}
                         </div>
                       )}
                     </div>
