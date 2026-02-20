@@ -195,10 +195,17 @@ export default function ParentBadges() {
 
   // Derive badge completion from actual requirement progress (source of truth)
   const isBadgeComplete = (badgeId) => {
+    const badgeDef = badges.find(b => b.id === badgeId);
     const badgeModules = modules.filter(m => m.badge_id === badgeId);
     if (badgeModules.length === 0) {
-      // Fall back to DB record if no modules defined
       return badgeProgress.some(p => p.member_id === child.id && p.badge_id === badgeId && p.status === 'completed');
+    }
+    if (badgeDef?.completion_rule === 'one_module') {
+      return badgeModules.some(mod => {
+        const modReqs = requirements.filter(r => r.module_id === mod.id);
+        const completedReqs = reqProgress.filter(p => p.member_id === child.id && p.module_id === mod.id && p.completed);
+        return modReqs.length > 0 && completedReqs.length >= modReqs.length;
+      });
     }
     for (const mod of badgeModules) {
       const modReqs = requirements.filter(r => r.module_id === mod.id);
