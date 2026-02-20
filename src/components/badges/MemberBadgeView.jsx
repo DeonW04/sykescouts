@@ -243,8 +243,17 @@ export default function MemberBadgeView({ sectionFilter }) {
   };
 
   const isBadgeActuallyComplete = (memberId, badgeId) => {
+    const badgeDef = badges.find(b => b.id === badgeId);
     const badgeModules = modules.filter(m => m.badge_id === badgeId);
     if (badgeModules.length === 0) return false;
+    if (badgeDef?.completion_rule === 'one_module') {
+      // Complete if ANY module is fully done
+      return badgeModules.some(mod => {
+        const modReqs = requirements.filter(r => r.module_id === mod.id);
+        const completedReqs = reqProgress.filter(p => p.member_id === memberId && p.module_id === mod.id && p.completed);
+        return modReqs.length > 0 && completedReqs.length >= modReqs.length;
+      });
+    }
     for (const mod of badgeModules) {
       const modReqs = requirements.filter(r => r.module_id === mod.id);
       const completedReqs = reqProgress.filter(p => p.member_id === memberId && p.module_id === mod.id && p.completed);
