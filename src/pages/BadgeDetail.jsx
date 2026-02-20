@@ -18,7 +18,12 @@ import StockManagementDialog from '../components/badges/StockManagementDialog';
 export default function BadgeDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [isAdmin, setIsAdmin] = useState(false);
   const [stockDialog, setStockDialog] = useState(null);
+
+  useEffect(() => {
+    base44.auth.me().then(u => setIsAdmin(u?.role === 'admin')).catch(() => {});
+  }, []);
   const [editingCount, setEditingCount] = useState(null); // { memberId, reqId, value }
   const [confirmUncheck, setConfirmUncheck] = useState(null); // { memberId, reqId, memberName }
   const urlParams = new URLSearchParams(window.location.search);
