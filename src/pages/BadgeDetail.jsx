@@ -266,8 +266,41 @@ export default function BadgeDetail() {
     return completedReqs.length === moduleReqs.length;
   };
 
-  // Progress based on individual requirements, respecting x_of_n modules
+  const isOneModuleRule = badge?.completion_rule === 'one_module';
+
+  // Progress based on individual requirements, respecting x_of_n modules and one_module badge rule
   const getMemberProgress = (memberId) => {
+    if (isOneModuleRule) {
+      // Badge complete if ANY single module is fully complete
+      // Progress bar shows the best (most complete) module
+      let bestPct = 0;
+      let bestCompleted = 0;
+      let bestTotal = 0;
+      let anyComplete = false;
+
+      modules.forEach(module => {
+        const moduleReqs = requirements.filter(r => r.module_id === module.id);
+        const modTotal = moduleReqs.reduce((s, req) => s + (req.required_completions || 1), 0);
+        let modCompleted = 0;
+        moduleReqs.forEach(req => {
+          const reqProg = progress.find(p => p.member_id === memberId && p.requirement_id === req.id);
+          modCompleted += Math.min(reqProg?.completion_count || 0, req.required_completions || 1);
+        });
+        const modPct = modTotal > 0 ? Math.round((modCompleted / modTotal) * 100) : 0;
+        if (modPct >= bestPct) { bestPct = modPct; bestCompleted = modCompleted; bestTotal = modTotal; }
+        if (modCompleted >= modTotal && modTotal > 0) anyComplete = true;
+      });
+
+      const hasAnyProgress = progress.some(p => p.member_id === memberId && p.completed);
+      return {
+        completed: bestCompleted,
+        total: bestTotal,
+        percentage: anyComplete ? 100 : bestPct,
+        isComplete: anyComplete,
+        hasAnyProgress,
+      };
+    }
+
     let totalRequired = 0;
     let totalCompleted = 0;
 
@@ -280,7 +313,6 @@ export default function BadgeDetail() {
         const completedReqs = progress.filter(p => p.member_id === memberId && p.module_id === module.id && p.completed);
         totalCompleted += Math.min(completedReqs.length, needed);
       } else {
-        // Sum up partial progress for each requirement
         moduleReqs.forEach(req => {
           const requiredCount = req.required_completions || 1;
           const reqProg = progress.find(p => p.member_id === memberId && p.requirement_id === req.id);
