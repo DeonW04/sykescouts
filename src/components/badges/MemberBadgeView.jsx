@@ -178,15 +178,25 @@ export default function MemberBadgeView({ sectionFilter }) {
       await queryClient.invalidateQueries({ queryKey: ['req-progress-all'] });
       // Check badge completion
       const updatedReqProgress = await base44.entities.MemberRequirementProgress.filter({ badge_id: variables.badgeId, member_id: variables.memberId });
+      const badgeDef = badges.find(b => b.id === variables.badgeId);
       const badgeModules = modules.filter(m => m.badge_id === variables.badgeId);
-      let allComplete = true;
-      for (const mod of badgeModules) {
-        const modReqs = requirements.filter(r => r.module_id === mod.id);
-        const completed = updatedReqProgress.filter(p => p.module_id === mod.id && p.completed);
-        if (mod.completion_rule === 'x_of_n_required') {
-          if (completed.length < (mod.required_count || modReqs.length)) { allComplete = false; break; }
-        } else {
-          if (completed.length < modReqs.length) { allComplete = false; break; }
+      let allComplete;
+      if (badgeDef?.completion_rule === 'one_module') {
+        allComplete = badgeModules.some(mod => {
+          const modReqs = requirements.filter(r => r.module_id === mod.id);
+          const completed = updatedReqProgress.filter(p => p.module_id === mod.id && p.completed);
+          return modReqs.length > 0 && completed.length >= modReqs.length;
+        });
+      } else {
+        allComplete = true;
+        for (const mod of badgeModules) {
+          const modReqs = requirements.filter(r => r.module_id === mod.id);
+          const completed = updatedReqProgress.filter(p => p.module_id === mod.id && p.completed);
+          if (mod.completion_rule === 'x_of_n_required') {
+            if (completed.length < (mod.required_count || modReqs.length)) { allComplete = false; break; }
+          } else {
+            if (completed.length < modReqs.length) { allComplete = false; break; }
+          }
         }
       }
       const existingBadgeProgress = badgeProgress.find(bp => bp.member_id === variables.memberId && bp.badge_id === variables.badgeId);
