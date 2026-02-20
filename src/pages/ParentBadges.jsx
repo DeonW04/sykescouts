@@ -243,10 +243,29 @@ export default function ParentBadges() {
   });
 
   const getBadgeProgress = (badgeId) => {
+    const badgeDef = badges.find(b => b.id === badgeId);
     const badgeModules = modules.filter(m => m.badge_id === badgeId);
+
+    if (badgeDef?.completion_rule === 'one_module') {
+      let bestPct = 0, bestCompleted = 0, bestTotal = 0;
+      let anyComplete = false;
+      badgeModules.forEach(module => {
+        const moduleReqs = requirements.filter(r => r.module_id === module.id);
+        const modTotal = moduleReqs.reduce((s, req) => s + (req.required_completions || 1), 0);
+        let modCompleted = 0;
+        moduleReqs.forEach(req => {
+          const rp = reqProgress.find(p => p.member_id === child.id && p.requirement_id === req.id);
+          modCompleted += Math.min(rp?.completion_count || 0, req.required_completions || 1);
+        });
+        const modPct = modTotal > 0 ? Math.round((modCompleted / modTotal) * 100) : 0;
+        if (modPct >= bestPct) { bestPct = modPct; bestCompleted = modCompleted; bestTotal = modTotal; }
+        if (modCompleted >= modTotal && modTotal > 0) anyComplete = true;
+      });
+      return { completed: bestCompleted, total: bestTotal, percentage: anyComplete ? 100 : bestPct };
+    }
+
     let totalRequired = 0;
     let totalCompleted = 0;
-
     badgeModules.forEach(module => {
       const moduleReqs = requirements.filter(r => r.module_id === module.id);
       if (module.completion_rule === 'x_of_n_required') {
