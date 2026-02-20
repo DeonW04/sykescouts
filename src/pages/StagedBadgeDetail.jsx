@@ -50,7 +50,10 @@ export default function StagedBadgeDetail() {
     .sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
 
   const getBadgeStats = (badgeId) => {
-    const relevantMembers = members.filter(m => !m.section_id || m.active);
+    const badge = allBadges.find(b => b.id === badgeId);
+    const relevantMembers = members.filter(m =>
+      badge?.section === 'all' || m.section_id === sections.find(s => s.name === badge?.section)?.id
+    );
 
     const memberProgress = allProgress.filter(p => 
       p.badge_id === badgeId && 
