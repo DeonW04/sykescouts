@@ -356,10 +356,12 @@ export default function LeaderBadges() {
                       } else if (category === 'activity') {
                         const nightsAwayBadges = categoryBadges.filter(b => b.name.toLowerCase().includes('nights away'));
                         const hikesAwayBadges = categoryBadges.filter(b => b.name.toLowerCase().includes('hikes away'));
+                        // Exclude joining in awards from activity section entirely (they appear in staged)
                         const otherBadges = categoryBadges.filter(b =>
                           !b.name.toLowerCase().includes('nights away') &&
                           !b.name.toLowerCase().includes('hikes away') &&
-                          !b.name.toLowerCase().includes('joining in award')
+                          !b.name.toLowerCase().includes('joining in award') &&
+                          b.special_type !== 'joining_in'
                         );
 
                         const nightsAwayPlaceholder = nightsAwayBadges.length > 0 ? [{
