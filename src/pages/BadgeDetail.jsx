@@ -452,45 +452,49 @@ export default function BadgeDetail() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-wrap gap-3 mb-8"
         >
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (badge.category === 'staged') {
-                navigate(createPageUrl('ManageStagedBadge') + `?familyId=${badge.badge_family_id}`);
-              } else {
-                navigate(createPageUrl('EditBadgeStructure') + `?id=${badge.id}`);
-              }
-            }}
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            {badge.category === 'staged' ? 'Manage Stages' : 'Edit Structure'}
-          </Button>
-          <Button variant="outline" onClick={() => setStockDialog(badge)}>
-            <Package className="w-4 h-4 mr-2" />
-            Manage Stock
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate(createPageUrl('ManageBadges'))}
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Badge
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (confirm('Delete this badge?')) {
-                base44.entities.BadgeDefinition.update(badge.id, { active: false }).then(() => {
-                  toast.success('Badge deleted');
-                  navigate(createPageUrl('LeaderBadges'));
-                });
-              }
-            }}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete
-          </Button>
+          {isAdmin && (
+            <>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (badge.category === 'staged') {
+                    navigate(createPageUrl('ManageStagedBadge') + `?familyId=${badge.badge_family_id}`);
+                  } else {
+                    navigate(createPageUrl('EditBadgeStructure') + `?id=${badge.id}`);
+                  }
+                }}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                {badge.category === 'staged' ? 'Manage Stages' : 'Edit Structure'}
+              </Button>
+              <Button variant="outline" onClick={() => setStockDialog(badge)}>
+                <Package className="w-4 h-4 mr-2" />
+                Manage Stock
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => navigate(createPageUrl('ManageBadges'))}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Badge
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (confirm('Delete this badge?')) {
+                    base44.entities.BadgeDefinition.update(badge.id, { active: false }).then(() => {
+                      toast.success('Badge deleted');
+                      navigate(createPageUrl('LeaderBadges'));
+                    });
+                  }
+                }}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </Button>
+            </>
+          )}
         </motion.div>
 
         {/* Stats Overview */}
