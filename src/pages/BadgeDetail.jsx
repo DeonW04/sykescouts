@@ -88,14 +88,24 @@ export default function BadgeDetail() {
       setEditingCount(null);
       await queryClient.invalidateQueries({ queryKey: ['req-progress'] });
       const updatedProgress = await base44.entities.MemberRequirementProgress.filter({ badge_id: badgeId, member_id: variables.memberId });
-      let allModulesComplete = modules.length > 0;
-      for (const module of modules) {
-        const moduleReqs = requirements.filter(r => r.module_id === module.id);
-        const completedReqs = updatedProgress.filter(p => p.module_id === module.id && p.completed);
-        if (module.completion_rule === 'x_of_n_required') {
-          if (completedReqs.length < (module.required_count || moduleReqs.length)) { allModulesComplete = false; break; }
-        } else {
-          if (completedReqs.length < moduleReqs.length) { allModulesComplete = false; break; }
+      const isOneMod = badge?.completion_rule === 'one_module';
+      let allModulesComplete;
+      if (isOneMod) {
+        allModulesComplete = modules.some(module => {
+          const moduleReqs = requirements.filter(r => r.module_id === module.id);
+          const completedReqs = updatedProgress.filter(p => p.module_id === module.id && p.completed);
+          return completedReqs.length >= moduleReqs.length && moduleReqs.length > 0;
+        });
+      } else {
+        allModulesComplete = modules.length > 0;
+        for (const module of modules) {
+          const moduleReqs = requirements.filter(r => r.module_id === module.id);
+          const completedReqs = updatedProgress.filter(p => p.module_id === module.id && p.completed);
+          if (module.completion_rule === 'x_of_n_required') {
+            if (completedReqs.length < (module.required_count || moduleReqs.length)) { allModulesComplete = false; break; }
+          } else {
+            if (completedReqs.length < moduleReqs.length) { allModulesComplete = false; break; }
+          }
         }
       }
       // Always fetch fresh badge progress to avoid stale state
