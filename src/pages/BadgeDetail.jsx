@@ -683,16 +683,16 @@ export default function BadgeDetail() {
 
                     return (
                       <tr 
-                        key={member.id} 
-                        className={`border-b transition-colors ${
-                          isComplete 
-                            ? 'bg-green-50 hover:bg-green-100' 
-                            : isNearlyDone 
-                            ? 'bg-orange-50 hover:bg-orange-100' 
-                            : 'hover:bg-gray-50'
-                        }`}
+                       key={member.id} 
+                       className={`border-b transition-colors ${
+                         isComplete 
+                           ? 'bg-green-50 hover:bg-green-100' 
+                           : isNearlyDone 
+                           ? 'bg-orange-50 hover:bg-orange-100' 
+                           : 'hover:bg-gray-50'
+                       }`}
                       >
-                        <td className="p-4 sticky left-0 bg-white z-10 border-r border-gray-100">
+                        <td className={`p-4 sticky left-0 z-10 border-r border-gray-100 ${isComplete ? 'bg-green-50' : isNearlyDone ? 'bg-orange-50' : 'bg-white'}`}>
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center text-white font-bold text-sm">
                               {member.full_name.charAt(0)}
