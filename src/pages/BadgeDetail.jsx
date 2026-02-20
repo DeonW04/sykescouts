@@ -692,7 +692,7 @@ export default function BadgeDetail() {
                             : 'hover:bg-gray-50'
                         }`}
                       >
-                        <td className="p-4 sticky left-0 bg-white z-10">
+                        <td className="p-4 sticky left-0 bg-white z-10 border-r border-gray-100">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 bg-gradient-to-br from-gray-600 to-gray-700 rounded-full flex items-center justify-center text-white font-bold text-sm">
                               {member.full_name.charAt(0)}
