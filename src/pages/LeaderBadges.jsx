@@ -43,6 +43,11 @@ export default function LeaderBadges() {
     queryFn: () => base44.entities.MemberBadgeProgress.filter({}),
   });
 
+  const { data: modules = [] } = useQuery({
+    queryKey: ['modules-all'],
+    queryFn: () => base44.entities.BadgeModule.filter({}),
+  });
+
   const { data: requirements = [] } = useQuery({
     queryKey: ['requirements'],
     queryFn: () => base44.entities.BadgeRequirement.filter({}),
