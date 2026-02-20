@@ -371,146 +371,44 @@ export default function LeaderBadges() {
                               const isHikesAwayFamily = badge.isHikesAwayFamily;
 
                               return (
-                                <Card key={badge.id} className="hover:shadow-lg transition-shadow">
-                                  <CardHeader>
-                                    <div className="flex flex-col">
-                                      <img
-                                       src={badge.image_url}
-                                       alt={badge.name}
-                                       className={`w-full h-28 rounded-lg object-contain mb-3 ${!isFamilyPlaceholder && !badge.is_chief_scout_award ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
-                                       onClick={() => {
-                                         if (!isFamilyPlaceholder && !badge.is_chief_scout_award) {
-                                           navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`);
-                                         }
-                                       }}
-                                      />
-                                      <div>
-                                        <CardTitle className="text-lg">{badge.name}</CardTitle>
-                                        <div className="flex gap-2 mt-1">
-                                          <Badge variant="outline">
-                                            {isStaged ? 'All Sections' : (sections.find(s => s.name === badge.section)?.display_name || badge.section)}
-                                          </Badge>
-                                          <Badge variant="outline" className="capitalize">
-                                            {badge.category}
-                                          </Badge>
+                                <Card
+                                  key={badge.id}
+                                  className={`hover:shadow-lg transition-shadow ${!isFamilyPlaceholder && !badge.is_chief_scout_award ? 'cursor-pointer' : ''}`}
+                                  onClick={() => {
+                                    if (isNightsAwayFamily) navigate(createPageUrl('NightsAwayBadgeDetail'));
+                                    else if (isHikesAwayFamily) navigate(createPageUrl('HikesAwayBadgeDetail'));
+                                    else if (isJoiningIn) navigate(createPageUrl('JoiningInBadgeDetail'));
+                                    else if (isStaged) {
+                                      if (badge.badge_family_id === 'nights_away') navigate(createPageUrl('NightsAwayBadgeDetail'));
+                                      else if (badge.badge_family_id === 'hikes_away') navigate(createPageUrl('HikesAwayBadgeDetail'));
+                                      else navigate(createPageUrl('StagedBadgeDetail') + `?familyId=${badge.badge_family_id}`);
+                                    } else if (badge.is_chief_scout_award) navigate(createPageUrl('GoldAwardDetail'));
+                                    else if (!isFamilyPlaceholder) navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`);
+                                  }}
+                                >
+                                  <CardContent className="p-3 text-center">
+                                    <img
+                                      src={badge.image_url}
+                                      alt={badge.name}
+                                      className="w-full aspect-square object-contain rounded-lg mb-2"
+                                    />
+                                    <h3 className="font-semibold text-xs leading-tight">{badge.name}</h3>
+                                    {!isFamilyPlaceholder && !badge.is_chief_scout_award && stats && (
+                                      <div className="mt-2">
+                                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden flex mb-1">
+                                          <div className="h-full bg-[#7413dc]" style={{ width: `${stats.totalMembers > 0 ? Math.round((stats.completedCount / stats.totalMembers) * 100) : 0}%` }} />
+                                          <div className="h-full bg-blue-400" style={{ width: `${stats.totalMembers > 0 ? Math.round((stats.inProgressCount / stats.totalMembers) * 100) : 0}%` }} />
                                         </div>
-                                      </div>
-                                    </div>
-                                  </CardHeader>
-                                  <CardContent>
-                                  {isNightsAwayFamily ? (
-                                    <Button variant="outline" className="w-full"
-                                      onClick={() => navigate(createPageUrl('NightsAwayBadgeDetail'))}>
-                                      <Award className="w-4 h-4 mr-2" />View All Stages
-                                    </Button>
-                                  ) : isHikesAwayFamily ? (
-                                    <Button variant="outline" className="w-full"
-                                      onClick={() => navigate(createPageUrl('HikesAwayBadgeDetail'))}>
-                                      <Award className="w-4 h-4 mr-2" />View All Stages
-                                    </Button>
-                                  ) : isJoiningIn ? (
-                                    <Button
-                                      variant="outline"
-                                      className="w-full"
-                                      onClick={() => navigate(createPageUrl('JoiningInBadgeDetail'))}
-                                    >
-                                      <Award className="w-4 h-4 mr-2" />
-                                      View All Stages
-                                    </Button>
-                                  ) : isStaged ? (
-                                    <Button
-                                      variant="outline"
-                                      className="w-full"
-                                      onClick={() => {
-                                        if (badge.badge_family_id === 'nights_away') {
-                                          navigate(createPageUrl('NightsAwayBadgeDetail'));
-                                        } else if (badge.badge_family_id === 'hikes_away') {
-                                          navigate(createPageUrl('HikesAwayBadgeDetail'));
-                                        } else {
-                                          navigate(createPageUrl('StagedBadgeDetail') + `?familyId=${badge.badge_family_id}`);
-                                        }
-                                      }}
-                                    >
-                                      <Award className="w-4 h-4 mr-2" />
-                                      View Stages
-                                    </Button>
-                                  ) : badge.is_chief_scout_award ? (
-                                    <Button
-                                      variant="outline"
-                                      className="w-full bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-300 hover:from-amber-100 hover:to-yellow-100"
-                                      onClick={() => navigate(createPageUrl('GoldAwardDetail'))}
-                                    >
-                                      <Award className="w-4 h-4 mr-2 text-amber-600" />
-                                      <span className="text-amber-900">View Gold Award</span>
-                                    </Button>
-                                  ) : (
-                                      <div 
-                                        className="space-y-3 cursor-pointer"
-                                        onClick={() => navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`)}
-                                      >
-                                         <div>
-                                           <div className="text-sm mb-1 text-gray-600">Section Completion</div>
-                                           <div className="h-3 bg-gray-100 rounded-full overflow-hidden flex">
-                                             <div
-                                               className="h-full bg-[#7413dc] transition-all"
-                                               style={{ width: `${stats.totalMembers > 0 ? Math.round((stats.completedCount / stats.totalMembers) * 100) : 0}%` }}
-                                             />
-                                             <div
-                                               className="h-full bg-blue-400 transition-all"
-                                               style={{ width: `${stats.totalMembers > 0 ? Math.round((stats.inProgressCount / stats.totalMembers) * 100) : 0}%` }}
-                                             />
-                                           </div>
-                                           <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                                             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-[#7413dc] inline-block" />{stats.completedCount} done</span>
-                                             <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />{stats.inProgressCount} in progress</span>
-                                           </div>
-                                         </div>
-
-                                        <div className="grid grid-cols-2 gap-2 text-center mb-3">
-                                          <div className="bg-green-50 rounded-lg p-2">
-                                            <div className="text-xl font-bold text-green-700">{stats.completedCount}</div>
-                                            <div className="text-xs text-green-600">Completed</div>
-                                          </div>
-                                          <div className="bg-blue-50 rounded-lg p-2">
-                                            <div className="text-xl font-bold text-blue-700">{stats.inProgressCount}</div>
-                                            <div className="text-xs text-blue-600">In Progress</div>
-                                          </div>
-                                        </div>
-
+                                        <span className="text-xs text-gray-500">{stats.completedCount} done · {stats.inProgressCount} in progress</span>
                                         {stats.dueCount > 0 && (
-                                          <div className={`p-2 rounded-lg flex items-center justify-between ${
-                                            stats.outOfStock ? 'bg-red-50' : stats.lowStock ? 'bg-orange-50' : 'bg-purple-50'
-                                          }`}>
-                                            <div className="flex items-center gap-2">
-                                              <Award className={`w-4 h-4 ${
-                                                stats.outOfStock ? 'text-red-600' : stats.lowStock ? 'text-orange-600' : 'text-purple-600'
-                                              }`} />
-                                              <span className={`text-sm font-medium ${
-                                                stats.outOfStock ? 'text-red-700' : stats.lowStock ? 'text-orange-700' : 'text-purple-700'
-                                              }`}>
-                                                {stats.dueCount} due to award
-                                              </span>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                              <Package className={`w-4 h-4 ${
-                                                stats.outOfStock ? 'text-red-600' : stats.lowStock ? 'text-orange-600' : 'text-gray-600'
-                                              }`} />
-                                              <span className={`text-xs ${
-                                                stats.outOfStock ? 'text-red-600 font-bold' : stats.lowStock ? 'text-orange-600' : 'text-gray-600'
-                                              }`}>
-                                                {stats.currentStock}
-                                              </span>
-                                            </div>
-                                          </div>
-                                        )}
-
-                                        {stats.outOfStock && stats.dueCount > 0 && (
-                                          <div className="flex items-center gap-1 mt-2 text-xs text-red-600">
-                                            <AlertTriangle className="w-3 h-3" />
-                                            Out of stock!
+                                          <div className={`mt-1 text-xs font-medium ${stats.outOfStock ? 'text-red-600' : stats.lowStock ? 'text-orange-600' : 'text-purple-600'}`}>
+                                            {stats.dueCount} to award {stats.outOfStock ? '⚠ No stock' : ''}
                                           </div>
                                         )}
                                       </div>
+                                    )}
+                                    {(isFamilyPlaceholder || isStaged || badge.is_chief_scout_award) && (
+                                      <p className="text-xs text-[#7413dc] mt-1 font-medium">View →</p>
                                     )}
                                   </CardContent>
                                 </Card>
