@@ -541,6 +541,12 @@ export default function BadgeDetail() {
               </div>
             </CardHeader>
             <CardContent className="p-6">
+              {isOneModuleRule && (
+                <div className="mb-4 flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <Info className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                  <p className="text-sm text-amber-800 font-medium">Complete one module only — finishing any single module below counts as completing this badge.</p>
+                </div>
+              )}
               <div className="space-y-6">
                 {modules.sort((a, b) => a.order - b.order).map((module, moduleIdx) => {
                   const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
