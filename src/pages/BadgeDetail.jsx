@@ -633,7 +633,7 @@ export default function BadgeDetail() {
                 <table className="w-full">
               <thead>
                 <tr className="border-b-2 border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
-                  <th className="text-left p-4 font-semibold text-gray-900 sticky left-0 bg-gradient-to-r from-green-50 to-emerald-50 z-10">Member</th>
+                  <th className="text-left p-4 font-semibold text-gray-900 sticky left-0 bg-green-50 z-10">Member</th>
                   <th className="text-center p-4 font-semibold text-gray-900 w-28">Progress</th>
                   {modules.sort((a, b) => a.order - b.order).map((module, moduleIdx) => {
                     const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
