@@ -185,14 +185,24 @@ export default function BadgeDetail() {
         member_id: variables.memberId 
       });
       
-      let allModulesComplete = modules.length > 0;
-      for (const module of modules) {
-        const moduleReqs = requirements.filter(r => r.module_id === module.id);
-        const completedReqs = updatedProgress.filter(p => p.module_id === module.id && p.completed);
-        if (module.completion_rule === 'x_of_n_required') {
-          if (completedReqs.length < (module.required_count || moduleReqs.length)) { allModulesComplete = false; break; }
-        } else {
-          if (completedReqs.length < moduleReqs.length) { allModulesComplete = false; break; }
+      const isOneMod2 = badge?.completion_rule === 'one_module';
+      let allModulesComplete;
+      if (isOneMod2) {
+        allModulesComplete = modules.some(module => {
+          const moduleReqs = requirements.filter(r => r.module_id === module.id);
+          const completedReqs = updatedProgress.filter(p => p.module_id === module.id && p.completed);
+          return completedReqs.length >= moduleReqs.length && moduleReqs.length > 0;
+        });
+      } else {
+        allModulesComplete = modules.length > 0;
+        for (const module of modules) {
+          const moduleReqs = requirements.filter(r => r.module_id === module.id);
+          const completedReqs = updatedProgress.filter(p => p.module_id === module.id && p.completed);
+          if (module.completion_rule === 'x_of_n_required') {
+            if (completedReqs.length < (module.required_count || moduleReqs.length)) { allModulesComplete = false; break; }
+          } else {
+            if (completedReqs.length < moduleReqs.length) { allModulesComplete = false; break; }
+          }
         }
       }
       
