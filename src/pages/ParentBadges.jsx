@@ -992,6 +992,12 @@ export default function ParentBadges() {
                   ) : (
                     /* Regular single badge criteria */
                     <div className="space-y-6 mt-4">
+                      {selectedBadge.badge.completion_rule === 'one_module' && (
+                        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <CheckCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                          <p className="text-sm text-amber-800 font-medium">Complete one module only — finishing any single module below earns this badge.</p>
+                        </div>
+                      )}
                       {getBadgeModules(selectedBadge.badge.id).map(module => {
                         const moduleReqs = getModuleRequirements(module.id);
                         return (
