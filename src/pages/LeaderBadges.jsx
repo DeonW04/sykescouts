@@ -90,6 +90,38 @@ export default function LeaderBadges() {
       || requirementProgress.filter(p => p.member_id === memberId && p.badge_id === badgeId && p.completed).length === badgeReqs.length && badgeReqs.length > 0;
   };
 
+  const isMemberBadgeCompleteCalc = (memberId, badgeId, badge) => {
+    const badgeModules = modules.filter(m => m.badge_id === badgeId);
+    const badgeReqs = requirements.filter(r => r.badge_id === badgeId);
+    const memberReqProgress = requirementProgress.filter(p => p.member_id === memberId && p.badge_id === badgeId);
+
+    if (badgeModules.length === 0) {
+      return allProgress.some(p => p.member_id === memberId && p.badge_id === badgeId && p.status === 'completed');
+    }
+
+    const isOneMod = badge?.completion_rule === 'one_module';
+    if (isOneMod) {
+      return badgeModules.some(mod => {
+        const modReqs = badgeReqs.filter(r => r.module_id === mod.id);
+        if (modReqs.length === 0) return false;
+        const completedModReqs = memberReqProgress.filter(p => p.module_id === mod.id && p.completed);
+        if (mod.completion_rule === 'x_of_n_required') {
+          return completedModReqs.length >= (mod.required_count || modReqs.length);
+        }
+        return completedModReqs.length >= modReqs.length;
+      });
+    }
+
+    return badgeModules.every(mod => {
+      const modReqs = badgeReqs.filter(r => r.module_id === mod.id);
+      const completedModReqs = memberReqProgress.filter(p => p.module_id === mod.id && p.completed);
+      if (mod.completion_rule === 'x_of_n_required') {
+        return completedModReqs.length >= (mod.required_count || modReqs.length);
+      }
+      return completedModReqs.length >= modReqs.length;
+    });
+  };
+
   const getBadgeStats = (badgeId) => {
     const badge = badges.find(b => b.id === badgeId);
     
@@ -97,20 +129,10 @@ export default function LeaderBadges() {
       return badge?.section === 'all' || m.section_id === sections.find(s => s.name === badge?.section)?.id;
     });
 
-    // Count completed: use DB badge progress record (kept in sync by BadgeDetail mutations)
-    const memberBadgeProgress = allProgress.filter(p => 
-      p.badge_id === badgeId && 
-      relevantMembers.some(m => m.id === p.member_id)
-    );
+    const completedCount = relevantMembers.filter(m => isMemberBadgeCompleteCalc(m.id, badgeId, badge)).length;
 
-    const completedCount = relevantMembers.filter(m =>
-      memberBadgeProgress.some(p => p.member_id === m.id && p.status === 'completed')
-    ).length;
-
-    // In Progress: at least 1 individual requirement done, but badge not completed
     const inProgressCount = relevantMembers.filter(m => {
-      const isCompleted = memberBadgeProgress.some(p => p.member_id === m.id && p.status === 'completed');
-      if (isCompleted) return false;
+      if (isMemberBadgeCompleteCalc(m.id, badgeId, badge)) return false;
       return requirementProgress.some(p => p.member_id === m.id && p.badge_id === badgeId && p.completed);
     }).length;
 
@@ -118,14 +140,12 @@ export default function LeaderBadges() {
       ? Math.round((completedCount / relevantMembers.length) * 100) 
       : 0;
 
-    // Due badges (completed but not awarded)
     const dueCount = awards.filter(a => 
       a.badge_id === badgeId && 
       a.award_status === 'pending' &&
       relevantMembers.some(m => m.id === a.member_id)
     ).length;
 
-    // Stock info
     const stockInfo = stock.find(s => s.badge_id === badgeId);
     const currentStock = stockInfo?.current_stock || 0;
     const lowStock = stockInfo && currentStock < stockInfo.minimum_threshold;
