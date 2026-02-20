@@ -333,7 +333,8 @@ export default function LeaderBadges() {
                         const hikesAwayBadges = categoryBadges.filter(b => b.name.toLowerCase().includes('hikes away'));
                         const otherBadges = categoryBadges.filter(b =>
                           !b.name.toLowerCase().includes('nights away') &&
-                          !b.name.toLowerCase().includes('hikes away')
+                          !b.name.toLowerCase().includes('hikes away') &&
+                          !b.name.toLowerCase().includes('joining in award')
                         );
 
                         const nightsAwayPlaceholder = nightsAwayBadges.length > 0 ? [{
