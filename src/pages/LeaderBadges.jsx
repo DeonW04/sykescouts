@@ -303,7 +303,10 @@ export default function LeaderBadges() {
                       // Also group Nights Away, Hikes Away, and Joining In as families in activity
                       let displayBadges;
                       if (category === 'staged') {
-                        const joiningInBadges = filteredBadges.filter(b => b.name.toLowerCase().includes('joining in award'));
+                        // Joining In: use stage 1 image (lowest stage number)
+                        const joiningInBadges = filteredBadges
+                          .filter(b => b.name.toLowerCase().includes('joining in award'))
+                          .sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
                         const joiningInPlaceholder = joiningInBadges.length > 0 ? [{
                           id: 'joining-in-awards', name: 'Joining In Awards', section: 'all',
                           category: 'staged', image_url: joiningInBadges[0].image_url,
@@ -322,8 +325,13 @@ export default function LeaderBadges() {
                             familyMap.set(familyId, firstStage);
                           }
                         });
-                        displayBadges = [...Array.from(familyMap.values()), ...joiningInPlaceholder]
-                          .sort((a, b) => a.name.localeCompare(b.name));
+                        // Nights Away, Hikes Away and Joining In always last
+                        const specialNames = ['nights away', 'hikes away', 'joining in'];
+                        const regular = Array.from(familyMap.values()).filter(b => !specialNames.some(n => b.name.toLowerCase().includes(n))).sort((a, b) => a.name.localeCompare(b.name));
+                        const nightsFamily = Array.from(familyMap.values()).find(b => b.name.toLowerCase().includes('nights away'));
+                        const hikesFamily = Array.from(familyMap.values()).find(b => b.name.toLowerCase().includes('hikes away'));
+                        const tail = [...(nightsFamily ? [nightsFamily] : []), ...(hikesFamily ? [hikesFamily] : []), ...joiningInPlaceholder];
+                        displayBadges = [...regular, ...tail];
                       } else if (category === 'activity') {
                         const nightsAwayBadges = categoryBadges.filter(b => b.name.toLowerCase().includes('nights away'));
                         const hikesAwayBadges = categoryBadges.filter(b => b.name.toLowerCase().includes('hikes away'));
