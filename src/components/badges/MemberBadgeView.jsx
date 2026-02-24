@@ -31,9 +31,12 @@ function GoldAwardProgressDialog({ member, badges, modules, requirements, reqPro
   const challengeBadges = badges.filter(b => b.category === 'challenge' && b.section === 'scouts' && !b.is_chief_scout_award);
   // Activity badges: check requirement progress OR MemberBadgeAward records
   const activityBadgeDefs = badges.filter(b =>
-    b.category === 'activity' &&
+    (b.category === 'activity' || b.category === 'staged') &&
     (b.section === 'scouts' || b.section === 'all') &&
-    !b.name.toLowerCase().includes('joining in award')
+    !b.is_chief_scout_award &&
+    !b.name.toLowerCase().includes('joining in award') &&
+    !b.name.toLowerCase().includes('nights away') &&
+    !b.name.toLowerCase().includes('hikes away')
   );
 
   const isChallengeComplete = (badgeId) => {
