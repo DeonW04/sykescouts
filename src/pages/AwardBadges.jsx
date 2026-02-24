@@ -193,7 +193,7 @@ export default function AwardBadges() {
   const manualBadges = badges.filter(b => b.completion_rule === 'manual' && b.category === 'special');
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-y-auto">
+    <div className="min-h-screen bg-gray-50">
       <LeaderNav />
       <div className="bg-[#7413dc] text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
