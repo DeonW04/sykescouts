@@ -360,6 +360,8 @@ export default function LeaderBadges() {
                         displayBadges = [...categoryBadges].sort((a, b) => a.name.localeCompare(b.name));
                       }
 
+                      if (displayBadges.length === 0) return null;
+
                       return (
                         <div key={category} className="mb-8">
                           <h2 className="text-2xl font-bold mb-4 capitalize">{category} Badges</h2>
