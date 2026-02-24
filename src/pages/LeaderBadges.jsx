@@ -356,6 +356,13 @@ export default function LeaderBadges() {
                         displayBadges = categoryBadges
                           .filter(b => !b.name.toLowerCase().includes('joining in award'))
                           .sort((a, b) => a.name.localeCompare(b.name));
+                      } else if (category === 'challenge') {
+                        // Gold Award first, rest A-Z
+                        displayBadges = [...categoryBadges].sort((a, b) => {
+                          if (a.is_chief_scout_award) return -1;
+                          if (b.is_chief_scout_award) return 1;
+                          return a.name.localeCompare(b.name);
+                        });
                       } else {
                         displayBadges = [...categoryBadges].sort((a, b) => a.name.localeCompare(b.name));
                       }
