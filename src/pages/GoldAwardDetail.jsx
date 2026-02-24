@@ -56,7 +56,7 @@ export default function GoldAwardDetail() {
       const all = await base44.entities.BadgeDefinition.filter({ active: true });
       return all
         .filter(b =>
-          b.category === 'activity' &&
+          (b.category === 'activity' || b.category === 'staged') &&
           (b.section === 'scouts' || b.section === 'all') &&
           !b.is_chief_scout_award &&
           !b.name.toLowerCase().includes('joining in award')
