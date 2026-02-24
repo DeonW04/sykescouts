@@ -133,6 +133,9 @@ export default function LeaderBadges() {
     const badge = badges.find(b => b.id === badgeId);
     
     const relevantMembers = members.filter(m => {
+      // If a section is selected in the context, filter to that section
+      if (selectedSection) return m.section_id === selectedSection;
+      // Otherwise fall back to badge's own section filter
       return badge?.section === 'all' || m.section_id === sections.find(s => s.name === badge?.section)?.id;
     });
 
