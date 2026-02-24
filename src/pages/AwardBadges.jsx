@@ -34,6 +34,13 @@ export default function AwardBadges() {
     loadUser();
   }, []);
 
+  // Sync section dropdown to global selected section
+  useEffect(() => {
+    if (selectedSection) {
+      setSectionFilter(selectedSection);
+    }
+  }, [selectedSection]);
+
   const loadUser = async () => {
     const currentUser = await base44.auth.me();
     setUser(currentUser);
