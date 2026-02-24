@@ -258,6 +258,8 @@ export default function BadgeDetail() {
 
   const relevantMembers = members
     .filter(m => {
+      // If a section is selected in context, filter to that section (unless badge has its own specific section that differs)
+      if (selectedSection) return m.section_id === selectedSection;
       return badge.section === 'all' || m.section_id === sections.find(s => s.name === badge.section)?.id;
     })
     .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime());
