@@ -233,8 +233,11 @@ export default function ManageBadges() {
               .filter(b => !b.name.toLowerCase().includes('joining in award'))
               .sort((a, b) => a.name.localeCompare(b.name));
           } else {
+            // challenge and anything else — A-Z
             displayBadges = [...categoryBadges].sort((a, b) => a.name.localeCompare(b.name));
           }
+          
+          if (displayBadges.length === 0) return null;
           
           return (
             <div key={category} className="mb-8">
