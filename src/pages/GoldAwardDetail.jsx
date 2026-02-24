@@ -145,7 +145,12 @@ export default function GoldAwardDetail() {
 
   const getMemberProgress = (memberId) => {
     const challengesCompleted = challengeBadges.filter(badge => isBadgeCompleted(memberId, badge));
-    const activitiesCompleted = activityBadges.filter(badge => isBadgeCompleted(memberId, badge));
+    // Count activity badges by checking awards records only (awarded or pending)
+    const activitiesCompleted = allAwards.filter(a =>
+      a.member_id === memberId &&
+      activityBadgeIds.includes(a.badge_id) &&
+      (a.award_status === 'awarded' || a.award_status === 'pending')
+    ).length;
     const hasGoldAward = goldAwardBadge && allAwards.some(a =>
       a.member_id === memberId && a.badge_id === goldAwardBadge.id && a.award_status === 'awarded'
     );
@@ -154,7 +159,7 @@ export default function GoldAwardDetail() {
       total: challengeBadges.length,
       percentage: challengeBadges.length > 0 ? Math.round((challengesCompleted.length / challengeBadges.length) * 100) : 0,
       badges: challengesCompleted,
-      activitiesCompleted: activitiesCompleted.length,
+      activitiesCompleted,
       hasGoldAward,
     };
   };
