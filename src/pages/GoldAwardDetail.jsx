@@ -145,12 +145,16 @@ export default function GoldAwardDetail() {
 
   const getMemberProgress = (memberId) => {
     const challengesCompleted = challengeBadges.filter(badge => isBadgeCompleted(memberId, badge));
-    // Count activity badges by checking awards records only (awarded or pending)
-    const activitiesCompleted = allAwards.filter(a =>
-      a.member_id === memberId &&
-      activityBadgeIds.includes(a.badge_id) &&
-      (a.award_status === 'awarded' || a.award_status === 'pending')
-    ).length;
+    // Count distinct activity badges: check MemberBadgeAward OR MemberBadgeProgress
+    const activityAwardedIds = new Set(
+      allAwards
+        .filter(a => a.member_id === memberId && activityBadgeIds.includes(a.badge_id) && (a.award_status === 'awarded' || a.award_status === 'pending'))
+        .map(a => a.badge_id)
+    );
+    allBadgeProgress
+      .filter(p => p.member_id === memberId && activityBadgeIds.includes(p.badge_id) && p.status === 'completed')
+      .forEach(p => activityAwardedIds.add(p.badge_id));
+    const activitiesCompleted = activityAwardedIds.size;
     const hasGoldAward = goldAwardBadge && allAwards.some(a =>
       a.member_id === memberId && a.badge_id === goldAwardBadge.id && a.award_status === 'awarded'
     );
