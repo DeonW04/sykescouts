@@ -50,16 +50,19 @@ export default function GoldAwardDetail() {
     },
   });
 
-  // All activity badges (including staged) for scouts
-  const { data: activityBadges = [] } = useQuery({
-    queryKey: ['activity-badges-scouts'],
+  // Activity badge IDs for scouts (only activity category, not staged families)
+  const { data: activityBadgeIds = [] } = useQuery({
+    queryKey: ['activity-badge-ids-scouts'],
     queryFn: async () => {
       const all = await base44.entities.BadgeDefinition.filter({ active: true });
-      return all.filter(b =>
-        (b.category === 'activity' || b.category === 'staged') &&
-        (b.section === 'scouts' || b.section === 'all') &&
-        !b.is_chief_scout_award
-      );
+      return all
+        .filter(b =>
+          b.category === 'activity' &&
+          (b.section === 'scouts' || b.section === 'all') &&
+          !b.is_chief_scout_award &&
+          !b.name.toLowerCase().includes('joining in award')
+        )
+        .map(b => b.id);
     },
   });
 
