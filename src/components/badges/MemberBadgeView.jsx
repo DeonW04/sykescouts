@@ -92,7 +92,7 @@ function GoldAwardProgressDialog({ member, badges, modules, requirements, reqPro
           </div>
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span className="font-medium">Activity Badges ({completedActivities.length}/8)</span>
+              <span className="font-medium">Activity Badges ({completedActivitiesCount}/6)</span>
             </div>
             <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
               <div className="h-full bg-purple-500 rounded-full" style={{ width: `${activityPct}%` }} />
