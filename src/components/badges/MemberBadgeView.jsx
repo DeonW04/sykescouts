@@ -27,13 +27,50 @@ function getAgeProgress(member, sectionName) {
   return Math.min(100, Math.max(0, Math.round(pct)));
 }
 
-function GoldAwardProgressDialog({ member, badges, modules, requirements, reqProgress, badgeProgress, open, onClose }) {
+function GoldAwardProgressDialog({ member, badges, modules, requirements, reqProgress, badgeProgress, awards, open, onClose }) {
   const challengeBadges = badges.filter(b => b.category === 'challenge' && b.section === 'scouts' && !b.is_chief_scout_award);
-  const activityBadges = badges.filter(b => b.category === 'activity' && b.section === 'scouts');
-  const completedChallenges = challengeBadges.filter(b => badgeProgress.some(p => p.member_id === member.id && p.badge_id === b.id && p.status === 'completed'));
-  const completedActivities = activityBadges.filter(b => badgeProgress.some(p => p.member_id === member.id && p.badge_id === b.id && p.status === 'completed'));
+  // Activity badges: check requirement progress OR MemberBadgeAward records
+  const activityBadgeDefs = badges.filter(b =>
+    b.category === 'activity' &&
+    (b.section === 'scouts' || b.section === 'all') &&
+    !b.name.toLowerCase().includes('joining in award')
+  );
+
+  const isChallengeComplete = (badgeId) => {
+    // Check award record first
+    if (awards.some(a => a.member_id === member.id && a.badge_id === badgeId && (a.award_status === 'awarded' || a.award_status === 'pending'))) return true;
+    // Check badge progress
+    if (badgeProgress.some(p => p.member_id === member.id && p.badge_id === badgeId && p.status === 'completed')) return true;
+    // Check requirement progress
+    const badgeMods = modules.filter(m => m.badge_id === badgeId);
+    if (badgeMods.length === 0) return false;
+    const badge = badges.find(b => b.id === badgeId);
+    if (badge?.completion_rule === 'one_module') {
+      return badgeMods.some(mod => {
+        const modReqs = requirements.filter(r => r.module_id === mod.id);
+        const done = reqProgress.filter(p => p.member_id === member.id && p.module_id === mod.id && p.completed);
+        return modReqs.length > 0 && (mod.completion_rule === 'x_of_n_required' ? done.length >= (mod.required_count || modReqs.length) : done.length >= modReqs.length);
+      });
+    }
+    return badgeMods.every(mod => {
+      const modReqs = requirements.filter(r => r.module_id === mod.id);
+      const done = reqProgress.filter(p => p.member_id === member.id && p.module_id === mod.id && p.completed);
+      return mod.completion_rule === 'x_of_n_required' ? done.length >= (mod.required_count || modReqs.length) : done.length >= modReqs.length;
+    });
+  };
+
+  const completedChallenges = challengeBadges.filter(b => isChallengeComplete(b.id));
+  // Activity: use distinct awarded/pending badge IDs from MemberBadgeAward OR requirement progress
+  const activityAwardedIds = new Set(
+    awards.filter(a => a.member_id === member.id && activityBadgeDefs.some(b => b.id === a.badge_id) && (a.award_status === 'awarded' || a.award_status === 'pending')).map(a => a.badge_id)
+  );
+  activityBadgeDefs.forEach(b => {
+    if (badgeProgress.some(p => p.member_id === member.id && p.badge_id === b.id && p.status === 'completed')) activityAwardedIds.add(b.id);
+  });
+  const completedActivitiesCount = activityAwardedIds.size;
+
   const challengePct = challengeBadges.length > 0 ? Math.round((completedChallenges.length / challengeBadges.length) * 100) : 0;
-  const activityPct = Math.min(100, Math.round((completedActivities.length / 8) * 100));
+  const activityPct = Math.min(100, Math.round((completedActivitiesCount / 6) * 100));
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
