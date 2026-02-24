@@ -11,8 +11,7 @@ import { createPageUrl } from '../utils';
 import LeaderNav from '../components/leader/LeaderNav';
 import { differenceInMonths, differenceInYears, addYears } from 'date-fns';
 
-// Scouts age out at 18
-const SCOUTS_MAX_AGE = 18;
+const SCOUTS_MAX_AGE = 14;
 const ACTIVITY_BADGES_REQUIRED = 6;
 
 function getSectionTimeInfo(member) {
