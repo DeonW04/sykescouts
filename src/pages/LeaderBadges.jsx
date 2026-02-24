@@ -327,7 +327,6 @@ export default function LeaderBadges() {
                       } else if (category === 'activity') {
                         const nightsAwayBadges = categoryBadges.filter(b => b.name.toLowerCase().includes('nights away'));
                         const hikesAwayBadges = categoryBadges.filter(b => b.name.toLowerCase().includes('hikes away'));
-                        // Exclude joining in awards from activity section entirely (they appear in staged)
                         const otherBadges = categoryBadges.filter(b =>
                           !b.name.toLowerCase().includes('nights away') &&
                           !b.name.toLowerCase().includes('hikes away') &&
@@ -352,8 +351,13 @@ export default function LeaderBadges() {
 
                         displayBadges = [...otherBadges, ...nightsAwayPlaceholder, ...hikesAwayPlaceholder]
                           .sort((a, b) => a.name.localeCompare(b.name));
+                      } else if (category === 'core') {
+                        // Exclude joining in awards from core — they show under staged
+                        displayBadges = categoryBadges
+                          .filter(b => !b.name.toLowerCase().includes('joining in award'))
+                          .sort((a, b) => a.name.localeCompare(b.name));
                       } else {
-                        displayBadges = categoryBadges;
+                        displayBadges = [...categoryBadges].sort((a, b) => a.name.localeCompare(b.name));
                       }
 
                       return (
