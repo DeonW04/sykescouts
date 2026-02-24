@@ -474,6 +474,7 @@ export default function MemberBadgeView({ sectionFilter }) {
           requirements={requirements}
           reqProgress={reqProgress}
           badgeProgress={badgeProgress}
+          awards={awards}
           open={true}
           onClose={() => setGoldMember(null)}
         />
