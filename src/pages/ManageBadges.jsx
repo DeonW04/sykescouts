@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Edit, Trash2, Award, Package } from 'lucide-react';
+import { Plus, Edit, Trash2, Award, Package, Search } from 'lucide-react';
 import StockManagementDialog from '../components/badges/StockManagementDialog';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -18,6 +18,7 @@ import LeaderNav from '../components/leader/LeaderNav';
 export default function ManageBadges() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
   const [showDialog, setShowDialog] = useState(false);
   const [editingBadge, setEditingBadge] = useState(null);
   const [formData, setFormData] = useState({
