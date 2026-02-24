@@ -69,9 +69,15 @@ export default function LeaderBadges() {
     queryFn: () => base44.entities.BadgeStock.filter({}),
   });
 
+  // Find the section name for the currently selected section
+  const selectedSectionObj = availableSections.find(s => s.id === selectedSection);
+  const selectedSectionName = selectedSectionObj?.name;
+
   const filteredBadges = badges.filter(badge => {
     const matchesSearch = badge.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSection = sectionFilter === 'all' || badge.section === sectionFilter || badge.section === 'all';
+    // Core and staged badges apply to all sections; otherwise filter by selected section
+    const isSectionAgnostic = badge.section === 'all' || badge.category === 'core' || badge.category === 'staged';
+    const matchesSection = !selectedSectionName || isSectionAgnostic || badge.section === selectedSectionName;
     const matchesCategory = categoryFilter === 'all' || badge.category === categoryFilter;
     return matchesSearch && matchesSection && matchesCategory;
   });
