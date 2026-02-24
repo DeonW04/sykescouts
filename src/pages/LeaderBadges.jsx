@@ -75,8 +75,8 @@ export default function LeaderBadges() {
 
   const filteredBadges = badges.filter(badge => {
     const matchesSearch = badge.name.toLowerCase().includes(searchTerm.toLowerCase());
-    // Core and staged badges apply to all sections; otherwise filter by selected section
-    const isSectionAgnostic = badge.section === 'all' || badge.category === 'core' || badge.category === 'staged';
+    // Staged badges apply to all sections; others filter by section
+    const isSectionAgnostic = badge.section === 'all' || badge.category === 'staged';
     const matchesSection = !selectedSectionName || isSectionAgnostic || badge.section === selectedSectionName;
     const matchesCategory = categoryFilter === 'all' || badge.category === categoryFilter;
     return matchesSearch && matchesSection && matchesCategory;
