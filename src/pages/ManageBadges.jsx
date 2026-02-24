@@ -206,31 +206,34 @@ export default function ManageBadges() {
           const categoryBadges = badges.filter(b => b.active && b.category === category && b.name.toLowerCase().includes(searchTerm.toLowerCase()));
           if (categoryBadges.length === 0) return null;
 
-          // For staged badges, only show family badges (stage_number = null)
-          // For activity badges, sort A-Z and consolidate Joining In Awards
           let displayBadges;
           if (category === 'staged') {
-            displayBadges = categoryBadges.filter(b => b.stage_number === null);
-          } else if (category === 'activity') {
-            const nonJoiningIn = categoryBadges.filter(b => !b.name.includes('Joining In Award'));
-            const joiningInBadges = categoryBadges.filter(b => b.name.includes('Joining In Award'));
-            
-            // Create placeholder for Joining In Awards
+            // Show family badges (stage_number = null) + Joining In placeholder
+            const familyBadges = categoryBadges.filter(b => b.stage_number === null);
+            const allActivityBadges = badges.filter(b => b.active && b.category === 'activity' && b.name.toLowerCase().includes(searchTerm.toLowerCase()));
+            const joiningInBadges = allActivityBadges.filter(b => b.name.toLowerCase().includes('joining in award'));
             const joiningInPlaceholder = joiningInBadges.length > 0 ? [{
               id: 'joining-in-awards',
               name: 'Joining In Awards',
               section: 'all',
-              category: 'activity',
+              category: 'staged',
               image_url: joiningInBadges[0].image_url,
               description: `Manage all ${joiningInBadges.length} Joining In Award stages`,
               isJoiningInPlaceholder: true
             }] : [];
-            
-            displayBadges = [...nonJoiningIn, ...joiningInPlaceholder].sort((a, b) => 
-              a.name.localeCompare(b.name)
-            );
+            displayBadges = [...familyBadges, ...joiningInPlaceholder].sort((a, b) => a.name.localeCompare(b.name));
+          } else if (category === 'activity') {
+            // Exclude Joining In Awards (they show under staged)
+            displayBadges = categoryBadges
+              .filter(b => !b.name.toLowerCase().includes('joining in award'))
+              .sort((a, b) => a.name.localeCompare(b.name));
+          } else if (category === 'core') {
+            // Exclude Joining In from core
+            displayBadges = categoryBadges
+              .filter(b => !b.name.toLowerCase().includes('joining in award'))
+              .sort((a, b) => a.name.localeCompare(b.name));
           } else {
-            displayBadges = categoryBadges;
+            displayBadges = [...categoryBadges].sort((a, b) => a.name.localeCompare(b.name));
           }
           
           return (
