@@ -193,13 +193,16 @@ export default function ParentBadges() {
     );
   }
 
-  // Derive badge completion from actual requirement progress (source of truth)
+  // Derive badge completion: check MemberBadgeAward OR requirement progress OR MemberBadgeProgress record
   const isBadgeComplete = (badgeId) => {
+    // 1. Check award record (awarded or pending = completed)
+    if (awards.some(a => a.member_id === child.id && a.badge_id === badgeId && (a.award_status === 'awarded' || a.award_status === 'pending'))) return true;
+    // 2. Check MemberBadgeProgress record
+    if (badgeProgress.some(p => p.member_id === child.id && p.badge_id === badgeId && p.status === 'completed')) return true;
+    // 3. Check requirement progress
     const badgeDef = badges.find(b => b.id === badgeId);
     const badgeModules = modules.filter(m => m.badge_id === badgeId);
-    if (badgeModules.length === 0) {
-      return badgeProgress.some(p => p.member_id === child.id && p.badge_id === badgeId && p.status === 'completed');
-    }
+    if (badgeModules.length === 0) return false;
     if (badgeDef?.completion_rule === 'one_module') {
       return badgeModules.some(mod => {
         const modReqs = requirements.filter(r => r.module_id === mod.id);
