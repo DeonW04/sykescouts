@@ -265,19 +265,6 @@ export default function LeaderBadges() {
                   className="pl-10"
                 />
               </div>
-              <Select value={sectionFilter} onValueChange={setSectionFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="All sections" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sections</SelectItem>
-                  {sections.map(section => (
-                    <SelectItem key={section.id} value={section.name}>
-                      {section.display_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="All categories" />
