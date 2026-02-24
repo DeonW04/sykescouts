@@ -11,6 +11,7 @@ import { ArrowLeft, Plus, Edit, Trash2, Award, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
+import LeaderNav from '../components/leader/LeaderNav';
 import StockManagementDialog from '../components/badges/StockManagementDialog';
 
 export default function ManageStagedBadge() {
