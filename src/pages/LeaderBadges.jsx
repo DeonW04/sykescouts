@@ -15,8 +15,8 @@ import MemberBadgeView from '../components/badges/MemberBadgeView';
 
 export default function LeaderBadges() {
   const navigate = useNavigate();
+  const { selectedSection, availableSections } = useSectionContext();
   const [searchTerm, setSearchTerm] = useState('');
-  const [sectionFilter, setSectionFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [viewMode, setViewMode] = useState('badge'); // 'badge' | 'member'
 
