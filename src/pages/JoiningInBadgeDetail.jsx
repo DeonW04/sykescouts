@@ -134,7 +134,7 @@ export default function JoiningInBadgeDetail() {
             {joiningInBadges.length === 0 ? (
               <p className="text-gray-500">No Joining In Award badges found in the system.</p>
             ) : (
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap justify-center gap-4">
                 {joiningInBadges.map(b => (
                   <div key={b.id} className="flex flex-col items-center gap-1 text-center">
                     <img src={b.image_url} alt={b.name} className="w-16 h-16 object-contain rounded-lg" />
