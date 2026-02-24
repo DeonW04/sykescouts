@@ -191,8 +191,19 @@ export default function ManageBadges() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Search Bar */}
+        <div className="mb-6 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search badges..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
         {['challenge', 'activity', 'staged', 'core'].map(category => {
-          const categoryBadges = badges.filter(b => b.active && b.category === category);
+          const categoryBadges = badges.filter(b => b.active && b.category === category && b.name.toLowerCase().includes(searchTerm.toLowerCase()));
           if (categoryBadges.length === 0) return null;
 
           // For staged badges, only show family badges (stage_number = null)
