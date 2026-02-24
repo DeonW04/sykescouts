@@ -19,6 +19,17 @@ export default function AwardBadges() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
+
+  // Pick up the section from the SectionContext if available
+  const { selectedSection } = (() => {
+    try {
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const { useSectionContext } = require('../components/leader/SectionContext');
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      return useSectionContext();
+    } catch { return { selectedSection: null }; }
+  })();
+
   const [sectionFilter, setSectionFilter] = useState('all');
   const [badgeFilter, setBadgeFilter] = useState('all');
   const [onlyDue, setOnlyDue] = useState(true);
