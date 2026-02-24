@@ -204,7 +204,6 @@ export default function ManageBadges() {
 
         {['challenge', 'activity', 'staged', 'core'].map(category => {
           const categoryBadges = badges.filter(b => b.active && b.category === category && b.name.toLowerCase().includes(searchTerm.toLowerCase()));
-          if (categoryBadges.length === 0) return null;
 
           let displayBadges;
           if (category === 'staged') {
