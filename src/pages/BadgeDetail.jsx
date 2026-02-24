@@ -19,6 +19,7 @@ import StockManagementDialog from '../components/badges/StockManagementDialog';
 export default function BadgeDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { selectedSection } = useSectionContext();
   const [isAdmin, setIsAdmin] = useState(false);
   const [stockDialog, setStockDialog] = useState(null);
 
