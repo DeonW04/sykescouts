@@ -220,7 +220,13 @@ export default function ManageBadges() {
               description: `Manage all ${joiningInBadges.length} Joining In Award stages`,
               isJoiningInPlaceholder: true
             }] : [];
-            displayBadges = [...familyBadges, ...joiningInPlaceholder].sort((a, b) => a.name.localeCompare(b.name));
+            // Nights Away, Hikes Away, Joining In always last
+            const specialNames = ['nights away', 'hikes away', 'joining in'];
+            const regularFamilies = familyBadges.filter(b => !specialNames.some(n => b.name.toLowerCase().includes(n))).sort((a, b) => a.name.localeCompare(b.name));
+            const nightsFam = familyBadges.find(b => b.name.toLowerCase().includes('nights away'));
+            const hikesFam = familyBadges.find(b => b.name.toLowerCase().includes('hikes away'));
+            const tail = [...(nightsFam ? [nightsFam] : []), ...(hikesFam ? [hikesFam] : []), ...joiningInPlaceholder];
+            displayBadges = [...regularFamilies, ...tail];
           } else if (category === 'activity') {
             // Exclude Joining In Awards (they show under staged)
             displayBadges = categoryBadges
