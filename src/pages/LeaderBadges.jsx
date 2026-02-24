@@ -303,7 +303,6 @@ export default function LeaderBadges() {
                       // Also group Nights Away, Hikes Away, and Joining In as families in activity
                       let displayBadges;
                       if (category === 'staged') {
-                        // Also pull in Joining In Awards from activity category (treated as staged)
                         const joiningInBadges = filteredBadges.filter(b => b.name.toLowerCase().includes('joining in award'));
                         const joiningInPlaceholder = joiningInBadges.length > 0 ? [{
                           id: 'joining-in-awards', name: 'Joining In Awards', section: 'all',
@@ -323,7 +322,8 @@ export default function LeaderBadges() {
                             familyMap.set(familyId, firstStage);
                           }
                         });
-                        displayBadges = [...Array.from(familyMap.values()), ...joiningInPlaceholder];
+                        displayBadges = [...Array.from(familyMap.values()), ...joiningInPlaceholder]
+                          .sort((a, b) => a.name.localeCompare(b.name));
                       } else if (category === 'activity') {
                         const nightsAwayBadges = categoryBadges.filter(b => b.name.toLowerCase().includes('nights away'));
                         const hikesAwayBadges = categoryBadges.filter(b => b.name.toLowerCase().includes('hikes away'));
