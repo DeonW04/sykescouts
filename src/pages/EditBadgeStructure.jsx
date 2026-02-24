@@ -144,14 +144,6 @@ export default function EditBadgeStructure() {
       <LeaderNav />
       <div className="bg-[#7413dc] text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(createPageUrl('BadgeDetail') + `?id=${badgeId}`)}
-            className="text-white hover:bg-white/10 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold">{badge.name} - Structure</h1>
