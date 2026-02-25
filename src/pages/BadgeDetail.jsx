@@ -352,14 +352,31 @@ export default function BadgeDetail() {
       }
     });
 
-    const allModulesComplete = modules.length > 0 && modules.every(m => isModuleComplete(memberId, m));
+    let isComplete = modules.length > 0;
+    for (const module of modules) {
+      const moduleReqs = requirements.filter(r => r.module_id === module.id);
+      if (module.completion_rule === 'x_of_n_required') {
+        const needed = module.required_count || moduleReqs.length;
+        const completedReqs = progress.filter(
+          p => p.member_id === memberId && p.module_id === module.id && p.completed
+        );
+        if (completedReqs.length < needed) { isComplete = false; break; }
+      } else {
+        // all_required: every req must have completion_count >= required_completions
+        const allReqsDone = moduleReqs.every(req => {
+          const reqProg = progress.find(p => p.member_id === memberId && p.requirement_id === req.id);
+          return (reqProg?.completion_count || 0) >= (req.required_completions || 1);
+        });
+        if (!allReqsDone) { isComplete = false; break; }
+      }
+    }
     const hasAnyProgress = totalCompleted > 0;
 
     return {
       completed: totalCompleted,
       total: totalRequired,
       percentage: totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0,
-      isComplete: allModulesComplete,
+      isComplete,
       hasAnyProgress,
     };
   };
