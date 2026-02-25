@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useSectionContext } from '../components/leader/SectionContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +17,7 @@ const STAGE_THRESHOLDS = [1, 2, 5, 10, 15, 20, 35, 50];
 export default function HikesAwayBadgeDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { selectedSection } = useSectionContext();
   const [editingMemberId, setEditingMemberId] = useState(null);
   const [editingValue, setEditingValue] = useState('');
   const inputRef = useRef(null);
@@ -25,16 +27,24 @@ export default function HikesAwayBadgeDetail() {
     queryFn: () => base44.entities.Member.filter({ active: true }),
   });
 
+  const { data: sections = [] } = useQuery({
+    queryKey: ['sections'],
+    queryFn: () => base44.entities.Section.filter({ active: true }),
+  });
+
   const { data: hikesAwayBadges = [] } = useQuery({
     queryKey: ['hikesaway-badges'],
     queryFn: () => base44.entities.BadgeDefinition.filter({ badge_family_id: 'hikes_away' }),
   });
 
   const { data: awards = [] } = useQuery({
-    queryKey: ['awards'],
+    queryKey: ['hikes-awards'],
     queryFn: () => base44.entities.MemberBadgeAward.filter({}),
   });
 
+  const relevantMembers = members
+    .filter(m => selectedSection ? m.section_id === selectedSection : true)
+    .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime());
 
   const updateHikesMutation = useMutation({
     mutationFn: async ({ memberId, newCount }) => {
@@ -45,7 +55,7 @@ export default function HikesAwayBadgeDetail() {
     onSuccess: async (_, variables) => {
       const { memberId, newCount } = variables;
 
-      // Check every threshold and award any badges the member has now earned
+      // Fetch fresh awards from DB for this member — never trust stale cache
       const freshAwards = await base44.entities.MemberBadgeAward.filter({ member_id: memberId });
       let newBadgesAwarded = 0;
 
@@ -69,6 +79,7 @@ export default function HikesAwayBadgeDetail() {
       }
 
       await queryClient.invalidateQueries({ queryKey: ['members'] });
+      await queryClient.invalidateQueries({ queryKey: ['hikes-awards'] });
       await queryClient.invalidateQueries({ queryKey: ['awards'] });
 
       if (newBadgesAwarded > 0) {
@@ -88,7 +99,6 @@ export default function HikesAwayBadgeDetail() {
   const startEditing = (member) => {
     setEditingMemberId(member.id);
     setEditingValue(String(member.total_hikes_away || 0));
-    // Focus input on next tick after render
     setTimeout(() => inputRef.current?.focus(), 0);
   };
 
@@ -111,8 +121,6 @@ export default function HikesAwayBadgeDetail() {
     if (e.key === 'Escape') cancelEditing();
   };
 
-  // Auto-award badges based on total hikes
-
   const getMemberBadges = (memberId) => {
     const memberAwards = awards.filter(a => a.member_id === memberId);
     return hikesAwayBadges
@@ -129,13 +137,19 @@ export default function HikesAwayBadgeDetail() {
       <LeaderNav />
       <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <Footprints className="w-12 h-12" />
-              <div>
-                <h1 className="text-3xl font-bold">Hikes Away Staged Activity Badge</h1>
-                <p className="mt-1 text-white/80">Tracking hikes and awarding badges automatically</p>
-              </div>
+          <Button
+            variant="ghost"
+            onClick={() => navigate(createPageUrl('LeaderBadges'))}
+            className="text-white hover:bg-white/20 mb-6"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Badges
+          </Button>
+          <div className="flex items-center gap-4">
+            <Footprints className="w-12 h-12" />
+            <div>
+              <h1 className="text-3xl font-bold">Hikes Away Staged Activity Badge</h1>
+              <p className="mt-1 text-white/80">Tracking hikes and awarding badges automatically</p>
             </div>
           </div>
         </div>
@@ -186,7 +200,14 @@ export default function HikesAwayBadgeDetail() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Member Progress</CardTitle>
+            <CardTitle>
+              Member Progress
+              {selectedSection && (
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  — {sections.find(s => s.id === selectedSection)?.display_name}
+                </span>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
@@ -200,107 +221,105 @@ export default function HikesAwayBadgeDetail() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {members
-                  .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime())
-                  .map(member => {
-                    const totalHikes = member.total_hikes_away || 0;
-                    const earnedBadges = getMemberBadges(member.id);
-                    const nextStage = getNextStage(totalHikes);
-                    const progress = nextStage 
-                      ? Math.round((totalHikes / nextStage) * 100)
-                      : 100;
-                    const isEditing = editingMemberId === member.id;
-                    const isSaving = updateHikesMutation.isPending && updateHikesMutation.variables?.memberId === member.id;
+                {relevantMembers.map(member => {
+                  const totalHikes = member.total_hikes_away || 0;
+                  const earnedBadges = getMemberBadges(member.id);
+                  const nextStage = getNextStage(totalHikes);
+                  const progress = nextStage 
+                    ? Math.round((totalHikes / nextStage) * 100)
+                    : 100;
+                  const isEditing = editingMemberId === member.id;
+                  const isSaving = updateHikesMutation.isPending && updateHikesMutation.variables?.memberId === member.id;
 
-                    return (
-                      <TableRow key={member.id}>
-                        <TableCell className="font-medium">{member.full_name}</TableCell>
-                        <TableCell>
-                          {isEditing ? (
-                            <div className="flex items-center gap-2">
-                              <Footprints className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                              <input
-                                ref={inputRef}
-                                type="number"
-                                min={0}
-                                value={editingValue}
-                                onChange={(e) => setEditingValue(e.target.value)}
-                                onKeyDown={(e) => handleKeyDown(e, member.id)}
-                                className="w-20 text-lg font-bold text-[#7413dc] border-2 border-[#7413dc] rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-[#7413dc]/30"
-                                disabled={isSaving}
-                              />
-                              <button
-                                onClick={() => saveEditing(member.id)}
-                                disabled={isSaving}
-                                className="w-7 h-7 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center flex-shrink-0 disabled:opacity-50 transition-colors"
-                                title="Save"
-                              >
-                                <Check className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={cancelEditing}
-                                disabled={isSaving}
-                                className="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center flex-shrink-0 disabled:opacity-50 transition-colors"
-                                title="Cancel"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ) : (
+                  return (
+                    <TableRow key={member.id}>
+                      <TableCell className="font-medium">{member.full_name}</TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <div className="flex items-center gap-2">
+                            <Footprints className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <input
+                              ref={inputRef}
+                              type="number"
+                              min={0}
+                              value={editingValue}
+                              onChange={(e) => setEditingValue(e.target.value)}
+                              onKeyDown={(e) => handleKeyDown(e, member.id)}
+                              className="w-20 text-lg font-bold text-[#7413dc] border-2 border-[#7413dc] rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-[#7413dc]/30"
+                              disabled={isSaving}
+                            />
                             <button
-                              onClick={() => startEditing(member)}
-                              className="flex items-center gap-2 group rounded px-1 -mx-1 hover:bg-gray-100 transition-colors"
-                              title="Click to edit"
+                              onClick={() => saveEditing(member.id)}
+                              disabled={isSaving}
+                              className="w-7 h-7 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center flex-shrink-0 disabled:opacity-50 transition-colors"
+                              title="Save"
                             >
-                              <Footprints className="w-4 h-4 text-gray-400" />
-                              <span className="text-lg font-bold text-[#7413dc] group-hover:underline decoration-dotted underline-offset-2">
-                                {totalHikes}
-                              </span>
+                              <Check className="w-4 h-4" />
                             </button>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {nextStage ? (
-                            <Badge variant="outline">{nextStage} hikes</Badge>
-                          ) : (
-                            <Badge className="bg-blue-600">All stages complete!</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            {earnedBadges.map(badge => (
-                              <div key={badge.id} className="relative group">
-                                <img 
-                                  src={badge.image_url} 
-                                  alt={`Stage ${badge.stage_number}`}
-                                  className="w-8 h-8 object-contain"
-                                />
-                                <div className="absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                  {badge.stage_number} hikes
-                                </div>
-                              </div>
-                            ))}
+                            <button
+                              onClick={cancelEditing}
+                              disabled={isSaving}
+                              className="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center flex-shrink-0 disabled:opacity-50 transition-colors"
+                              title="Cancel"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          {nextStage && (
-                            <div className="w-32">
-                              <div className="flex justify-between text-xs mb-1">
-                                <span>{totalHikes}</span>
-                                <span>{nextStage}</span>
-                              </div>
-                              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-blue-500 transition-all"
-                                  style={{ width: `${progress}%` }}
-                                />
+                        ) : (
+                          <button
+                            onClick={() => startEditing(member)}
+                            className="flex items-center gap-2 group rounded px-1 -mx-1 hover:bg-gray-100 transition-colors"
+                            title="Click to edit"
+                          >
+                            <Footprints className="w-4 h-4 text-gray-400" />
+                            <span className="text-lg font-bold text-[#7413dc] group-hover:underline decoration-dotted underline-offset-2">
+                              {totalHikes}
+                            </span>
+                          </button>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {nextStage ? (
+                          <Badge variant="outline">{nextStage} hikes</Badge>
+                        ) : (
+                          <Badge className="bg-blue-600">All stages complete!</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          {earnedBadges.map(badge => (
+                            <div key={badge.id} className="relative group">
+                              <img 
+                                src={badge.image_url} 
+                                alt={`Stage ${badge.stage_number}`}
+                                className="w-8 h-8 object-contain"
+                              />
+                              <div className="absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                {badge.stage_number} hikes
                               </div>
                             </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {nextStage && (
+                          <div className="w-32">
+                            <div className="flex justify-between text-xs mb-1">
+                              <span>{totalHikes}</span>
+                              <span>{nextStage}</span>
+                            </div>
+                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-blue-500 transition-all"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>
