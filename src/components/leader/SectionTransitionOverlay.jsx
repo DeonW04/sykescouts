@@ -35,7 +35,7 @@ export default function SectionTransitionOverlay({ fromSection, toSection, onCom
     const t2 = setTimeout(() => {
       setPhase('fade-out');
       onComplete();
-    }, 1000);
+    }, 2000);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
