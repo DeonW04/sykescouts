@@ -704,32 +704,37 @@ export default function ParentBadges() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex flex-wrap gap-3">
-                  {filteredInProgress.map((bp, idx) => {
-                    const displayName = bp.type === 'family' ? bp.family.name : bp.badge.name;
-                    const displayImage = bp.badge.image_url;
-                    return (
-                      <motion.button
-                        key={bp.type === 'family' ? bp.family.familyId : bp.badge.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.02 }}
-                        onClick={() => setSelectedBadge(bp)}
-                        className="w-14 h-14 rounded-lg overflow-hidden hover:ring-2 hover:ring-orange-400 transition-all hover:scale-110 bg-gray-50 relative"
-                        title={`${displayName} — ${bp.progress.percentage}%`}
-                      >
-                        <img src={displayImage} alt={displayName} className="w-full h-full object-contain p-1" />
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200">
-                          <div className="h-full bg-orange-400 transition-all" style={{ width: `${bp.progress.percentage}%` }} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {filteredInProgress.map((bp, idx) => {
+                const displayName = bp.type === 'family' ? bp.family.name : bp.badge.name;
+                const displayImage = bp.badge.image_url;
+                return (
+                  <motion.div
+                    key={bp.type === 'family' ? bp.family.familyId : bp.badge.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.02 }}
+                  >
+                    <Card
+                      className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] bg-white"
+                      onClick={() => setSelectedBadge(bp)}
+                    >
+                      <CardContent className="p-4 flex items-center gap-4">
+                        <img src={displayImage} alt={displayName} className="w-16 h-16 rounded-lg object-contain flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 truncate">{displayName}</p>
+                          <p className="text-sm text-gray-500 capitalize">{bp.type === 'family' ? bp.family.category : bp.badge.category}</p>
+                          <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-orange-400 rounded-full transition-all" style={{ width: `${bp.progress.percentage}%` }} />
+                          </div>
+                          <p className="text-xs text-orange-600 mt-1 font-medium">{bp.progress.percentage}% complete</p>
                         </div>
-                      </motion.button>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </div>
           )}
         </div>
 
