@@ -13,9 +13,24 @@ export const useSectionContext = () => {
 
 export const SectionProvider = ({ children }) => {
   const [selectedSection, setSelectedSection] = useState(null);
+  const [previousSection, setPreviousSection] = useState(null);
+  const [transitioning, setTransitioning] = useState(false);
   const [availableSections, setAvailableSections] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const changeSection = (newSectionId) => {
+    if (newSectionId === selectedSection) return;
+    setPreviousSection(selectedSection);
+    setTransitioning(true);
+    // Actual section change happens after animation via onTransitionComplete
+  };
+
+  const onTransitionComplete = (newSectionId) => {
+    setSelectedSection(newSectionId);
+    setPreviousSection(null);
+    setTransitioning(false);
+  };
 
   useEffect(() => {
     loadUserAndSections();
