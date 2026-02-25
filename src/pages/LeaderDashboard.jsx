@@ -135,6 +135,7 @@ const BadgesDue = ({ sections, selectedSection }) => {
 export default function LeaderDashboard() {
   const [user, setUser] = useState(null);
   const [leader, setLeader] = useState(null);
+  const { selectedSection } = useSectionContext();
 
   useEffect(() => {
     loadUserData();
