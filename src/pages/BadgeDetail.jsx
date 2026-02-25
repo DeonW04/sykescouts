@@ -142,8 +142,7 @@ export default function BadgeDetail() {
       const existing = progress.find(p => p.member_id === memberId && p.requirement_id === reqId);
       const req = requirements.find(r => r.id === reqId);
       const requiredCount = req?.required_completions || 1;
-      
-      // Check if member has enough nights away
+
       if (increment && req?.nights_away_required) {
         const memberData = await base44.entities.Member.filter({ id: memberId });
         const member = memberData[0];
@@ -152,14 +151,12 @@ export default function BadgeDetail() {
           throw new Error('Not enough nights away');
         }
       }
-      
+
       if (existing) {
         const currentCount = existing.completion_count || 0;
         const newCount = increment ? currentCount + 1 : Math.max(0, currentCount - 1);
         const isComplete = newCount >= requiredCount;
-        
         if (newCount === 0) {
-          // Delete if count goes to 0
           return base44.entities.MemberRequirementProgress.delete(existing.id);
         } else {
           return base44.entities.MemberRequirementProgress.update(existing.id, {
@@ -170,7 +167,6 @@ export default function BadgeDetail() {
           });
         }
       } else if (increment) {
-        // Create new progress record
         const isComplete = 1 >= requiredCount;
         return base44.entities.MemberRequirementProgress.create({
           member_id: memberId,
@@ -184,14 +180,66 @@ export default function BadgeDetail() {
         });
       }
     },
-    onSuccess: async (data, variables) => {
-      await queryClient.invalidateQueries({ queryKey: ['req-progress'] });
-      
-      const updatedProgress = await base44.entities.MemberRequirementProgress.filter({ 
-        badge_id: badgeId, 
-        member_id: variables.memberId 
+
+    onMutate: async ({ memberId, reqId, increment }) => {
+      // Cancel any outgoing refetches so they don't overwrite optimistic update
+      await queryClient.cancelQueries({ queryKey: ['req-progress', badgeId] });
+
+      // Snapshot current cache
+      const previousProgress = queryClient.getQueryData(['req-progress', badgeId]);
+
+      const req = requirements.find(r => r.id === reqId);
+      const requiredCount = req?.required_completions || 1;
+
+      // Optimistically update the cache
+      queryClient.setQueryData(['req-progress', badgeId], (old = []) => {
+        const existing = old.find(p => p.member_id === memberId && p.requirement_id === reqId);
+        const currentCount = existing?.completion_count || 0;
+        const newCount = increment ? currentCount + 1 : Math.max(0, currentCount - 1);
+        const isComplete = newCount >= requiredCount;
+
+        if (newCount === 0) {
+          return old.filter(p => !(p.member_id === memberId && p.requirement_id === reqId));
+        }
+
+        if (existing) {
+          return old.map(p =>
+            p.member_id === memberId && p.requirement_id === reqId
+              ? { ...p, completion_count: newCount, completed: isComplete,
+                  completed_date: isComplete ? new Date().toISOString().split('T')[0] : null }
+              : p
+          );
+        } else {
+          return [...old, {
+            id: `optimistic-${memberId}-${reqId}`,
+            member_id: memberId,
+            badge_id: badgeId,
+            module_id: req.module_id,
+            requirement_id: reqId,
+            completion_count: newCount,
+            completed: isComplete,
+            completed_date: isComplete ? new Date().toISOString().split('T')[0] : null,
+            source: 'manual',
+          }];
+        }
       });
-      
+
+      return { previousProgress };
+    },
+
+    onError: (err, variables, context) => {
+      // Roll back on error
+      if (context?.previousProgress) {
+        queryClient.setQueryData(['req-progress', badgeId], context.previousProgress);
+      }
+    },
+
+    onSuccess: async (data, variables) => {
+      const updatedProgress = await base44.entities.MemberRequirementProgress.filter({
+        badge_id: badgeId,
+        member_id: variables.memberId
+      });
+
       const isOneMod2 = badge?.completion_rule === 'one_module';
       let allModulesComplete;
       if (isOneMod2) {
@@ -212,11 +260,10 @@ export default function BadgeDetail() {
           }
         }
       }
-      
-      // Always fetch fresh badge progress to avoid stale state
+
       const freshBadgeProgress = await base44.entities.MemberBadgeProgress.filter({ badge_id: badgeId, member_id: variables.memberId });
       const existingBadgeProgress = freshBadgeProgress[0];
-      
+
       if (allModulesComplete) {
         if (existingBadgeProgress) {
           if (existingBadgeProgress.status !== 'completed') {
@@ -244,7 +291,9 @@ export default function BadgeDetail() {
           toast.info('Badge award removed — member no longer meets requirements.');
         }
       }
-      
+
+      // Final sync with real server data
+      queryClient.invalidateQueries({ queryKey: ['req-progress', badgeId] });
       queryClient.invalidateQueries({ queryKey: ['badge-progress'] });
       queryClient.invalidateQueries({ queryKey: ['awards'] });
     },
