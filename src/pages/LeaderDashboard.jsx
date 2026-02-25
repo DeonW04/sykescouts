@@ -13,7 +13,9 @@ import { format } from 'date-fns';
 
 const UpcomingMeetings = ({ sections }) => {
   const navigate = useNavigate();
-  const sectionIds = sections.map(s => s.id);
+  const { selectedSection } = useSectionContext();
+  const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
+  const sectionIds = filteredSections.map(s => s.id);
   
   const { data: programmes = [] } = useQuery({
     queryKey: ['upcoming-programmes', sectionIds],
