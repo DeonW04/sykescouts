@@ -342,7 +342,11 @@ export default function LeaderProgramme() {
         open={showNewTermDialog}
         onOpenChange={(open) => {
           setShowNewTermDialog(open);
-          if (!open) setEditingTerm(null);
+          if (!open) {
+            setEditingTerm(null);
+            queryClient.invalidateQueries({ queryKey: ['terms'] });
+            queryClient.invalidateQueries({ queryKey: ['term-meetings'] });
+          }
         }}
         sections={sections.filter(s => s.id === selectedSection)}
         editTerm={editingTerm}
