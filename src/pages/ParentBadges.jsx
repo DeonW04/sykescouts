@@ -929,7 +929,14 @@ export default function ParentBadges() {
                       />
                       <div>
                         <DialogTitle className="text-2xl">{selectedBadge.badge.name}</DialogTitle>
-                        <Badge className="mt-1 capitalize">{selectedBadge.badge.category}</Badge>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge className="capitalize">{selectedBadge.badge.category}</Badge>
+                          {selectedBadge.progress?.isCompleted && (
+                            <Badge className="bg-green-600 flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" /> Earned
+                            </Badge>
+                          )}
+                        </div>
                         {selectedBadge.badge.description && (
                           <p className="text-gray-600 mt-2">{selectedBadge.badge.description}</p>
                         )}
