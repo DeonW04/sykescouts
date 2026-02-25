@@ -92,14 +92,6 @@ export default function HikesAwayBadgeDetail() {
       <LeaderNav />
       <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(createPageUrl('LeaderBadges'))}
-            className="text-white hover:bg-white/10 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Badges
-          </Button>
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-4">
               <Footprints className="w-12 h-12" />
