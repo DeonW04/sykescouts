@@ -81,14 +81,6 @@ export default function EventUpdateList() {
       
       <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(createPageUrl('Communications'))}
-            className="text-white hover:bg-white/10 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold">Event Updates</h1>
             <Button onClick={createNewPage} className="bg-white text-orange-600 hover:bg-gray-100">
