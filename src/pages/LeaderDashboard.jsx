@@ -69,9 +69,10 @@ const UpcomingMeetings = ({ sections, selectedSection }) => {
   );
 };
 
-const BadgesDue = ({ sections }) => {
+const BadgesDue = ({ sections, selectedSection }) => {
   const navigate = useNavigate();
-  const sectionIds = sections.map(s => s.id);
+  const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
+  const sectionIds = filteredSections.map(s => s.id);
 
   const { data: members = [] } = useQuery({
     queryKey: ['members'],
