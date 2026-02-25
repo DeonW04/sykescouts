@@ -90,14 +90,6 @@ Focus on practical, specific risks following Scouts UK safety standards. Conside
       {/* Header */}
       <div className="bg-gradient-to-r from-[#7413dc] to-[#ff66b2] text-white py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(createPageUrl('LeaderDashboard'))}
-            className="text-white hover:bg-white/20 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
           <div className="flex items-center gap-4 mb-2">
             <ShieldAlert className="w-12 h-12" />
             <div>
