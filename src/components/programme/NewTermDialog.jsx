@@ -50,12 +50,55 @@ export default function NewTermDialog({ open, onOpenChange, sections, editTerm }
     }
   }, [editTerm, open]);
 
+  // Compute all meeting dates for a term definition
+  const getMeetingDates = (data) => {
+    const dayOfWeekMap = { 'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6 };
+    const targetDay = dayOfWeekMap[data.meeting_day];
+    const start = new Date(data.start_date);
+    const end = new Date(data.end_date);
+    const halfTermStart = new Date(data.half_term_start);
+    const halfTermEnd = new Date(data.half_term_end);
+    const dates = [];
+    let current = new Date(start);
+    while (current.getDay() !== targetDay) current.setDate(current.getDate() + 1);
+    while (current <= end) {
+      const isHalfTerm = current >= halfTermStart && current <= halfTermEnd;
+      if (!isHalfTerm) dates.push(current.toISOString().split('T')[0]);
+      current.setDate(current.getDate() + 7);
+    }
+    return dates;
+  };
+
   const createTermMutation = useMutation({
-    mutationFn: (data) => editTerm 
-      ? base44.entities.Term.update(editTerm.id, data)
-      : base44.entities.Term.create(data),
+    mutationFn: async (data) => {
+      if (editTerm) {
+        await base44.entities.Term.update(editTerm.id, data);
+        // Reconcile Programme records: add/remove meetings as needed
+        const newDates = new Set(getMeetingDates(data));
+        const existingProgs = await base44.entities.Programme.filter({ section_id: editTerm.section_id });
+        const termProgs = existingProgs.filter(p => {
+          // A programme belongs to this term if its date falls within the old term range
+          const d = new Date(p.date);
+          return d >= new Date(editTerm.start_date) && d <= new Date(editTerm.end_date);
+        });
+        const existingDates = new Set(termProgs.map(p => p.date));
+        // Remove programmes for dates no longer in the term
+        const toRemove = termProgs.filter(p => !newDates.has(p.date));
+        // Add placeholder programmes for new dates (only if no programme exists)
+        const toAdd = [...newDates].filter(d => !existingDates.has(d));
+        await Promise.all([
+          ...toRemove.map(p => base44.entities.Programme.delete(p.id)),
+          // We don't auto-create programmes for new dates – they appear as "not planned yet"
+        ]);
+        // toAdd: nothing to create, new dates just show as empty in the list
+      } else {
+        await base44.entities.Term.create(data);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['terms'] });
+      queryClient.invalidateQueries({ queryKey: ['programmes'] });
+      queryClient.invalidateQueries({ queryKey: ['term-meetings'] });
       onOpenChange(false);
       setFormData({
         title: '',
