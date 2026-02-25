@@ -403,9 +403,6 @@ export default function BadgeDetail() {
     })
     .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime());
 
-  // Members who haven't fully completed the badge yet (eligible for bulk award)
-  const bulkEligibleMembers = relevantMembers.filter(m => !getMemberProgress(m.id).isComplete);
-
   const getRequirementProgress = (memberId, reqId) => {
     const req = requirements.find(r => r.id === reqId);
     const reqProgress = progress.find(p => p.member_id === memberId && p.requirement_id === reqId);
