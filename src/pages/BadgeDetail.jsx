@@ -142,7 +142,6 @@ export default function BadgeDetail() {
 
   const toggleReqMutation = useMutation({
     mutationFn: async ({ memberId, reqId, increment }) => {
-      const existing = progress.find(p => p.member_id === memberId && p.requirement_id === reqId);
       const req = requirements.find(r => r.id === reqId);
       const requiredCount = req?.required_completions || 1;
 
@@ -154,6 +153,13 @@ export default function BadgeDetail() {
           throw new Error('Not enough nights away');
         }
       }
+
+      // Always fetch fresh from DB — never trust stale closed-over `progress`
+      const freshRecords = await base44.entities.MemberRequirementProgress.filter({
+        member_id: memberId,
+        requirement_id: reqId,
+      });
+      const existing = freshRecords[0];
 
       if (existing) {
         const currentCount = existing.completion_count || 0;
