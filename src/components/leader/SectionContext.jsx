@@ -19,16 +19,19 @@ export const SectionProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [pendingSectionId, setPendingSectionId] = useState(null);
+
   const changeSection = (newSectionId) => {
     if (newSectionId === selectedSection) return;
     setPreviousSection(selectedSection);
+    setPendingSectionId(newSectionId);
     setTransitioning(true);
-    // Actual section change happens after animation via onTransitionComplete
   };
 
-  const onTransitionComplete = (newSectionId) => {
-    setSelectedSection(newSectionId);
+  const onTransitionComplete = () => {
+    setSelectedSection(pendingSectionId);
     setPreviousSection(null);
+    setPendingSectionId(null);
     setTransitioning(false);
   };
 
