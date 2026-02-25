@@ -34,6 +34,8 @@ export default function MeetingDetail() {
   const termId = urlParams.get('term_id');
 
   const [activeTab, setActiveTab] = useState('plan');
+  const [swapDialogOpen, setSwapDialogOpen] = useState(false);
+  const [swapTargetDate, setSwapTargetDate] = useState('');
 
   const [formData, setFormData] = useState({
     title: '',
