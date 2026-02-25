@@ -163,16 +163,7 @@ export default function ParentEventDetail() {
           </div>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]"></div>
           
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative">
-            <Button
-              variant="ghost"
-              onClick={() => navigate(createPageUrl('ParentEvents'))}
-              className="text-white hover:bg-white/20 mb-6 -ml-2"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Events
-            </Button>
-            
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative">            
             <div className="flex flex-col lg:flex-row items-start justify-between gap-6">
               <div className="flex-1">
                 <Badge className="bg-white/20 backdrop-blur text-white mb-3 border-0">{event.type}</Badge>
