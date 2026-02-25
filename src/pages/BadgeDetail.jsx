@@ -758,7 +758,20 @@ export default function BadgeDetail() {
                         </td>
                         {modules.sort((a, b) => a.order - b.order).map((module, moduleIdx) => {
                           const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
-                          const moduleComplete = isModuleComplete(member.id, module);
+                          const moduleComplete = (() => {
+                            if (module.completion_rule === 'x_of_n_required') {
+                              const needed = module.required_count || moduleReqs.length;
+                              const completedReqs = progress.filter(
+                                p => p.member_id === member.id && p.module_id === module.id && p.completed
+                              );
+                              return completedReqs.length >= needed;
+                            } else {
+                              return moduleReqs.every(req => {
+                                const reqProg = progress.find(p => p.member_id === member.id && p.requirement_id === req.id);
+                                return (reqProg?.completion_count || 0) >= (req.required_completions || 1);
+                              });
+                            }
+                          })();
                           const moduleCompletedCount = progress.filter(
                             p => p.member_id === member.id && p.module_id === module.id && p.completed
                           ).length;
