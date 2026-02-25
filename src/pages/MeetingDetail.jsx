@@ -395,6 +395,17 @@ export default function MeetingDetail() {
           </TabsContent>
 
           <TabsContent value="plan" className="space-y-6">
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setSwapTargetDate(''); setSwapDialogOpen(true); }}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeftRight className="w-4 h-4" />
+                Rearrange
+              </Button>
+            </div>
             <Card>
               <CardHeader>
                 <CardTitle>Meeting Details</CardTitle>
