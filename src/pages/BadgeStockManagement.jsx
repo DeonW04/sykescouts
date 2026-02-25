@@ -324,14 +324,6 @@ export default function BadgeStockManagement() {
       
       <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(createPageUrl('LeaderBadges'))}
-            className="text-white hover:bg-white/20 mb-6"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Badges
-          </Button>
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
               <Package className="w-8 h-8 text-white" />
