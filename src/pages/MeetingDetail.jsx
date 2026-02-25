@@ -669,6 +669,47 @@ export default function MeetingDetail() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Swap Dialog */}
+      <Dialog open={swapDialogOpen} onOpenChange={setSwapDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowLeftRight className="w-5 h-5" />
+              Rearrange Meeting
+            </DialogTitle>
+            <DialogDescription>
+              Select another meeting in this term to swap dates with. The plan and attendance records will be swapped.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Select value={swapTargetDate} onValueChange={setSwapTargetDate}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a meeting to swap with..." />
+              </SelectTrigger>
+              <SelectContent>
+                {termMeetingDates
+                  .filter(d => d !== date)
+                  .map(d => (
+                    <SelectItem key={d} value={d}>
+                      {new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSwapDialogOpen(false)}>Cancel</Button>
+            <Button
+              className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white"
+              disabled={!swapTargetDate || swapMutation.isPending}
+              onClick={() => swapMutation.mutate(swapTargetDate)}
+            >
+              {swapMutation.isPending ? 'Swapping...' : 'Swap Meetings'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
