@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Award, CheckCircle, Circle, Info, Target, Users, TrendingUp, Edit, Trash2, Package, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Award, CheckCircle, Circle, Info, Target, Users, TrendingUp, Edit, Trash2, Package, AlertTriangle, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
@@ -22,6 +22,10 @@ export default function BadgeDetail() {
   const { selectedSection } = useSectionContext();
   const [isAdmin, setIsAdmin] = useState(false);
   const [stockDialog, setStockDialog] = useState(null);
+  const [bulkAwardOpen, setBulkAwardOpen] = useState(false);
+  const [bulkSelectedMembers, setBulkSelectedMembers] = useState([]);
+  const [bulkAwarding, setBulkAwarding] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0, memberName: '' });
 
   useEffect(() => {
     base44.auth.me().then(u => setIsAdmin(u?.role === 'admin')).catch(() => {});
@@ -115,7 +119,6 @@ export default function BadgeDetail() {
           }
         }
       }
-      // Always fetch fresh badge progress to avoid stale state
       const freshBadgeProgress = await base44.entities.MemberBadgeProgress.filter({ badge_id: badgeId, member_id: variables.memberId });
       const existingBadgeProgress = freshBadgeProgress[0];
       if (allModulesComplete) {
@@ -182,16 +185,11 @@ export default function BadgeDetail() {
     },
 
     onMutate: async ({ memberId, reqId, increment }) => {
-      // Cancel any outgoing refetches so they don't overwrite optimistic update
       await queryClient.cancelQueries({ queryKey: ['req-progress', badgeId] });
-
-      // Snapshot current cache
       const previousProgress = queryClient.getQueryData(['req-progress', badgeId]);
-
       const req = requirements.find(r => r.id === reqId);
       const requiredCount = req?.required_completions || 1;
 
-      // Optimistically update the cache
       queryClient.setQueryData(['req-progress', badgeId], (old = []) => {
         const existing = old.find(p => p.member_id === memberId && p.requirement_id === reqId);
         const currentCount = existing?.completion_count || 0;
@@ -228,7 +226,6 @@ export default function BadgeDetail() {
     },
 
     onError: (err, variables, context) => {
-      // Roll back on error
       if (context?.previousProgress) {
         queryClient.setQueryData(['req-progress', badgeId], context.previousProgress);
       }
@@ -292,12 +289,106 @@ export default function BadgeDetail() {
         }
       }
 
-      // Final sync with real server data
       queryClient.invalidateQueries({ queryKey: ['req-progress', badgeId] });
       queryClient.invalidateQueries({ queryKey: ['badge-progress'] });
       queryClient.invalidateQueries({ queryKey: ['awards'] });
     },
   });
+
+  // ─── Bulk Award Logic ────────────────────────────────────────────────────────
+
+  const handleBulkAward = async () => {
+    if (bulkSelectedMembers.length === 0) return;
+    setBulkAwarding(true);
+    const today = new Date().toISOString().split('T')[0];
+
+    for (let i = 0; i < bulkSelectedMembers.length; i++) {
+      const memberId = bulkSelectedMembers[i];
+      const member = relevantMembers.find(m => m.id === memberId);
+      setBulkProgress({ current: i + 1, total: bulkSelectedMembers.length, memberName: member?.full_name || '' });
+
+      // 1. Tick every requirement to fully complete
+      for (const req of requirements) {
+        const requiredCount = req.required_completions || 1;
+        const existing = await base44.entities.MemberRequirementProgress.filter({
+          member_id: memberId,
+          requirement_id: req.id,
+        });
+        const existingRecord = existing[0];
+
+        if (existingRecord) {
+          if (!existingRecord.completed) {
+            await base44.entities.MemberRequirementProgress.update(existingRecord.id, {
+              completion_count: requiredCount,
+              completed: true,
+              completed_date: today,
+              source: 'manual',
+            });
+          }
+        } else {
+          await base44.entities.MemberRequirementProgress.create({
+            member_id: memberId,
+            badge_id: badgeId,
+            module_id: req.module_id,
+            requirement_id: req.id,
+            completion_count: requiredCount,
+            completed: true,
+            completed_date: today,
+            source: 'manual',
+          });
+        }
+      }
+
+      // 2. Mark badge progress as completed
+      const freshBadgeProgress = await base44.entities.MemberBadgeProgress.filter({
+        badge_id: badgeId,
+        member_id: memberId,
+      });
+      const existingBadgeProgress = freshBadgeProgress[0];
+      if (existingBadgeProgress) {
+        if (existingBadgeProgress.status !== 'completed') {
+          await base44.entities.MemberBadgeProgress.update(existingBadgeProgress.id, {
+            status: 'completed',
+            completion_date: today,
+          });
+        }
+      } else {
+        await base44.entities.MemberBadgeProgress.create({
+          member_id: memberId,
+          badge_id: badgeId,
+          status: 'completed',
+          completion_date: today,
+        });
+      }
+
+      // 3. Create award if it doesn't exist
+      const existingAward = await base44.entities.MemberBadgeAward.filter({
+        member_id: memberId,
+        badge_id: badgeId,
+      });
+      if (existingAward.length === 0) {
+        await base44.entities.MemberBadgeAward.create({
+          member_id: memberId,
+          badge_id: badgeId,
+          completed_date: today,
+          award_status: 'pending',
+        });
+      }
+    }
+
+    // Refresh all relevant queries
+    await queryClient.invalidateQueries({ queryKey: ['req-progress', badgeId] });
+    await queryClient.invalidateQueries({ queryKey: ['badge-progress'] });
+    await queryClient.invalidateQueries({ queryKey: ['awards'] });
+
+    toast.success(`${bulkSelectedMembers.length} member${bulkSelectedMembers.length > 1 ? 's' : ''} awarded the badge!`);
+    setBulkAwarding(false);
+    setBulkAwardOpen(false);
+    setBulkSelectedMembers([]);
+    setBulkProgress({ current: 0, total: 0, memberName: '' });
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────────
 
   if (!badge) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -307,11 +398,13 @@ export default function BadgeDetail() {
 
   const relevantMembers = members
     .filter(m => {
-      // If a section is selected in context, filter to that section (unless badge has its own specific section that differs)
       if (selectedSection) return m.section_id === selectedSection;
       return badge.section === 'all' || m.section_id === sections.find(s => s.name === badge.section)?.id;
     })
     .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime());
+
+  // Members who haven't fully completed the badge yet (eligible for bulk award)
+  const bulkEligibleMembers = relevantMembers.filter(m => !getMemberProgress(m.id).isComplete);
 
   const getRequirementProgress = (memberId, reqId) => {
     const req = requirements.find(r => r.id === reqId);
@@ -340,17 +433,13 @@ export default function BadgeDetail() {
     if (module.completion_rule === 'x_of_n_required') {
       return completedReqs.length >= (module.required_count || moduleReqs.length);
     }
-    // Default: all_required
     return completedReqs.length === moduleReqs.length;
   };
 
   const isOneModuleRule = badge?.completion_rule === 'one_module';
 
-  // Progress based on individual requirements, respecting x_of_n modules and one_module badge rule
   const getMemberProgress = (memberId) => {
     if (isOneModuleRule) {
-      // Badge complete if ANY single module is fully complete
-      // Progress bar shows the best (most complete) module
       let bestPct = 0;
       let bestCompleted = 0;
       let bestTotal = 0;
@@ -411,7 +500,6 @@ export default function BadgeDetail() {
         );
         if (completedReqs.length < needed) { isComplete = false; break; }
       } else {
-        // all_required: every req must have completion_count >= required_completions
         const allReqsDone = moduleReqs.every(req => {
           const reqProg = progress.find(p => p.member_id === memberId && p.requirement_id === req.id);
           return (reqProg?.completion_count || 0) >= (req.required_completions || 1);
@@ -430,16 +518,13 @@ export default function BadgeDetail() {
     };
   };
 
-  // Check if unchecking a requirement would cause the badge to become incomplete
   const wouldRemoveBadge = (memberId, reqId) => {
     const req = requirements.find(r => r.id === reqId);
     if (!req) return false;
     const module = modules.find(m => m.id === req.module_id);
     if (!module) return false;
-    // Is badge currently complete?
     const currentlyComplete = getMemberProgress(memberId).isComplete;
     if (!currentlyComplete) return false;
-    // Check if removing this req makes the module incomplete
     const moduleReqs = requirements.filter(r => r.module_id === module.id);
     const completedReqs = progress.filter(p => p.member_id === memberId && p.module_id === module.id && p.completed && p.requirement_id !== reqId);
     let moduleWillBeComplete;
@@ -463,7 +548,6 @@ export default function BadgeDetail() {
   const completedCount = relevantMembers.filter(m => getMemberProgress(m.id).isComplete).length;
   const inProgressCount = relevantMembers.filter(m => {
     const prog = getMemberProgress(m.id);
-    // At least 1 individual requirement done, not fully complete
     return prog.hasAnyProgress && !prog.isComplete;
   }).length;
   const notStartedCount = relevantMembers.filter(m => !getMemberProgress(m.id).hasAnyProgress).length;
@@ -514,6 +598,18 @@ export default function BadgeDetail() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-wrap gap-3 mb-8"
         >
+          {/* Bulk Award button — visible to all leaders */}
+          <Button
+            onClick={() => {
+              setBulkSelectedMembers([]);
+              setBulkAwardOpen(true);
+            }}
+            className="bg-[#7413dc] hover:bg-[#5f0fb8] text-white"
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            Bulk Award Badge
+          </Button>
+
           {isAdmin && (
             <>
               <Button
@@ -929,6 +1025,120 @@ export default function BadgeDetail() {
               Yes, Remove Award
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Award Dialog */}
+      <Dialog open={bulkAwardOpen} onOpenChange={(open) => { if (!bulkAwarding) { setBulkAwardOpen(open); if (!open) setBulkSelectedMembers([]); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-[#7413dc]" />
+              Bulk Award Badge
+            </DialogTitle>
+            <DialogDescription>
+              Select members to award this badge to. All requirements will be ticked and the badge will be marked as completed for each selected member.
+            </DialogDescription>
+          </DialogHeader>
+
+          {bulkAwarding ? (
+            <div className="py-8 flex flex-col items-center gap-4">
+              <div className="animate-spin w-10 h-10 border-4 border-[#7413dc] border-t-transparent rounded-full" />
+              <div className="text-center">
+                <p className="font-semibold text-gray-900">Awarding badges...</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  {bulkProgress.memberName} ({bulkProgress.current} of {bulkProgress.total})
+                </p>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="h-full bg-[#7413dc] rounded-full transition-all duration-300"
+                  style={{ width: `${(bulkProgress.current / bulkProgress.total) * 100}%` }}
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="max-h-80 overflow-y-auto space-y-1 py-2">
+                {bulkEligibleMembers.length === 0 ? (
+                  <p className="text-center text-gray-500 py-6 text-sm">All members have already completed this badge.</p>
+                ) : (
+                  <>
+                    {/* Select all toggle */}
+                    <div
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer border-b border-gray-100 mb-2"
+                      onClick={() => {
+                        if (bulkSelectedMembers.length === bulkEligibleMembers.length) {
+                          setBulkSelectedMembers([]);
+                        } else {
+                          setBulkSelectedMembers(bulkEligibleMembers.map(m => m.id));
+                        }
+                      }}
+                    >
+                      <Checkbox
+                        checked={bulkSelectedMembers.length === bulkEligibleMembers.length && bulkEligibleMembers.length > 0}
+                        onCheckedChange={() => {}}
+                        className="pointer-events-none"
+                      />
+                      <span className="text-sm font-semibold text-gray-700">
+                        Select all ({bulkEligibleMembers.length} members)
+                      </span>
+                    </div>
+
+                    {bulkEligibleMembers.map(member => {
+                      const prog = getMemberProgress(member.id);
+                      const isSelected = bulkSelectedMembers.includes(member.id);
+                      return (
+                        <div
+                          key={member.id}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${isSelected ? 'bg-purple-50 border border-purple-200' : 'hover:bg-gray-50'}`}
+                          onClick={() => {
+                            setBulkSelectedMembers(prev =>
+                              prev.includes(member.id)
+                                ? prev.filter(id => id !== member.id)
+                                : [...prev, member.id]
+                            );
+                          }}
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => {}}
+                            className={`pointer-events-none ${isSelected ? 'border-[#7413dc] data-[state=checked]:bg-[#7413dc]' : ''}`}
+                          />
+                          <div className="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                            {member.full_name.charAt(0)}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{member.full_name}</p>
+                            <p className="text-xs text-gray-400">{prog.percentage}% complete</p>
+                          </div>
+                          {prog.hasAnyProgress && (
+                            <Badge variant="outline" className="text-xs border-blue-300 text-blue-600 flex-shrink-0">
+                              In progress
+                            </Badge>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-2 pt-2 border-t border-gray-100">
+                <Button variant="outline" onClick={() => { setBulkAwardOpen(false); setBulkSelectedMembers([]); }}>
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-[#7413dc] hover:bg-[#5f0fb8] text-white"
+                  disabled={bulkSelectedMembers.length === 0}
+                  onClick={handleBulkAward}
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  Award to {bulkSelectedMembers.length} member{bulkSelectedMembers.length !== 1 ? 's' : ''}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
