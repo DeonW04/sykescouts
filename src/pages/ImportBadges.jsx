@@ -280,13 +280,6 @@ export default function ImportBadges() {
                 <p className="mt-1 text-white/80">Import badge definitions from CSV files</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-              onClick={() => navigate(createPageUrl('ManageBadges'))}
-            >
-              Back to Badges
-            </Button>
           </div>
         </div>
       </div>
