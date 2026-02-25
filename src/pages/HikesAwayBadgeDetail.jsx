@@ -1,20 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Footprints, Trophy } from 'lucide-react';
+import { ArrowLeft, Footprints, Trophy, Check, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import LeaderNav from '../components/leader/LeaderNav';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 const STAGE_THRESHOLDS = [1, 2, 5, 10, 15, 20, 35, 50];
 
 export default function HikesAwayBadgeDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [editingMemberId, setEditingMemberId] = useState(null);
+  const [editingValue, setEditingValue] = useState('');
+  const inputRef = useRef(null);
 
   const { data: members = [] } = useQuery({
     queryKey: ['members'],
@@ -47,6 +51,49 @@ export default function HikesAwayBadgeDetail() {
       queryClient.invalidateQueries({ queryKey: ['awards'] });
     },
   });
+
+  const updateHikesMutation = useMutation({
+    mutationFn: async ({ memberId, newCount }) => {
+      await base44.entities.Member.update(memberId, {
+        total_hikes_away: newCount,
+      });
+    },
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ['members'] });
+      toast.success('Hikes count updated');
+      setEditingMemberId(null);
+      setEditingValue('');
+    },
+    onError: () => {
+      toast.error('Failed to update hikes count');
+    },
+  });
+
+  const startEditing = (member) => {
+    setEditingMemberId(member.id);
+    setEditingValue(String(member.total_hikes_away || 0));
+    // Focus input on next tick after render
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const cancelEditing = () => {
+    setEditingMemberId(null);
+    setEditingValue('');
+  };
+
+  const saveEditing = (memberId) => {
+    const parsed = parseInt(editingValue, 10);
+    if (isNaN(parsed) || parsed < 0) {
+      toast.error('Please enter a valid number');
+      return;
+    }
+    updateHikesMutation.mutate({ memberId, newCount: parsed });
+  };
+
+  const handleKeyDown = (e, memberId) => {
+    if (e.key === 'Enter') saveEditing(memberId);
+    if (e.key === 'Escape') cancelEditing();
+  };
 
   // Auto-award badges based on total hikes
   useEffect(() => {
@@ -114,7 +161,7 @@ export default function HikesAwayBadgeDetail() {
                 <p className="text-sm text-blue-800">
                   When creating activities or camps, add badge criteria and mark the checkbox "Counts as hike away". 
                   When members attend and the badge criteria is awarded, it will automatically increment their hike count 
-                  and award the appropriate badges.
+                  and award the appropriate badges. You can also click on any member's hike count to edit it directly.
                 </p>
               </div>
             </div>
@@ -172,15 +219,55 @@ export default function HikesAwayBadgeDetail() {
                     const progress = nextStage 
                       ? Math.round((totalHikes / nextStage) * 100)
                       : 100;
+                    const isEditing = editingMemberId === member.id;
+                    const isSaving = updateHikesMutation.isPending && updateHikesMutation.variables?.memberId === member.id;
 
                     return (
                       <TableRow key={member.id}>
                         <TableCell className="font-medium">{member.full_name}</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Footprints className="w-4 h-4 text-gray-400" />
-                            <span className="text-lg font-bold text-[#7413dc]">{totalHikes}</span>
-                          </div>
+                          {isEditing ? (
+                            <div className="flex items-center gap-2">
+                              <Footprints className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              <input
+                                ref={inputRef}
+                                type="number"
+                                min={0}
+                                value={editingValue}
+                                onChange={(e) => setEditingValue(e.target.value)}
+                                onKeyDown={(e) => handleKeyDown(e, member.id)}
+                                className="w-20 text-lg font-bold text-[#7413dc] border-2 border-[#7413dc] rounded px-2 py-0.5 focus:outline-none focus:ring-2 focus:ring-[#7413dc]/30"
+                                disabled={isSaving}
+                              />
+                              <button
+                                onClick={() => saveEditing(member.id)}
+                                disabled={isSaving}
+                                className="w-7 h-7 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center flex-shrink-0 disabled:opacity-50 transition-colors"
+                                title="Save"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={cancelEditing}
+                                disabled={isSaving}
+                                className="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-600 flex items-center justify-center flex-shrink-0 disabled:opacity-50 transition-colors"
+                                title="Cancel"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => startEditing(member)}
+                              className="flex items-center gap-2 group rounded px-1 -mx-1 hover:bg-gray-100 transition-colors"
+                              title="Click to edit"
+                            >
+                              <Footprints className="w-4 h-4 text-gray-400" />
+                              <span className="text-lg font-bold text-[#7413dc] group-hover:underline decoration-dotted underline-offset-2">
+                                {totalHikes}
+                              </span>
+                            </button>
+                          )}
                         </TableCell>
                         <TableCell>
                           {nextStage ? (
