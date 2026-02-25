@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { useSectionContext } from '../components/leader/SectionContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Calendar, Award, CheckSquare, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt, Lightbulb, Package, TrendingUp } from 'lucide-react';
@@ -13,9 +12,7 @@ import { format } from 'date-fns';
 
 const UpcomingMeetings = ({ sections }) => {
   const navigate = useNavigate();
-  const { selectedSection } = useSectionContext();
-  const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
-  const sectionIds = filteredSections.map(s => s.id);
+  const sectionIds = sections.map(s => s.id);
   
   const { data: programmes = [] } = useQuery({
     queryKey: ['upcoming-programmes', sectionIds],
@@ -72,9 +69,7 @@ const UpcomingMeetings = ({ sections }) => {
 
 const BadgesDue = ({ sections }) => {
   const navigate = useNavigate();
-  const { selectedSection } = useSectionContext();
-  const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
-  const sectionIds = filteredSections.map(s => s.id);
+  const sectionIds = sections.map(s => s.id);
 
   const { data: members = [] } = useQuery({
     queryKey: ['members'],

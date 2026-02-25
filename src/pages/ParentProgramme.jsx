@@ -199,13 +199,13 @@ export default function ParentProgramme() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid md:grid-cols-2 gap-4">
                 {Object.values(programmeBadges).map(({ badge, requirements: reqs }) => (
-                  <div key={badge.id} className="flex flex-col items-center gap-2 p-3 bg-white rounded-xl border-2 border-yellow-100 hover:shadow-md transition-shadow text-center">
-                    <img src={badge.image_url} alt={badge.name} className="w-12 h-12 rounded-lg object-contain" />
-                    <div>
-                      <h4 className="font-semibold text-sm leading-tight">{badge.name}</h4>
-                      <p className="text-xs text-gray-500 mt-0.5">{reqs.length} req{reqs.length !== 1 ? 's' : ''}</p>
+                  <div key={badge.id} className="flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-yellow-100 hover:shadow-md transition-shadow">
+                    <img src={badge.image_url} alt={badge.name} className="w-20 h-20 rounded-lg object-contain" />
+                    <div className="flex-1">
+                      <h4 className="font-bold text-lg">{badge.name}</h4>
+                      <p className="text-sm text-gray-600 mt-1">{reqs.length} requirement{reqs.length !== 1 ? 's' : ''}</p>
                     </div>
                   </div>
                 ))}
