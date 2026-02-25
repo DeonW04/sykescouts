@@ -542,6 +542,9 @@ export default function BadgeDetail() {
     }
   };
 
+  // Members who haven't fully completed the badge yet (eligible for bulk award)
+  const bulkEligibleMembers = relevantMembers.filter(m => !getMemberProgress(m.id).isComplete);
+
   const completedCount = relevantMembers.filter(m => getMemberProgress(m.id).isComplete).length;
   const inProgressCount = relevantMembers.filter(m => {
     const prog = getMemberProgress(m.id);
