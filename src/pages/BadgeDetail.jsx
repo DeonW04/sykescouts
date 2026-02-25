@@ -479,14 +479,6 @@ export default function BadgeDetail() {
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(createPageUrl('LeaderBadges'))}
-            className="text-white hover:bg-white/20 mb-6"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Badges
-          </Button>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
