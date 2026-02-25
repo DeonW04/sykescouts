@@ -29,6 +29,7 @@ export default function AwardBadges() {
   const [manualAwardBadge, setManualAwardBadge] = useState(null);
   const [checkingJoiningIn, setCheckingJoiningIn] = useState(false);
   const [awardingDialog, setAwardingDialog] = useState(false); // 'loading' | 'success' | false
+  const [awardingProgress, setAwardingProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
     loadUser();
@@ -73,8 +74,11 @@ export default function AwardBadges() {
 
   const awardBadgesMutation = useMutation({
     mutationFn: async (awardIds) => {
+      // Initialise progress
+      setAwardingProgress({ current: 0, total: awardIds.length });
+
       const results = [];
-      for (const awardId of awardIds) {
+      for (const [index, awardId] of awardIds.entries()) {
         const award = awards.find(a => a.id === awardId);
         if (!award) continue;
 
@@ -105,6 +109,8 @@ export default function AwardBadges() {
         }
 
         results.push(awardId);
+        // Update progress after each award completes
+        setAwardingProgress({ current: index + 1, total: awardIds.length });
       }
       return results;
     },
@@ -113,7 +119,10 @@ export default function AwardBadges() {
       queryClient.invalidateQueries({ queryKey: ['badge-stock'] });
       setSelectedAwards([]);
       setAwardingDialog('success');
-      setTimeout(() => setAwardingDialog(false), 2000);
+      setTimeout(() => {
+        setAwardingDialog(false);
+        setAwardingProgress({ current: 0, total: 0 });
+      }, 2000);
     },
   });
 
@@ -198,6 +207,10 @@ export default function AwardBadges() {
       setCheckingJoiningIn(false);
     }
   };
+
+  const progressPct = awardingProgress.total > 0
+    ? Math.round((awardingProgress.current / awardingProgress.total) * 100)
+    : 0;
 
   const manualBadges = badges.filter(b => b.completion_rule === 'manual' && b.category === 'special');
 
@@ -482,15 +495,27 @@ export default function AwardBadges() {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  className="flex flex-col items-center gap-4"
+                  className="flex flex-col items-center gap-4 w-full"
                 >
                   <div className="relative w-20 h-20 flex items-center justify-center">
                     <div className="absolute inset-0 rounded-full border-4 border-purple-100" />
                     <Loader2 className="w-10 h-10 text-[#7413dc] animate-spin" />
                   </div>
-                  <div>
+                  <div className="w-full">
                     <p className="text-lg font-semibold text-gray-900">Awarding Badges...</p>
-                    <p className="text-sm text-gray-500 mt-1">Please wait a moment</p>
+                    <p className="text-sm text-gray-500 mt-1 mb-4">
+                      {awardingProgress.current} of {awardingProgress.total}
+                    </p>
+                    {/* Progress bar */}
+                    <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                      <motion.div
+                        className="h-full bg-[#7413dc] rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progressPct}%` }}
+                        transition={{ duration: 0.3, ease: 'easeOut' }}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">{progressPct}%</p>
                   </div>
                 </motion.div>
               )}
