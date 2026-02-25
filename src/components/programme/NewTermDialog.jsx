@@ -99,6 +99,7 @@ export default function NewTermDialog({ open, onOpenChange, sections, editTerm }
       queryClient.invalidateQueries({ queryKey: ['terms'] });
       queryClient.invalidateQueries({ queryKey: ['programmes'] });
       queryClient.invalidateQueries({ queryKey: ['term-meetings'] });
+      queryClient.invalidateQueries({ queryKey: ['term-meeting-dates'] });
       onOpenChange(false);
       setFormData({
         title: '',
