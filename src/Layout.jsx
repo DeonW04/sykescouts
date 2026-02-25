@@ -8,6 +8,8 @@ import { Toaster } from 'sonner';
 import { HelmetProvider } from 'react-helmet-async';
 import { SectionProvider } from './components/leader/SectionContext';
 import SectionSelector from './components/leader/SectionSelector';
+import SectionTransitionOverlay from './components/leader/SectionTransitionOverlay';
+import { useSectionContext } from './components/leader/SectionContext';
 
 export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
