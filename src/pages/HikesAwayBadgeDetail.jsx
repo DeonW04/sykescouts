@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -35,20 +35,6 @@ export default function HikesAwayBadgeDetail() {
     queryFn: () => base44.entities.MemberBadgeAward.filter({}),
   });
 
-  const autoAwardMutation = useMutation({
-    mutationFn: async ({ memberId, badgeId, hikesCount }) => {
-      await base44.entities.MemberBadgeAward.create({
-        member_id: memberId,
-        badge_id: badgeId,
-        completed_date: new Date().toISOString().split('T')[0],
-        award_status: 'pending',
-        notes: `Auto-awarded for reaching ${hikesCount} hikes away`
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['awards'] });
-    },
-  });
 
   const updateHikesMutation = useMutation({
     mutationFn: async ({ memberId, newCount }) => {
@@ -126,32 +112,6 @@ export default function HikesAwayBadgeDetail() {
   };
 
   // Auto-award badges based on total hikes
-  useEffect(() => {
-    if (members.length > 0 && hikesAwayBadges.length > 0) {
-      members.forEach(member => {
-        const totalHikes = member.total_hikes_away || 0;
-        
-        STAGE_THRESHOLDS.forEach(threshold => {
-          if (totalHikes >= threshold) {
-            const badge = hikesAwayBadges.find(b => b.stage_number === threshold);
-            if (badge) {
-              const alreadyAwarded = awards.some(a => 
-                a.member_id === member.id && a.badge_id === badge.id
-              );
-              
-              if (!alreadyAwarded) {
-                autoAwardMutation.mutate({
-                  memberId: member.id,
-                  badgeId: badge.id,
-                  hikesCount: threshold
-                });
-              }
-            }
-          }
-        });
-      });
-    }
-  }, [members, hikesAwayBadges, awards]);
 
   const getMemberBadges = (memberId) => {
     const memberAwards = awards.filter(a => a.member_id === memberId);
