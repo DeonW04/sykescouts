@@ -87,6 +87,78 @@ export default function MeetingDetail() {
     enabled: !!section,
   });
 
+  // All meetings in this term (for the swap dropdown)
+  const { data: termMeetingDates = [] } = useQuery({
+    queryKey: ['term-meeting-dates', termId],
+    queryFn: async () => {
+      if (!termId) return [];
+      const terms = await base44.entities.Term.filter({ id: termId });
+      const term = terms[0];
+      if (!term) return [];
+      const dayOfWeekMap = { 'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6 };
+      const targetDay = dayOfWeekMap[term.meeting_day];
+      const start = new Date(term.start_date);
+      const end = new Date(term.end_date);
+      const halfTermStart = new Date(term.half_term_start);
+      const halfTermEnd = new Date(term.half_term_end);
+      const dates = [];
+      let current = new Date(start);
+      while (current.getDay() !== targetDay) current.setDate(current.getDate() + 1);
+      while (current <= end) {
+        const isHalfTerm = current >= halfTermStart && current <= halfTermEnd;
+        if (!isHalfTerm) {
+          dates.push(current.toISOString().split('T')[0]);
+        }
+        current.setDate(current.getDate() + 7);
+      }
+      return dates;
+    },
+    enabled: !!termId,
+  });
+
+  const swapMutation = useMutation({
+    mutationFn: async (targetDate) => {
+      // Fetch both programmes (may not exist)
+      const [thisProgs, targetProgs] = await Promise.all([
+        base44.entities.Programme.filter({ section_id: sectionId, date }),
+        base44.entities.Programme.filter({ section_id: sectionId, date: targetDate }),
+      ]);
+      const thisProg = thisProgs[0];
+      const targetProg = targetProgs[0];
+
+      // Swap: update each programme to the other's date
+      if (thisProg && targetProg) {
+        await Promise.all([
+          base44.entities.Programme.update(thisProg.id, { date: targetDate }),
+          base44.entities.Programme.update(targetProg.id, { date }),
+        ]);
+      } else if (thisProg && !targetProg) {
+        await base44.entities.Programme.update(thisProg.id, { date: targetDate });
+      } else if (!thisProg && targetProg) {
+        await base44.entities.Programme.update(targetProg.id, { date });
+      }
+      // Also swap attendance records
+      const [thisAtt, targetAtt] = await Promise.all([
+        base44.entities.Attendance.filter({ section_id: sectionId, date }),
+        base44.entities.Attendance.filter({ section_id: sectionId, date: targetDate }),
+      ]);
+      await Promise.all([
+        ...thisAtt.map(a => base44.entities.Attendance.update(a.id, { date: targetDate })),
+        ...targetAtt.map(a => base44.entities.Attendance.update(a.id, { date })),
+      ]);
+    },
+    onSuccess: (_, targetDate) => {
+      queryClient.invalidateQueries({ queryKey: ['programme'] });
+      queryClient.invalidateQueries({ queryKey: ['programmes'] });
+      queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      toast.success('Meetings swapped successfully');
+      setSwapDialogOpen(false);
+      // Navigate to the same meeting slot (now at targetDate)
+      navigate(createPageUrl('MeetingDetail') + `?section_id=${sectionId}&date=${targetDate}&term_id=${termId}`);
+    },
+    onError: () => toast.error('Failed to swap meetings'),
+  });
+
   const { data: actionsRequired = [] } = useQuery({
     queryKey: ['actions-required', existingProgramme],
     queryFn: async () => {
