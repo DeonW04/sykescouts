@@ -37,12 +37,10 @@ export default function HikesAwayBadgeDetail() {
 
   const autoAwardMutation = useMutation({
     mutationFn: async ({ memberId, badgeId, hikesCount }) => {
-      const user = await base44.auth.me();
       await base44.entities.MemberBadgeAward.create({
         member_id: memberId,
         badge_id: badgeId,
-        awarded_date: new Date().toISOString().split('T')[0],
-        awarded_by: user.email,
+        completed_date: new Date().toISOString().split('T')[0],
         award_status: 'pending',
         notes: `Auto-awarded for reaching ${hikesCount} hikes away`
       });
@@ -63,7 +61,6 @@ export default function HikesAwayBadgeDetail() {
 
       // Check every threshold and award any badges the member has now earned
       const freshAwards = await base44.entities.MemberBadgeAward.filter({ member_id: memberId });
-      const user = await base44.auth.me();
       let newBadgesAwarded = 0;
 
       for (const threshold of STAGE_THRESHOLDS) {
@@ -75,8 +72,7 @@ export default function HikesAwayBadgeDetail() {
               await base44.entities.MemberBadgeAward.create({
                 member_id: memberId,
                 badge_id: badge.id,
-                awarded_date: new Date().toISOString().split('T')[0],
-                awarded_by: user.email,
+                completed_date: new Date().toISOString().split('T')[0],
                 award_status: 'pending',
                 notes: `Auto-awarded for reaching ${threshold} hikes away`,
               });
