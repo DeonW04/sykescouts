@@ -763,29 +763,30 @@ export default function ParentBadges() {
             sortedNotStartedCategories.map(category => (
               <div key={category} className="mb-6">
                 <h3 className="text-lg font-bold capitalize mb-3 text-gray-700">{category} Badges</h3>
-                <Card className="shadow-sm">
-                  <CardContent className="p-4">
-                    <div className="flex flex-wrap gap-3">
-                      {notStartedByCategory[category].map((bp, idx) => {
-                        const displayName = bp.type === 'family' ? bp.family.name : bp.badge.name;
-                        const displayImage = bp.badge.image_url;
-                        return (
-                          <motion.button
-                            key={bp.type === 'family' ? bp.family.familyId : bp.badge.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: idx * 0.02 }}
-                            onClick={() => setSelectedBadge(bp)}
-                            className="w-14 h-14 rounded-lg overflow-hidden hover:ring-2 hover:ring-purple-400 transition-all hover:scale-110 bg-gray-50 opacity-70 hover:opacity-100"
-                            title={displayName}
-                          >
-                            <img src={displayImage} alt={displayName} className="w-full h-full object-contain p-1" />
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {notStartedByCategory[category].map((bp, idx) => {
+                    const displayName = bp.type === 'family' ? bp.family.name : bp.badge.name;
+                    const displayImage = bp.badge.image_url;
+                    return (
+                      <motion.div
+                        key={bp.type === 'family' ? bp.family.familyId : bp.badge.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.02 }}
+                      >
+                        <Card
+                          onClick={() => setSelectedBadge(bp)}
+                          className="cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] bg-white opacity-80 hover:opacity-100"
+                        >
+                          <CardContent className="p-3 flex items-center gap-3">
+                            <img src={displayImage} alt={displayName} className="w-12 h-12 rounded-lg object-contain flex-shrink-0" />
+                            <p className="font-medium text-gray-700 text-sm truncate">{displayName}</p>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
+                </div>
               </div>
             ))
           )}
