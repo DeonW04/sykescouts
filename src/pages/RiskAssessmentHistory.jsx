@@ -50,14 +50,6 @@ export default function RiskAssessmentHistory() {
       {/* Header */}
       <div className="bg-gradient-to-r from-[#7413dc] to-[#ff66b2] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(createPageUrl('RiskAssessments'))}
-            className="text-white hover:bg-white/20 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <ShieldAlert className="w-12 h-12" />
