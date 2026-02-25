@@ -215,16 +215,7 @@ export default function MeetingDetail() {
     <div className="min-h-screen bg-gray-50">
       <LeaderNav />
       <div className="bg-[#004851] text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(createPageUrl('LeaderProgramme'))}
-            className="text-white hover:bg-white/10 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Programme
-          </Button>
-          
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">          
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold">
