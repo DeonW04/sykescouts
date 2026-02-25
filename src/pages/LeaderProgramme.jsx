@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Plus, ChevronRight, Sparkles, Clock, List, Image } from 'lucide-react';
+import { Calendar, Plus, ChevronRight, Sparkles, Clock, List, Image, Pencil } from 'lucide-react';
 import NewTermDialog from '../components/programme/NewTermDialog';
 import AllTermsDialog from '../components/programme/AllTermsDialog';
 import { motion } from 'framer-motion';
@@ -240,6 +240,15 @@ export default function LeaderProgramme() {
                       </span>
                     </div>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setEditingTerm(currentTerm); setShowNewTermDialog(true); }}
+                    className="flex items-center gap-2"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Edit Term
+                  </Button>
                 </div>
               </CardHeader>
             </Card>
