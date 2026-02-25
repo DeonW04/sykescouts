@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Award, CheckCircle, Circle, Info, Target, Users, TrendingUp, Edit, Trash2, Package, AlertTriangle, Zap } from 'lucide-react';
+import { ArrowLeft, Award, CheckCircle, Circle, Info, Target, Users, TrendingUp, Edit, Trash2, Package, AlertTriangle, Zap, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
@@ -26,6 +26,8 @@ export default function BadgeDetail() {
   const [bulkSelectedMembers, setBulkSelectedMembers] = useState([]);
   const [bulkAwarding, setBulkAwarding] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0, memberName: '' });
+  // Track which requirement cells are currently processing: Set of "memberId-reqId"
+  const [pendingReqs, setPendingReqs] = useState(new Set());
 
   useEffect(() => {
     base44.auth.me().then(u => setIsAdmin(u?.role === 'admin')).catch(() => {});
@@ -69,6 +71,18 @@ export default function BadgeDetail() {
     queryKey: ['badge-progress', badgeId],
     queryFn: () => base44.entities.MemberBadgeProgress.filter({ badge_id: badgeId }),
   });
+
+  const setPending = (memberId, reqId, isPending) => {
+    const key = `${memberId}-${reqId}`;
+    setPendingReqs(prev => {
+      const next = new Set(prev);
+      if (isPending) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  };
+
+  const isReqPending = (memberId, reqId) => pendingReqs.has(`${memberId}-${reqId}`);
 
   const setCountMutation = useMutation({
     mutationFn: async ({ memberId, reqId, newCount }) => {
@@ -191,6 +205,9 @@ export default function BadgeDetail() {
     },
 
     onMutate: async ({ memberId, reqId, increment }) => {
+      // Mark this specific cell as pending — blocks any further clicks on it
+      setPending(memberId, reqId, true);
+
       await queryClient.cancelQueries({ queryKey: ['req-progress', badgeId] });
       const previousProgress = queryClient.getQueryData(['req-progress', badgeId]);
       const req = requirements.find(r => r.id === reqId);
@@ -232,6 +249,8 @@ export default function BadgeDetail() {
     },
 
     onError: (err, variables, context) => {
+      // Always clear pending on error so the cell isn't stuck
+      setPending(variables.memberId, variables.reqId, false);
       if (context?.previousProgress) {
         queryClient.setQueryData(['req-progress', badgeId], context.previousProgress);
       }
@@ -295,6 +314,8 @@ export default function BadgeDetail() {
         }
       }
 
+      // Clear pending, then sync with real server data
+      setPending(variables.memberId, variables.reqId, false);
       queryClient.invalidateQueries({ queryKey: ['req-progress', badgeId] });
       queryClient.invalidateQueries({ queryKey: ['badge-progress'] });
       queryClient.invalidateQueries({ queryKey: ['awards'] });
@@ -313,14 +334,16 @@ export default function BadgeDetail() {
       const member = relevantMembers.find(m => m.id === memberId);
       setBulkProgress({ current: i + 1, total: bulkSelectedMembers.length, memberName: member?.full_name || '' });
 
-      // 1. Tick every requirement to fully complete
+      // 1. Fetch FRESH progress for this member from DB — never use stale cache
+      const existingProgress = await base44.entities.MemberRequirementProgress.filter({
+        badge_id: badgeId,
+        member_id: memberId,
+      });
+
+      // 2. Tick every requirement sequentially using fresh data
       for (const req of requirements) {
         const requiredCount = req.required_completions || 1;
-        const existing = await base44.entities.MemberRequirementProgress.filter({
-          member_id: memberId,
-          requirement_id: req.id,
-        });
-        const existingRecord = existing[0];
+        const existingRecord = existingProgress.find(p => p.requirement_id === req.id);
 
         if (existingRecord) {
           if (!existingRecord.completed) {
@@ -345,7 +368,7 @@ export default function BadgeDetail() {
         }
       }
 
-      // 2. Mark badge progress as completed
+      // 3. Mark badge progress as completed
       const freshBadgeProgress = await base44.entities.MemberBadgeProgress.filter({
         badge_id: badgeId,
         member_id: memberId,
@@ -367,7 +390,7 @@ export default function BadgeDetail() {
         });
       }
 
-      // 3. Create award if it doesn't exist
+      // 4. Create award if it doesn't exist
       const existingAward = await base44.entities.MemberBadgeAward.filter({
         member_id: memberId,
         badge_id: badgeId,
@@ -382,7 +405,6 @@ export default function BadgeDetail() {
       }
     }
 
-    // Refresh all relevant queries
     await queryClient.invalidateQueries({ queryKey: ['req-progress', badgeId] });
     await queryClient.invalidateQueries({ queryKey: ['badge-progress'] });
     await queryClient.invalidateQueries({ queryKey: ['awards'] });
@@ -604,7 +626,6 @@ export default function BadgeDetail() {
           animate={{ opacity: 1, y: 0 }}
           className="flex flex-wrap gap-3 mb-8"
         >
-          {/* Bulk Award button — visible to all leaders */}
           <Button
             onClick={() => {
               setBulkSelectedMembers([]);
@@ -922,6 +943,8 @@ export default function BadgeDetail() {
                           return moduleReqs.map((req, reqIdx) => {
                             const reqProgress = getRequirementProgress(member.id, req.id);
                             const requiresMultiple = (req.required_completions || 1) > 1;
+                            const pending = isReqPending(member.id, req.id);
+
                             return (
                               <td 
                                 key={req.id} 
@@ -933,9 +956,9 @@ export default function BadgeDetail() {
                                   <div className="flex flex-col items-center gap-1">
                                     <div className="flex items-center gap-1">
                                       <button
-                                        onClick={() => toggleReqMutation.mutate({ memberId: member.id, reqId: req.id, increment: false })}
-                                        className="w-5 h-5 rounded bg-gray-200 hover:bg-gray-300 text-xs font-bold"
-                                        disabled={reqProgress.currentCount === 0}
+                                        onClick={() => !pending && toggleReqMutation.mutate({ memberId: member.id, reqId: req.id, increment: false })}
+                                        className="w-5 h-5 rounded bg-gray-200 hover:bg-gray-300 text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+                                        disabled={reqProgress.currentCount === 0 || pending}
                                       >-</button>
                                       {editingCount?.memberId === member.id && editingCount?.reqId === req.id ? (
                                         <input
@@ -958,36 +981,48 @@ export default function BadgeDetail() {
                                         />
                                       ) : (
                                         <button
-                                          onClick={() => setEditingCount({ memberId: member.id, reqId: req.id, value: reqProgress.currentCount })}
-                                          className={`text-xs font-bold min-w-[2rem] cursor-pointer hover:underline ${reqProgress.isComplete ? 'text-green-600' : 'text-gray-700'}`}
+                                          onClick={() => !pending && setEditingCount({ memberId: member.id, reqId: req.id, value: reqProgress.currentCount })}
+                                          className={`text-xs font-bold min-w-[2rem] ${pending ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:underline'} ${reqProgress.isComplete ? 'text-green-600' : 'text-gray-700'}`}
                                           title="Click to set value"
+                                          disabled={pending}
                                         >
                                           {reqProgress.currentCount}/{reqProgress.requiredCount}
                                         </button>
                                       )}
                                       <button
-                                        onClick={() => toggleReqMutation.mutate({ memberId: member.id, reqId: req.id, increment: true })}
-                                        className="w-5 h-5 rounded bg-green-500 hover:bg-green-600 text-white text-xs font-bold"
+                                        onClick={() => !pending && toggleReqMutation.mutate({ memberId: member.id, reqId: req.id, increment: true })}
+                                        className="w-5 h-5 rounded bg-green-500 hover:bg-green-600 text-white text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+                                        disabled={pending}
                                       >+</button>
                                     </div>
-                                    {reqProgress.isComplete && (
+                                    {/* Loading spinner or completion tick for multi-count reqs */}
+                                    {pending ? (
+                                      <Loader2 className="w-3 h-3 text-gray-400 animate-spin" />
+                                    ) : reqProgress.isComplete ? (
                                       <CheckCircle className="w-3 h-3 text-green-600" />
-                                    )}
+                                    ) : null}
                                   </div>
                                 ) : (
-                                  <div className="flex justify-center relative">
-                                    <Checkbox
-                                      checked={reqProgress.isComplete}
-                                      onCheckedChange={(checked) => {
-                                        if (checked) {
-                                          toggleReqMutation.mutate({ memberId: member.id, reqId: req.id, increment: true });
-                                        } else {
-                                          handleUncheckReq(member.id, req.id);
-                                        }
-                                      }}
-                                      className={reqProgress.isComplete ? 'border-green-500 data-[state=checked]:bg-green-500' : ''}
-                                    />
-                                    {reqIdx === 0 && moduleComplete && (
+                                  <div className="flex justify-center items-center relative w-full h-full">
+                                    {/* Replace checkbox with spinner while saving */}
+                                    {pending ? (
+                                      <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                                    ) : (
+                                      <Checkbox
+                                        checked={reqProgress.isComplete}
+                                        onCheckedChange={(checked) => {
+                                          if (pending) return;
+                                          if (checked) {
+                                            toggleReqMutation.mutate({ memberId: member.id, reqId: req.id, increment: true });
+                                          } else {
+                                            handleUncheckReq(member.id, req.id);
+                                          }
+                                        }}
+                                        className={reqProgress.isComplete ? 'border-green-500 data-[state=checked]:bg-green-500' : ''}
+                                      />
+                                    )}
+                                    {/* Module complete indicator — only show when not pending */}
+                                    {reqIdx === 0 && moduleComplete && !pending && (
                                       <CheckCircle className="w-4 h-4 text-green-600 absolute -top-1 -right-1" />
                                     )}
                                   </div>
@@ -1070,7 +1105,6 @@ export default function BadgeDetail() {
                   <p className="text-center text-gray-500 py-6 text-sm">All members have already completed this badge.</p>
                 ) : (
                   <>
-                    {/* Select all toggle */}
                     <div
                       className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer border-b border-gray-100 mb-2"
                       onClick={() => {
