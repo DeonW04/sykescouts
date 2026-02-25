@@ -571,46 +571,46 @@ export default function ParentBadges() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-3 lg:grid-cols-5 gap-3">
-              {earnedNonStaged.map(progress => {
-                const badge = badges.find(b => b.id === progress.badge_id);
-                if (!badge) return null;
-                return (
-                  <motion.div key={progress.badge_id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-                    <Card className="bg-green-50 border-green-200 hover:shadow-lg transition-shadow">
-                      <CardContent className="p-3 text-center">
-                        <img src={badge.image_url} alt={badge.name} className="w-full aspect-square object-contain rounded-lg mb-2" />
-                        <h3 className="font-semibold text-xs leading-tight">{badge.name}</h3>
-                        <div className="flex items-center justify-center gap-1 mt-1">
-                          <CheckCircle className="w-3 h-3 text-green-600" />
-                          <span className="text-xs text-green-700">Earned</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-              {/* Staged Badge Families - Highest Stage */}
-              {Object.entries(stagedBadgeFamilies).map(([familyId, family]) => {
-                const highestStage = getHighestCompletedStage(familyId);
-                if (!highestStage) return null;
-                return (
-                  <motion.div key={familyId} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
-                    <Card className="bg-green-50 border-green-200 hover:shadow-lg transition-shadow">
-                      <CardContent className="p-3 text-center">
-                        <img src={highestStage.image_url} alt={highestStage.name} className="w-full aspect-square object-contain rounded-lg mb-2" />
-                        <h3 className="font-semibold text-xs leading-tight">{family.name}</h3>
-                        <p className="text-xs text-gray-500">Stage {highestStage.stage_number}</p>
-                        <div className="flex items-center justify-center gap-1 mt-1">
-                          <CheckCircle className="w-3 h-3 text-green-600" />
-                          <span className="text-xs text-green-700">Earned</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
+            <Card className="bg-green-50 border-green-200 shadow-lg">
+              <CardContent className="p-4">
+                <div className="flex flex-wrap gap-2">
+                  {earnedNonStaged.map(progress => {
+                    const badge = badges.find(b => b.id === progress.badge_id);
+                    if (!badge) return null;
+                    const bp = { type: 'single', badge, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } };
+                    return (
+                      <motion.button
+                        key={progress.badge_id}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        onClick={() => setSelectedBadge(bp)}
+                        className="w-14 h-14 rounded-lg overflow-hidden hover:ring-2 hover:ring-green-500 transition-all hover:scale-110 bg-white"
+                        title={badge.name}
+                      >
+                        <img src={badge.image_url} alt={badge.name} className="w-full h-full object-contain p-1" />
+                      </motion.button>
+                    );
+                  })}
+                  {Object.entries(stagedBadgeFamilies).map(([familyId, family]) => {
+                    const highestStage = getHighestCompletedStage(familyId);
+                    if (!highestStage) return null;
+                    const bp = { type: 'single', badge: highestStage, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } };
+                    return (
+                      <motion.button
+                        key={familyId}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        onClick={() => setSelectedBadge(bp)}
+                        className="w-14 h-14 rounded-lg overflow-hidden hover:ring-2 hover:ring-green-500 transition-all hover:scale-110 bg-white"
+                        title={`${family.name} – Stage ${highestStage.stage_number}`}
+                      >
+                        <img src={highestStage.image_url} alt={highestStage.name} className="w-full h-full object-contain p-1" />
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
 
