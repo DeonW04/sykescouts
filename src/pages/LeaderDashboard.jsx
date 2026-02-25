@@ -11,9 +11,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 
-const UpcomingMeetings = ({ sections }) => {
+const UpcomingMeetings = ({ sections, selectedSection }) => {
   const navigate = useNavigate();
-  const sectionIds = sections.map(s => s.id);
+  const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
+  const sectionIds = filteredSections.map(s => s.id);
   
   const { data: programmes = [] } = useQuery({
     queryKey: ['upcoming-programmes', sectionIds],
