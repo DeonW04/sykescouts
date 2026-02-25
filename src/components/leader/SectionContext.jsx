@@ -82,6 +82,7 @@ export const SectionProvider = ({ children }) => {
         isAdmin: user?.role === 'admin',
         transitioning,
         previousSection,
+        pendingSectionId,
         onTransitionComplete,
       }}
     >
