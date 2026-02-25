@@ -25,8 +25,6 @@ export default function LeaderBadges() {
     queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
   });
 
-  // For display: show individual stage badges and all non-staged badges
-  // But also include family badges for the staged category view
   const badges = allBadges;
 
   const { data: sections = [] } = useQuery({
@@ -75,83 +73,115 @@ export default function LeaderBadges() {
 
   const filteredBadges = badges.filter(badge => {
     const matchesSearch = badge.name.toLowerCase().includes(searchTerm.toLowerCase());
-    // Staged badges apply to all sections; others filter by section
     const isSectionAgnostic = badge.section === 'all' || badge.category === 'staged';
     const matchesSection = !selectedSectionName || isSectionAgnostic || badge.section === selectedSectionName;
     const matchesCategory = categoryFilter === 'all' || badge.category === categoryFilter;
     return matchesSearch && matchesSection && matchesCategory;
   });
 
-  const isMemberBadgeComplete = (memberId, badgeId) => {
-    const badgeModules = requirements.length > 0 
-      ? [...new Set(requirements.filter(r => r.badge_id === badgeId).map(r => r.module_id))]
-      : [];
-    // Fall back to DB record if no requirement data
-    if (badgeModules.length === 0) {
-      return allProgress.some(p => p.member_id === memberId && p.badge_id === badgeId && p.status === 'completed');
+  // ── Mirrors BadgeDetail's isModuleComplete ──────────────────────────────────
+  const isModuleComplete = (memberId, module, badgeReqs, memberReqProgress) => {
+    const moduleReqs = badgeReqs.filter(r => r.module_id === module.id);
+    const completedReqs = memberReqProgress.filter(
+      p => p.member_id === memberId && p.module_id === module.id && p.completed
+    );
+    if (module.completion_rule === 'x_of_n_required') {
+      return completedReqs.length >= (module.required_count || moduleReqs.length);
     }
-    // Use requirementProgress as source of truth
-    const badgeReqs = requirements.filter(r => r.badge_id === badgeId);
-    // Group by module — need module data for completion rules
-    return allProgress.some(p => p.member_id === memberId && p.badge_id === badgeId && p.status === 'completed')
-      || requirementProgress.filter(p => p.member_id === memberId && p.badge_id === badgeId && p.completed).length === badgeReqs.length && badgeReqs.length > 0;
+    return completedReqs.length >= moduleReqs.length;
   };
 
-  const isMemberBadgeCompleteCalc = (memberId, badgeId, badge) => {
-    const badgeModules = modules.filter(m => m.badge_id === badgeId);
+  // ── Mirrors BadgeDetail's getMemberProgress ─────────────────────────────────
+  const getMemberProgress = (memberId, badgeId, badge) => {
+    const badgeModules = modules.filter(m => m.badge_id === badgeId).sort((a, b) => a.order - b.order);
     const badgeReqs = requirements.filter(r => r.badge_id === badgeId);
     const memberReqProgress = requirementProgress.filter(p => p.member_id === memberId && p.badge_id === badgeId);
 
-    if (badgeModules.length === 0) {
-      return allProgress.some(p => p.member_id === memberId && p.badge_id === badgeId && p.status === 'completed');
-    }
+    const isOneModuleRule = badge?.completion_rule === 'one_module';
 
-    const isOneMod = badge?.completion_rule === 'one_module';
-    if (isOneMod) {
-      return badgeModules.some(mod => {
-        const modReqs = badgeReqs.filter(r => r.module_id === mod.id);
-        if (modReqs.length === 0) return false;
-        const completedModReqs = memberReqProgress.filter(p => p.module_id === mod.id && p.completed);
-        if (mod.completion_rule === 'x_of_n_required') {
-          return completedModReqs.length >= (mod.required_count || modReqs.length);
-        }
-        return completedModReqs.length >= modReqs.length;
+    if (isOneModuleRule) {
+      let bestPct = 0;
+      let bestCompleted = 0;
+      let bestTotal = 0;
+      let anyComplete = false;
+
+      badgeModules.forEach(module => {
+        const moduleReqs = badgeReqs.filter(r => r.module_id === module.id);
+        const modTotal = moduleReqs.reduce((s, req) => s + (req.required_completions || 1), 0);
+        let modCompleted = 0;
+        moduleReqs.forEach(req => {
+          const reqProg = memberReqProgress.find(p => p.requirement_id === req.id);
+          modCompleted += Math.min(reqProg?.completion_count || 0, req.required_completions || 1);
+        });
+        const modPct = modTotal > 0 ? Math.round((modCompleted / modTotal) * 100) : 0;
+        if (modPct >= bestPct) { bestPct = modPct; bestCompleted = modCompleted; bestTotal = modTotal; }
+        if (modCompleted >= modTotal && modTotal > 0) anyComplete = true;
       });
+
+      const hasAnyProgress = memberReqProgress.some(p => p.completed);
+      return {
+        completed: bestCompleted,
+        total: bestTotal,
+        percentage: anyComplete ? 100 : bestPct,
+        isComplete: anyComplete,
+        hasAnyProgress,
+      };
     }
 
-    return badgeModules.every(mod => {
-      const modReqs = badgeReqs.filter(r => r.module_id === mod.id);
-      const completedModReqs = memberReqProgress.filter(p => p.module_id === mod.id && p.completed);
-      if (mod.completion_rule === 'x_of_n_required') {
-        return completedModReqs.length >= (mod.required_count || modReqs.length);
+    let totalRequired = 0;
+    let totalCompleted = 0;
+
+    badgeModules.forEach(module => {
+      const moduleReqs = badgeReqs.filter(r => r.module_id === module.id);
+      if (module.completion_rule === 'x_of_n_required') {
+        const needed = module.required_count || moduleReqs.length;
+        totalRequired += needed;
+        const completedReqs = memberReqProgress.filter(p => p.module_id === module.id && p.completed);
+        totalCompleted += Math.min(completedReqs.length, needed);
+      } else {
+        moduleReqs.forEach(req => {
+          const requiredCount = req.required_completions || 1;
+          const reqProg = memberReqProgress.find(p => p.requirement_id === req.id);
+          const currentCount = reqProg?.completion_count || 0;
+          totalRequired += requiredCount;
+          totalCompleted += Math.min(currentCount, requiredCount);
+        });
       }
-      return completedModReqs.length >= modReqs.length;
     });
+
+    const allModulesComplete =
+      badgeModules.length > 0 &&
+      badgeModules.every(m => isModuleComplete(memberId, m, badgeReqs, memberReqProgress));
+    const hasAnyProgress = totalCompleted > 0;
+
+    return {
+      completed: totalCompleted,
+      total: totalRequired,
+      percentage: totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0,
+      isComplete: allModulesComplete,
+      hasAnyProgress,
+    };
   };
 
+  // ── getBadgeStats now uses the same logic as BadgeDetail ────────────────────
   const getBadgeStats = (badgeId) => {
     const badge = badges.find(b => b.id === badgeId);
-    
+
     const relevantMembers = members.filter(m => {
-      // If a section is selected in the context, filter to that section
       if (selectedSection) return m.section_id === selectedSection;
-      // Otherwise fall back to badge's own section filter
       return badge?.section === 'all' || m.section_id === sections.find(s => s.name === badge?.section)?.id;
     });
 
-    const completedCount = relevantMembers.filter(m => isMemberBadgeCompleteCalc(m.id, badgeId, badge)).length;
+    const memberProgressList = relevantMembers.map(m => getMemberProgress(m.id, badgeId, badge));
 
-    const inProgressCount = relevantMembers.filter(m => {
-      if (isMemberBadgeCompleteCalc(m.id, badgeId, badge)) return false;
-      return requirementProgress.some(p => p.member_id === m.id && p.badge_id === badgeId && p.completed);
-    }).length;
-
-    const percentComplete = relevantMembers.length > 0 
-      ? Math.round((completedCount / relevantMembers.length) * 100) 
+    const completedCount = memberProgressList.filter(p => p.isComplete).length;
+    const inProgressCount = memberProgressList.filter(p => p.hasAnyProgress && !p.isComplete).length;
+    const percentComplete = relevantMembers.length > 0
+      ? Math.round((completedCount / relevantMembers.length) * 100)
       : 0;
 
-    const dueCount = awards.filter(a => 
-      a.badge_id === badgeId && 
+    const dueCount = awards.filter(a =>
+      a.badge_id === badgeId &&
       a.award_status === 'pending' &&
       relevantMembers.some(m => m.id === a.member_id)
     ).length;
@@ -161,15 +191,15 @@ export default function LeaderBadges() {
     const lowStock = stockInfo && currentStock < stockInfo.minimum_threshold;
     const outOfStock = currentStock === 0;
 
-    return { 
-      completedCount, 
-      inProgressCount, 
-      percentComplete, 
+    return {
+      completedCount,
+      inProgressCount,
+      percentComplete,
       totalMembers: relevantMembers.length,
       dueCount,
       currentStock,
       lowStock,
-      outOfStock
+      outOfStock,
     };
   };
 
@@ -299,11 +329,8 @@ export default function LeaderBadges() {
                       const categoryBadges = filteredBadges.filter(b => b.category === category);
                       if (categoryBadges.length === 0) return null;
 
-                      // For staged badges, group by family and show one badge per family
-                      // Also group Nights Away, Hikes Away, and Joining In as families in activity
                       let displayBadges;
                       if (category === 'staged') {
-                        // Joining In: use stage 1 image (lowest stage number)
                         const joiningInBadges = filteredBadges
                           .filter(b => b.name.toLowerCase().includes('joining in award'))
                           .sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
@@ -325,7 +352,6 @@ export default function LeaderBadges() {
                             familyMap.set(familyId, firstStage);
                           }
                         });
-                        // Nights Away, Hikes Away and Joining In always last
                         const specialNames = ['nights away', 'hikes away', 'joining in'];
                         const regular = Array.from(familyMap.values()).filter(b => !specialNames.some(n => b.name.toLowerCase().includes(n))).sort((a, b) => a.name.localeCompare(b.name));
                         const nightsFamily = Array.from(familyMap.values()).find(b => b.name.toLowerCase().includes('nights away'));
@@ -360,12 +386,10 @@ export default function LeaderBadges() {
                         displayBadges = [...otherBadges, ...nightsAwayPlaceholder, ...hikesAwayPlaceholder]
                           .sort((a, b) => a.name.localeCompare(b.name));
                       } else if (category === 'core') {
-                        // Exclude joining in awards from core — they show under staged
                         displayBadges = categoryBadges
                           .filter(b => !b.name.toLowerCase().includes('joining in award'))
                           .sort((a, b) => a.name.localeCompare(b.name));
                       } else if (category === 'challenge') {
-                        // Gold Award first, rest A-Z
                         displayBadges = [...categoryBadges].sort((a, b) => {
                           if (a.is_chief_scout_award) return -1;
                           if (b.is_chief_scout_award) return 1;
@@ -384,7 +408,7 @@ export default function LeaderBadges() {
                             {displayBadges.map(badge => {
                               const isStaged = badge.category === 'staged';
                               const isJoiningIn = badge.isJoiningInPlaceholder;
-                              const isFamilyPlaceholder = badge.isNightsAwayFamily || badge.isHikesAwayFamily || isJoiningIn || isJoiningIn;
+                              const isFamilyPlaceholder = badge.isNightsAwayFamily || badge.isHikesAwayFamily || isJoiningIn;
                               const stats = !isFamilyPlaceholder ? getBadgeStats(badge.id) : null;
 
                               const isNightsAwayFamily = badge.isNightsAwayFamily;
