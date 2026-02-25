@@ -30,9 +30,13 @@ export default function SectionTransitionOverlay({ fromSection, toSection, onCom
   useEffect(() => {
     // fade-in: 400ms → slide: 600ms → fade-out: 500ms
     const t1 = setTimeout(() => setPhase('show'), 400);
-    const t2 = setTimeout(() => setPhase('fade-out'), 1000);
-    const t3 = setTimeout(() => onComplete(), 1500);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    // Call onComplete (switches the section) at the START of fade-out,
+    // so the page loads behind the animation
+    const t2 = setTimeout(() => {
+      setPhase('fade-out');
+      onComplete();
+    }, 1000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
   return (
