@@ -78,8 +78,14 @@ export default function EventAttendeesSection({ eventId, event }) {
   });
 
   const updateResponseMutation = useMutation({
-    mutationFn: ({ responseId, value }) => 
-      base44.entities.ActionResponse.update(responseId, { response: value }),
+    mutationFn: ({ responseId, value }) =>
+      base44.entities.ActionResponse.update(responseId, {
+        response: value,
+        // Always mark as completed when a leader manually sets a value —
+        // this hides the action from the parent portal pending list
+        status: 'completed',
+        responded_at: new Date().toISOString(),
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-responses'] });
     },
@@ -94,8 +100,8 @@ export default function EventAttendeesSection({ eventId, event }) {
 
   const invitedMemberIds = attendances.map(a => a.member_id);
   const availableMembers = allMembers
-    .filter(m => 
-      event.section_ids?.includes(m.section_id) && 
+    .filter(m =>
+      event.section_ids?.includes(m.section_id) &&
       !invitedMemberIds.includes(m.id)
     )
     .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime());
@@ -146,7 +152,7 @@ export default function EventAttendeesSection({ eventId, event }) {
         return member ? [member.parent_one_email, member.parent_two_email].filter(Boolean) : [];
       })
       .flat();
-    
+
     const leaderEmails = leaders
       .filter(leader => leader.section_ids?.some(sid => event.section_ids?.includes(sid)))
       .map(leader => {
@@ -154,7 +160,7 @@ export default function EventAttendeesSection({ eventId, event }) {
         return user?.email;
       })
       .filter(Boolean);
-    
+
     const allEmails = [...new Set([...memberEmails, ...leaderEmails])];
     return allEmails.join(', ');
   };
@@ -170,23 +176,23 @@ export default function EventAttendeesSection({ eventId, event }) {
       r => r.member_id === memberId && r.action_required_id === actionId
     );
     if (!response) return { display: '-', response: null };
-    
+
     if (response.status !== 'completed') return { display: 'Pending', response };
-    
+
     const action = actionsRequired.find(a => a.id === actionId);
     const responseValue = response.response || response.response_value;
     if (!action) return { display: responseValue || 'Yes', response };
-    
+
     if (action.action_purpose === 'attendance') {
-      return { 
-        display: responseValue === 'yes' ? '✓' : '✗', 
-        response 
+      return {
+        display: responseValue === 'yes' ? '✓' : '✗',
+        response
       };
     }
     if (action.action_purpose === 'consent') {
-      return { 
-        display: responseValue === 'yes' ? '✓ Consent Given' : '✗ Not Given', 
-        response 
+      return {
+        display: responseValue === 'yes' ? '✓ Consent Given' : '✗ Not Given',
+        response
       };
     }
     return { display: responseValue || '-', response };
@@ -207,7 +213,8 @@ export default function EventAttendeesSection({ eventId, event }) {
 
   const handleSaveAllResponses = async () => {
     const promises = [];
-    
+    const today = new Date().toISOString();
+
     actionsRequired.forEach(action => {
       const existingResponse = actionResponses.find(
         r => r.member_id === editingMember.id && r.action_required_id === action.id
@@ -215,6 +222,8 @@ export default function EventAttendeesSection({ eventId, event }) {
       const newValue = editResponses[action.id];
 
       if (existingResponse && newValue) {
+        // Update existing response — always set status to completed and
+        // stamp responded_at so the parent portal knows this has been answered
         promises.push(
           updateResponseMutation.mutateAsync({
             responseId: existingResponse.id,
@@ -222,6 +231,8 @@ export default function EventAttendeesSection({ eventId, event }) {
           })
         );
       } else if (newValue) {
+        // Create new response — mark as completed immediately since a leader
+        // is entering it manually on behalf of the parent
         promises.push(
           createResponseMutation.mutateAsync({
             action_required_id: action.id,
@@ -230,6 +241,7 @@ export default function EventAttendeesSection({ eventId, event }) {
             parent_email: editingMember?.parent_one_email || 'admin@manual.entry',
             response: newValue,
             status: 'completed',
+            responded_at: today,
           })
         );
       }
@@ -245,7 +257,7 @@ export default function EventAttendeesSection({ eventId, event }) {
   return (
     <div className="space-y-6">
       <LeaderRotaSection eventId={eventId} sectionId={eventSections[0]?.id} />
-      
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -299,43 +311,42 @@ export default function EventAttendeesSection({ eventId, event }) {
                     .filter(({ member }) => member)
                     .sort((a, b) => new Date(a.member.date_of_birth).getTime() - new Date(b.member.date_of_birth).getTime())
                     .map(({ attendance, member }) => {
-
-                    return (
-                      <TableRow key={attendance.id}>
-                        <TableCell className="font-medium">{member.full_name}</TableCell>
-                        <TableCell>{getMemberSection(member.section_id)}</TableCell>
-                        {actionsRequired.map((action) => {
-                          const { display } = getActionResponse(member.id, action.id);
-                          return (
-                            <TableCell key={action.id}>
-                              {display}
-                            </TableCell>
-                          );
-                        })}
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleOpenEditDialog(member)}
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            >
-                              <Pencil className="w-4 h-4 mr-1" />
-                              Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeAttendanceMutation.mutate(attendance.id)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              Remove
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                      return (
+                        <TableRow key={attendance.id}>
+                          <TableCell className="font-medium">{member.full_name}</TableCell>
+                          <TableCell>{getMemberSection(member.section_id)}</TableCell>
+                          {actionsRequired.map((action) => {
+                            const { display } = getActionResponse(member.id, action.id);
+                            return (
+                              <TableCell key={action.id}>
+                                {display}
+                              </TableCell>
+                            );
+                          })}
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleOpenEditDialog(member)}
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              >
+                                <Pencil className="w-4 h-4 mr-1" />
+                                Edit
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeAttendanceMutation.mutate(attendance.id)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                 </TableBody>
               </Table>
             </div>
@@ -353,11 +364,11 @@ export default function EventAttendeesSection({ eventId, event }) {
               <div key={action.id} className="space-y-2">
                 <Label>{action.column_title}</Label>
                 <p className="text-sm text-gray-600">{action.action_text}</p>
-                
+
                 {action.action_purpose === 'attendance' || action.action_purpose === 'consent' ? (
                   <Select
                     value={editResponses[action.id] || ''}
-                    onValueChange={(value) => setEditResponses({...editResponses, [action.id]: value})}
+                    onValueChange={(value) => setEditResponses({ ...editResponses, [action.id]: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select response" />
@@ -370,7 +381,7 @@ export default function EventAttendeesSection({ eventId, event }) {
                 ) : action.action_purpose === 'custom_dropdown' ? (
                   <Select
                     value={editResponses[action.id] || ''}
-                    onValueChange={(value) => setEditResponses({...editResponses, [action.id]: value})}
+                    onValueChange={(value) => setEditResponses({ ...editResponses, [action.id]: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select option" />
@@ -384,7 +395,7 @@ export default function EventAttendeesSection({ eventId, event }) {
                 ) : (
                   <Input
                     value={editResponses[action.id] || ''}
-                    onChange={(e) => setEditResponses({...editResponses, [action.id]: e.target.value})}
+                    onChange={(e) => setEditResponses({ ...editResponses, [action.id]: e.target.value })}
                     placeholder="Enter response"
                   />
                 )}
