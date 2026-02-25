@@ -12,36 +12,20 @@ import SectionTransitionOverlay from './components/leader/SectionTransitionOverl
 import { useSectionContext } from './components/leader/SectionContext';
 
 function SectionTransitionWrapper() {
-  const { transitioning, previousSection, selectedSection, onTransitionComplete, availableSections } = useSectionContext();
-  const [pendingSection, setPendingSection] = React.useState(null);
+  const { transitioning, previousSection, pendingSectionId, onTransitionComplete, availableSections } = useSectionContext();
 
-  React.useEffect(() => {
-    if (transitioning && !pendingSection) {
-      // Find the new section (the one being transitioned to — we need to track it)
-      // It's stored as the context's next intended section
-      // We'll use a ref approach: pendingSection is set when transitioning starts
-    }
-  }, [transitioning]);
-
-  // We need to capture the "to" section id — piggyback on the previousSection change
-  React.useEffect(() => {
-    if (transitioning) {
-      // The selectedSection hasn't changed yet (it changes after animation)
-      // pendingSection = whatever setSelectedSection was called with
-      // We'll read it from context's internal pending value
-    }
-  }, [transitioning]);
-
-  if (!transitioning || !previousSection) return null;
+  if (!transitioning || !previousSection || !pendingSectionId) return null;
 
   const fromSec = availableSections.find(s => s.id === previousSection);
-  // At this point selectedSection still holds the OLD value — the new one is in context._pending
-  // Actually selectedSection is still old since we haven't called setSelectedSection yet
-  // We need to know the target. Let's read it from context.
-  const toSectionId = selectedSection; // BUG: still old
-  const toSec = availableSections.find(s => s.id === toSectionId);
+  const toSec = availableSections.find(s => s.id === pendingSectionId);
 
-  return null;
+  return (
+    <SectionTransitionOverlay
+      fromSection={fromSec}
+      toSection={toSec}
+      onComplete={onTransitionComplete}
+    />
+  );
 }
 
 export default function Layout({ children, currentPageName }) {
