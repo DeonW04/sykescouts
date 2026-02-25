@@ -59,8 +59,42 @@ export default function HikesAwayBadgeDetail() {
       });
     },
     onSuccess: async (_, variables) => {
+      const { memberId, newCount } = variables;
+
+      // Check every threshold and award any badges the member has now earned
+      const freshAwards = await base44.entities.MemberBadgeAward.filter({ member_id: memberId });
+      const user = await base44.auth.me();
+      let newBadgesAwarded = 0;
+
+      for (const threshold of STAGE_THRESHOLDS) {
+        if (newCount >= threshold) {
+          const badge = hikesAwayBadges.find(b => b.stage_number === threshold);
+          if (badge) {
+            const alreadyAwarded = freshAwards.some(a => a.badge_id === badge.id);
+            if (!alreadyAwarded) {
+              await base44.entities.MemberBadgeAward.create({
+                member_id: memberId,
+                badge_id: badge.id,
+                awarded_date: new Date().toISOString().split('T')[0],
+                awarded_by: user.email,
+                award_status: 'pending',
+                notes: `Auto-awarded for reaching ${threshold} hikes away`,
+              });
+              newBadgesAwarded++;
+            }
+          }
+        }
+      }
+
       await queryClient.invalidateQueries({ queryKey: ['members'] });
-      toast.success('Hikes count updated');
+      await queryClient.invalidateQueries({ queryKey: ['awards'] });
+
+      if (newBadgesAwarded > 0) {
+        toast.success(`Hikes updated — ${newBadgesAwarded} new badge${newBadgesAwarded > 1 ? 's' : ''} awarded!`);
+      } else {
+        toast.success('Hikes count updated');
+      }
+
       setEditingMemberId(null);
       setEditingValue('');
     },
