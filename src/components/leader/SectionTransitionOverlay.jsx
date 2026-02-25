@@ -28,14 +28,15 @@ export default function SectionTransitionOverlay({ fromSection, toSection, onCom
   const toStyle = getStyle(toSection?.name);
 
   useEffect(() => {
-    // fade-in: 400ms → slide: 600ms → fade-out: 500ms
+    // fade-in: 400ms → slide: 600ms → hold: 1000ms → fade-out: 500ms
     const t1 = setTimeout(() => setPhase('show'), 400);
     // Call onComplete (switches the section) at the START of fade-out,
-    // so the page loads behind the animation
+    // so the page loads behind the animation.
+    // 400 (fade-in) + 600 (slide) + 1000 (hold) = 2000ms
     const t2 = setTimeout(() => {
       setPhase('fade-out');
       onComplete();
-    }, 1000);
+    }, 2000);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
