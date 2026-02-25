@@ -72,11 +72,14 @@ export const SectionProvider = ({ children }) => {
     <SectionContext.Provider
       value={{
         selectedSection,
-        setSelectedSection,
+        setSelectedSection: changeSection,
         availableSections,
         user,
         loading,
         isAdmin: user?.role === 'admin',
+        transitioning,
+        previousSection,
+        onTransitionComplete,
       }}
     >
       {children}
