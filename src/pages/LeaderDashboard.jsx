@@ -378,8 +378,8 @@ export default function LeaderDashboard() {
           transition={{ delay: 0.6 }}
           className="grid lg:grid-cols-2 gap-6 mb-6"
         >
-          <UpcomingMeetings sections={sections} />
-          <BadgesDue sections={sections} />
+          <UpcomingMeetings sections={sections} selectedSection={selectedSection} />
+          <BadgesDue sections={sections} selectedSection={selectedSection} />
         </motion.div>
 
         {/* Receipt Upload Bar */}
