@@ -82,6 +82,8 @@ export default function ParentBadges() {
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [filterType, setFilterType] = useState('all');
   const [activityDialog, setActivityDialog] = useState(null); // 'nights' | 'hikes' | 'joining'
+  const [uniformDialog, setUniformDialog] = useState(false);
+  const [uniformPositionHighlight, setUniformPositionHighlight] = useState(null); // badge to highlight on uniform
 
   useEffect(() => {
     loadUserData();
