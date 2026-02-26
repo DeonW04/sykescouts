@@ -521,14 +521,23 @@ export default function ParentBadges() {
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="flex items-center gap-4 mb-3">
-            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-              <Award className="w-8 h-8" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 mb-3">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                <Award className="w-8 h-8" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold">Badges & Awards</h1>
+                <p className="text-yellow-100 text-lg">{child.full_name}'s progress</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-4xl font-bold">Badges & Awards</h1>
-              <p className="text-yellow-100 text-lg">{child.full_name}'s progress</p>
-            </div>
+            <Button
+              onClick={() => setUniformDialog(true)}
+              className="bg-white/20 hover:bg-white/30 text-white border border-white/30 gap-2"
+            >
+              <Shirt className="w-4 h-4" />
+              Uniform Guide
+            </Button>
           </div>
         </div>
       </div>
