@@ -863,6 +863,19 @@ export default function ParentBadges() {
                           <CheckCircle className="w-4 h-4" /> Highest: {highestInDialog.name}
                         </p>
                       )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 gap-1 mt-2"
+                        onClick={() => {
+                          setUniformPositionHighlight(highestInDialog?.uniform_position || null);
+                          setActivityDialog(null);
+                          setUniformDialog(true);
+                        }}
+                      >
+                        <MapPin className="w-3 h-3" />
+                        Where does this go on my uniform?
+                      </Button>
                     </div>
                   </div>
                 </DialogHeader>
