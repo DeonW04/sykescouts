@@ -45,8 +45,6 @@ const DEFAULT_POSITIONS = {
 
 export default function UniformDiagram({ uniformConfig, earnedBadges, allBadges, onBadgeClick }) {
   const [activePosition, setActivePosition] = useState(null);
-  const [imgSize, setImgSize] = useState(null);
-  const imgRef = React.useRef(null);
   const sectionName = uniformConfig?.section || 'scouts';
 
   const imageUrl = uniformConfig?.image_url || null;
@@ -64,75 +62,30 @@ export default function UniformDiagram({ uniformConfig, earnedBadges, allBadges,
 
   const positions = Object.keys(POSITION_LABELS);
 
-  const handleImageLoad = () => {
-    if (imgRef.current) {
-      const el = imgRef.current;
-      // naturalWidth/naturalHeight = original image dimensions
-      // offsetWidth/offsetHeight = rendered container size (may have letterbox if object-contain)
-      const containerW = el.offsetWidth;
-      const containerH = el.offsetHeight;
-      const naturalW = el.naturalWidth;
-      const naturalH = el.naturalHeight;
-
-      // Calculate the actual rendered image dimensions inside the container (object-contain)
-      const imageAspect = naturalW / naturalH;
-      const containerAspect = containerW / containerH;
-
-      let renderedW, renderedH, offsetX, offsetY;
-      if (imageAspect > containerAspect) {
-        // Image is wider — letterbox on top/bottom
-        renderedW = containerW;
-        renderedH = containerW / imageAspect;
-        offsetX = 0;
-        offsetY = (containerH - renderedH) / 2;
-      } else {
-        // Image is taller — letterbox on left/right
-        renderedH = containerH;
-        renderedW = containerH * imageAspect;
-        offsetX = (containerW - renderedW) / 2;
-        offsetY = 0;
-      }
-
-      setImgSize({ containerW, containerH, renderedW, renderedH, offsetX, offsetY });
-    }
-  };
-
   return (
     <div className="relative w-full">
       {imageUrl ? (
-        <div className="relative w-full">
+        <div className="relative inline-block w-full">
           <img
-            ref={imgRef}
             src={imageUrl}
             alt="Uniform diagram"
-            className="w-full rounded-xl object-contain block"
-            style={{ maxHeight: 480 }}
-            onLoad={handleImageLoad}
+            className="w-full rounded-xl"
+            style={{ maxHeight: 480, display: 'block' }}
           />
-          {/* Dot overlays — positioned relative to ACTUAL rendered image, accounting for letterboxing */}
-          {imgSize && positions.map(pos => {
+          {/* Dots use same % coordinate system as the editor */}
+          {positions.map(pos => {
             const coords = dotPositions[pos];
             if (!coords) return null;
-            const badges = badgesByPosition[pos] || [];
-            const hasEarned = badges.length > 0;
-            // Convert % coords (relative to image content) to px offset from container top-left
-            const leftPx = imgSize.offsetX + (coords.x / 100) * imgSize.renderedW;
-            const topPx = imgSize.offsetY + (coords.y / 100) * imgSize.renderedH;
             return (
               <button
                 key={pos}
                 onClick={() => setActivePosition(activePosition === pos ? null : pos)}
-                style={{ left: leftPx, top: topPx, transform: 'translate(-50%, -50%)' }}
-                className={`absolute z-10 rounded-full border-2 shadow-lg transition-all hover:scale-110 focus:outline-none
-                  ${hasEarned
-                    ? 'w-8 h-8 bg-yellow-400 border-yellow-600 text-yellow-900'
-                    : 'w-7 h-7 bg-white/80 border-gray-400 text-gray-500'}
-                  ${activePosition === pos ? 'ring-4 ring-purple-400 scale-110' : ''}
+                style={{ left: `${coords.x}%`, top: `${coords.y}%`, transform: 'translate(-50%, -50%)' }}
+                className={`absolute z-10 w-5 h-5 rounded-full border-2 shadow-lg transition-all hover:scale-110 focus:outline-none bg-white border-gray-500
+                  ${activePosition === pos ? 'ring-4 ring-purple-400 scale-110 bg-purple-100 border-purple-500' : ''}
                 `}
                 title={POSITION_LABELS[pos]}
-              >
-                <span className="text-xs font-bold">{badges.length > 0 ? badges.length : '+'}</span>
-              </button>
+              />
             );
           })}
         </div>
