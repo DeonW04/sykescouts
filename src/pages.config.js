@@ -71,9 +71,11 @@ import JoinEnquiries from './pages/JoinEnquiries';
 import JoiningInBadgeDetail from './pages/JoiningInBadgeDetail';
 import LeaderAttendance from './pages/LeaderAttendance';
 import LeaderBadges from './pages/LeaderBadges';
+import LeaderDashboard from './pages/LeaderDashboard';
 import LeaderEvents from './pages/LeaderEvents';
 import LeaderGallery from './pages/LeaderGallery';
 import LeaderMembers from './pages/LeaderMembers';
+import LeaderProgramme from './pages/LeaderProgramme';
 import ManageBadges from './pages/ManageBadges';
 import ManageStagedBadge from './pages/ManageStagedBadge';
 import MeetingDetail from './pages/MeetingDetail';
@@ -83,11 +85,13 @@ import MonthlyNewsletterList from './pages/MonthlyNewsletterList';
 import MyChild from './pages/MyChild';
 import NightsAwayBadgeDetail from './pages/NightsAwayBadgeDetail';
 import NightsAwayTracking from './pages/NightsAwayTracking';
+import ParentBadges from './pages/ParentBadges';
 import ParentDashboard from './pages/ParentDashboard';
 import ParentEventDetail from './pages/ParentEventDetail';
 import ParentEvents from './pages/ParentEvents';
 import ParentGoldAward from './pages/ParentGoldAward';
 import ParentPortal from './pages/ParentPortal';
+import ParentProgramme from './pages/ParentProgramme';
 import Parents from './pages/Parents';
 import ReceiptUploader from './pages/ReceiptUploader';
 import RiskAssessmentDetail from './pages/RiskAssessmentDetail';
@@ -99,10 +103,6 @@ import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
 import WeeklyMessage from './pages/WeeklyMessage';
 import WeeklyMessageList from './pages/WeeklyMessageList';
-import LeaderProgramme from './pages/LeaderProgramme';
-import ParentBadges from './pages/ParentBadges';
-import LeaderDashboard from './pages/LeaderDashboard';
-import ParentProgramme from './pages/ParentProgramme';
 import __Layout from './Layout.jsx';
 
 
@@ -131,9 +131,11 @@ export const PAGES = {
     "JoiningInBadgeDetail": JoiningInBadgeDetail,
     "LeaderAttendance": LeaderAttendance,
     "LeaderBadges": LeaderBadges,
+    "LeaderDashboard": LeaderDashboard,
     "LeaderEvents": LeaderEvents,
     "LeaderGallery": LeaderGallery,
     "LeaderMembers": LeaderMembers,
+    "LeaderProgramme": LeaderProgramme,
     "ManageBadges": ManageBadges,
     "ManageStagedBadge": ManageStagedBadge,
     "MeetingDetail": MeetingDetail,
@@ -143,11 +145,13 @@ export const PAGES = {
     "MyChild": MyChild,
     "NightsAwayBadgeDetail": NightsAwayBadgeDetail,
     "NightsAwayTracking": NightsAwayTracking,
+    "ParentBadges": ParentBadges,
     "ParentDashboard": ParentDashboard,
     "ParentEventDetail": ParentEventDetail,
     "ParentEvents": ParentEvents,
     "ParentGoldAward": ParentGoldAward,
     "ParentPortal": ParentPortal,
+    "ParentProgramme": ParentProgramme,
     "Parents": Parents,
     "ReceiptUploader": ReceiptUploader,
     "RiskAssessmentDetail": RiskAssessmentDetail,
@@ -159,10 +163,6 @@ export const PAGES = {
     "Volunteer": Volunteer,
     "WeeklyMessage": WeeklyMessage,
     "WeeklyMessageList": WeeklyMessageList,
-    "LeaderProgramme": LeaderProgramme,
-    "ParentBadges": ParentBadges,
-    "LeaderDashboard": LeaderDashboard,
-    "ParentProgramme": ParentProgramme,
 }
 
 export const pagesConfig = {

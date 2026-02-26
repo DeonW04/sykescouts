@@ -30,6 +30,7 @@ export default function ManageBadges() {
     completion_rule: 'all_modules',
     badge_family_id: '',
     stage_number: null,
+    uniform_position: '',
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [stockDialog, setStockDialog] = useState(null);

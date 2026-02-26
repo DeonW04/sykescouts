@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, Trophy, CheckCircle, Circle, Filter, Moon, Footprints, Star, X } from 'lucide-react';
+import { Award, Trophy, CheckCircle, Circle, Filter, Moon, Footprints, Star, X, Shirt, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,6 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ParentNav from '../components/parent/ParentNav';
 import { motion } from 'framer-motion';
+import UniformDiagram from '../components/uniform/UniformDiagram';
 
 function StagedFamilyDialog({ selectedBadge, child, badgeProgress, getBadgeModules, getModuleRequirements, isRequirementCompleted }) {
   const realStages = selectedBadge.family.stages.filter(s => s.stage_number != null && s.stage_number !== '');
