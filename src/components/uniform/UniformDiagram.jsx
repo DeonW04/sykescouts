@@ -45,6 +45,8 @@ const DEFAULT_POSITIONS = {
 
 export default function UniformDiagram({ uniformConfig, earnedBadges, allBadges, onBadgeClick }) {
   const [activePosition, setActivePosition] = useState(null);
+  const [imgSize, setImgSize] = useState(null);
+  const imgRef = React.useRef(null);
   const sectionName = uniformConfig?.section || 'scouts';
 
   const imageUrl = uniformConfig?.image_url || null;
@@ -62,22 +64,31 @@ export default function UniformDiagram({ uniformConfig, earnedBadges, allBadges,
 
   const positions = Object.keys(POSITION_LABELS);
 
+  const handleImageLoad = () => {
+    if (imgRef.current) {
+      setImgSize({ w: imgRef.current.offsetWidth, h: imgRef.current.offsetHeight });
+    }
+  };
+
   return (
     <div className="relative w-full">
       {imageUrl ? (
-        <div className="relative inline-block w-full">
+        <div className="relative w-full">
           <img
+            ref={imgRef}
             src={imageUrl}
             alt="Uniform diagram"
-            className="w-full rounded-xl object-contain"
+            className="w-full rounded-xl object-contain block"
             style={{ maxHeight: 480 }}
+            onLoad={handleImageLoad}
           />
-          {/* Dot overlays */}
-          {positions.map(pos => {
+          {/* Dot overlays — positioned relative to the rendered image size */}
+          {imgSize && positions.map(pos => {
             const coords = dotPositions[pos];
             if (!coords) return null;
             const badges = badgesByPosition[pos] || [];
             const hasEarned = badges.length > 0;
+            // coords are % of image natural size, apply directly as % of rendered image
             return (
               <button
                 key={pos}
