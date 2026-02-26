@@ -58,6 +58,21 @@ export default function AdminSettings() {
     queryFn: () => base44.entities.WebsiteImage.list(),
   });
 
+  const { data: uniformConfigs = [], refetch: refetchUniforms } = useQuery({
+    queryKey: ['uniform-configs'],
+    queryFn: () => base44.entities.UniformConfig.filter({}),
+  });
+
+  const handleSaveUniform = async (section, data) => {
+    const existing = uniformConfigs.find(u => u.section === section);
+    if (existing) {
+      await base44.entities.UniformConfig.update(existing.id, data);
+    } else {
+      await base44.entities.UniformConfig.create({ section, ...data });
+    }
+    refetchUniforms();
+  };
+
   const { data: galleryPhotos = [] } = useQuery({
     queryKey: ['gallery-photos'],
     queryFn: () => base44.entities.EventPhoto.filter({}),
