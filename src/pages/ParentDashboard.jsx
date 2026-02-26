@@ -156,6 +156,7 @@ export default function ParentDashboard() {
     queryFn: async () => {
       if (children.length === 0) return [];
       const sectionIds = [...new Set(children.map(c => c.section_id))];
+      const childIds = children.map(c => c.id);
       
       // Get all programmes for these sections
       const programmes = await base44.entities.Programme.filter({});
@@ -175,8 +176,13 @@ export default function ParentDashboard() {
       
       const relevantActions = [...programmeActions, ...eventActions];
       
-      // Get all responses from this parent
-      const responses = await base44.entities.ActionResponse.filter({ parent_email: user?.email });
+      // Fetch ALL responses for this parent's children — match by member_id, NOT
+      // parent_email, so that responses entered manually by a leader (which use
+      // 'admin@manual.entry' as the email) are still counted as completed.
+      const allResponses = await base44.entities.ActionResponse.filter({});
+      const childResponses = allResponses.filter(r =>
+        childIds.includes(r.member_id) || childIds.includes(r.child_member_id)
+      );
       
       // Add programme/event details to each action
       const actionsWithDetails = relevantActions.map(action => ({
@@ -189,13 +195,14 @@ export default function ParentDashboard() {
         // Don't show closed actions
         if (action.is_open === false) return false;
         
-        // Check if all children have responded to this action
-        const allChildrenResponded = children.every(child => 
-          responses.some(r => 
-            (r.action_required_id === action.id || r.action_id === action.id) && 
+        // Check if ALL children have a completed response for this action —
+        // regardless of whether it was entered by the parent or a leader manually
+        const allChildrenResponded = children.every(child =>
+          childResponses.some(r =>
+            (r.action_required_id === action.id || r.action_id === action.id) &&
             (r.member_id === child.id || r.child_member_id === child.id) &&
             r.status === 'completed' &&
-            r.response // Only count as responded if there's actually a response value
+            r.response // Only count if there's actually a response value
           )
         );
         return !allChildrenResponded;
