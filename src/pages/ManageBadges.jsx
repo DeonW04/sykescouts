@@ -100,6 +100,7 @@ export default function ManageBadges() {
       completion_rule: 'all_modules',
       badge_family_id: '',
       stage_number: null,
+      uniform_position: '',
     });
     setEditingBadge(null);
   };
@@ -115,6 +116,7 @@ export default function ManageBadges() {
       completion_rule: badge.completion_rule,
       badge_family_id: badge.badge_family_id || '',
       stage_number: badge.stage_number || null,
+      uniform_position: badge.uniform_position || '',
     });
     setShowDialog(true);
   };
