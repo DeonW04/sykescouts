@@ -460,6 +460,27 @@ export default function ManageBadges() {
               </div>
             )}
             <div>
+              <Label>Uniform Position</Label>
+              <Select
+                value={formData.uniform_position || '__none__'}
+                onValueChange={(v) => setFormData({ ...formData, uniform_position: v === '__none__' ? '' : v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select position on uniform" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Not specified</SelectItem>
+                  <SelectItem value="left_sleeve_upper">Left Sleeve (Upper)</SelectItem>
+                  <SelectItem value="left_sleeve_lower">Left Sleeve (Lower)</SelectItem>
+                  <SelectItem value="right_sleeve">Right Sleeve</SelectItem>
+                  <SelectItem value="left_chest_upper">Left Chest (Upper)</SelectItem>
+                  <SelectItem value="left_chest_lower">Left Chest (Lower)</SelectItem>
+                  <SelectItem value="right_chest_upper">Right Chest (Upper)</SelectItem>
+                  <SelectItem value="right_chest_lower">Right Chest (Lower)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label>Badge Image (JPG/PNG)</Label>
               <Input
                 type="file"
