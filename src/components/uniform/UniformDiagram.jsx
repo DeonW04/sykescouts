@@ -66,7 +66,34 @@ export default function UniformDiagram({ uniformConfig, earnedBadges, allBadges,
 
   const handleImageLoad = () => {
     if (imgRef.current) {
-      setImgSize({ w: imgRef.current.offsetWidth, h: imgRef.current.offsetHeight });
+      const el = imgRef.current;
+      // naturalWidth/naturalHeight = original image dimensions
+      // offsetWidth/offsetHeight = rendered container size (may have letterbox if object-contain)
+      const containerW = el.offsetWidth;
+      const containerH = el.offsetHeight;
+      const naturalW = el.naturalWidth;
+      const naturalH = el.naturalHeight;
+
+      // Calculate the actual rendered image dimensions inside the container (object-contain)
+      const imageAspect = naturalW / naturalH;
+      const containerAspect = containerW / containerH;
+
+      let renderedW, renderedH, offsetX, offsetY;
+      if (imageAspect > containerAspect) {
+        // Image is wider — letterbox on top/bottom
+        renderedW = containerW;
+        renderedH = containerW / imageAspect;
+        offsetX = 0;
+        offsetY = (containerH - renderedH) / 2;
+      } else {
+        // Image is taller — letterbox on left/right
+        renderedH = containerH;
+        renderedW = containerH * imageAspect;
+        offsetX = (containerW - renderedW) / 2;
+        offsetY = 0;
+      }
+
+      setImgSize({ containerW, containerH, renderedW, renderedH, offsetX, offsetY });
     }
   };
 
@@ -82,18 +109,20 @@ export default function UniformDiagram({ uniformConfig, earnedBadges, allBadges,
             style={{ maxHeight: 480 }}
             onLoad={handleImageLoad}
           />
-          {/* Dot overlays — positioned relative to the rendered image size */}
+          {/* Dot overlays — positioned relative to ACTUAL rendered image, accounting for letterboxing */}
           {imgSize && positions.map(pos => {
             const coords = dotPositions[pos];
             if (!coords) return null;
             const badges = badgesByPosition[pos] || [];
             const hasEarned = badges.length > 0;
-            // coords are % of image natural size, apply directly as % of rendered image
+            // Convert % coords (relative to image content) to px offset from container top-left
+            const leftPx = imgSize.offsetX + (coords.x / 100) * imgSize.renderedW;
+            const topPx = imgSize.offsetY + (coords.y / 100) * imgSize.renderedH;
             return (
               <button
                 key={pos}
                 onClick={() => setActivePosition(activePosition === pos ? null : pos)}
-                style={{ left: `${coords.x}%`, top: `${coords.y}%`, transform: 'translate(-50%, -50%)' }}
+                style={{ left: leftPx, top: topPx, transform: 'translate(-50%, -50%)' }}
                 className={`absolute z-10 rounded-full border-2 shadow-lg transition-all hover:scale-110 focus:outline-none
                   ${hasEarned
                     ? 'w-8 h-8 bg-yellow-400 border-yellow-600 text-yellow-900'
