@@ -995,21 +995,19 @@ export default function ParentBadges() {
                               <CheckCircle className="w-3 h-3" /> Earned
                             </Badge>
                           )}
-                          {selectedBadge.badge.uniform_position && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 gap-1"
-                              onClick={() => {
-                                setUniformPositionHighlight(selectedBadge.badge.uniform_position);
-                                setSelectedBadge(null);
-                                setUniformDialog(true);
-                              }}
-                            >
-                              <MapPin className="w-3 h-3" />
-                              Where does this go on my uniform?
-                            </Button>
-                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 gap-1"
+                            onClick={() => {
+                              setUniformPositionHighlight(selectedBadge.badge.uniform_position || null);
+                              setSelectedBadge(null);
+                              setUniformDialog(true);
+                            }}
+                          >
+                            <MapPin className="w-3 h-3" />
+                            Where does this go on my uniform?
+                          </Button>
                         </div>
                         {selectedBadge.badge.description && (
                           <p className="text-gray-600 mt-2">{selectedBadge.badge.description}</p>
