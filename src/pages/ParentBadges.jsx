@@ -960,12 +960,27 @@ export default function ParentBadges() {
                       />
                       <div>
                         <DialogTitle className="text-2xl">{selectedBadge.badge.name}</DialogTitle>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <Badge className="capitalize">{selectedBadge.badge.category}</Badge>
                           {selectedBadge.progress?.isCompleted && (
                             <Badge className="bg-green-600 flex items-center gap-1">
                               <CheckCircle className="w-3 h-3" /> Earned
                             </Badge>
+                          )}
+                          {selectedBadge.badge.uniform_position && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 gap-1"
+                              onClick={() => {
+                                setUniformPositionHighlight(selectedBadge.badge.uniform_position);
+                                setSelectedBadge(null);
+                                setUniformDialog(true);
+                              }}
+                            >
+                              <MapPin className="w-3 h-3" />
+                              Where does this go on my uniform?
+                            </Button>
                           )}
                         </div>
                         {selectedBadge.badge.description && (
