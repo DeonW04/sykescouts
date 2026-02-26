@@ -6,11 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, AlertCircle, Star, Loader2 } from 'lucide-react';
 import EditMemberDialog from '../components/EditMemberDialog';
 import BadgesTab from '../components/member/BadgesTab';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
+import { createPageUrl } from '../utils';
+
+// Badge IDs to auto-tick all requirements for on investment
+const INVESTMENT_BADGE_IDS = [
+  '6974158e478e055ffb2477ca',
+  '69a019485d963fb039dd3c52',
+  '69a01930136941e6329f31d4',
+  '69a0197f06ed6d5a44a21573',
+];
 
 export default function MemberDetail() {
   const navigate = useNavigate();
@@ -18,6 +27,7 @@ export default function MemberDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const memberId = urlParams.get('id');
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [isInvesting, setIsInvesting] = useState(false);
 
   const { data: member, isLoading } = useQuery({
     queryKey: ['member', memberId],
@@ -37,33 +47,16 @@ export default function MemberDetail() {
     enabled: !!member?.section_id,
   });
 
-  const { data: parents = [] } = useQuery({
-    queryKey: ['parents', member?.parent_ids],
-    queryFn: async () => {
-      if (!member?.parent_ids?.length) return [];
-      const allParents = await base44.entities.Parent.filter({});
-      return allParents.filter(p => member.parent_ids.includes(p.id));
-    },
-    enabled: !!member?.parent_ids?.length,
-  });
-
   const { data: parentRegistration = {} } = useQuery({
     queryKey: ['parent-registration', member?.parent_one_email, member?.parent_two_email],
     queryFn: async () => {
       if (!member) return {};
       const emails = [member.parent_one_email, member.parent_two_email].filter(Boolean);
       if (emails.length === 0) return {};
-      
       const response = await base44.functions.invoke('checkParentRegistration', { emails });
       return response.data.results || {};
     },
     enabled: !!member,
-  });
-
-  const { data: badgeProgress = [] } = useQuery({
-    queryKey: ['badge-progress', memberId],
-    queryFn: () => base44.entities.BadgeProgress.filter({ member_id: memberId }),
-    enabled: !!memberId,
   });
 
   const { data: attendance = [] } = useQuery({
@@ -75,7 +68,6 @@ export default function MemberDetail() {
     enabled: !!memberId,
   });
 
-  // Check if either parent has a registered account
   const parentAccountExists = member && (
     (member.parent_one_email && parentRegistration[member.parent_one_email]) ||
     (member.parent_two_email && parentRegistration[member.parent_two_email])
@@ -86,79 +78,145 @@ export default function MemberDetail() {
     const today = new Date();
     let years = today.getFullYear() - birthDate.getFullYear();
     let months = today.getMonth() - birthDate.getMonth();
-    
-    if (months < 0) {
-      years--;
-      months += 12;
-    }
-    
+    if (months < 0) { years--; months += 12; }
     return { years, months };
+  };
+
+  // Core investment logic — ticks all requirements for each badge and creates
+  // a pending MemberBadgeAward. Does NOT mark anything as already awarded.
+  const performInvestment = async () => {
+    setIsInvesting(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+
+      // 1. Mark the member as invested
+      await base44.entities.Member.update(memberId, { invested: true });
+
+      // 2. For each investment badge, tick all its requirements and queue the award
+      for (const badgeId of INVESTMENT_BADGE_IDS) {
+        // Fetch requirements for this badge
+        const requirements = await base44.entities.BadgeRequirement.filter({ badge_id: badgeId });
+
+        // Fetch existing progress so we don't double-create
+        const existingProgress = await base44.entities.MemberRequirementProgress.filter({
+          member_id: memberId,
+          badge_id: badgeId,
+        });
+
+        // Tick every requirement
+        for (const req of requirements) {
+          const alreadyDone = existingProgress.find(p => p.requirement_id === req.id && p.completed);
+          if (alreadyDone) continue;
+
+          const existing = existingProgress.find(p => p.requirement_id === req.id);
+          const requiredCount = req.required_completions || 1;
+
+          if (existing) {
+            await base44.entities.MemberRequirementProgress.update(existing.id, {
+              completion_count: requiredCount,
+              completed: true,
+              completed_date: today,
+              source: 'manual',
+            });
+          } else {
+            await base44.entities.MemberRequirementProgress.create({
+              member_id: memberId,
+              badge_id: badgeId,
+              module_id: req.module_id,
+              requirement_id: req.id,
+              completion_count: requiredCount,
+              completed: true,
+              completed_date: today,
+              source: 'manual',
+            });
+          }
+        }
+
+        // Update or create MemberBadgeProgress to 'completed'
+        const existingBadgeProgress = await base44.entities.MemberBadgeProgress.filter({
+          member_id: memberId,
+          badge_id: badgeId,
+        });
+        if (existingBadgeProgress.length > 0) {
+          await base44.entities.MemberBadgeProgress.update(existingBadgeProgress[0].id, {
+            status: 'completed',
+            completion_date: today,
+          });
+        } else {
+          await base44.entities.MemberBadgeProgress.create({
+            member_id: memberId,
+            badge_id: badgeId,
+            status: 'completed',
+            completion_date: today,
+          });
+        }
+
+        // Create MemberBadgeAward as 'pending' (due but not yet physically awarded)
+        const existingAward = await base44.entities.MemberBadgeAward.filter({
+          member_id: memberId,
+          badge_id: badgeId,
+        });
+        if (existingAward.length === 0) {
+          await base44.entities.MemberBadgeAward.create({
+            member_id: memberId,
+            badge_id: badgeId,
+            completed_date: today,
+            award_status: 'pending',
+          });
+        }
+      }
+
+      // 3. Also award the World Membership badge if it exists (original behaviour)
+      const membershipBadges = await base44.entities.BadgeDefinition.filter({
+        special_type: 'membership',
+        active: true,
+      });
+      if (membershipBadges[0]) {
+        const existingAward = await base44.entities.MemberBadgeAward.filter({
+          member_id: memberId,
+          badge_id: membershipBadges[0].id,
+        });
+        if (existingAward.length === 0) {
+          await base44.entities.MemberBadgeAward.create({
+            member_id: memberId,
+            badge_id: membershipBadges[0].id,
+            completed_date: today,
+            award_status: 'pending',
+          });
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['member', memberId] });
+      queryClient.invalidateQueries({ queryKey: ['badge-progress'] });
+      queryClient.invalidateQueries({ queryKey: ['awards'] });
+      toast.success('Member invested! All investment badges marked as due.');
+    } catch (error) {
+      toast.error('Error investing member: ' + error.message);
+    } finally {
+      setIsInvesting(false);
+    }
   };
 
   const handleSaveMember = async (formData) => {
     try {
-      // Check if invested status changed from false to true
       const investedChanged = !member.invested && formData.invested;
-      
       await base44.entities.Member.update(memberId, formData);
-      
-      // If invested was just set to true, create World Membership badge award
+
       if (investedChanged) {
-        const badges = await base44.entities.BadgeDefinition.filter({ 
-          special_type: 'membership',
-          active: true 
-        });
-        const membershipBadge = badges[0];
-        
-        if (membershipBadge) {
-          // Check if already awarded
-          const existingAwards = await base44.entities.MemberBadgeAward.filter({
-            member_id: memberId,
-            badge_id: membershipBadge.id
-          });
-          
-          if (existingAwards.length === 0) {
-            await base44.entities.MemberBadgeAward.create({
-              member_id: memberId,
-              badge_id: membershipBadge.id,
-              completed_date: new Date().toISOString().split('T')[0],
-              award_status: 'pending',
-            });
-            toast.success('Member updated and World Membership badge marked as due');
-          }
-        }
+        // Trigger full investment logic (badges etc.) when checkbox is ticked via edit dialog
+        await performInvestment();
+        return; // performInvestment already shows toast and invalidates queries
       }
-      
+
       queryClient.invalidateQueries({ queryKey: ['member', memberId] });
       setShowEditDialog(false);
-      if (!investedChanged) {
-        toast.success('Member updated successfully');
-      }
+      toast.success('Member updated successfully');
     } catch (error) {
       toast.error('Error updating member: ' + error.message);
     }
   };
 
   const [sendingInvite, setSendingInvite] = useState(false);
-
-  const handleSendInvite = async () => {
-    setSendingInvite(true);
-    try {
-      await base44.functions.invoke('sendMemberInvite', {
-        parent_name: member.parent_name,
-        parent_email: member.parent_email,
-        parent_phone: member.parent_phone,
-        child_name: member.full_name,
-        child_dob: member.date_of_birth,
-      });
-      toast.success('Invitation sent successfully!');
-      queryClient.invalidateQueries({ queryKey: ['parent-account', member.parent_email] });
-    } catch (error) {
-      toast.error('Error sending invitation: ' + error.message);
-    } finally {
-      setSendingInvite(false);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -176,9 +234,7 @@ export default function MemberDetail() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="p-8 text-center">
           <p className="text-gray-600">Member not found</p>
-          <Button onClick={() => navigate(-1)} className="mt-4">
-            Go Back
-          </Button>
+          <Button onClick={() => navigate(-1)} className="mt-4">Go Back</Button>
         </Card>
       </div>
     );
@@ -191,7 +247,7 @@ export default function MemberDetail() {
       <LeaderNav />
       {/* Header */}
       <div className="bg-[#004851] text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">         
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-start gap-4">
             <div className="flex items-center gap-4 md:gap-6 flex-1">
               <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full flex items-center justify-center text-[#004851] font-bold text-2xl md:text-3xl flex-shrink-0">
@@ -209,10 +265,14 @@ export default function MemberDetail() {
                       {member.patrol}
                     </Badge>
                   )}
+                  {member.invested && (
+                    <Badge variant="secondary" className="bg-yellow-400/90 text-yellow-900 text-xs md:text-sm">
+                      <Star className="w-3 h-3 mr-1" />
+                      Invested
+                    </Badge>
+                  )}
                   <div className={`flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium ${
-                    parentAccountExists 
-                      ? 'bg-green-500 text-white' 
-                      : 'bg-red-500 text-white'
+                    parentAccountExists ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
                   }`}>
                     {parentAccountExists ? (
                       <>
@@ -231,8 +291,29 @@ export default function MemberDetail() {
                 </div>
               </div>
             </div>
-            <div className="flex gap-2 w-full md:w-auto">
-              <Button 
+            <div className="flex gap-2 w-full md:w-auto flex-wrap">
+              {/* Invest Member button — only shows when not yet invested */}
+              {!member.invested && (
+                <Button
+                  onClick={performInvestment}
+                  disabled={isInvesting}
+                  className="bg-yellow-500 hover:bg-yellow-400 text-yellow-900 font-semibold flex-1 md:flex-none"
+                >
+                  {isInvesting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <span className="hidden sm:inline">Investing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Star className="w-4 h-4 md:mr-2" />
+                      <span className="hidden sm:inline">Invest Member</span>
+                      <span className="sm:hidden">Invest</span>
+                    </>
+                  )}
+                </Button>
+              )}
+              <Button
                 onClick={() => setShowEditDialog(true)}
                 className="bg-white text-[#004851] hover:bg-gray-100 flex-1 md:flex-none"
               >
@@ -337,7 +418,10 @@ export default function MemberDetail() {
                   )}
                   <div>
                     <p className="text-sm text-gray-600">Invested</p>
-                    <p className="font-medium">{member.invested ? 'Yes' : 'No'}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{member.invested ? 'Yes' : 'No'}</p>
+                      {member.invested && <Star className="w-4 h-4 text-yellow-500" />}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -413,7 +497,6 @@ export default function MemberDetail() {
                           });
                           toast.success('Invitation sent');
                         } catch (error) {
-                          console.error('Invitation error:', error);
                           toast.error('Failed to send invitation: ' + (error.message || 'Unknown error'));
                         }
                       }}
@@ -467,7 +550,6 @@ export default function MemberDetail() {
                           });
                           toast.success('Invitation sent');
                         } catch (error) {
-                          console.error('Invitation error:', error);
                           toast.error('Failed to send invitation: ' + (error.message || 'Unknown error'));
                         }
                       }}
@@ -531,8 +613,8 @@ export default function MemberDetail() {
                           {record.notes && <p className="text-sm text-gray-500">{record.notes}</p>}
                         </div>
                         <Badge variant={
-                          record.status === 'present' ? 'default' : 
-                          record.status === 'absent' ? 'destructive' : 
+                          record.status === 'present' ? 'default' :
+                          record.status === 'absent' ? 'destructive' :
                           'secondary'
                         }>
                           {record.status}
