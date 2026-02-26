@@ -943,6 +943,34 @@ export default function ParentBadges() {
         </DialogContent>
       </Dialog>
 
+      {/* Uniform Guide Dialog */}
+      <Dialog open={uniformDialog} onOpenChange={(open) => { setUniformDialog(open); if (!open) setUniformPositionHighlight(null); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shirt className="w-5 h-5" />
+              Uniform Guide – {child.full_name}
+            </DialogTitle>
+          </DialogHeader>
+          {uniformPositionHighlight && (
+            <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm text-purple-800 flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              Showing where this badge goes on the uniform
+            </div>
+          )}
+          <UniformDiagram
+            uniformConfig={uniformConfigs.find(u => u.section === childSectionName) || null}
+            earnedBadges={completedBadges}
+            allBadges={badges}
+            onBadgeClick={(badge) => {
+              setUniformDialog(false);
+              setSelectedBadge({ type: 'single', badge, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } });
+            }}
+          />
+          <p className="text-xs text-gray-500 text-center mt-2">Tap a circle to see which badges go in that area. Gold circles = earned badges.</p>
+        </DialogContent>
+      </Dialog>
+
       {/* Badge Detail Dialog */}
       <Dialog open={!!selectedBadge} onOpenChange={(open) => !open && setSelectedBadge(null)}> 
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
