@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, MapPin, Download, FileText, Award, AlertCircle, Check, X, CheckCircle, Clock } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Download, FileText, Award, AlertCircle, Check, X, CheckCircle, Clock, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
@@ -23,6 +23,8 @@ export default function ParentEventDetail() {
   const [consentDialog, setConsentDialog] = useState(null);
   const [textInputs, setTextInputs] = useState({});
   const [dropdownValues, setDropdownValues] = useState({});
+  const [editDialog, setEditDialog] = useState(null); // { action, child, existingResponse }
+  const [editValue, setEditValue] = useState('');
 
   useEffect(() => {
     loadUser();
@@ -86,9 +88,15 @@ export default function ParentEventDetail() {
   });
 
   const { data: actionResponses = [] } = useQuery({
-    queryKey: ['action-responses', eventId, user?.email],
-    queryFn: () => base44.entities.ActionResponse.filter({ entity_id: eventId, parent_email: user?.email }),
-    enabled: !!eventId && !!user?.email,
+    queryKey: ['action-responses', eventId],
+    queryFn: async () => {
+      // Fetch ALL responses for this event and filter by member_id client-side.
+      // This ensures leader-entered responses (which use 'admin@manual.entry'
+      // as parent_email) are included alongside parent-submitted ones.
+      const allResponses = await base44.entities.ActionResponse.filter({ entity_id: eventId });
+      return allResponses;
+    },
+    enabled: !!eventId,
   });
 
   const { data: badgeCriteria = [] } = useQuery({
@@ -110,8 +118,15 @@ export default function ParentEventDetail() {
     mutationFn: async ({ actionId, memberId, response }) => {
       return base44.entities.ActionResponse.create({
         action_required_id: actionId,
+        action_id: actionId,
         member_id: memberId,
-        response: response,
+        child_member_id: memberId,
+        entity_id: eventId,
+        parent_email: user.email,
+        response,
+        response_value: response,
+        status: 'completed',
+        responded_at: new Date().toISOString(),
       });
     },
     onSuccess: () => {
@@ -119,6 +134,23 @@ export default function ParentEventDetail() {
       toast.success('Response recorded');
       setTextInputs({});
       setDropdownValues({});
+    },
+  });
+
+  const updateResponseMutation = useMutation({
+    mutationFn: async ({ responseId, response }) => {
+      return base44.entities.ActionResponse.update(responseId, {
+        response,
+        response_value: response,
+        status: 'completed',
+        responded_at: new Date().toISOString(),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['action-responses'] });
+      toast.success('Response updated');
+      setEditDialog(null);
+      setEditValue('');
     },
   });
 
@@ -138,17 +170,67 @@ export default function ParentEventDetail() {
     eventAttendances.some(a => a.member_id === child.id)
   );
 
+  const childIds = myChildrenInEvent.map(c => c.id);
+
+  // Match responses by member_id so leader-entered responses are included
+  const myChildResponses = actionResponses.filter(r =>
+    childIds.includes(r.member_id) || childIds.includes(r.child_member_id)
+  );
+
+  const getChildResponse = (actionId, childId) => {
+    return myChildResponses.find(
+      r => (r.action_required_id === actionId || r.action_id === actionId) &&
+           (r.member_id === childId || r.child_member_id === childId) &&
+           r.status === 'completed' &&
+           r.response
+    );
+  };
+
+  const formatResponseDisplay = (action, responseValue) => {
+    if (!responseValue) return '—';
+    if (action.action_purpose === 'attendance') {
+      return responseValue === 'yes' ? '✓ Attending' : '✗ Not Attending';
+    }
+    if (action.action_purpose === 'consent') {
+      return responseValue === 'yes' ? '✓ Consent Given' : '✗ Not Given';
+    }
+    return responseValue;
+  };
+
   const unresolvedActions = actionsRequired.filter(action => {
-    return myChildrenInEvent.some(child => {
-      const hasResponse = actionResponses.some(
-        r => r.action_required_id === action.id && r.member_id === child.id && r.status === 'completed'
-      );
-      return !hasResponse;
-    });
+    return myChildrenInEvent.some(child => !getChildResponse(action.id, child.id));
+  });
+
+  const resolvedActions = actionsRequired.filter(action => {
+    return myChildrenInEvent.every(child => !!getChildResponse(action.id, child.id));
   });
 
   const getBadgeName = (badgeId) => {
     return badges.find(b => b.id === badgeId)?.name || 'Unknown Badge';
+  };
+
+  const openEditDialog = (action, child) => {
+    const existing = getChildResponse(action.id, child.id);
+    setEditDialog({ action, child, existingResponse: existing });
+    setEditValue(existing?.response || '');
+  };
+
+  const handleSaveEdit = () => {
+    if (!editValue || !editDialog) return;
+    if (editDialog.existingResponse) {
+      updateResponseMutation.mutate({
+        responseId: editDialog.existingResponse.id,
+        response: editValue,
+      });
+    } else {
+      respondToActionMutation.mutate({
+        actionId: editDialog.action.id,
+        memberId: editDialog.child.id,
+        response: editValue,
+      });
+      setEditDialog(null);
+      setEditValue('');
+    }
   };
 
   return (
@@ -207,7 +289,8 @@ export default function ParentEventDetail() {
         </div>
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          {/* Actions Required Section */}
+
+          {/* Actions Required - Pending */}
           {unresolvedActions.length > 0 && (
             <div className="mb-6 p-6 bg-gradient-to-br from-orange-50 via-red-50 to-orange-50 border-2 border-orange-200 rounded-2xl shadow-xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-400/20 to-transparent rounded-full blur-2xl" />
@@ -228,11 +311,8 @@ export default function ParentEventDetail() {
                       <p className="font-semibold text-gray-900 mb-4">{action.action_text}</p>
                       
                       {myChildrenInEvent.map(child => {
-                        const hasResponse = actionResponses.some(
-                          r => r.action_required_id === action.id && r.member_id === child.id && r.status === 'completed'
-                        );
-                        
-                        if (hasResponse) return null;
+                        const existingResponse = getChildResponse(action.id, child.id);
+                        if (existingResponse) return null;
                         
                         return (
                           <div key={child.id} className="mt-3 pt-3 border-t border-orange-100 first:border-t-0 first:mt-0 first:pt-0">
@@ -334,7 +414,56 @@ export default function ParentEventDetail() {
             </div>
           )}
 
-          {/* Main Content - Continuous Flow */}
+          {/* Responded Actions - show current responses with edit option */}
+          {resolvedActions.length > 0 && (
+            <div className="mb-6 p-6 bg-gradient-to-br from-green-50 via-emerald-50 to-green-50 border-2 border-green-200 rounded-2xl shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/20 to-transparent rounded-full blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Responses Submitted</h2>
+                    <p className="text-gray-600">Your responses to the following requests</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {resolvedActions.map(action => (
+                    <div key={action.id} className="bg-white/80 backdrop-blur rounded-xl p-5 border border-green-200 shadow-sm">
+                      <p className="font-semibold text-gray-900 mb-3">{action.action_text}</p>
+                      {myChildrenInEvent.map(child => {
+                        const existingResponse = getChildResponse(action.id, child.id);
+                        if (!existingResponse) return null;
+                        return (
+                          <div key={child.id} className="flex items-center justify-between py-2 border-t border-green-100 first:border-t-0 first:pt-0">
+                            <div>
+                              <p className="text-sm text-gray-500">{child.full_name}</p>
+                              <p className="font-medium text-green-800 mt-0.5">
+                                {formatResponseDisplay(action, existingResponse.response)}
+                              </p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEditDialog(action, child)}
+                              className="border-green-300 text-green-700 hover:bg-green-50 gap-1.5"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                              Edit
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Main Content */}
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl overflow-hidden">
             <div className="p-8 lg:p-12 space-y-12">
               {/* Event Description */}
@@ -500,6 +629,76 @@ export default function ParentEventDetail() {
             >
               <CheckCircle className="w-4 h-4 mr-2" />
               Give Consent
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Response Dialog */}
+      <Dialog open={!!editDialog} onOpenChange={() => { setEditDialog(null); setEditValue(''); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Response for {editDialog?.child.full_name}</DialogTitle>
+            <DialogDescription>{editDialog?.action.action_text}</DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            {editDialog?.action.action_purpose === 'attendance' && (
+              <Select value={editValue} onValueChange={setEditValue}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select response" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="yes">✓ Attending</SelectItem>
+                  <SelectItem value="no">✗ Not Attending</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
+            {editDialog?.action.action_purpose === 'consent' && (
+              <Select value={editValue} onValueChange={setEditValue}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select response" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="yes">✓ Give Consent</SelectItem>
+                  <SelectItem value="no">✗ Withdraw Consent</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
+            {editDialog?.action.action_purpose === 'custom_dropdown' && (
+              <Select value={editValue} onValueChange={setEditValue}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select option" />
+                </SelectTrigger>
+                <SelectContent>
+                  {editDialog.action.dropdown_options?.map((option, idx) => (
+                    <SelectItem key={idx} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {editDialog?.action.action_purpose === 'text_input' && (
+              <Input
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                placeholder="Enter your response"
+              />
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setEditDialog(null); setEditValue(''); }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveEdit}
+              disabled={!editValue || updateResponseMutation.isPending}
+              className="bg-[#7413dc] hover:bg-[#5c0fb0]"
+            >
+              Save Response
             </Button>
           </DialogFooter>
         </DialogContent>
