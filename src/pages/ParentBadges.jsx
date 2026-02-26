@@ -15,8 +15,10 @@ import ParentNav from '../components/parent/ParentNav';
 import { motion } from 'framer-motion';
 import UniformDiagram from '../components/uniform/UniformDiagram';
 
-function StagedFamilyDialog({ selectedBadge, child, badgeProgress, getBadgeModules, getModuleRequirements, isRequirementCompleted }) {
+function StagedFamilyDialog({ selectedBadge, child, badgeProgress, getBadgeModules, getModuleRequirements, isRequirementCompleted, onUniformClick }) {
   const realStages = selectedBadge.family.stages.filter(s => s.stage_number != null && s.stage_number !== '');
+  // Use uniform_position from first stage that has one
+  const uniformPosition = selectedBadge.family.stages.find(s => s.uniform_position)?.uniform_position;
   return (
     <>
       <DialogHeader>
@@ -24,7 +26,18 @@ function StagedFamilyDialog({ selectedBadge, child, badgeProgress, getBadgeModul
           <img src={selectedBadge.badge.image_url} alt={selectedBadge.family.name} className="w-20 h-20 rounded-lg" />
           <div>
             <DialogTitle className="text-2xl">{selectedBadge.family.name}</DialogTitle>
-            <Badge className="mt-1 capitalize">Staged Badge</Badge>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <Badge className="capitalize">Staged Badge</Badge>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 gap-1"
+                onClick={() => onUniformClick(uniformPosition)}
+              >
+                <MapPin className="w-3 h-3" />
+                Where does this go on my uniform?
+              </Button>
+            </div>
           </div>
         </div>
       </DialogHeader>
