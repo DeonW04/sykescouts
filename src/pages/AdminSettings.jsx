@@ -342,6 +342,7 @@ export default function AdminSettings() {
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="images">Website Images</TabsTrigger>
             <TabsTrigger value="badges">Badge System</TabsTrigger>
+            <TabsTrigger value="uniform">Uniform Guide</TabsTrigger>
             <TabsTrigger value="gallery">Gallery Stats</TabsTrigger>
             <TabsTrigger value="receipts">Receipts</TabsTrigger>
             <TabsTrigger value="export">Data</TabsTrigger>
