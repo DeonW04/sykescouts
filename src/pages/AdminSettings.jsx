@@ -655,6 +655,33 @@ export default function AdminSettings() {
             </div>
           </TabsContent>
 
+          <TabsContent value="uniform">
+            <div className="space-y-6">
+              <Tabs defaultValue="scouts">
+                <TabsList>
+                  <TabsTrigger value="scouts">Scouts</TabsTrigger>
+                  <TabsTrigger value="cubs">Cubs</TabsTrigger>
+                  <TabsTrigger value="beavers">Beavers</TabsTrigger>
+                </TabsList>
+                {['scouts', 'cubs', 'beavers'].map(sec => (
+                  <TabsContent key={sec} value={sec}>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="capitalize">{sec} Uniform Diagram</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <UniformPositionEditor
+                          uniformConfig={uniformConfigs.find(u => u.section === sec)}
+                          onSave={(data) => handleSaveUniform(sec, data)}
+                        />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </div>
+          </TabsContent>
+
           <TabsContent value="gallery">
             {(() => {
               const totalPhotos = galleryPhotos.length;
