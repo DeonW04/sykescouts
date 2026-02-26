@@ -72,7 +72,6 @@ export default function UniformDiagram({ uniformConfig, earnedBadges, allBadges,
             className="w-full rounded-xl"
             style={{ maxHeight: 480, display: 'block' }}
           />
-          {/* Dots use same % coordinate system as the editor */}
           {positions.map(pos => {
             const coords = dotPositions[pos];
             if (!coords) return null;
@@ -125,14 +124,18 @@ export default function UniformDiagram({ uniformConfig, earnedBadges, allBadges,
                 ))}
               </div>
             )}
-            {/* Section example image */}
+            {/* Section example image — full width */}
             {(() => {
               const exampleImg = (uniformConfig?.section_example_images || []).find(i => i.position === activePosition);
               if (!exampleImg) return null;
               return (
                 <div className="mt-3 pt-3 border-t">
                   <p className="text-xs text-gray-500 mb-2">Example:</p>
-                  <img src={exampleImg.image_url} alt={exampleImg.label} className="h-28 rounded-lg object-cover" />
+                  <img
+                    src={exampleImg.image_url}
+                    alt={exampleImg.label}
+                    className="w-full rounded-lg object-cover"
+                  />
                 </div>
               );
             })()}
