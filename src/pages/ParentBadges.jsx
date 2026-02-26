@@ -166,6 +166,11 @@ export default function ParentBadges() {
     enabled: children.length > 0,
   });
 
+  const { data: uniformConfigs = [] } = useQuery({
+    queryKey: ['uniform-configs'],
+    queryFn: () => base44.entities.UniformConfig.filter({}),
+  });
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
