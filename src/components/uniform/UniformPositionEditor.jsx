@@ -128,7 +128,7 @@ export default function UniformPositionEditor({ uniformConfig, onSave }) {
             onClick={handleImageClick}
             style={{ cursor: placingDot ? 'crosshair' : 'default' }}
           >
-            <img ref={imgRef} src={imageUrl} alt="Uniform" className="w-full rounded-xl object-contain" style={{ maxHeight: 400 }} />
+            <img ref={imgRef} src={imageUrl} alt="Uniform" className="w-full rounded-xl block" style={{ maxHeight: 400 }} />
             {POSITIONS.map(p => {
               const coord = dots[p.key];
               if (!coord) return null;
