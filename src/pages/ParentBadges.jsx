@@ -1147,6 +1147,11 @@ export default function ParentBadges() {
                   getBadgeModules={getBadgeModules}
                   getModuleRequirements={getModuleRequirements}
                   isRequirementCompleted={isRequirementCompleted}
+                  onUniformClick={(pos) => {
+                    setUniformPositionHighlight(pos || null);
+                    setSelectedBadge(null);
+                    setUniformDialog(true);
+                  }}
                 />
               )}
             </>
