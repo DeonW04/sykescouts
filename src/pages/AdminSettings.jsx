@@ -18,6 +18,7 @@ import LeaderNav from '../components/leader/LeaderNav';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReceiptManagement from '../components/admin/ReceiptManagement';
 import BulkBadgeUpdate from '../components/badges/BulkBadgeUpdate';
+import UniformPositionEditor from '../components/uniform/UniformPositionEditor';
 
 export default function AdminSettings() {
   const navigate = useNavigate();
