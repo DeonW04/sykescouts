@@ -236,6 +236,7 @@ export default function ParentEventDetail() {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+        <ParentNav />
         {/* Hero Header */}
         <div className="relative bg-gradient-to-br from-[#7413dc] via-[#8b32eb] to-[#5c0fb0] text-white overflow-hidden">
           <div className="absolute inset-0">
