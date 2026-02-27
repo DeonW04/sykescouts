@@ -25,7 +25,7 @@ function SectionTransitionWrapper() {
       toSection={toSec}
       onComplete={onTransitionComplete}
     />
-  );
+  ); 
 }
 
 export default function Layout({ children, currentPageName }) {
