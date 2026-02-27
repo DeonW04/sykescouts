@@ -67,6 +67,9 @@ export default function MyChild() {
       id: child.id,
       preferred_name: child.preferred_name || '',
       address: child.address || '',
+      doctors_surgery: child.doctors_surgery || '',
+      doctors_surgery_address: child.doctors_surgery_address || '',
+      doctors_phone: child.doctors_phone || '',
       medical_info: child.medical_info || '',
       allergies: child.allergies || '',
       dietary_requirements: child.dietary_requirements || '',
@@ -99,12 +102,7 @@ export default function MyChild() {
     const today = new Date();
     let years = today.getFullYear() - birthDate.getFullYear();
     let months = today.getMonth() - birthDate.getMonth();
-    
-    if (months < 0) {
-      years--;
-      months += 12;
-    }
-    
+    if (months < 0) { years--; months += 12; }
     return { years, months };
   };
 
@@ -123,7 +121,6 @@ export default function MyChild() {
 
   const parent1HasAccount = child && child.parent_one_email && allUsers.some(u => u.email === child.parent_one_email);
   const parent2HasAccount = child && child.parent_two_email && allUsers.some(u => u.email === child.parent_two_email);
-  const registeredCount = (parent1HasAccount ? 1 : 0) + (parent2HasAccount ? 1 : 0);
 
   if (!child) {
     return (
@@ -201,8 +198,7 @@ export default function MyChild() {
                   className="bg-white text-[#7413dc] hover:bg-blue-50 font-semibold shadow-xl flex-1 md:flex-none"
                 >
                   <Save className="w-4 h-4 md:w-5 md:h-5 md:mr-2" />
-                  <span className="hidden sm:inline">Save</span>
-                  <span className="sm:hidden">Save</span>
+                  Save
                 </Button>
                 <Button 
                   variant="outline"
@@ -211,8 +207,7 @@ export default function MyChild() {
                   className="bg-white/10 text-white border-white/30 hover:bg-white/20 flex-1 md:flex-none"
                 >
                   <X className="w-4 h-4 md:w-5 md:h-5 md:mr-2" />
-                  <span className="hidden sm:inline">Cancel</span>
-                  <span className="sm:hidden">Cancel</span>
+                  Cancel
                 </Button>
               </div>
             )}
@@ -313,9 +308,7 @@ export default function MyChild() {
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Parent One</CardTitle>
-                  </div>
+                  <CardTitle>Parent One</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
@@ -353,9 +346,7 @@ export default function MyChild() {
 
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Parent Two</CardTitle>
-                  </div>
+                  <CardTitle>Parent Two</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid md:grid-cols-2 gap-4">
@@ -400,18 +391,48 @@ export default function MyChild() {
                 <CardTitle>Medical Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Doctor's Surgery — now editable */}
                 <div>
                   <Label>Doctor's Surgery</Label>
-                  <p className="mt-1 font-medium">{child.doctors_surgery || 'Not provided'}</p>
+                  {editMode ? (
+                    <Input
+                      value={editForm.doctors_surgery}
+                      onChange={(e) => setEditForm({ ...editForm, doctors_surgery: e.target.value })}
+                      placeholder="Surgery name"
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="mt-1 font-medium">{child.doctors_surgery || 'Not provided'}</p>
+                  )}
                 </div>
                 <div>
                   <Label>Doctor's Surgery Address</Label>
-                  <p className="mt-1 font-medium whitespace-pre-line">{child.doctors_surgery_address || 'Not provided'}</p>
+                  {editMode ? (
+                    <Textarea
+                      value={editForm.doctors_surgery_address}
+                      onChange={(e) => setEditForm({ ...editForm, doctors_surgery_address: e.target.value })}
+                      placeholder="Surgery address"
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="mt-1 font-medium whitespace-pre-line">{child.doctors_surgery_address || 'Not provided'}</p>
+                  )}
                 </div>
                 <div>
                   <Label>Doctor's Phone Number</Label>
-                  <p className="mt-1 font-medium">{child.doctors_phone || 'Not provided'}</p>
+                  {editMode ? (
+                    <Input
+                      type="tel"
+                      value={editForm.doctors_phone}
+                      onChange={(e) => setEditForm({ ...editForm, doctors_phone: e.target.value })}
+                      placeholder="Surgery phone number"
+                      className="mt-1"
+                    />
+                  ) : (
+                    <p className="mt-1 font-medium">{child.doctors_phone || 'Not provided'}</p>
+                  )}
                 </div>
+
                 <div>
                   <Label>Medical Conditions</Label>
                   {editMode ? (
