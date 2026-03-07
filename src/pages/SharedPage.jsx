@@ -27,16 +27,12 @@ export default function SharedPage() {
     queryKey: ['shared-page', pageId],
     queryFn: async () => {
       if (!pageId) return null;
-      const pages = await base44.entities.CommunicationPage.filter({
-        page_id: pageId,
-        status: 'published',
-      });
-      if (!pages || pages.length === 0) throw new Error('Page not found');
-      // Increment view count in the background (non-blocking)
-      base44.entities.CommunicationPage.update(pages[0].id, {
-        view_count: (pages[0].view_count || 0) + 1,
-      }).catch(() => {});
-      return pages[0];
+      try {
+        const response = await base44.functions.invoke('getSharedPage', { pageId });
+        return response.data;
+      } catch (err) {
+        throw err;
+      }
     },
     enabled: !!pageId,
   });
