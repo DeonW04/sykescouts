@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSectionContext } from '../components/leader/SectionContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Award, Plus, Search, Users, TrendingUp, Package, AlertTriangle, LayoutList, Grid } from 'lucide-react';
+import { Award, Plus, Search, Users, TrendingUp, Package, AlertTriangle, LayoutList, Grid, Mail, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Badge } from '@/components/ui/badge';
 import LeaderNav from '../components/leader/LeaderNav';
 import MemberBadgeView from '../components/badges/MemberBadgeView';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 export default function LeaderBadges() {
   const navigate = useNavigate();
