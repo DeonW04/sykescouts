@@ -21,8 +21,8 @@ Deno.serve(async (req) => {
 
     const childName = member.preferred_name || member.first_name;
     const parentFirstName = member.parent_one_first_name || 'there';
-    const appBaseUrl = Deno.env.get('APP_BASE_URL') || '';
-    const badgesUrl = appBaseUrl ? `${appBaseUrl}/ParentBadges` : null;
+    const origin = req.headers.get('origin') || req.headers.get('referer')?.split('/').slice(0,3).join('/') || '';
+    const badgesUrl = origin ? `${origin}/ParentBadges` : null;
 
     const emailBody = `<!DOCTYPE html>
 <html>
