@@ -47,7 +47,7 @@ export default function UniformDiagram({ uniformConfig, earnedBadges, allBadges,
   const [activePosition, setActivePosition] = useState(highlightPosition || null);
 
   // When highlightPosition changes (e.g. opened from a badge), update active position
-  React.useEffect(() => {
+  useEffect(() => {
     if (highlightPosition) setActivePosition(highlightPosition);
   }, [highlightPosition]);
   const sectionName = uniformConfig?.section || 'scouts';
