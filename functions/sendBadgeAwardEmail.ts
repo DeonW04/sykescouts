@@ -21,8 +21,7 @@ Deno.serve(async (req) => {
 
     const childName = member.preferred_name || member.first_name;
     const parentFirstName = member.parent_one_first_name || 'there';
-    const origin = req.headers.get('origin') || req.headers.get('referer')?.split('/').slice(0,3).join('/') || '';
-    const badgesUrl = origin ? `${origin}/ParentBadges` : null;
+    const badgesUrl = 'https://sykescouts.org/ParentBadges';
 
     const emailBody = `<!DOCTYPE html>
 <html>
