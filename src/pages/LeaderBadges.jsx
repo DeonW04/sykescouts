@@ -513,6 +513,45 @@ export default function LeaderBadges() {
                 )}
         </>}
       </div>
+
+      {/* Email Confirmation Dialog */}
+      <Dialog open={showEmailConfirm} onOpenChange={setShowEmailConfirm}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="w-5 h-5 text-amber-500" />
+              Send Badge Award Emails
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600 mb-4">
+            The following parents will receive an email about their child's new badge{pendingNotifications.length !== 1 ? 's' : ''}:
+          </p>
+          <div className="space-y-3 mb-6">
+            {pendingMemberList.map(({ member, badgeItems, emails }) => (
+              <div key={member.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm">{member.full_name}</p>
+                  <p className="text-xs text-gray-500 truncate">{emails.join(', ')}</p>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {badgeItems.map(badge => (
+                    <img key={badge.id} src={badge.image_url} alt={badge.name} title={badge.name} className="w-8 h-8 rounded object-contain bg-white border" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => setShowEmailConfirm(false)} className="flex-1" disabled={sendingEmails}>
+              Cancel
+            </Button>
+            <Button onClick={handleSendEmails} disabled={sendingEmails} className="flex-1 bg-amber-500 hover:bg-amber-600 gap-2">
+              <Send className="w-4 h-4" />
+              {sendingEmails ? 'Sending...' : 'Send Emails'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
