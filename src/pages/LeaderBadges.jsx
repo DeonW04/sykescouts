@@ -72,6 +72,39 @@ export default function LeaderBadges() {
     queryFn: () => base44.entities.BadgeStock.filter({}),
   });
 
+  const { data: pendingNotifications = [] } = useQuery({
+    queryKey: ['pending-badge-notifications'],
+    queryFn: () => base44.entities.PendingBadgeNotification.list(),
+  });
+
+  // Group pending notifications by member for the confirmation dialog
+  const pendingByMember = pendingNotifications.reduce((acc, notif) => {
+    if (!acc[notif.member_id]) acc[notif.member_id] = [];
+    acc[notif.member_id].push(notif);
+    return acc;
+  }, {});
+
+  const pendingMemberList = Object.entries(pendingByMember).map(([memberId, notifs]) => {
+    const member = members.find(m => m.id === memberId);
+    const badgeItems = notifs.map(n => badges.find(b => b.id === n.badge_id)).filter(Boolean);
+    const emails = [member?.parent_one_email, member?.parent_two_email].filter(Boolean);
+    return { member, badgeItems, emails };
+  }).filter(m => m.member);
+
+  const handleSendEmails = async () => {
+    setSendingEmails(true);
+    try {
+      await base44.functions.invoke('sendPendingBadgeEmails', {});
+      queryClient.invalidateQueries({ queryKey: ['pending-badge-notifications'] });
+      setShowEmailConfirm(false);
+      toast.success('Badge award emails sent successfully!');
+    } catch (e) {
+      toast.error('Failed to send emails. Please try again.');
+    } finally {
+      setSendingEmails(false);
+    }
+  };
+
   // Find the section name for the currently selected section
   const selectedSectionObj = availableSections.find(s => s.id === selectedSection);
   const selectedSectionName = selectedSectionObj?.name;
