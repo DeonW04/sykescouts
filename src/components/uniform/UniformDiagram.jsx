@@ -43,8 +43,13 @@ const DEFAULT_POSITIONS = {
   },
 };
 
-export default function UniformDiagram({ uniformConfig, earnedBadges, allBadges, onBadgeClick }) {
-  const [activePosition, setActivePosition] = useState(null);
+export default function UniformDiagram({ uniformConfig, earnedBadges, allBadges, onBadgeClick, highlightPosition }) {
+  const [activePosition, setActivePosition] = useState(highlightPosition || null);
+
+  // When highlightPosition changes (e.g. opened from a badge), update active position
+  React.useEffect(() => {
+    if (highlightPosition) setActivePosition(highlightPosition);
+  }, [highlightPosition]);
   const sectionName = uniformConfig?.section || 'scouts';
 
   const imageUrl = uniformConfig?.image_url || null;
