@@ -25,11 +25,14 @@ Deno.serve(async (req) => {
       const member = allMembers.find(m => m.id === memberId);
       if (!member) continue;
 
-      const parentEmails = [member.parent_one_email, member.parent_two_email].filter(Boolean);
-      if (parentEmails.length === 0) continue;
+      const parents = [
+        { email: member.parent_one_email, name: member.parent_one_first_name },
+        { email: member.parent_two_email, name: member.parent_two_first_name },
+      ].filter(p => p.email);
+
+      if (parents.length === 0) continue;
 
       const childName = member.preferred_name || member.first_name;
-      const parentFirstName = member.parent_one_first_name || 'there';
 
       const awardedBadges = notifs
         .map(n => allBadges.find(b => b.id === n.badge_id))
@@ -47,7 +50,13 @@ Deno.serve(async (req) => {
         </div>
       `).join('');
 
-      const emailBody = `<!DOCTYPE html>
+      const subject = badgeCount === 1
+        ? `🏅 ${childName} has been awarded the ${awardedBadges[0].name}!`
+        : `🏅 ${childName} has been awarded ${badgeCount} new badges!`;
+
+      for (const parent of parents) {
+        const parentFirstName = parent.name || 'there';
+        const emailBody = `<!DOCTYPE html>
 <html>
 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
   <div style="background: linear-gradient(135deg, #7413dc, #004851); padding: 30px; border-radius: 12px; margin-bottom: 24px; text-align: center;">
@@ -68,13 +77,7 @@ Deno.serve(async (req) => {
   <p style="font-size: 13px; color: #999; text-align: center;">40th Rochdale (Syke) Scouts</p>
 </body>
 </html>`;
-
-      const subject = badgeCount === 1
-        ? `🏅 ${childName} has been awarded the ${awardedBadges[0].name}!`
-        : `🏅 ${childName} has been awarded ${badgeCount} new badges!`;
-
-      for (const email of parentEmails) {
-        await base44.asServiceRole.integrations.Core.SendEmail({ to: email, subject, body: emailBody });
+        await base44.asServiceRole.integrations.Core.SendEmail({ to: parent.email, subject, body: emailBody });
         emailsSent++;
       }
     }
