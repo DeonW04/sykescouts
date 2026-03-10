@@ -17,10 +17,13 @@ import { toast } from 'sonner';
 
 export default function LeaderBadges() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { selectedSection, availableSections } = useSectionContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [viewMode, setViewMode] = useState('badge'); // 'badge' | 'member'
+  const [showEmailConfirm, setShowEmailConfirm] = useState(false);
+  const [sendingEmails, setSendingEmails] = useState(false);
 
   const { data: allBadges = [], isLoading } = useQuery({
     queryKey: ['badges'],
