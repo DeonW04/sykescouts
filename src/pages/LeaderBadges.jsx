@@ -255,6 +255,15 @@ export default function LeaderBadges() {
               </div>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
+              {pendingNotifications.length > 0 && (
+                <Button
+                  onClick={() => setShowEmailConfirm(true)}
+                  className="bg-amber-500 hover:bg-amber-600 text-white gap-2 animate-pulse"
+                >
+                  <Mail className="w-4 h-4" />
+                  Send Badge Emails ({pendingMemberList.length})
+                </Button>
+              )}
               <div className="flex rounded-lg overflow-hidden border border-white/30">
                 <button
                   onClick={() => setViewMode('badge')}
