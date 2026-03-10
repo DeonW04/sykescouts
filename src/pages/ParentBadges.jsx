@@ -988,6 +988,7 @@ export default function ParentBadges() {
             uniformConfig={uniformConfigs.find(u => u.section === childSectionName) || null}
             earnedBadges={completedBadges}
             allBadges={badges}
+            highlightPosition={uniformPositionHighlight}
             onBadgeClick={(badge) => {
               setUniformDialog(false);
               setSelectedBadge({ type: 'single', badge, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } });
