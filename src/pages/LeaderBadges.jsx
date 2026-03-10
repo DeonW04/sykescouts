@@ -528,10 +528,10 @@ export default function LeaderBadges() {
           </p>
           <div className="space-y-3 mb-6">
             {pendingMemberList.map(({ member, badgeItems, emails }) => (
-              <div key={member.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border">
+              <div key={member.id} className="flex items-center gap-3 p-3 bg-gray-100 rounded-lg border border-gray-200">
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm">{member.full_name}</p>
-                  <p className="text-xs text-gray-500 truncate">{emails.join(', ')}</p>
+                  <p className="font-semibold text-sm text-gray-900">{member.full_name}</p>
+                  <p className="text-xs text-gray-600 truncate">{emails.join(', ')}</p>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   {badgeItems.map(badge => (
