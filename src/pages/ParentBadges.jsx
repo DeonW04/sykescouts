@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ParentNav from '../components/parent/ParentNav';
 import { motion } from 'framer-motion';
 import UniformDiagram from '../components/uniform/UniformDiagram';
+import { useRef } from 'react';
 
 function StagedFamilyDialog({ selectedBadge, child, badgeProgress, getBadgeModules, getModuleRequirements, isRequirementCompleted, onUniformClick }) {
   const realStages = selectedBadge.family.stages.filter(s => s.stage_number != null && s.stage_number !== '');
@@ -97,6 +98,9 @@ export default function ParentBadges() {
   const [activityDialog, setActivityDialog] = useState(null); // 'nights' | 'hikes' | 'joining'
   const [uniformDialog, setUniformDialog] = useState(false);
   const [uniformPositionHighlight, setUniformPositionHighlight] = useState(null); // badge to highlight on uniform
+  const [newBadgesModal, setNewBadgesModal] = useState(false);
+  const [newAwardedBadges, setNewAwardedBadges] = useState([]);
+  const newBadgesCheckedRef = useRef(false);
 
   useEffect(() => {
     loadUserData();
@@ -119,7 +123,7 @@ export default function ParentBadges() {
     enabled: !!user?.email,
   });
 
-  const { data: badges = [] } = useQuery({
+  const { data: badges = [], isSuccess: badgesLoaded } = useQuery({
     queryKey: ['badges'],
     queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
   });
@@ -154,7 +158,7 @@ export default function ParentBadges() {
     enabled: children.length > 0,
   });
 
-  const { data: awards = [] } = useQuery({
+  const { data: awards = [], isSuccess: awardsLoaded } = useQuery({
     queryKey: ['awards', children],
     queryFn: async () => {
       if (children.length === 0) return [];
@@ -184,6 +188,32 @@ export default function ParentBadges() {
     queryFn: () => base44.entities.UniformConfig.filter({}),
   });
 
+  useEffect(() => {
+    if (newBadgesCheckedRef.current) return;
+    const currentChild = children[0];
+    if (!currentChild || !awardsLoaded || !badgesLoaded) return;
+    newBadgesCheckedRef.current = true;
+    const storageKey = `badges_last_seen_${currentChild.id}`;
+    const lastSeen = localStorage.getItem(storageKey);
+    if (!lastSeen) {
+      localStorage.setItem(storageKey, new Date().toISOString());
+      return;
+    }
+    const lastSeenDate = new Date(lastSeen);
+    const newAwards = awards.filter(a => new Date(a.created_date) > lastSeenDate);
+    if (newAwards.length > 0) {
+      const newBadgeItems = newAwards.map(award => {
+        const b = badges.find(bd => bd.id === award.badge_id);
+        if (!b) return null;
+        return { type: 'single', badge: b, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } };
+      }).filter(Boolean);
+      if (newBadgeItems.length > 0) {
+        setNewAwardedBadges(newBadgeItems);
+        setNewBadgesModal(true);
+      }
+    }
+  }, [children[0]?.id, awardsLoaded, badgesLoaded]);
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -193,6 +223,13 @@ export default function ParentBadges() {
   }
 
   const child = children[0];
+
+  const dismissNewBadgesModal = () => {
+    if (child) {
+      localStorage.setItem(`badges_last_seen_${child.id}`, new Date().toISOString());
+    }
+    setNewBadgesModal(false);
+  };
 
   if (!child) {
     return (
@@ -966,6 +1003,36 @@ export default function ParentBadges() {
               </>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* New Badges Awarded Modal */}
+      <Dialog open={newBadgesModal} onOpenChange={(open) => { if (!open) dismissNewBadgesModal(); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-xl">🎉 New Badges Awarded!</DialogTitle>
+          </DialogHeader>
+          <p className="text-gray-600 text-sm mb-4">
+            {child.full_name} has earned {newAwardedBadges.length} new badge{newAwardedBadges.length !== 1 ? 's' : ''}! Tap a badge to see the details.
+          </p>
+          <div className="grid grid-cols-3 gap-4">
+            {newAwardedBadges.map((bp, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  dismissNewBadgesModal();
+                  setSelectedBadge(bp);
+                }}
+                className="flex flex-col items-center gap-2 p-3 rounded-xl border hover:bg-purple-50 hover:border-purple-300 transition-all hover:scale-105"
+              >
+                <img src={bp.badge.image_url} alt={bp.badge.name} className="w-16 h-16 object-contain rounded-lg" />
+                <span className="text-xs text-center font-medium text-gray-700 leading-tight">{bp.badge.name}</span>
+              </button>
+            ))}
+          </div>
+          <Button onClick={dismissNewBadgesModal} variant="outline" className="w-full mt-4">
+            Close
+          </Button>
         </DialogContent>
       </Dialog>
 
