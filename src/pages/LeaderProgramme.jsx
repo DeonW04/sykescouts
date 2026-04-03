@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Plus, ChevronRight, Sparkles, Clock, List, Image, Pencil, Download } from 'lucide-react';
+import { Calendar, Plus, ChevronRight, Sparkles, Clock, List, Image, Pencil, Download, ArrowRight, Wand2 } from 'lucide-react';
 import NewTermDialog from '../components/programme/NewTermDialog';
 import AllTermsDialog from '../components/programme/AllTermsDialog';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -149,68 +149,87 @@ export default function LeaderProgramme() {
               </div>
               <p className="text-blue-100 text-lg">Plan weekly meetings and track your section's progress</p>
             </div>
-            <div className="flex gap-3 flex-wrap">
-              {currentTerm && savedDraft && (
-                <Button
-                  onClick={() => {
-                    sessionStorage.setItem('ai_plan_data', JSON.stringify({
-                      meetings: savedDraft.generated_meetings || [],
-                      engagement_score: savedDraft.engagement_score,
-                      engagement_summary: savedDraft.engagement_summary,
-                      term: currentTerm,
-                      section: currentSection,
-                      section_id: currentTerm.section_id,
-                      term_id: currentTerm.id,
-                      meetingDates: [],
-                      preFilled: [],
-                      sliders: {
-                        adventure: savedDraft.slider_adventure,
-                        competition: savedDraft.slider_competition,
-                        outdoor: savedDraft.slider_outdoor,
-                        badgeFocus: savedDraft.slider_badge_focus,
-                      },
-                      notes: savedDraft.notes,
-                      theme: savedDraft.theme,
-                      youthVoice: savedDraft.youth_voice,
-                    }));
-                    navigate(createPageUrl('AIProgrammePlanner'));
-                  }}
-                  size="lg"
-                  variant="outline"
-                  className="bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20 font-semibold gap-2"
-                >
-                  <Download className="w-5 h-5" />
-                  Load Saved Draft
-                </Button>
-              )}
-              {currentTerm && (
-                <motion.div
-                  animate={{ scale: [1, 1.03, 1] }}
-                  transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
-                >
-                  <Button
-                    onClick={() => setShowAIModal(true)}
-                    size="lg"
-                    className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold shadow-xl border-0 gap-2"
-                  >
-                    <Sparkles className="w-5 h-5" />
-                    ✨ Generate Full Term with AI
-                  </Button>
-                </motion.div>
-              )}
-              <Button
-                onClick={() => setShowAllTermsDialog(true)}
-                size="lg"
-                variant="outline"
-                className="bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20 font-semibold"
-              >
-                <List className="w-5 h-5 mr-2" />
-                Past & Future Terms
-              </Button>
-            </div>
+            <Button
+              onClick={() => setShowAllTermsDialog(true)}
+              size="lg"
+              variant="outline"
+              className="bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20 font-semibold self-start md:self-auto"
+            >
+              <List className="w-5 h-5 mr-2" />
+              Past & Future Terms
+            </Button>
           </div>
         </div>
       </div>
+
+      {/* AI Banner — shown only when a term is loaded */}
+      {currentTerm && (
+        <div className="border-b border-gray-100 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            {savedDraft ? (
+              <motion.button
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                onClick={() => {
+                  sessionStorage.setItem('ai_plan_data', JSON.stringify({
+                    meetings: savedDraft.generated_meetings || [],
+                    engagement_score: savedDraft.engagement_score,
+                    engagement_summary: savedDraft.engagement_summary,
+                    term: currentTerm,
+                    section: currentSection,
+                    section_id: currentTerm.section_id,
+                    term_id: currentTerm.id,
+                    meetingDates: [],
+                    preFilled: [],
+                    sliders: {
+                      adventure: savedDraft.slider_adventure,
+                      competition: savedDraft.slider_competition,
+                      outdoor: savedDraft.slider_outdoor,
+                      badgeFocus: savedDraft.slider_badge_focus,
+                    },
+                    notes: savedDraft.notes,
+                    theme: savedDraft.theme,
+                    youthVoice: savedDraft.youth_voice,
+                  }));
+                  navigate(createPageUrl('AIProgrammePlanner'));
+                }}
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-200 hover:border-violet-400 hover:shadow-md transition-all duration-200 group text-left"
+              >
+                <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
+                  <Download className="w-5 h-5 text-violet-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-violet-900 text-sm">You have a saved AI draft for this term</p>
+                  <p className="text-violet-600 text-xs truncate">
+                    {savedDraft.generated_meetings?.length || 0} meetings planned · tap to continue editing
+                  </p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-violet-400 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+              </motion.button>
+            ) : (
+              <motion.button
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                onClick={() => setShowAIModal(true)}
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 hover:border-amber-400 hover:shadow-md transition-all duration-200 group text-left"
+              >
+                <motion.div
+                  animate={{ rotate: [0, 10, -10, 0] }}
+                  transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+                  className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0"
+                >
+                  <Wand2 className="w-5 h-5 text-amber-600" />
+                </motion.div>
+                <div className="flex-1">
+                  <p className="font-bold text-amber-900 text-sm">✨ Generate this term's full programme with AI</p>
+                  <p className="text-amber-600 text-xs">Let AI plan engaging weekly meetings tailored to your section</p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-amber-400 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+              </motion.button>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Next Meeting Highlight */}
