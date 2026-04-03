@@ -30,13 +30,38 @@ export default function AIPlannerModal({
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState(null);
 
-  // Dates that need planning
-  const meetingDates = useMemo(() =>
-    (meetings || [])
-      .filter(m => !m.isHalfTerm)
-      .map(m => (m.date instanceof Date ? m.date : new Date(m.date)).toISOString().split('T')[0]),
-    [meetings]
-  );
+  // Compute meeting dates directly from term dates — don't rely on the meetings prop
+  const meetingDates = useMemo(() => {
+    if (!term?.start_date || !term?.end_date || !term?.meeting_day) return [];
+
+    const dayOfWeekMap = {
+      'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+      'Thursday': 4, 'Friday': 5, 'Saturday': 6
+    };
+    const targetDay = dayOfWeekMap[term.meeting_day];
+    const start = new Date(term.start_date);
+    const end = new Date(term.end_date);
+    const halfTermStart = term.half_term_start ? new Date(term.half_term_start) : null;
+    const halfTermEnd = term.half_term_end ? new Date(term.half_term_end) : null;
+
+    const dates = [];
+    let current = new Date(start);
+    // Advance to first occurrence of the meeting day
+    while (current.getDay() !== targetDay) {
+      current.setDate(current.getDate() + 1);
+    }
+
+    while (current <= end) {
+      const isHalfTerm = halfTermStart && halfTermEnd && current >= halfTermStart && current <= halfTermEnd;
+      if (!isHalfTerm) {
+        dates.push(current.toISOString().split('T')[0]);
+      }
+      current = new Date(current);
+      current.setDate(current.getDate() + 7);
+    }
+
+    return dates;
+  }, [term]);
 
   const preFilledDates = useMemo(() =>
     (preFilled || []).map(p => ({ date: p.date, title: p.title })),
