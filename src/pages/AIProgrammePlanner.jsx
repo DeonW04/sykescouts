@@ -39,8 +39,9 @@ const ENGAGEMENT_COLORS = {
 const COST_COLORS = { free: 'text-green-600', low: 'text-amber-600', medium: 'text-orange-600' };
 const RISK_COLORS = { low: 'text-green-600', medium: 'text-amber-600' };
 
-function MeetingCard({ meeting, index, onRemove, onReject, isPreFilled }) {
+function MeetingCard({ meeting, index, onRemove, onReject, isPreFilled, allDates, onSwapDate }) {
   const [expanded, setExpanded] = useState(false);
+  const [showDateSwap, setShowDateSwap] = useState(false);
   const EngagementIcon = ENGAGEMENT_ICONS[meeting.engagement_type] || Sparkles;
 
   return (
@@ -180,13 +181,32 @@ function MeetingCard({ meeting, index, onRemove, onReject, isPreFilled }) {
 
         {/* Actions */}
         {!isPreFilled && (
-          <div className="flex gap-2 mt-3">
+          <div className="flex flex-wrap gap-3 mt-3 items-center">
+            <button
+              onClick={() => setShowDateSwap(!showDateSwap)}
+              className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1 transition-colors"
+            >
+              <RefreshCw className="w-3 h-3" /> Move to different date
+            </button>
             <button
               onClick={() => onReject(meeting)}
               className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 transition-colors"
             >
               <X className="w-3 h-3" /> Remove & reject
             </button>
+          </div>
+        )}
+        {showDateSwap && !isPreFilled && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {allDates.filter(d => d !== meeting.date).map(d => (
+              <button
+                key={d}
+                onClick={() => { onSwapDate(meeting.date, d); setShowDateSwap(false); }}
+                className="text-xs bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors"
+              >
+                {new Date(d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -341,6 +361,19 @@ export default function AIProgrammePlanner() {
     }
   };
 
+  const handleSwapDate = (fromDate, toDate) => {
+    setMeetings(prev => {
+      const updated = prev.map(m => {
+        if (m.date === fromDate) return { ...m, date: toDate };
+        if (m.date === toDate) return { ...m, date: fromDate };
+        return m;
+      });
+      return updated.sort((a, b) => new Date(a.date) - new Date(b.date));
+    });
+    toast.success('Meeting dates swapped!');
+  };
+
+  const allMeetingDates = planData.meetingDates || meetings.map(m => m.date);
   const sortedMeetings = [...meetings].sort((a, b) => new Date(a.date) - new Date(b.date));
   const generatedCount = meetings.filter(m => !m.is_prefilled).length;
   const spectacleCount = meetings.filter(m => m.is_spectacle).length;
@@ -447,6 +480,8 @@ export default function AIProgrammePlanner() {
                   isPreFilled={isPreFilled}
                   onRemove={() => {}}
                   onReject={handleReject}
+                  allDates={allMeetingDates}
+                  onSwapDate={handleSwapDate}
                 />
               );
             })}

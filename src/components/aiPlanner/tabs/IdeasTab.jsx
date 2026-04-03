@@ -152,19 +152,18 @@ export default function IdeasTab({ sectionId, selectedIdeas, onChange, meetingDa
                     </button>
                   </div>
 
-                  {/* Placement */}
+                  {/* Placement — use native selects to avoid portal clipping inside AnimatePresence */}
                   <div className="mt-2">
-                    <Select value={idea.placement || 'flexible'} onValueChange={v => updateSelected(idea.id, { placement: v, preferredDate: null })}>
-                      <SelectTrigger className="h-7 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PLACEMENTS.map(p => (
-                          <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>
-                        ))}
-                        <SelectItem value="specific" className="text-xs">📌 Specific date</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <select
+                      value={idea.placement || 'flexible'}
+                      onChange={e => updateSelected(idea.id, { placement: e.target.value, preferredDate: null })}
+                      className="w-full text-xs border border-gray-200 rounded-lg p-1.5 bg-white"
+                    >
+                      {PLACEMENTS.map(p => (
+                        <option key={p.value} value={p.value}>{p.label}</option>
+                      ))}
+                      <option value="specific">📌 Specific date</option>
+                    </select>
                   </div>
 
                   {/* Specific date picker */}

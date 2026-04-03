@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Plus, ChevronRight, Sparkles, Clock, List, Image, Pencil } from 'lucide-react';
+import { Calendar, Plus, ChevronRight, Sparkles, Clock, List, Image, Pencil, Download } from 'lucide-react';
 import NewTermDialog from '../components/programme/NewTermDialog';
 import AllTermsDialog from '../components/programme/AllTermsDialog';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -96,6 +96,13 @@ export default function LeaderProgramme() {
     enabled: !!currentTerm,
   });
 
+  const { data: savedDraft } = useQuery({
+    queryKey: ['ai-draft', currentTerm?.id],
+    queryFn: () => base44.entities.AIProgrammePlan.filter({ term_id: currentTerm.id }),
+    enabled: !!currentTerm,
+    select: (data) => data?.[0] || null,
+  });
+
   const handleMeetingClick = (meeting) => {
     if (meeting.isHalfTerm) return;
     const dateStr = meeting.date.toISOString().split('T')[0];
@@ -143,6 +150,39 @@ export default function LeaderProgramme() {
               <p className="text-blue-100 text-lg">Plan weekly meetings and track your section's progress</p>
             </div>
             <div className="flex gap-3 flex-wrap">
+              {currentTerm && savedDraft && (
+                <Button
+                  onClick={() => {
+                    sessionStorage.setItem('ai_plan_data', JSON.stringify({
+                      meetings: savedDraft.generated_meetings || [],
+                      engagement_score: savedDraft.engagement_score,
+                      engagement_summary: savedDraft.engagement_summary,
+                      term: currentTerm,
+                      section: currentSection,
+                      section_id: currentTerm.section_id,
+                      term_id: currentTerm.id,
+                      meetingDates: [],
+                      preFilled: [],
+                      sliders: {
+                        adventure: savedDraft.slider_adventure,
+                        competition: savedDraft.slider_competition,
+                        outdoor: savedDraft.slider_outdoor,
+                        badgeFocus: savedDraft.slider_badge_focus,
+                      },
+                      notes: savedDraft.notes,
+                      theme: savedDraft.theme,
+                      youthVoice: savedDraft.youth_voice,
+                    }));
+                    navigate(createPageUrl('AIProgrammePlanner'));
+                  }}
+                  size="lg"
+                  variant="outline"
+                  className="bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20 font-semibold gap-2"
+                >
+                  <Download className="w-5 h-5" />
+                  Load Saved Draft
+                </Button>
+              )}
               {currentTerm && (
                 <motion.div
                   animate={{ scale: [1, 1.03, 1] }}
