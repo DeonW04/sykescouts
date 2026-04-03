@@ -104,7 +104,7 @@ export default function Layout({ children, currentPageName }) {
     }
   };
 
-  const leaderPages = ['LeaderDashboard', 'LeaderMembers', 'LeaderProgramme', 'MeetingDetail', 'MemberDetail', 'LeaderGallery', 'LeaderEvents', 'EventDetail', 'LeaderAttendance', 'LeaderBadges', 'BadgeDetail', 'AwardBadges', 'ManageBadges', 'EditBadgeStructure', 'StagedBadgeDetail', 'ManageStagedBadge', 'NightsAwayBadgeDetail', 'HikesAwayBadgeDetail', 'BadgeStockManagement', 'NightsAwayTracking', 'RiskAssessments', 'RiskAssessmentDetail', 'RiskAssessmentHistory', 'Communications', 'WeeklyMessage', 'WeeklyMessageList', 'MonthlyNewsletter', 'MonthlyNewsletterList', 'EventUpdate', 'EventUpdateList', 'JoinEnquiries', 'ArchivedMembers', 'GoldAwardDetail', 'IdeasBoard'];
+  const leaderPages = ['LeaderDashboard', 'LeaderMembers', 'LeaderProgramme', 'MeetingDetail', 'MemberDetail', 'LeaderGallery', 'LeaderEvents', 'EventDetail', 'LeaderAttendance', 'LeaderBadges', 'BadgeDetail', 'AwardBadges', 'ManageBadges', 'EditBadgeStructure', 'StagedBadgeDetail', 'ManageStagedBadge', 'NightsAwayBadgeDetail', 'HikesAwayBadgeDetail', 'BadgeStockManagement', 'NightsAwayTracking', 'RiskAssessments', 'RiskAssessmentDetail', 'RiskAssessmentHistory', 'Communications', 'WeeklyMessage', 'WeeklyMessageList', 'MonthlyNewsletter', 'MonthlyNewsletterList', 'EventUpdate', 'EventUpdateList', 'JoinEnquiries', 'ArchivedMembers', 'GoldAwardDetail', 'IdeasBoard', 'AIProgrammePlanner'];
   const adminPages = ['AdminSettings'];
   const parentPages = ['ParentDashboard', 'MyChild', 'ParentProgramme', 'ParentEvents', 'ParentEventDetail', 'ParentBadges', 'ParentGoldAward', 'CompleteRegistration'];
   const protectedPages = [...leaderPages, ...adminPages, ...parentPages];

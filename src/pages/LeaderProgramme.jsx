@@ -6,12 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Plus, ChevronRight, Sparkles, Clock, List, Image, Pencil } from 'lucide-react';
 import NewTermDialog from '../components/programme/NewTermDialog';
 import AllTermsDialog from '../components/programme/AllTermsDialog';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import LeaderNav from '../components/leader/LeaderNav';
 import { useSectionContext } from '../components/leader/SectionContext';
+import AIPlannerModal from '../components/aiPlanner/AIPlannerModal';
 
 export default function LeaderProgramme() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export default function LeaderProgramme() {
   const [showAllTermsDialog, setShowAllTermsDialog] = useState(false);
   const [editingTerm, setEditingTerm] = useState(null);
   const [selectedTerm, setSelectedTerm] = useState(null);
+  const [showAIModal, setShowAIModal] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: sections = [] } = useQuery({
@@ -100,6 +102,30 @@ export default function LeaderProgramme() {
     navigate(createPageUrl('MeetingDetail') + `?section_id=${currentTerm.section_id}&date=${dateStr}&term_id=${currentTerm.id}`);
   };
 
+  // Build preFilled list from existing programmes
+  const preFilled = programmes
+    .filter(p => p.title)
+    .map(p => ({ date: p.date, title: p.title }));
+
+  const handleAIGenerated = (result) => {
+    // Merge preFilled meetings into result for display in planner
+    const allMeetings = [
+      ...preFilled.map(p => ({ ...p, is_prefilled: true })),
+      ...(result.meetings || []),
+    ].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    sessionStorage.setItem('ai_plan_data', JSON.stringify({
+      ...result,
+      meetings: allMeetings,
+      term: currentTerm,
+      section: currentSection,
+      section_id: currentTerm?.section_id,
+      term_id: currentTerm?.id,
+    }));
+    setShowAIModal(false);
+    navigate(createPageUrl('AIProgrammePlanner'));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <LeaderNav />
@@ -119,15 +145,32 @@ export default function LeaderProgramme() {
               </div>
               <p className="text-blue-100 text-lg">Plan weekly meetings and track your section's progress</p>
             </div>
-            <Button
-              onClick={() => setShowAllTermsDialog(true)}
-              size="lg"
-              variant="outline"
-              className="bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20 font-semibold"
-            >
-              <List className="w-5 h-5 mr-2" />
-              Past & Future Terms
-            </Button>
+            <div className="flex gap-3 flex-wrap">
+              {currentTerm && (
+                <motion.div
+                  animate={{ scale: [1, 1.03, 1] }}
+                  transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
+                >
+                  <Button
+                    onClick={() => setShowAIModal(true)}
+                    size="lg"
+                    className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold shadow-xl border-0 gap-2"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    ✨ Generate Full Term with AI
+                  </Button>
+                </motion.div>
+              )}
+              <Button
+                onClick={() => setShowAllTermsDialog(true)}
+                size="lg"
+                variant="outline"
+                className="bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20 font-semibold"
+              >
+                <List className="w-5 h-5 mr-2" />
+                Past & Future Terms
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -359,6 +402,20 @@ export default function LeaderProgramme() {
           setShowNewTermDialog(true);
         }}
       />
+
+      <AnimatePresence>
+        {showAIModal && currentTerm && (
+          <AIPlannerModal
+            term={currentTerm}
+            section={currentSection}
+            meetings={meetings}
+            preFilled={preFilled}
+            sectionId={selectedSection}
+            onClose={() => setShowAIModal(false)}
+            onGenerated={handleAIGenerated}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

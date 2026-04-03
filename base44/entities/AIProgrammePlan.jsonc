@@ -1,0 +1,133 @@
+{
+  "name": "AIProgrammePlan",
+  "type": "object",
+  "properties": {
+    "section_id": {
+      "type": "string",
+      "description": "Section ID"
+    },
+    "term_id": {
+      "type": "string",
+      "description": "Term ID this plan is for"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "published"
+      ],
+      "default": "draft",
+      "description": "Plan status"
+    },
+    "generated_meetings": {
+      "type": "array",
+      "description": "AI-generated meeting suggestions",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "badge_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "badge_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "equipment": {
+            "type": "string"
+          },
+          "prep_time": {
+            "type": "string"
+          },
+          "cost": {
+            "type": "string"
+          },
+          "risk_level": {
+            "type": "string"
+          },
+          "weather": {
+            "type": "string"
+          },
+          "engagement_type": {
+            "type": "string"
+          },
+          "is_spectacle": {
+            "type": "boolean"
+          },
+          "is_prefilled": {
+            "type": "boolean"
+          },
+          "idea_id": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "engagement_score": {
+      "type": "number",
+      "description": "AI overall engagement score 1-10"
+    },
+    "engagement_summary": {
+      "type": "string",
+      "description": "AI one-sentence engagement summary"
+    },
+    "rejected_ideas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Titles of rejected meeting ideas so AI avoids them"
+    },
+    "slider_adventure": {
+      "type": "number",
+      "default": 50
+    },
+    "slider_competition": {
+      "type": "number",
+      "default": 50
+    },
+    "slider_outdoor": {
+      "type": "number",
+      "default": 50
+    },
+    "slider_badge_focus": {
+      "type": "number",
+      "default": 50
+    },
+    "notes": {
+      "type": "string"
+    },
+    "theme": {
+      "type": "string"
+    },
+    "youth_voice": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "section_id",
+    "term_id"
+  ]
+}
