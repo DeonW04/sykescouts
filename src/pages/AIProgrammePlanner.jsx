@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sparkles, Star, Zap, Flame, RefreshCw, Save, Globe, ArrowLeft,
   ChevronDown, ChevronUp, Trash2, Clock, DollarSign, CloudRain,
   Trophy, Users, Tent, Brush, Heart, Leaf, Loader2, CheckCircle,
-  AlertTriangle, BarChart3, Download, X
+  AlertTriangle, BarChart3, Download, X, CalendarOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -259,16 +259,25 @@ export default function AIProgrammePlanner() {
     toast('Meeting removed', { description: 'AI will not suggest this again if you regenerate.' });
   };
 
+  const handleKeepBlank = (date) => {
+    // Add a sentinel "keep blank" entry so this date is excluded from future refill
+    setMeetings(prev => [...prev, { date, title: null, _keepBlank: true }].sort((a, b) => new Date(a.date) - new Date(b.date)));
+    toast('Meeting kept blank', { description: 'This slot won\'t be filled automatically.' });
+  };
+
+  const handleUnkeepBlank = (date) => {
+    setMeetings(prev => prev.filter(m => !(m.date === date && m._keepBlank)));
+  };
+
   const handleRefill = async (modalResult) => {
     setShowRefillModal(false);
     setRefilling(true);
     try {
-      // Dates that still need filling: any date not already covered by a non-prefilled meeting
-      const filledDates = meetings.filter(m => !preFilled.some(p => p.date === m.date)).map(m => m.date);
-      const allDates = planData.meetingDates?.length
-        ? planData.meetingDates
-        : meetings.map(m => m.date); // fallback to current meeting dates
-      const emptyDates = allDates.filter(d => !filledDates.includes(d));
+      // All term dates (from planData or derived from term definition)
+      const allDates = termTimeline.filter(d => d.type === 'meeting').map(d => d.date);
+      // Dates already having a real meeting OR explicitly kept blank
+      const filledDates = new Set(meetings.filter(m => m.title || m._keepBlank).map(m => m.date));
+      const emptyDates = allDates.filter(d => !filledDates.has(d));
 
       if (emptyDates.length === 0) {
         toast.info('All dates are already filled! Remove some meetings first.');
@@ -386,10 +395,48 @@ export default function AIProgrammePlanner() {
     toast.success('Dates swapped!');
   };
 
-  // Always derive all dates from the actual meetings list so date swap works even when meetingDates is empty
-  const allMeetingDates = meetings.map(m => m.date);
+  // Build full term timeline including half term and blank slots
+  const termTimeline = useMemo(() => {
+    const t = term;
+    if (!t?.start_date || !t?.end_date || !t?.meeting_day) {
+      // Fallback: just use meeting dates
+      return meetings.map(m => ({ type: 'meeting', date: m.date })).sort((a, b) => new Date(a.date) - new Date(b.date));
+    }
+    const dayMap = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+    const targetDay = dayMap[t.meeting_day];
+    const start = new Date(t.start_date);
+    const end = new Date(t.end_date);
+    const halfStart = t.half_term_start ? new Date(t.half_term_start) : null;
+    const halfEnd = t.half_term_end ? new Date(t.half_term_end) : null;
+
+    const entries = [];
+    let halfTermInserted = false;
+    let current = new Date(start);
+    while (current.getDay() !== targetDay) current.setDate(current.getDate() + 1);
+
+    while (current <= end) {
+      const dateStr = current.toISOString().split('T')[0];
+      const inHalfTerm = halfStart && halfEnd && current >= halfStart && current <= halfEnd;
+
+      if (inHalfTerm) {
+        if (!halfTermInserted) {
+          entries.push({ type: 'half_term', date: dateStr });
+          halfTermInserted = true;
+        }
+      } else {
+        entries.push({ type: 'meeting', date: dateStr });
+      }
+      current = new Date(current);
+      current.setDate(current.getDate() + 7);
+    }
+    return entries;
+  }, [term, meetings]);
+
+  // All real meeting dates for date-swap picker
+  const allMeetingDates = termTimeline.filter(e => e.type === 'meeting').map(e => e.date);
   const sortedMeetings = [...meetings].sort((a, b) => new Date(a.date) - new Date(b.date));
-  const generatedCount = meetings.filter(m => !m.is_prefilled).length;
+  const generatedCount = meetings.filter(m => !m.is_prefilled && !m._keepBlank && m.title).length;
+  const blankCount = termTimeline.filter(e => e.type === 'meeting').filter(e => !meetings.some(m => m.date === e.date && (m.title || m._keepBlank))).length;
   const spectacleCount = meetings.filter(m => m.is_spectacle).length;
 
   const scoreColor = engagementScore >= 8 ? 'text-green-600' : engagementScore >= 6 ? 'text-amber-600' : 'text-red-600';
@@ -452,7 +499,7 @@ export default function AIProgrammePlanner() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <StatCard icon={<Sparkles className="w-5 h-5 text-purple-600" />} value={generatedCount} label="Meetings planned" color="purple" />
           <StatCard icon={<Star className="w-5 h-5 text-amber-600" />} value={spectacleCount} label="Spectacle events" color="amber" />
-          <StatCard icon={<Trash2 className="w-5 h-5 text-red-500" />} value={rejectedTitles.length} label="Rejected" color="red" />
+          <StatCard icon={<CalendarOff className="w-5 h-5 text-gray-400" />} value={blankCount} label="Blank slots" color="gray" />
           <div className={`rounded-2xl border-2 p-4 ${scoreBg}`}>
             <div className="flex items-center gap-2 mb-1">
               <BarChart3 className="w-5 h-5" />
@@ -481,11 +528,93 @@ export default function AIProgrammePlanner() {
           </motion.div>
         )}
 
-        {/* Meetings list */}
+        {/* Full term timeline */}
         <div className="space-y-4">
           <AnimatePresence>
-            {sortedMeetings.map((meeting, index) => {
-              const isPreFilled = preFilled.some(p => p.date === meeting.date);
+            {termTimeline.map((entry, index) => {
+              if (entry.type === 'half_term') {
+                return (
+                  <motion.div
+                    key={`half-term-${entry.date}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center gap-3 py-2"
+                  >
+                    <div className="flex-1 h-px bg-amber-300" />
+                    <span className="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full whitespace-nowrap">
+                      🏖️ Half Term
+                    </span>
+                    <div className="flex-1 h-px bg-amber-300" />
+                  </motion.div>
+                );
+              }
+
+              const meeting = meetings.find(m => m.date === entry.date);
+              const isPreFilled = preFilled.some(p => p.date === entry.date);
+
+              if (!meeting || (!meeting.title && !meeting._keepBlank)) {
+                // Blank slot
+                return (
+                  <motion.div
+                    key={`blank-${entry.date}`}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 p-4 flex items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex-shrink-0 w-14 text-center">
+                        <div className="bg-gray-200 text-gray-500 rounded-xl px-2 py-2">
+                          <p className="text-xs opacity-70">{new Date(entry.date).toLocaleDateString('en-GB', { weekday: 'short' })}</p>
+                          <p className="text-lg font-bold leading-none">{new Date(entry.date).toLocaleDateString('en-GB', { day: 'numeric' })}</p>
+                          <p className="text-xs opacity-70">{new Date(entry.date).toLocaleDateString('en-GB', { month: 'short' })}</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-400 italic">Not yet planned</p>
+                    </div>
+                    <button
+                      onClick={() => handleKeepBlank(entry.date)}
+                      className="text-xs text-gray-400 hover:text-gray-600 border border-gray-200 hover:border-gray-400 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1"
+                    >
+                      <CalendarOff className="w-3 h-3" /> Keep blank
+                    </button>
+                  </motion.div>
+                );
+              }
+
+              if (meeting._keepBlank) {
+                // Explicitly kept blank
+                return (
+                  <motion.div
+                    key={`kept-blank-${entry.date}`}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-100/50 p-4 flex items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex-shrink-0 w-14 text-center">
+                        <div className="bg-gray-300 text-gray-600 rounded-xl px-2 py-2">
+                          <p className="text-xs opacity-70">{new Date(entry.date).toLocaleDateString('en-GB', { weekday: 'short' })}</p>
+                          <p className="text-lg font-bold leading-none">{new Date(entry.date).toLocaleDateString('en-GB', { day: 'numeric' })}</p>
+                          <p className="text-xs opacity-70">{new Date(entry.date).toLocaleDateString('en-GB', { month: 'short' })}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Kept blank</p>
+                        <p className="text-xs text-gray-400">Plan this meeting later</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleUnkeepBlank(entry.date)}
+                      className="text-xs text-gray-400 hover:text-red-500 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      Undo
+                    </button>
+                  </motion.div>
+                );
+              }
+
               return (
                 <MeetingCard
                   key={`${meeting.date}-${index}`}
@@ -502,7 +631,7 @@ export default function AIProgrammePlanner() {
           </AnimatePresence>
         </div>
 
-        {meetings.length === 0 && (
+        {termTimeline.length === 0 && (
           <div className="text-center py-20 text-gray-400">
             <p className="text-5xl mb-4">📋</p>
             <p className="text-lg">No meetings generated yet.</p>
@@ -513,7 +642,7 @@ export default function AIProgrammePlanner() {
         )}
 
         {/* Bottom actions */}
-        {meetings.length > 0 && (
+        {termTimeline.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -566,6 +695,7 @@ function StatCard({ icon, value, label, color }) {
     amber: 'bg-amber-50 border-amber-200',
     red: 'bg-red-50 border-red-200',
     green: 'bg-green-50 border-green-200',
+    gray: 'bg-gray-50 border-gray-200',
   };
   return (
     <div className={`rounded-2xl border-2 p-4 ${colors[color]}`}>
