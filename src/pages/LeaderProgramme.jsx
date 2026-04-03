@@ -102,21 +102,18 @@ export default function LeaderProgramme() {
     navigate(createPageUrl('MeetingDetail') + `?section_id=${currentTerm.section_id}&date=${dateStr}&term_id=${currentTerm.id}`);
   };
 
-  // Build preFilled list from existing programmes
-  const preFilled = programmes
-    .filter(p => p.title)
-    .map(p => ({ date: p.date, title: p.title }));
+  // Build preFilled list: only programmes that fall within the current term's date range
+  const preFilled = currentTerm ? programmes
+    .filter(p => {
+      if (!p.title) return false;
+      const d = new Date(p.date);
+      return d >= new Date(currentTerm.start_date) && d <= new Date(currentTerm.end_date);
+    })
+    .map(p => ({ date: p.date, title: p.title })) : [];
 
   const handleAIGenerated = (result) => {
-    // Merge preFilled meetings into result for display in planner
-    const allMeetings = [
-      ...preFilled.map(p => ({ ...p, is_prefilled: true })),
-      ...(result.meetings || []),
-    ].sort((a, b) => new Date(a.date) - new Date(b.date));
-
     sessionStorage.setItem('ai_plan_data', JSON.stringify({
       ...result,
-      meetings: allMeetings,
       term: currentTerm,
       section: currentSection,
       section_id: currentTerm?.section_id,
