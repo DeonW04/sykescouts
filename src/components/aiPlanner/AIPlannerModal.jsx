@@ -89,10 +89,11 @@ export default function AIPlannerModal({
         rejectedIdeas: [],
       });
       if (res.data?.error) throw new Error(res.data.error);
+      const payload = res.data.response || res.data;
       onGenerated({
-        meetings: res.data.meetings || [],
-        engagement_score: res.data.engagement_score,
-        engagement_summary: res.data.engagement_summary,
+        meetings: payload.meetings || [],
+        engagement_score: payload.engagement_score,
+        engagement_summary: payload.engagement_summary,
         sliders, notes, youthVoice, theme,
         preFilled: preFilledDates,
         meetingDates,

@@ -260,7 +260,8 @@ export default function AIProgrammePlanner() {
         existingMeetings: meetings.map(m => ({ date: m.date })),
       });
       if (res.data?.error) throw new Error(res.data.error);
-      const newMeetings = res.data.meetings || [];
+      const refillPayload = res.data.response || res.data;
+      const newMeetings = refillPayload.meetings || [];
       setMeetings(prev => [...prev, ...newMeetings].sort((a, b) => new Date(a.date) - new Date(b.date)));
       toast.success(`Added ${newMeetings.length} new meetings!`);
     } catch (e) {
