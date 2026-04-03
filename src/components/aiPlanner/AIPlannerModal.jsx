@@ -17,7 +17,7 @@ const TABS = [
 
 export default function AIPlannerModal({
   term, section, meetings, preFilled, sectionId,
-  onClose, onGenerated
+  onClose, onGenerated, refillMode = false
 }) {
   const [activeTab, setActiveTab] = useState('ideas');
   const [selectedIdeas, setSelectedIdeas] = useState([]);
@@ -71,6 +71,12 @@ export default function AIPlannerModal({
   const totalSelected = selectedIdeas.length + selectedCriteria.length + notableDates.length;
 
   const handleGenerate = async () => {
+    if (refillMode) {
+      // In refill mode, just pass the parameters back — the parent handles the API call
+      onGenerated({ selectedIdeas, selectedCriteria, notableDates, sliders, notes, youthVoice, theme });
+      return;
+    }
+
     setGenerating(true);
     setError(null);
     try {
@@ -132,8 +138,8 @@ export default function AIPlannerModal({
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">AI Programme Generator</h2>
-                <p className="text-white/70 text-sm">{term?.title} · {meetingDates.length} meetings to plan</p>
+                <h2 className="text-xl font-bold text-white">{refillMode ? 'Fill Blank Meetings' : 'AI Programme Generator'}</h2>
+                <p className="text-white/70 text-sm">{term?.title} · {refillMode ? 'Set preferences for the new meetings' : `${meetingDates.length} meetings to plan`}</p>
               </div>
             </div>
             <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
@@ -235,7 +241,7 @@ export default function AIPlannerModal({
             </Button>
             <Button
               onClick={handleGenerate}
-              disabled={generating || meetingDates.length === 0}
+              disabled={generating || (!refillMode && meetingDates.length === 0)}
               className="flex-1 bg-gradient-to-r from-[#7413dc] to-[#004851] hover:opacity-90 text-white font-semibold text-base py-3 gap-2 shadow-lg"
             >
               {generating ? (
@@ -246,7 +252,7 @@ export default function AIPlannerModal({
               ) : (
                 <>
                   <Sparkles className="w-5 h-5" />
-                  Generate Programme
+                  {refillMode ? 'Fill Blank Meetings' : 'Generate Programme'}
                 </>
               )}
             </Button>

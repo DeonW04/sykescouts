@@ -227,7 +227,7 @@ export default function AIProgrammePlanner() {
   const [rejectedTitles, setRejectedTitles] = useState([]);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [showRefillModal, setShowRefillModal] = useState(false);
   const [refilling, setRefilling] = useState(false);
 
   // If no plan data, show empty state with back button
@@ -259,25 +259,38 @@ export default function AIProgrammePlanner() {
     toast('Meeting removed', { description: 'AI will not suggest this again if you regenerate.' });
   };
 
-  const handleRefill = async () => {
+  const handleRefill = async (modalResult) => {
+    setShowRefillModal(false);
     setRefilling(true);
     try {
-      const filledDates = meetings.map(m => m.date);
-      const allDates = planData.meetingDates || [];
-      const emptyDates = allDates.filter(d => !filledDates.includes(d) && !preFilled.some(p => p.date === d));
+      // Dates that still need filling: any date not already covered by a non-prefilled meeting
+      const filledDates = meetings.filter(m => !preFilled.some(p => p.date === m.date)).map(m => m.date);
+      const allDates = planData.meetingDates?.length
+        ? planData.meetingDates
+        : meetings.map(m => m.date); // fallback to current meeting dates
+      const emptyDates = allDates.filter(d => !filledDates.includes(d));
 
       if (emptyDates.length === 0) {
-        toast.info('All dates are already filled!');
+        toast.info('All dates are already filled! Remove some meetings first.');
         setRefilling(false);
         return;
       }
 
       const res = await base44.functions.invoke('generateAIProgramme', {
-        ...planData,
+        term: planData.term,
+        section: planData.section,
         meetingDates: emptyDates,
+        preFilled: preFilled,
+        selectedIdeas: modalResult?.selectedIdeas || [],
+        selectedCriteria: modalResult?.selectedCriteria || [],
+        notableDates: modalResult?.notableDates || [],
+        sliders: modalResult?.sliders || planData.sliders || { adventure: 50, competition: 50, outdoor: 50, badgeFocus: 50 },
+        notes: modalResult?.notes || planData.notes || '',
+        youthVoice: modalResult?.youthVoice || planData.youthVoice || '',
+        theme: modalResult?.theme || planData.theme || '',
         rejectedIdeas: rejectedTitles,
         refillOnly: true,
-        existingMeetings: meetings.map(m => ({ date: m.date })),
+        existingMeetings: meetings.map(m => ({ date: m.date, title: m.title })),
       });
       if (res.data?.error) throw new Error(res.data.error);
       const refillPayload = res.data.response || res.data;
@@ -363,17 +376,18 @@ export default function AIProgrammePlanner() {
 
   const handleSwapDate = (fromDate, toDate) => {
     setMeetings(prev => {
-      const updated = prev.map(m => {
+      const newMeetings = prev.map(m => {
         if (m.date === fromDate) return { ...m, date: toDate };
         if (m.date === toDate) return { ...m, date: fromDate };
         return m;
       });
-      return updated.sort((a, b) => new Date(a.date) - new Date(b.date));
+      return [...newMeetings].sort((a, b) => new Date(a.date) - new Date(b.date));
     });
-    toast.success('Meeting dates swapped!');
+    toast.success('Dates swapped!');
   };
 
-  const allMeetingDates = planData.meetingDates || meetings.map(m => m.date);
+  // Always derive all dates from the actual meetings list so date swap works even when meetingDates is empty
+  const allMeetingDates = meetings.map(m => m.date);
   const sortedMeetings = [...meetings].sort((a, b) => new Date(a.date) - new Date(b.date));
   const generatedCount = meetings.filter(m => !m.is_prefilled).length;
   const spectacleCount = meetings.filter(m => m.is_spectacle).length;
@@ -403,7 +417,7 @@ export default function AIProgrammePlanner() {
             </div>
             <div className="flex gap-2 flex-wrap">
               <Button
-                onClick={handleRefill}
+                onClick={() => setShowRefillModal(true)}
                 disabled={refilling}
                 variant="outline"
                 className="bg-white/10 border-white/30 text-white hover:bg-white/20 gap-2"
@@ -527,6 +541,21 @@ export default function AIProgrammePlanner() {
           </motion.div>
         )}
       </div>
+
+      <AnimatePresence>
+        {showRefillModal && planData.term && (
+          <AIPlannerModal
+            term={planData.term}
+            section={planData.section}
+            meetings={meetings}
+            preFilled={preFilled}
+            sectionId={planData.section_id || planData.section?.id}
+            onClose={() => setShowRefillModal(false)}
+            onGenerated={handleRefill}
+            refillMode
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
