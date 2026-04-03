@@ -44,13 +44,13 @@ export default function LeaderProgramme() {
     enabled: !!selectedSection,
   });
 
-  // Determine current term
+  // Determine current term: active > next upcoming > most recent
   const currentTerm = selectedTerm || terms.find(t => {
     const today = new Date();
     const start = new Date(t.start_date);
     const end = new Date(t.end_date);
     return today >= start && today <= end;
-  }) || terms[0];
+  }) || terms.find(t => new Date(t.start_date) > new Date()) || terms[0];
 
   const currentSection = sections.find(s => s.id === currentTerm?.section_id);
 
