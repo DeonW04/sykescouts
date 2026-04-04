@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Save, Calendar, Users, Award, Eye, EyeOff, Plus, Trash2, ListTodo, Shield, AlertCircle, Upload, FileText, Image, ArrowLeftRight, Gamepad2 } from 'lucide-react';
 import { toast } from 'sonner';
-import IScoutSection from '../components/meeting/IScoutSection.jsx';
+import IScoutSection from '../components/meeting/IScoutSection';
 import TodoSection from '../components/meeting/TodoSection';
 import ParentPortalSection from '../components/meeting/ParentPortalSection';
 import RiskAssessmentSection from '../components/meeting/RiskAssessmentSection';
