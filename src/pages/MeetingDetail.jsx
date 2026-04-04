@@ -33,7 +33,17 @@ export default function MeetingDetail() {
   const date = urlParams.get('date');
   const termId = urlParams.get('term_id');
 
-  const [activeTab, setActiveTab] = useState('plan');
+  const [activeTab, setActiveTab] = useState(() => {
+    const tabFromUrl = new URLSearchParams(window.location.search).get('tab');
+    return tabFromUrl || 'plan';
+  });
+
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', newTab);
+    window.history.replaceState(null, '', '?' + params.toString());
+  };
   const [swapDialogOpen, setSwapDialogOpen] = useState(false);
   const [swapTargetDate, setSwapTargetDate] = useState('');
 
@@ -358,10 +368,10 @@ export default function MeetingDetail() {
             { value: 'iscout', label: 'iScout', icon: <Zap /> },
           ]}
           value={activeTab}
-          onValueChange={setActiveTab}
+          onValueChange={handleTabChange}
         />
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <div className="hidden md:block">
             <TabsList className="bg-white border grid grid-cols-7">
               <TabsTrigger value="plan" className="flex items-center gap-2">
