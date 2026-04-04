@@ -8,6 +8,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AIProgrammePlanner from './pages/AIProgrammePlanner';
+import QuizBuilder from './pages/QuizBuilder';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -62,6 +63,11 @@ const AuthenticatedApp = () => {
       <Route path="/AIProgrammePlanner" element={
         <LayoutWrapper currentPageName="AIProgrammePlanner">
           <AIProgrammePlanner />
+        </LayoutWrapper>
+      } />
+      <Route path="/QuizBuilder" element={
+        <LayoutWrapper currentPageName="QuizBuilder">
+          <QuizBuilder />
         </LayoutWrapper>
       } />
       <Route path="*" element={<PageNotFound />} />

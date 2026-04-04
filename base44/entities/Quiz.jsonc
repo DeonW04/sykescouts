@@ -1,0 +1,44 @@
+{
+  "name": "Quiz",
+  "type": "object",
+  "properties": {
+    "programme_id": {
+      "type": "string",
+      "description": "Linked Programme (meeting) ID"
+    },
+    "title": {
+      "type": "string",
+      "description": "Quiz title"
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "question_text": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "correct_answer": {
+            "type": "number",
+            "description": "Index 0-3 of correct option"
+          },
+          "explanation": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Array of quiz questions",
+      "default": []
+    }
+  },
+  "required": [
+    "programme_id",
+    "title"
+  ]
+}

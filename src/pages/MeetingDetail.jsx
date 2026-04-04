@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save, Calendar, Users, Award, Eye, EyeOff, Plus, Trash2, ListTodo, Shield, AlertCircle, Upload, FileText, Image, ArrowLeftRight } from 'lucide-react';
+import { ArrowLeft, Save, Calendar, Users, Award, Eye, EyeOff, Plus, Trash2, ListTodo, Shield, AlertCircle, Upload, FileText, Image, ArrowLeftRight, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import TodoSection from '../components/meeting/TodoSection';
 import ParentPortalSection from '../components/meeting/ParentPortalSection';
@@ -23,6 +23,7 @@ import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeC
 import LeaderRotaSection from '../components/meeting/LeaderRotaSection';
 import LeaderNav from '../components/leader/LeaderNav';
 import MobileTabSelector from '../components/ui/mobile-tab-selector';
+import IScoutSection from '../components/meeting/IScoutSection';
 
 export default function MeetingDetail() {
   const navigate = useNavigate();
@@ -354,6 +355,7 @@ export default function MeetingDetail() {
             { value: 'parent', label: 'Parent Portal', icon: <Eye /> },
             { value: 'risk', label: 'Risk Assessment', icon: <Shield /> },
             { value: 'badges', label: 'Badges', icon: <Award /> },
+            { value: 'iscout', label: 'iScout', icon: <Zap /> },
           ]}
           value={activeTab}
           onValueChange={setActiveTab}
@@ -361,7 +363,7 @@ export default function MeetingDetail() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="hidden md:block">
-            <TabsList className="bg-white border grid grid-cols-6">
+            <TabsList className="bg-white border grid grid-cols-7">
               <TabsTrigger value="plan" className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 <span>Plan</span>
@@ -385,6 +387,10 @@ export default function MeetingDetail() {
               <TabsTrigger value="badges" className="flex items-center gap-2">
                 <Award className="w-4 h-4" />
                 <span>Badges</span>
+              </TabsTrigger>
+              <TabsTrigger value="iscout" className="flex items-center gap-2">
+                <Zap className="w-4 h-4" />
+                <span>iScout</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -510,6 +516,10 @@ export default function MeetingDetail() {
 
           <TabsContent value="badges" className="space-y-6">
             <ProgrammeBadgeCriteriaSection programmeId={existingProgramme?.id} />
+          </TabsContent>
+
+          <TabsContent value="iscout" className="space-y-6">
+            <IScoutSection programmeId={existingProgramme?.id} />
           </TabsContent>
 
           <TabsContent value="attendance" className="space-y-6">
