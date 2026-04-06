@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, FileText, Trash2, Download, Plus, Lock, Unlock } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, Plus, Lock, Unlock, Bell } from 'lucide-react';
 import { toast } from 'sonner';
+import ReminderDialog from '@/components/actions/ReminderDialog';
 
 export default function EventParentPortalSection({ eventId, event }) {
   const queryClient = useQueryClient();
@@ -20,6 +21,7 @@ export default function EventParentPortalSection({ eventId, event }) {
   const [showActionDialog, setShowActionDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingAction, setEditingAction] = useState(null);
+  const [reminderAction, setReminderAction] = useState(null);
   const [actionForm, setActionForm] = useState({
     action_text: '',
     column_title: '',
@@ -46,10 +48,11 @@ export default function EventParentPortalSection({ eventId, event }) {
   const createActionMutation = useMutation({
     mutationFn: async (data) => {
       const action = await base44.entities.ActionRequired.create({ ...data, event_id: eventId });
-      // Send email notifications
-      await base44.functions.invoke('sendActionRequiredEmail', {
+      await base44.functions.invoke('sendActionNotification', {
         actionRequiredId: action.id,
-        entityType: 'event'
+        entityType: 'event',
+        sendEmail: true,
+        sendPush: true,
       });
       return action;
     },
@@ -57,7 +60,7 @@ export default function EventParentPortalSection({ eventId, event }) {
       queryClient.invalidateQueries({ queryKey: ['action-required'] });
       setShowActionDialog(false);
       setActionForm({ action_text: '', column_title: '', action_purpose: '', dropdown_options: [''] });
-      toast.success('Action required added and emails sent');
+      toast.success('Action required added — email & push notifications sent');
     },
   });
 
@@ -242,6 +245,14 @@ export default function EventParentPortalSection({ eventId, event }) {
                     <Button
                       size="sm"
                       variant="ghost"
+                      onClick={() => setReminderAction(action)}
+                      title="Send reminder"
+                    >
+                      <Bell className="w-4 h-4 text-purple-600" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       onClick={() => {
                         setEditingAction(action);
                         setActionForm({
@@ -286,6 +297,13 @@ export default function EventParentPortalSection({ eventId, event }) {
           )}
         </CardContent>
       </Card>
+
+      <ReminderDialog
+        open={!!reminderAction}
+        onOpenChange={(open) => !open && setReminderAction(null)}
+        actionRequiredId={reminderAction?.id}
+        entityType="event"
+      />
 
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
         <DialogContent>

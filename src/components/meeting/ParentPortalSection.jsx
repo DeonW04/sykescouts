@@ -9,12 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Bell } from 'lucide-react';
 import { toast } from 'sonner';
+import ReminderDialog from '@/components/actions/ReminderDialog';
 
 export default function ParentPortalSection({ programmeId, formData, setFormData }) {
   const queryClient = useQueryClient();
   const [showActionDialog, setShowActionDialog] = useState(false);
+  const [reminderAction, setReminderAction] = useState(null);
   const [actionForm, setActionForm] = useState({
     action_text: '',
     column_title: '',
@@ -31,10 +33,11 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
   const createActionMutation = useMutation({
     mutationFn: async (data) => {
       const action = await base44.entities.ActionRequired.create({ ...data, programme_id: programmeId });
-      // Send email notifications
-      await base44.functions.invoke('sendActionRequiredEmail', {
+      await base44.functions.invoke('sendActionNotification', {
         actionRequiredId: action.id,
-        entityType: 'programme'
+        entityType: 'programme',
+        sendEmail: true,
+        sendPush: true,
       });
       return action;
     },
@@ -42,7 +45,7 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
       queryClient.invalidateQueries({ queryKey: ['action-required'] });
       setShowActionDialog(false);
       setActionForm({ action_text: '', column_title: '', action_purpose: '', dropdown_options: [''] });
-      toast.success('Action required added and emails sent');
+      toast.success('Action required added — email & push notifications sent');
     },
   });
 
@@ -132,20 +135,37 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
                       Column: {action.column_title} • Type: {action.action_purpose}
                     </p>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => deleteActionMutation.mutate(action.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setReminderAction(action)}
+                      title="Send reminder"
+                    >
+                      <Bell className="w-4 h-4 text-purple-600" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => deleteActionMutation.mutate(action.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <ReminderDialog
+        open={!!reminderAction}
+        onOpenChange={(open) => !open && setReminderAction(null)}
+        actionRequiredId={reminderAction?.id}
+        entityType="programme"
+      />
 
       <Dialog open={showActionDialog} onOpenChange={setShowActionDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
