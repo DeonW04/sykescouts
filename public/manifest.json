@@ -1,0 +1,23 @@
+{
+  "name": "iScout Basecamp",
+  "short_name": "iScout Basecamp",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7413dc",
+  "description": "40th Rochdale (Syke) Scouts - Parent & Leader Portal",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

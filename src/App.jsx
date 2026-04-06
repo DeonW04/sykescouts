@@ -9,6 +9,9 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AIProgrammePlanner from './pages/AIProgrammePlanner';
 import QuizBuilder from './pages/QuizBuilder';
+import MobileApp from './pages/MobileApp';
+import { usePWA } from './hooks/usePWA';
+import PWAInstallGate from './components/pwa/PWAInstallGate';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -17,6 +20,46 @@ const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
+
+const PWAGate = ({ children }) => {
+  const { isMobile, isPWA, isLeaderOrAdmin, isCheckingRole, isIOS, canInstall, triggerInstallPrompt } = usePWA();
+
+  // While checking role, don't render the gate to avoid flash
+  if (isCheckingRole) return <>{children}</>;
+
+  // On mobile, NOT a leader/admin, and NOT already in PWA mode → show install gate
+  if (isMobile && !isPWA && !isLeaderOrAdmin) {
+    return (
+      <PWAInstallGate
+        isIOS={isIOS}
+        canInstall={canInstall}
+        onInstall={triggerInstallPrompt}
+      />
+    );
+  }
+
+  return <>{children}</>;
+};
+
+const MobileRedirect = () => {
+  const { isMobile, isPWA, isLeaderOrAdmin, isCheckingRole } = usePWA();
+
+  if (isCheckingRole) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-[#7413dc] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Mobile PWA non-leader → redirect to mobile app
+  if (isMobile && isPWA && !isLeaderOrAdmin) {
+    window.location.replace('/app');
+    return null;
+  }
+
+  return null;
+};
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -43,6 +86,7 @@ const AuthenticatedApp = () => {
 
   // Render the main app
   return (
+    <PWAGate>
     <Routes>
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
@@ -70,8 +114,10 @@ const AuthenticatedApp = () => {
           <QuizBuilder />
         </LayoutWrapper>
       } />
+      <Route path="/app" element={<MobileApp />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </PWAGate>
   );
 };
 
