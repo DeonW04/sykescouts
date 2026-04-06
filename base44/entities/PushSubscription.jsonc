@@ -1,0 +1,22 @@
+{
+  "name": "PushSubscription",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User ID who owns this subscription"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "User email"
+    },
+    "subscription": {
+      "type": "object",
+      "description": "Web Push subscription object (endpoint, keys)"
+    }
+  },
+  "required": [
+    "user_id",
+    "subscription"
+  ]
+}
