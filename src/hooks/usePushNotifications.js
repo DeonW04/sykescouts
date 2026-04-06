@@ -13,6 +13,14 @@ export function usePushNotifications({ enabled }) {
   useEffect(() => {
     if (!enabled) return;
     if (typeof Notification === 'undefined') return;
+
+    // If permission already granted, silently re-register subscription in case it was lost
+    if (Notification.permission === 'granted') {
+      registerAndSubscribe();
+      localStorage.setItem(ASKED_KEY, '1');
+      return;
+    }
+
     if (localStorage.getItem(ASKED_KEY)) return;
     if (Notification.permission !== 'default') {
       localStorage.setItem(ASKED_KEY, '1');
@@ -23,10 +31,14 @@ export function usePushNotifications({ enabled }) {
   }, [enabled]);
 
   const registerAndSubscribe = async () => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      console.warn('Push not supported');
+      return;
+    }
     try {
       const reg = await navigator.serviceWorker.register(SW_URL);
       await navigator.serviceWorker.ready;
+      console.log('Service worker ready');
 
       // Fetch VAPID public key from backend
       const res = await base44.functions.invoke('getVapidPublicKey', {});
@@ -35,13 +47,16 @@ export function usePushNotifications({ enabled }) {
         console.warn('VAPID public key not available');
         return;
       }
+      console.log('Got VAPID key, subscribing...');
 
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
       });
 
-      await base44.functions.invoke('savePushSubscription', { subscription: sub.toJSON() });
+      console.log('Push subscribed, saving...', sub.endpoint);
+      const saveRes = await base44.functions.invoke('savePushSubscription', { subscription: sub.toJSON() });
+      console.log('Subscription saved:', saveRes?.data);
     } catch (err) {
       console.error('Push subscription failed:', err);
     }

@@ -119,9 +119,9 @@ Deno.serve(async (req) => {
     let pushSent = 0;
     let pushFailed = 0;
     if (sendPush) {
-      // Get all push subscriptions for parent emails
+      // Get ALL push subscriptions - send to all registered parent users
       const allSubs = await base44.asServiceRole.entities.PushSubscription.filter({});
-      const relevantSubs = allSubs.filter(s => parentEmails.has(s.user_email));
+      console.log(`Found ${allSubs.length} total push subscriptions`);
 
       const payload = JSON.stringify({
         title: 'Action Required',
@@ -129,12 +129,17 @@ Deno.serve(async (req) => {
         url: '/app'
       });
 
-      for (const sub of relevantSubs) {
+      for (const sub of allSubs) {
+        if (!sub.subscription?.endpoint) {
+          console.log(`Skipping sub for ${sub.user_email} - no valid endpoint`);
+          continue;
+        }
         try {
           await webpush.sendNotification(sub.subscription, payload);
+          console.log(`Push sent to ${sub.user_email}`);
           pushSent++;
         } catch (err) {
-          console.error('Push failed:', err.message);
+          console.error(`Push failed for ${sub.user_email}:`, err.message, 'status:', err.statusCode);
           pushFailed++;
           // Remove stale subscriptions (410 Gone)
           if (err.statusCode === 410) {
