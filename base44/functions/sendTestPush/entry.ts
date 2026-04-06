@@ -50,7 +50,8 @@ Deno.serve(async (req) => {
       } catch (err) {
         failed++;
         results.push({ email: sub.user_email, status: 'failed', reason: err.message, statusCode: err.statusCode });
-        if (err.statusCode === 410) {
+        // 410 = expired, 403 = key mismatch — both mean stale subscription
+        if (err.statusCode === 410 || err.statusCode === 403) {
           await base44.asServiceRole.entities.PushSubscription.delete(sub.id).catch(() => {});
         }
       }

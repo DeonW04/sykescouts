@@ -142,7 +142,8 @@ Deno.serve(async (req) => {
           console.error(`Push failed for ${sub.user_email}:`, err.message, 'status:', err.statusCode);
           pushFailed++;
           // Remove stale subscriptions (410 Gone)
-          if (err.statusCode === 410) {
+          // 410 = expired, 403 = key mismatch — both mean stale subscription
+          if (err.statusCode === 410 || err.statusCode === 403) {
             await base44.asServiceRole.entities.PushSubscription.delete(sub.id).catch(() => {});
           }
         }
