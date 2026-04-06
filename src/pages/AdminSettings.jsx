@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Users, Shield, Mail, Edit, Image, Upload, X, Award, Download, Receipt, Camera, PieChart } from 'lucide-react';
+import { Settings, Users, Shield, Mail, Edit, Image, Upload, X, Award, Download, Receipt, Camera, PieChart, Bell, Trash2, Send } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ReceiptManagement from '../components/admin/ReceiptManagement';
 import BulkBadgeUpdate from '../components/badges/BulkBadgeUpdate';
 import UniformPositionEditor from '../components/uniform/UniformPositionEditor';
+import PushNotificationsTab from '../components/admin/PushNotificationsTab';
 
 export default function AdminSettings() {
   const navigate = useNavigate();
@@ -361,6 +362,7 @@ export default function AdminSettings() {
             <TabsTrigger value="gallery">Gallery Stats</TabsTrigger>
             <TabsTrigger value="receipts">Receipts</TabsTrigger>
             <TabsTrigger value="export">Data</TabsTrigger>
+            <TabsTrigger value="push">Push Notifications</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -750,6 +752,10 @@ export default function AdminSettings() {
 
           <TabsContent value="receipts">
             <ReceiptManagement />
+          </TabsContent>
+
+          <TabsContent value="push">
+            <PushNotificationsTab />
           </TabsContent>
 
           <TabsContent value="export">
