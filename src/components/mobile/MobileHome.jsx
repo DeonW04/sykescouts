@@ -1,8 +1,9 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Calendar, Tent, Award, AlertCircle, ChevronRight, CheckCircle, Bell } from 'lucide-react';
+import { Calendar, Tent, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
+import ActionRequiredCard from './ActionRequiredCard';
 
 export default function MobileHome({ user, children, onTabChange }) {
   const childSectionIds = [...new Set(children.map(c => c.section_id).filter(Boolean))];
@@ -31,29 +32,35 @@ export default function MobileHome({ user, children, onTabChange }) {
     enabled: childSectionIds.length > 0,
   });
 
-  const { data: actionsRequired = [] } = useQuery({
+  const { data: actionsData = { actions: [], responses: [] } } = useQuery({
     queryKey: ['mobile-actions', children],
     queryFn: async () => {
-      if (children.length === 0) return [];
+      if (children.length === 0) return { actions: [], responses: [] };
       const sectionIds = [...new Set(children.map(c => c.section_id))];
-      const childIds = children.map(c => c.id);
       const programmes = await base44.entities.Programme.filter({});
       const relevantProgIds = programmes.filter(p => sectionIds.includes(p.section_id)).map(p => p.id);
       const allActions = await base44.entities.ActionRequired.filter({});
-      const relevantActions = allActions.filter(a => relevantProgIds.includes(a.programme_id) && a.is_open !== false);
-      const allResponses = await base44.entities.ActionResponse.filter({});
-      return relevantActions.filter(action =>
-        !children.every(child =>
-          allResponses.some(r =>
-            (r.action_required_id === action.id) &&
-            (r.member_id === child.id || r.child_member_id === child.id) &&
-            r.status === 'completed' && r.response
-          )
-        )
+      const relevantActions = allActions.filter(a =>
+        (relevantProgIds.includes(a.programme_id) || relevantProgIds.includes(a.event_id)) && a.is_open !== false
       );
+      const allResponses = await base44.entities.ActionResponse.filter({});
+      const childIds = children.map(c => c.id);
+      const relevantResponses = allResponses.filter(r => childIds.includes(r.member_id) || childIds.includes(r.child_member_id));
+      return { actions: relevantActions, responses: relevantResponses };
     },
     enabled: children.length > 0,
   });
+
+  const { actions: allActions, responses: existingResponses } = actionsData;
+  const actionsRequired = allActions.filter(action =>
+    !children.every(child =>
+      existingResponses.some(r =>
+        (r.action_required_id === action.id || r.action_id === action.id) &&
+        (r.member_id === child.id || r.child_member_id === child.id) &&
+        r.status === 'completed' && r.response
+      )
+    )
+  );
 
   const child = children[0];
   const firstName = user?.full_name?.split(' ')[0] || 'there';
@@ -76,25 +83,12 @@ export default function MobileHome({ user, children, onTabChange }) {
 
       <div className="px-4 py-5 space-y-5">
         {/* Actions Required */}
-        {actionsRequired.length > 0 && (
-          <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Bell className="w-4 h-4 text-orange-600" />
-              <h2 className="font-bold text-orange-900 text-sm">Action Required</h2>
-              <span className="ml-auto bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {actionsRequired.length}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {actionsRequired.slice(0, 2).map(action => (
-                <div key={action.id} className="bg-white rounded-xl p-3 flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-gray-800 leading-snug">{action.action_text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <ActionRequiredCard
+          actionsRequired={allActions}
+          children={children}
+          user={user}
+          existingResponses={existingResponses}
+        />
 
         {/* Quick Nav Grid */}
         <div className="grid grid-cols-2 gap-3">

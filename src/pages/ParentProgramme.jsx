@@ -62,19 +62,11 @@ export default function ParentProgramme() {
     queryFn: () => base44.entities.BadgeRequirement.filter({}),
   });
 
-  // Get current term
+  // Get current term, or fall back to next upcoming term
   const now = new Date();
-  const currentTerm = terms.find(term => {
-    const isRelevantSection = childSectionIds.includes(term.section_id);
-    if (!isRelevantSection) return false;
-
-    const start = new Date(term.start_date);
-    const end = new Date(term.end_date);
-    console.log("Now:", now);
-    console.log("Checking term:", term);
-    console.log("In date range:", now >= start && now <= end);
-    return now >= start && now <= end;
-  });
+  const relevantTerms = terms.filter(t => childSectionIds.includes(t.section_id));
+  const currentTerm = relevantTerms.find(t => now >= new Date(t.start_date) && now <= new Date(t.end_date))
+    || relevantTerms.filter(t => new Date(t.start_date) > now).sort((a, b) => new Date(a.start_date) - new Date(b.start_date))[0];
 
   // Get programmes for current term
   const allTermProgrammes = currentTerm
@@ -165,7 +157,7 @@ export default function ParentProgramme() {
           <Card>
             <CardContent className="p-12 text-center">
               <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600">No active term at the moment</p>
+              <p className="text-gray-600">No upcoming term at the moment</p>
             </CardContent>
           </Card>
         </div>
@@ -182,7 +174,12 @@ export default function ParentProgramme() {
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
         </div>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <h1 className="text-4xl font-bold mb-2">Weekly Programme</h1>
+          <div className="flex items-center gap-3 mb-2 flex-wrap">
+            <h1 className="text-4xl font-bold">Weekly Programme</h1>
+            {new Date(currentTerm.start_date) > now && (
+              <span className="bg-white/20 text-white text-sm font-bold px-3 py-1 rounded-full">Upcoming Term</span>
+            )}
+          </div>
           <p className="text-green-100 text-lg">
             {currentTerm.title} • {format(new Date(currentTerm.start_date), 'MMM d')} - {format(new Date(currentTerm.end_date), 'MMM d, yyyy')}
           </p>

@@ -75,10 +75,9 @@ export default function MobileProgramme({ children }) {
   });
 
   const now = new Date();
-  const currentTerm = terms.find(t => {
-    if (!childSectionIds.includes(t.section_id)) return false;
-    return now >= new Date(t.start_date) && now <= new Date(t.end_date);
-  });
+  const relevantTerms = terms.filter(t => childSectionIds.includes(t.section_id));
+  const currentTerm = relevantTerms.find(t => now >= new Date(t.start_date) && now <= new Date(t.end_date))
+    || relevantTerms.filter(t => new Date(t.start_date) > now).sort((a, b) => new Date(a.start_date) - new Date(b.start_date))[0];
 
   const termProgrammes = currentTerm
     ? programmes
@@ -100,6 +99,7 @@ export default function MobileProgramme({ children }) {
         {currentTerm && (
           <p className="text-white/70 text-sm mt-1">
             {currentTerm.title} · {format(new Date(currentTerm.start_date), 'd MMM')} – {format(new Date(currentTerm.end_date), 'd MMM yyyy')}
+            {new Date(currentTerm.start_date) > now && <span className="ml-2 bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Upcoming</span>}
           </p>
         )}
       </div>
@@ -112,8 +112,8 @@ export default function MobileProgramme({ children }) {
         ) : !currentTerm ? (
           <div className="text-center py-16 text-gray-400">
             <Calendar className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium text-gray-600">No active term</p>
-            <p className="text-sm mt-1">Check back when the next term begins.</p>
+            <p className="font-medium text-gray-600">No upcoming term</p>
+            <p className="text-sm mt-1">Check back soon.</p>
           </div>
         ) : (
           <>
