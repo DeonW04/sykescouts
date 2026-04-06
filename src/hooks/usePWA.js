@@ -31,10 +31,13 @@ export function usePWA() {
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
   }, []);
 
+  const [isSignedIn, setIsSignedIn] = useState(false);
+
   useEffect(() => {
     const checkRole = async () => {
       try {
         const isAuth = await base44.auth.isAuthenticated();
+        setIsSignedIn(isAuth);
         if (!isAuth) {
           setIsLeaderOrAdmin(false);
           setIsCheckingRole(false);
@@ -50,6 +53,7 @@ export function usePWA() {
         setIsLeaderOrAdmin(leaders.length > 0);
       } catch {
         setIsLeaderOrAdmin(false);
+        setIsSignedIn(false);
       } finally {
         setIsCheckingRole(false);
       }
@@ -70,6 +74,7 @@ export function usePWA() {
   return {
     isMobile,
     isPWA,
+    isSignedIn,
     isLeaderOrAdmin,
     isCheckingRole,
     isIOS,

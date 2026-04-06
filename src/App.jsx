@@ -3,7 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -12,6 +12,11 @@ import QuizBuilder from './pages/QuizBuilder';
 import MobileApp from './pages/MobileApp';
 import { usePWA } from './hooks/usePWA';
 import PWAInstallGate from './components/pwa/PWAInstallGate';
+import { useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+
+// Public-only pages that should never be shown in PWA mode
+const PUBLIC_PAGES = ['/', '/Home', '/About', '/Contact', '/Gallery', '/Join', '/Sections', '/Parents', '/Volunteer', '/SharedPage'];
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -22,13 +27,32 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   : <>{children}</>;
 
 const PWAGate = ({ children }) => {
-  const { isMobile, isPWA, isLeaderOrAdmin, isCheckingRole, isIOS, canInstall, triggerInstallPrompt } = usePWA();
+  const { isMobile, isPWA, isSignedIn, isLeaderOrAdmin, isCheckingRole, isIOS, canInstall, triggerInstallPrompt } = usePWA();
+  const location = useLocation();
 
-  // While checking role, don't render the gate to avoid flash
+  // Wait for role/auth check to resolve before making decisions
   if (isCheckingRole) return <>{children}</>;
 
-  // On mobile, NOT a leader/admin, and NOT already in PWA mode → show install gate
-  if (isMobile && !isPWA && !isLeaderOrAdmin) {
+  const isPublicPage = PUBLIC_PAGES.some(p => location.pathname === p || location.pathname === p + '/');
+
+  // --- PWA mode: redirect away from public pages ---
+  if (isPWA && isPublicPage) {
+    if (!isSignedIn) {
+      base44.auth.redirectToLogin('/app');
+    } else if (isLeaderOrAdmin) {
+      window.location.replace('/LeaderDashboard');
+    } else {
+      window.location.replace('/app');
+    }
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-[#7413dc] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // --- Non-PWA mobile: show install gate only to signed-in parents ---
+  if (isMobile && !isPWA && isSignedIn && !isLeaderOrAdmin) {
     return (
       <PWAInstallGate
         isIOS={isIOS}
@@ -39,26 +63,6 @@ const PWAGate = ({ children }) => {
   }
 
   return <>{children}</>;
-};
-
-const MobileRedirect = () => {
-  const { isMobile, isPWA, isLeaderOrAdmin, isCheckingRole } = usePWA();
-
-  if (isCheckingRole) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-[#7413dc] rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  // Mobile PWA non-leader → redirect to mobile app
-  if (isMobile && isPWA && !isLeaderOrAdmin) {
-    window.location.replace('/app');
-    return null;
-  }
-
-  return null;
 };
 
 const AuthenticatedApp = () => {
