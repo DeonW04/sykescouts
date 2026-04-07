@@ -64,52 +64,34 @@ export default function EventAttendeesSection({ eventId, event }) {
       // Create ActionResponse records for any actions required on this event and send notifications
       if (actionsRequired.length > 0) {
         const responsePromises = [];
-        const emailPromises = [];
+        const notificationPromises = [];
         
         memberIds.forEach(memberId => {
-          const member = allMembers.find(m => m.id === memberId);
-          const parentEmails = [member?.parent_one_email, member?.parent_two_email].filter(Boolean);
-          
           actionsRequired.forEach(action => {
             responsePromises.push(
               base44.entities.ActionResponse.create({
                 action_required_id: action.id,
                 member_id: memberId,
                 entity_id: eventId,
-                parent_email: parentEmails[0] || '',
+                parent_email: '',
                 response: '',
                 status: 'pending',
                 response_date: new Date().toISOString(),
               })
             );
             
-            // Send email and push notifications to parents for each action
-            parentEmails.forEach(email => {
-              emailPromises.push(
-                base44.functions.invoke('sendActionRequiredEmail', {
-                  member_id: memberId,
-                  action_id: action.id,
-                  parent_email: email,
-                  entity_type: 'event',
-                  entity_id: eventId,
-                }).catch(err => console.error('Failed to send email:', err))
-              );
-              
-              emailPromises.push(
-                base44.functions.invoke('sendActionNotification', {
-                  member_id: memberId,
-                  action_id: action.id,
-                  parent_email: email,
-                  entity_type: 'event',
-                  entity_id: eventId,
-                }).catch(err => console.error('Failed to send push notification:', err))
-              );
-            });
+            // Send email and push notifications for this action
+            notificationPromises.push(
+              base44.functions.invoke('sendMemberActionNotification', {
+                actionRequiredId: action.id,
+                memberId: memberId
+              }).catch(err => console.error('Failed to send notification:', err))
+            );
           });
         });
         
         await Promise.all(responsePromises);
-        await Promise.all(emailPromises);
+        await Promise.all(notificationPromises);
       }
     },
     onSuccess: () => {
