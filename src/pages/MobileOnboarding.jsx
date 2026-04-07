@@ -210,7 +210,7 @@ export default function MobileOnboarding({ user, onComplete }) {
         style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
           <img
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png"
+            src="/logo-512.png"
             alt="40th Rochdale Scouts"
             className="w-24 h-24 object-cover rounded-[22%] mb-6 shadow-2xl"
           />
