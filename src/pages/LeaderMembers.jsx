@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, Plus, Users } from 'lucide-react';
+import { Search, Plus, Users, Grid3x3, List } from 'lucide-react';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
 import { useSectionContext } from '../components/leader/SectionContext';
@@ -19,6 +19,7 @@ export default function LeaderMembers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [sending, setSending] = useState(false);
+  const [viewMode, setViewMode] = useState('tile'); // 'tile' or 'patrol'
   const [inviteForm, setInviteForm] = useState({
     parent_one_name: '',
     parent_one_email: '',
@@ -235,7 +236,7 @@ export default function LeaderMembers() {
         {/* Filters */}
         <Card className="mb-6">
           <CardContent className="p-4 md:p-6">
-            <div className="flex flex-col gap-3 md:flex-row md:gap-4">
+            <div className="flex flex-col gap-3 md:flex-row md:gap-4 md:items-center">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -246,6 +247,23 @@ export default function LeaderMembers() {
                     className="pl-10"
                   />
                 </div>
+              </div>
+              {/* View mode toggle */}
+              <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('tile')}
+                  className={`p-2 rounded transition-colors ${viewMode === 'tile' ? 'bg-[#004851] text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                  title="Tile view"
+                >
+                  <Grid3x3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('patrol')}
+                  className={`p-2 rounded transition-colors ${viewMode === 'patrol' ? 'bg-[#004851] text-white' : 'text-gray-500 hover:text-gray-700'}`}
+                  title="Patrol view"
+                >
+                  <List className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </CardContent>
@@ -269,7 +287,7 @@ export default function LeaderMembers() {
               </p>
             </CardContent>
           </Card>
-        ) : (
+        ) : viewMode === 'tile' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredMembers.map(member => {
               const age = calculateAge(member.date_of_birth);
@@ -308,8 +326,76 @@ export default function LeaderMembers() {
               );
             })}
           </div>
+        ) : (
+          <PatrolViewDesktop members={filteredMembers} sections={sections} />
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Desktop Patrol View Component ────────────────────────────────────────────
+function PatrolViewDesktop({ members, sections }) {
+  // Group members by patrol
+  const patrols = {};
+  members.forEach(m => {
+    const patrol = m.patrol || 'No Patrol';
+    if (!patrols[patrol]) patrols[patrol] = [];
+    patrols[patrol].push(m);
+  });
+
+  const patrolNames = Object.keys(patrols).sort();
+
+  const calculateAge = (dob) => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let years = today.getFullYear() - birthDate.getFullYear();
+    let months = today.getMonth() - birthDate.getMonth();
+    
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+    
+    if (today.getDate() < birthDate.getDate()) {
+      months--;
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+    }
+    
+    return { years, months };
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {patrolNames.map(patrolName => (
+        <Card key={patrolName} className="h-full">
+          <CardHeader className="bg-gradient-to-br from-blue-500 to-[#004851] text-white pb-3">
+            <CardTitle className="text-base">{patrolName}</CardTitle>
+            <p className="text-xs text-white/70 mt-1">{patrols[patrolName].length} members</p>
+          </CardHeader>
+          <CardContent className="p-0 divide-y">
+            {patrols[patrolName].map(member => {
+              const age = calculateAge(member.date_of_birth);
+              return (
+                <Link key={member.id} to={createPageUrl(`MemberDetail?id=${member.id}`)} className="block p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-[#004851] rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      {member.full_name?.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-900 truncate">{member.full_name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Age {age.years}y {age.months}m</p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
