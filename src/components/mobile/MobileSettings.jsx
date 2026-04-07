@@ -12,6 +12,13 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
 
+function arrayBufferToBase64Url(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 export default function MobileSettings({ user }) {
   const [permission, setPermission] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'denied'
@@ -48,19 +55,33 @@ export default function MobileSettings({ user }) {
       const vapidPublicKey = res?.data?.publicKey;
       if (!vapidPublicKey) throw new Error('Could not load notification config');
 
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-      });
+      // Unsubscribe stale subscription first (old VAPID key = 403 on send)
+      const existingSub = await reg.pushManager.getSubscription();
+      if (existingSub) {
+        console.log('[Push] Unsubscribing stale subscription...');
+        await existingSub.unsubscribe();
+      }
 
-      const key = sub.getKey('p256dh');
+      let sub;
+      try {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        });
+      } catch (subErr) {
+        console.error('[Push] subscribe() failed:', subErr.name, subErr.message);
+        throw new Error(`Subscribe failed: ${subErr.name} — ${subErr.message}`);
+      }
+
+      // Use base64url encoding (no padding) — required by web-push on the backend
+      const p256dh = sub.getKey('p256dh');
       const auth = sub.getKey('auth');
       const subscriptionPayload = {
         endpoint: sub.endpoint,
         expirationTime: sub.expirationTime,
         keys: {
-          p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : null,
-          auth: auth ? btoa(String.fromCharCode(...new Uint8Array(auth))) : null,
+          p256dh: p256dh ? arrayBufferToBase64Url(p256dh) : null,
+          auth: auth ? arrayBufferToBase64Url(auth) : null,
         },
       };
       await base44.functions.invoke('savePushSubscription', { subscription: subscriptionPayload });

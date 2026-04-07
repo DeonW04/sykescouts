@@ -32,47 +32,65 @@ export function usePushNotifications({ enabled }) {
 
   const registerAndSubscribe = async () => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      console.warn('Push not supported');
+      console.warn('Push not supported on this device');
       return;
     }
     try {
+      // Register SW and wait for it to be fully active
       const reg = await navigator.serviceWorker.register(SW_URL);
       await navigator.serviceWorker.ready;
-      console.log('Service worker ready');
+      console.log('[Push] Service worker ready, state:', reg.active?.state);
 
-      // Fetch VAPID public key from backend
+      // Fetch the current VAPID public key from the backend (never use a cached/hardcoded one)
       const res = await base44.functions.invoke('getVapidPublicKey', {});
       const vapidPublicKey = res?.data?.publicKey;
       if (!vapidPublicKey) {
-        console.warn('VAPID public key not available');
+        console.warn('[Push] VAPID public key not available from backend');
         return;
       }
-      console.log('Got VAPID key, subscribing...');
+      console.log('[Push] Got VAPID public key from backend');
 
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-      });
+      // IMPORTANT: If a stale subscription exists (e.g. from old VAPID keys), unsubscribe first.
+      // A mismatch between the subscription's applicationServerKey and the current VAPID key
+      // is the most common cause of 403 errors when sending notifications.
+      const existingSub = await reg.pushManager.getSubscription();
+      if (existingSub) {
+        console.log('[Push] Unsubscribing stale existing subscription...');
+        await existingSub.unsubscribe();
+        console.log('[Push] Stale subscription removed');
+      }
 
-      console.log('Push subscribed, saving...', sub.endpoint);
+      // Subscribe with the current VAPID key
+      console.log('[Push] Subscribing with new VAPID key...');
+      let sub;
+      try {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        });
+      } catch (subErr) {
+        console.error('[Push] pushManager.subscribe() failed:', subErr.name, subErr.message);
+        throw subErr;
+      }
+      console.log('[Push] Subscribed, endpoint:', sub.endpoint);
 
-      // Manually serialise keys — sub.toJSON() can produce ArrayBuffer objects
-      // that don't survive JSON serialisation correctly (p256dh / auth arrive as {})
-      const key = sub.getKey('p256dh');
+      // Serialise keys as base64url (no padding, url-safe) — this is what web-push expects.
+      // Do NOT use btoa() directly as it produces standard base64 with +/= which web-push rejects.
+      const p256dh = sub.getKey('p256dh');
       const auth = sub.getKey('auth');
       const subscriptionPayload = {
         endpoint: sub.endpoint,
         expirationTime: sub.expirationTime,
         keys: {
-          p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : null,
-          auth: auth ? btoa(String.fromCharCode(...new Uint8Array(auth))) : null,
+          p256dh: p256dh ? arrayBufferToBase64Url(p256dh) : null,
+          auth: auth ? arrayBufferToBase64Url(auth) : null,
         },
       };
 
       const saveRes = await base44.functions.invoke('savePushSubscription', { subscription: subscriptionPayload });
-      console.log('Subscription saved:', saveRes?.data);
+      console.log('[Push] Subscription saved:', saveRes?.data);
     } catch (err) {
-      console.error('Push subscription failed:', err);
+      console.error('[Push] Registration failed:', err.name, err.message);
     }
   };
 
@@ -95,9 +113,18 @@ export function usePushNotifications({ enabled }) {
   return { permission, showPrompt, requestPermission, dismissPrompt };
 }
 
+// Convert base64url → Uint8Array (for applicationServerKey)
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = atob(base64);
   return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+}
+
+// Convert ArrayBuffer → base64url (no padding, url-safe) — required by web-push
+function arrayBufferToBase64Url(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
