@@ -204,7 +204,6 @@ export default function MobileOnboarding({ user, onComplete }) {
     const prev = document.body.style.backgroundColor;
     document.body.style.background = 'linear-gradient(to bottom right,#7413dc,#004851)'
     document.documentElement.style.background = 'linear-gradient(to bottom right,#7413dc,#004851)'
-    document.documentElement.style.backgroundColor = step === 0 || step === 8 ? '#004851' : '#f9fafb';
     return () => {
       document.body.style.backgroundColor = prev;
       document.documentElement.style.backgroundColor = prev;
