@@ -199,6 +199,17 @@ export default function MobileOnboarding({ user, onComplete }) {
     }
   };
 
+  // Set body bg for overscroll area, reset on unmount
+  useEffect(() => {
+    const prev = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = step === 0 || step === 8 ? '#004851' : '#f9fafb';
+    document.documentElement.style.backgroundColor = step === 0 || step === 8 ? '#004851' : '#f9fafb';
+    return () => {
+      document.body.style.backgroundColor = prev;
+      document.documentElement.style.backgroundColor = prev;
+    };
+  }, [step]);
+
   const scrollTop = () => setTimeout(() => window.scrollTo({ top: 0 }), 50);
   const next = () => { scrollTop(); setStep(s => s + 1); };
   const back = () => { scrollTop(); setStep(s => s - 1); };
@@ -207,12 +218,7 @@ export default function MobileOnboarding({ user, onComplete }) {
   if (step === 0) {
     return (
       <div className="fixed inset-0 flex flex-col"
-        style={{ 
-          background: 'linear-gradient(to bottom right, #7413dc, #004851)',
-          paddingTop: 'env(safe-area-inset-top)', 
-          paddingBottom: '',
-          backgroundColor: '#004851'  
-        }}>
+        style={{ background: 'linear-gradient(to bottom right, #7413dc, #004851)', paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
           <img
             src="/logo-512.png"
