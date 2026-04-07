@@ -112,17 +112,15 @@ export default function LeaderNav() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="center">
-                        {item.dropdown.map((subItem) => (
-                          <React.Fragment key={subItem.page}>
-                            {subItem.separator && <DropdownMenuSeparator />}
-                            <DropdownMenuItem asChild>
-                              <Link to={createPageUrl(subItem.page)} className="flex items-center gap-2 cursor-pointer">
-                                <subItem.icon className="w-4 h-4" />
-                                {subItem.label}
-                              </Link>
-                            </DropdownMenuItem>
-                          </React.Fragment>
-                        ))}
+                        {item.dropdown.map((subItem) => [
+                          subItem.separator && <DropdownMenuSeparator key={`${subItem.page}-sep`} />,
+                          <DropdownMenuItem key={subItem.page} asChild>
+                            <Link to={createPageUrl(subItem.page)} className="flex items-center gap-2 cursor-pointer">
+                              <subItem.icon className="w-4 h-4" />
+                              {subItem.label}
+                            </Link>
+                          </DropdownMenuItem>
+                        ]).flat().filter(Boolean)}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   ) : (
