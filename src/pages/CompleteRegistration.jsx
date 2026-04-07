@@ -1,207 +1,204 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { CheckCircle, UserCheck, Baby, AlertCircle } from 'lucide-react';
+import { CheckCircle, ChevronRight, ChevronLeft, User, Baby, Heart, Phone, Camera, AlertCircle, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
 
+// Reusable field components
+function Field({ label, required, children }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block">
+        {label}{required && <span className="text-red-400 ml-1">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function TextInput({ value, onChange, placeholder, type = 'text', required }) {
+  return (
+    <input
+      type={type}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      required={required}
+      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#7413dc] focus:ring-2 focus:ring-[#7413dc]/20 transition-all"
+    />
+  );
+}
+
+function TextArea({ value, onChange, placeholder, rows = 3 }) {
+  return (
+    <textarea
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={rows}
+      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#7413dc] focus:ring-2 focus:ring-[#7413dc]/20 transition-all resize-none"
+    />
+  );
+}
+
+function SelectInput({ value, onChange, placeholder, options }) {
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#7413dc] focus:ring-2 focus:ring-[#7413dc]/20 transition-all appearance-none"
+    >
+      <option value="">{placeholder}</option>
+      {options.map(o => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
+  );
+}
+
+function StepHeader({ icon: Icon, iconBg, title, subtitle, step, totalSteps }) {
+  return (
+    <div className="px-5 pt-6 pb-5">
+      <div className="flex items-center gap-3 mb-4">
+        <div className={`w-10 h-10 ${iconBg} rounded-2xl flex items-center justify-center flex-shrink-0`}>
+          <Icon className="w-5 h-5 text-white" />
+        </div>
+        <div className="flex-1">
+          <h2 className="font-bold text-gray-900 text-base leading-tight">{title}</h2>
+          <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>
+        </div>
+        <span className="text-xs text-gray-400 font-medium">{step}/{totalSteps}</span>
+      </div>
+      {/* Progress bar */}
+      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-[#7413dc] to-[#004851] rounded-full transition-all duration-500"
+          style={{ width: `${(step / totalSteps) * 100}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function CompleteRegistration() {
   const [user, setUser] = useState(null);
-  const [isLeader, setIsLeader] = useState(false);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0); // 0 = welcome
   const [submitting, setSubmitting] = useState(false);
   const [noChildFound, setNoChildFound] = useState(false);
-  
-  const [userForm, setUserForm] = useState({
-    display_name: '',
-  });
+  const [existingChildId, setExistingChildId] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const [displayName, setDisplayName] = useState('');
 
   const [childForm, setChildForm] = useState({
-    first_name: '',
-    surname: '',
-    full_name: '',
-    preferred_name: '',
-    date_of_birth: '',
-    gender: '',
-    section_id: '',
-    patrol: '',
-    parent_one_first_name: '',
-    parent_one_surname: '',
-    parent_one_name: '',
-    parent_one_email: '',
-    parent_one_phone: '',
-    parent_two_first_name: '',
-    parent_two_surname: '',
-    parent_two_name: '',
-    parent_two_email: '',
-    parent_two_phone: '',
-    address: '',
-    doctors_surgery: '',
-    doctors_surgery_address: '',
-    doctors_phone: '',
-    medical_info: '',
-    allergies: '',
-    dietary_requirements: '',
-    medications: '',
-    emergency_contact_name: '',
-    emergency_contact_phone: '',
-    emergency_contact_relationship: '',
+    first_name: '', surname: '', full_name: '', preferred_name: '',
+    date_of_birth: '', gender: '', section_id: '', address: '',
+    parent_one_first_name: '', parent_one_surname: '', parent_one_name: '',
+    parent_one_email: '', parent_one_phone: '',
+    parent_two_first_name: '', parent_two_surname: '', parent_two_name: '',
+    parent_two_email: '', parent_two_phone: '',
+    doctors_surgery: '', doctors_surgery_address: '', doctors_phone: '',
+    medical_info: '', allergies: '', dietary_requirements: '', medications: '',
+    emergency_contact_name: '', emergency_contact_phone: '', emergency_contact_relationship: '',
     photo_consent: false,
   });
 
-  useEffect(() => {
-    loadUser();
-  }, []);
-
-  const loadUser = async () => {
-    try {
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
-      setUserForm({ display_name: currentUser.display_name || currentUser.full_name || '' });
-
-      // Check if user is a leader
-      if (currentUser.role === 'admin') {
-        setIsLeader(true);
-      } else {
-        const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
-        setIsLeader(leaders.length > 0);
-      }
-    } catch (error) {
-      base44.auth.redirectToLogin();
-    }
-  };
+  const setField = (key) => (val) => setChildForm(prev => ({ ...prev, [key]: val }));
 
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
     queryFn: () => base44.entities.Section.filter({ active: true }),
-  });
-
-  const { data: existingChild } = useQuery({
-    queryKey: ['child', user?.email],
-    queryFn: async () => {
-      if (!user?.email) return null;
-      const members = await base44.entities.Member.filter({});
-      const child = members.find(m => 
-        m.parent_one_email === user.email || 
-        m.parent_two_email === user.email
-      );
-      return child || null;
-    },
-    enabled: !!user && step === 2,
+    enabled: !!user,
   });
 
   useEffect(() => {
-    if (existingChild && step === 2) {
-      setChildForm({
-        first_name: existingChild.first_name || '',
-        surname: existingChild.surname || '',
-        full_name: existingChild.full_name || '',
-        preferred_name: existingChild.preferred_name || '',
-        date_of_birth: existingChild.date_of_birth || '',
-        gender: existingChild.gender || '',
-        section_id: existingChild.section_id || '',
-        patrol: existingChild.patrol || '',
-        parent_one_first_name: existingChild.parent_one_first_name || '',
-        parent_one_surname: existingChild.parent_one_surname || '',
-        parent_one_name: existingChild.parent_one_name || '',
-        parent_one_email: existingChild.parent_one_email || user.email,
-        parent_one_phone: existingChild.parent_one_phone || '',
-        parent_two_first_name: existingChild.parent_two_first_name || '',
-        parent_two_surname: existingChild.parent_two_surname || '',
-        parent_two_name: existingChild.parent_two_name || '',
-        parent_two_email: existingChild.parent_two_email || '',
-        parent_two_phone: existingChild.parent_two_phone || '',
-        address: existingChild.address || '',
-        doctors_surgery: existingChild.doctors_surgery || '',
-        doctors_surgery_address: existingChild.doctors_surgery_address || '',
-        doctors_phone: existingChild.doctors_phone || '',
-        medical_info: existingChild.medical_info || '',
-        allergies: existingChild.allergies || '',
-        dietary_requirements: existingChild.dietary_requirements || '',
-        medications: existingChild.medications || '',
-        emergency_contact_name: existingChild.emergency_contact_name || '',
-        emergency_contact_phone: existingChild.emergency_contact_phone || '',
-        emergency_contact_relationship: existingChild.emergency_contact_relationship || '',
-        photo_consent: existingChild.photo_consent || false,
-      });
-    } else if (existingChild === null && step === 2) {
-      setNoChildFound(true);
-    }
-  }, [existingChild, step]);
+    base44.auth.me()
+      .then(async (u) => {
+        setUser(u);
+        setDisplayName(u.display_name || u.full_name || '');
 
-  const handleStep1Submit = async (e) => {
-    e.preventDefault();
+        // Pre-fill child data if found
+        const members = await base44.entities.Member.filter({});
+        const child = members.find(m => m.parent_one_email === u.email || m.parent_two_email === u.email);
+        if (child) {
+          setExistingChildId(child.id);
+          setChildForm({
+            first_name: child.first_name || '',
+            surname: child.surname || '',
+            full_name: child.full_name || '',
+            preferred_name: child.preferred_name || '',
+            date_of_birth: child.date_of_birth || '',
+            gender: child.gender || '',
+            section_id: child.section_id || '',
+            address: child.address || '',
+            parent_one_first_name: child.parent_one_first_name || '',
+            parent_one_surname: child.parent_one_surname || '',
+            parent_one_name: child.parent_one_name || '',
+            parent_one_email: child.parent_one_email || u.email,
+            parent_one_phone: child.parent_one_phone || '',
+            parent_two_first_name: child.parent_two_first_name || '',
+            parent_two_surname: child.parent_two_surname || '',
+            parent_two_name: child.parent_two_name || '',
+            parent_two_email: child.parent_two_email || '',
+            parent_two_phone: child.parent_two_phone || '',
+            doctors_surgery: child.doctors_surgery || '',
+            doctors_surgery_address: child.doctors_surgery_address || '',
+            doctors_phone: child.doctors_phone || '',
+            medical_info: child.medical_info || '',
+            allergies: child.allergies || '',
+            dietary_requirements: child.dietary_requirements || '',
+            medications: child.medications || '',
+            emergency_contact_name: child.emergency_contact_name || '',
+            emergency_contact_phone: child.emergency_contact_phone || '',
+            emergency_contact_relationship: child.emergency_contact_relationship || '',
+            photo_consent: child.photo_consent || false,
+          });
+        } else {
+          setChildForm(prev => ({ ...prev, parent_one_email: u.email }));
+        }
+
+        setLoading(false);
+      })
+      .catch(() => base44.auth.redirectToLogin('/CompleteRegistration'));
+  }, []);
+
+  // TOTAL steps: 0=welcome, 1=your name, 2=child basics, 3=parents, 4=medical, 5=emergency, 6=photo, 7=done
+  const TOTAL_CONTENT_STEPS = 6;
+
+  const handleComplete = async () => {
     setSubmitting(true);
-    
     try {
-      // Update user profile
-      await base44.auth.updateMe({ display_name: userForm.display_name });
-      
-      // Optionally, refetch user data here if your API provides a method
-      const updatedUser = await base44.auth.me();
-      setUser(updatedUser);
+      // Update user name
+      await base44.auth.updateMe({ display_name: displayName });
 
-      // Check if user is a leader and update Leader entity
-      const leaderRecords = await base44.entities.Leader.filter({ user_id: updatedUser.id });
-      if (leaderRecords.length > 0) {
-        // Update leader display name
-        await base44.entities.Leader.update(leaderRecords[0].id, {
-          display_name: userForm.display_name
-        });
-        
-        // Complete onboarding and redirect to leader dashboard
-        setIsLeader(true);
+      // Check if leader
+      const leaderRecords = user.role === 'admin' ? [{ id: null }] : await base44.entities.Leader.filter({ user_id: user.id });
+      if (leaderRecords.length > 0 || user.role === 'admin') {
+        if (leaderRecords[0]?.id) {
+          await base44.entities.Leader.update(leaderRecords[0].id, { display_name: displayName });
+        }
         await base44.auth.updateMe({ onboarding_complete: true });
-        toast.success('Registration completed successfully!');
+        toast.success('Welcome aboard!');
         window.location.href = createPageUrl('LeaderDashboard');
         return;
       }
 
-      // Check if user is admin
-      if (updatedUser.role === 'admin') {
-        setIsLeader(true);
-        await base44.auth.updateMe({ onboarding_complete: true });
-        toast.success('Registration completed successfully!');
-        window.location.href = createPageUrl('LeaderDashboard');
+      // Parent flow — save child
+      if (!existingChildId) {
+        setNoChildFound(true);
+        setSubmitting(false);
         return;
       }
 
-      // Update local user state
-      setUser(updatedUser);
-      setStep(2);
-    } catch (error) {
-      toast.error('Error updating your details: ' + error.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+      const finalForm = {
+        ...childForm,
+        full_name: `${childForm.first_name} ${childForm.surname}`.trim(),
+        parent_one_name: `${childForm.parent_one_first_name} ${childForm.parent_one_surname}`.trim() || childForm.parent_one_name,
+        parent_two_name: `${childForm.parent_two_first_name} ${childForm.parent_two_surname}`.trim() || childForm.parent_two_name,
+      };
+      await base44.entities.Member.update(existingChildId, finalForm);
 
-  const handleStep2Submit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-
-    try {
-      if (existingChild) {
-        // Update existing child
-        await base44.entities.Member.update(existingChild.id, childForm);
-      } else {
-        // Create new child (shouldn't happen if no child found, but just in case)
-        await base44.entities.Member.create({
-          ...childForm,
-          active: true,
-          join_date: new Date().toISOString().split('T')[0],
-        });
-      }
-
-      // Create Parent entity record for portal tracking
       const existingParent = await base44.entities.Parent.filter({ user_id: user.id });
       if (existingParent.length === 0) {
         await base44.entities.Parent.create({
@@ -213,473 +210,389 @@ export default function CompleteRegistration() {
         });
       }
 
-      // Mark onboarding as complete
       await base44.auth.updateMe({ onboarding_complete: true });
-
-      toast.success('Registration completed successfully!');
-      // If on mobile/PWA, redirect to mobile app
-      const isMobilePWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-      window.location.href = isMobilePWA ? '/app' : createPageUrl('ParentDashboard');
-    } catch (error) {
-      toast.error('Error completing registration: ' + error.message);
-    } finally {
+      setStep(8); // done
+    } catch (err) {
+      toast.error('Error: ' + err.message);
       setSubmitting(false);
     }
   };
 
-  if (!user) {
+  const next = () => setStep(s => s + 1);
+  const back = () => setStep(s => s - 1);
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#7413dc]/5 to-[#004851]/5 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-[#7413dc] border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-[#7413dc] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // ── Welcome Screen ──
+  if (step === 0) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-[#7413dc] to-[#004851] flex flex-col"
+        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+          <img
+            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png"
+            alt="40th Rochdale Scouts"
+            className="w-24 h-24 object-contain mb-6 drop-shadow-2xl"
+          />
+          <h1 className="text-3xl font-extrabold text-white mb-3 leading-tight">
+            Welcome to the<br />Scout Portal
+          </h1>
+          <p className="text-white/75 text-base leading-relaxed mb-2">
+            Let's get your profile set up — it only takes a few minutes.
+          </p>
+          <p className="text-white/50 text-sm">40th Rochdale (Syke) Scouts</p>
+        </div>
+        <div className="px-6 pb-8 space-y-3">
+          <button
+            onClick={next}
+            className="w-full bg-white text-[#7413dc] font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform shadow-lg"
+          >
+            Get Started →
+          </button>
+          <button
+            onClick={() => base44.auth.logout()}
+            className="w-full text-white/60 text-sm py-2 flex items-center justify-center gap-1.5"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign out
+          </button>
         </div>
       </div>
     );
   }
 
+  // ── Done Screen ──
+  if (step === 8) {
+    const isMobilePWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-[#7413dc] to-[#004851] flex flex-col items-center justify-center px-8 text-center"
+        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-2xl">
+          <CheckCircle className="w-10 h-10 text-green-500" />
+        </div>
+        <h1 className="text-3xl font-extrabold text-white mb-3">All done!</h1>
+        <p className="text-white/75 text-base mb-8">
+          Your profile is set up and ready to go.
+        </p>
+        <button
+          onClick={() => {
+            window.location.href = isMobilePWA ? '/app' : createPageUrl('ParentDashboard');
+          }}
+          className="w-full bg-white text-[#7413dc] font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform shadow-lg"
+        >
+          Go to my Dashboard →
+        </button>
+      </div>
+    );
+  }
+
+  // ── No Child Found Screen ──
+  if (noChildFound) {
+    return (
+      <div className="fixed inset-0 bg-gray-50 flex flex-col"
+        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+          <div className="w-16 h-16 bg-orange-100 rounded-3xl flex items-center justify-center mb-5">
+            <AlertCircle className="w-8 h-8 text-orange-500" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-3">No child record found</h2>
+          <p className="text-gray-500 text-sm leading-relaxed mb-2">
+            We couldn't find a child registered with:
+          </p>
+          <p className="font-semibold text-gray-800 text-sm mb-4 bg-gray-100 px-4 py-2 rounded-xl">{user?.email}</p>
+          <p className="text-gray-400 text-xs leading-relaxed">
+            Please contact your section leader to ensure your child has been added with this email address, or sign in with the correct account.
+          </p>
+        </div>
+        <div className="px-6 pb-8 space-y-3">
+          <button
+            onClick={() => { setNoChildFound(false); setStep(1); }}
+            className="w-full bg-[#7413dc] text-white font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform"
+          >
+            Try Again
+          </button>
+          <button
+            onClick={() => base44.auth.logout()}
+            className="w-full text-gray-400 text-sm py-2 flex items-center justify-center gap-1.5"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Form Steps ──
+  const scrollTop = () => window.scrollTo({ top: 0 });
+  const goNext = () => { scrollTop(); next(); };
+  const goBack = () => { scrollTop(); back(); };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#7413dc]/5 to-[#004851]/5 py-6 px-4 md:py-12"
-      style={{ paddingTop: 'max(env(safe-area-inset-top), 24px)' }}>
-      <div className="max-w-3xl mx-auto">
-        {/* Progress Indicator */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center gap-4">
-            <div className={`flex items-center gap-2 ${step >= 1 ? 'text-[#7413dc]' : 'text-gray-400'}`}>
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-[#7413dc] text-white' : 'bg-gray-200'}`}>
-                {step > 1 ? <CheckCircle className="w-5 h-5" /> : '1'}
-              </div>
-              <span className="font-medium">Your Details</span>
-            </div>
-            <div className={`w-16 h-1 ${step >= 2 ? 'bg-[#7413dc]' : 'bg-gray-300'}`} />
-            <div className={`flex items-center gap-2 ${step >= 2 ? 'text-[#7413dc]' : 'text-gray-400'}`}>
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-[#7413dc] text-white' : 'bg-gray-200'}`}>
-                2
-              </div>
-              <span className="font-medium">Child Details</span>
+    <div className="min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto"
+      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+
+      {/* Back button */}
+      <div className="px-4 pt-4 pb-0 flex items-center">
+        <button onClick={goBack} className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-500">
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto pb-28">
+
+        {/* ── Step 1: Your Name ── */}
+        {step === 1 && (
+          <div>
+            <StepHeader icon={User} iconBg="bg-[#7413dc]" title="What shall we call you?" subtitle="This will show in the app" step={1} totalSteps={TOTAL_CONTENT_STEPS} />
+            <div className="px-5 space-y-4">
+              <Field label="Your Name" required>
+                <TextInput value={displayName} onChange={setDisplayName} placeholder="e.g. Sarah Smith" required />
+                <p className="text-xs text-gray-400 mt-1">This is how your name appears in the parent portal.</p>
+              </Field>
             </div>
           </div>
-        </div>
-
-        {/* Step 1: User Details */}
-        {step === 1 && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-[#7413dc] rounded-full flex items-center justify-center">
-                  <UserCheck className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <CardTitle>Welcome! Let's confirm your details</CardTitle>
-                  <p className="text-sm text-gray-500 mt-1">Please confirm your name to continue</p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleStep1Submit} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="display_name">Your Name *</Label>
-                  <Input
-                    id="display_name"
-                    value={userForm.display_name}
-                    onChange={(e) => setUserForm({ ...userForm, display_name: e.target.value })}
-                    placeholder="Enter your name"
-                    required
-                  />
-                  <p className="text-xs text-gray-500">This is how your name will appear in the portal</p>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full bg-[#7413dc] hover:bg-[#5c0fb0]"
-                >
-                  {submitting ? 'Saving...' : 'Continue'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
         )}
 
-        {/* Step 2: Child Details */}
-        {step === 2 && !noChildFound && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-[#7413dc] rounded-full flex items-center justify-center">
-                  <Baby className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <CardTitle>Child's Details</CardTitle>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {existingChild ? 'Please review and update your child\'s information' : 'Please provide your child\'s details'}
-                  </p>
+        {/* ── Step 2: Child Basics ── */}
+        {step === 2 && (
+          <div>
+            <StepHeader icon={Baby} iconBg="bg-blue-500" title="Your child's details" subtitle="Basic information about your scout" step={2} totalSteps={TOTAL_CONTENT_STEPS} />
+            <div className="px-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="First Name" required>
+                  <TextInput value={childForm.first_name} onChange={(v) => setChildForm(p => ({ ...p, first_name: v, full_name: `${v} ${p.surname}`.trim() }))} required />
+                </Field>
+                <Field label="Surname" required>
+                  <TextInput value={childForm.surname} onChange={(v) => setChildForm(p => ({ ...p, surname: v, full_name: `${p.first_name} ${v}`.trim() }))} required />
+                </Field>
+              </div>
+              <Field label="Preferred Name">
+                <TextInput value={childForm.preferred_name} onChange={setField('preferred_name')} placeholder="If different from above" />
+              </Field>
+              <Field label="Date of Birth" required>
+                <TextInput value={childForm.date_of_birth} onChange={setField('date_of_birth')} type="date" required />
+              </Field>
+              <Field label="Gender">
+                <SelectInput
+                  value={childForm.gender}
+                  onChange={setField('gender')}
+                  placeholder="Select gender"
+                  options={[
+                    { value: 'Male', label: 'Male' },
+                    { value: 'Female', label: 'Female' },
+                    { value: 'Other', label: 'Other' },
+                    { value: 'Prefer not to say', label: 'Prefer not to say' },
+                  ]}
+                />
+              </Field>
+              <Field label="Section" required>
+                <SelectInput
+                  value={childForm.section_id}
+                  onChange={setField('section_id')}
+                  placeholder="Select section"
+                  options={sections.map(s => ({ value: s.id, label: s.display_name }))}
+                />
+              </Field>
+              <Field label="Home Address" required>
+                <TextArea value={childForm.address} onChange={setField('address')} placeholder="Full address" rows={3} />
+              </Field>
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 3: Parent Details ── */}
+        {step === 3 && (
+          <div>
+            <StepHeader icon={User} iconBg="bg-purple-500" title="Parent / Guardian" subtitle="Contact information for parents" step={3} totalSteps={TOTAL_CONTENT_STEPS} />
+            <div className="px-5 space-y-5">
+              <div className="bg-purple-50 rounded-2xl p-4 border border-purple-100">
+                <p className="text-xs font-bold text-purple-700 uppercase tracking-wide mb-3">Parent One</p>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="First Name">
+                      <TextInput value={childForm.parent_one_first_name} onChange={(v) => setChildForm(p => ({ ...p, parent_one_first_name: v, parent_one_name: `${v} ${p.parent_one_surname}`.trim() }))} />
+                    </Field>
+                    <Field label="Surname">
+                      <TextInput value={childForm.parent_one_surname} onChange={(v) => setChildForm(p => ({ ...p, parent_one_surname: v, parent_one_name: `${p.parent_one_first_name} ${v}`.trim() }))} />
+                    </Field>
+                  </div>
+                  <Field label="Email">
+                    <TextInput value={childForm.parent_one_email} onChange={setField('parent_one_email')} type="email" />
+                  </Field>
+                  <Field label="Phone">
+                    <TextInput value={childForm.parent_one_phone} onChange={setField('parent_one_phone')} type="tel" />
+                  </Field>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleStep2Submit} className="space-y-6">
-                {/* Personal Info */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-gray-900 border-b pb-2">Personal Information</h3>
-                  
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="first_name">First Name *</Label>
-                      <Input
-                        id="first_name"
-                        value={childForm.first_name}
-                        onChange={(e) => setChildForm({ ...childForm, first_name: e.target.value, full_name: `${e.target.value} ${childForm.surname || ''}`.trim() })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="surname">Surname *</Label>
-                      <Input
-                        id="surname"
-                        value={childForm.surname}
-                        onChange={(e) => setChildForm({ ...childForm, surname: e.target.value, full_name: `${childForm.first_name || ''} ${e.target.value}`.trim() })}
-                        required
-                      />
-                    </div>
-                  </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="preferred_name">Preferred Name</Label>
-                      <Input
-                        id="preferred_name"
-                        value={childForm.preferred_name}
-                        onChange={(e) => setChildForm({ ...childForm, preferred_name: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="gender">Gender</Label>
-                      <Select
-                        value={childForm.gender}
-                        onValueChange={(value) => setChildForm({ ...childForm, gender: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Male">Male</SelectItem>
-                          <SelectItem value="Female">Female</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                          <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+              <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Parent Two (Optional)</p>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="First Name">
+                      <TextInput value={childForm.parent_two_first_name} onChange={(v) => setChildForm(p => ({ ...p, parent_two_first_name: v, parent_two_name: `${v} ${p.parent_two_surname}`.trim() }))} />
+                    </Field>
+                    <Field label="Surname">
+                      <TextInput value={childForm.parent_two_surname} onChange={(v) => setChildForm(p => ({ ...p, parent_two_surname: v, parent_two_name: `${p.parent_two_first_name} ${v}`.trim() }))} />
+                    </Field>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="date_of_birth">Date of Birth *</Label>
-                    <Input
-                      id="date_of_birth"
-                      type="date"
-                      value={childForm.date_of_birth}
-                      onChange={(e) => setChildForm({ ...childForm, date_of_birth: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="section_id">Section *</Label>
-                    <Select
-                      value={childForm.section_id}
-                      onValueChange={(value) => setChildForm({ ...childForm, section_id: value })}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select section" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sections.map(section => (
-                          <SelectItem key={section.id} value={section.id}>
-                            {section.display_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Home Address *</Label>
-                    <Textarea
-                      id="address"
-                      value={childForm.address}
-                      onChange={(e) => setChildForm({ ...childForm, address: e.target.value })}
-                      required
-                      className="min-h-[80px]"
-                    />
-                  </div>
+                  <Field label="Email">
+                    <TextInput value={childForm.parent_two_email} onChange={setField('parent_two_email')} type="email" />
+                  </Field>
+                  <Field label="Phone">
+                    <TextInput value={childForm.parent_two_phone} onChange={setField('parent_two_phone')} type="tel" />
+                  </Field>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-                {/* Parent Details */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-gray-900 border-b pb-2">Parent One Details</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="parent_one_first_name">First Name</Label>
-                      <Input
-                        id="parent_one_first_name"
-                        value={childForm.parent_one_first_name}
-                        onChange={(e) => setChildForm({ ...childForm, parent_one_first_name: e.target.value, parent_one_name: `${e.target.value} ${childForm.parent_one_surname || ''}`.trim() })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="parent_one_surname">Surname</Label>
-                      <Input
-                        id="parent_one_surname"
-                        value={childForm.parent_one_surname}
-                        onChange={(e) => setChildForm({ ...childForm, parent_one_surname: e.target.value, parent_one_name: `${childForm.parent_one_first_name || ''} ${e.target.value}`.trim() })}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="parent_one_email">Email</Label>
-                    <Input
-                      id="parent_one_email"
-                      type="email"
-                      value={childForm.parent_one_email}
-                      onChange={(e) => setChildForm({ ...childForm, parent_one_email: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="parent_one_phone">Phone</Label>
-                    <Input
-                      id="parent_one_phone"
-                      type="tel"
-                      value={childForm.parent_one_phone}
-                      onChange={(e) => setChildForm({ ...childForm, parent_one_phone: e.target.value })}
-                    />
-                  </div>
+        {/* ── Step 4: Medical Info ── */}
+        {step === 4 && (
+          <div>
+            <StepHeader icon={Heart} iconBg="bg-red-500" title="Medical information" subtitle="Important health details for your child's safety" step={4} totalSteps={TOTAL_CONTENT_STEPS} />
+            <div className="px-5 space-y-4">
+              <div className="bg-red-50 rounded-2xl p-3 border border-red-100 mb-2">
+                <p className="text-xs text-red-600 leading-relaxed">This information is kept confidential and only shared with leaders when needed for your child's safety.</p>
+              </div>
+              <Field label="Medical Conditions">
+                <TextArea value={childForm.medical_info} onChange={setField('medical_info')} placeholder="Any conditions leaders should know about (or 'None')" />
+              </Field>
+              <Field label="Allergies">
+                <TextArea value={childForm.allergies} onChange={setField('allergies')} placeholder="Any allergies (or 'None')" />
+              </Field>
+              <Field label="Dietary Requirements">
+                <TextInput value={childForm.dietary_requirements} onChange={setField('dietary_requirements')} placeholder="e.g. Vegetarian (or 'None')" />
+              </Field>
+              <Field label="Regular Medications">
+                <TextInput value={childForm.medications} onChange={setField('medications')} placeholder="Any medications taken regularly" />
+              </Field>
+              <Field label="Doctor's Surgery">
+                <TextInput value={childForm.doctors_surgery} onChange={setField('doctors_surgery')} placeholder="Surgery name" />
+              </Field>
+              <Field label="Surgery Address">
+                <TextArea value={childForm.doctors_surgery_address} onChange={setField('doctors_surgery_address')} placeholder="Surgery address" rows={2} />
+              </Field>
+              <Field label="Doctor's Phone">
+                <TextInput value={childForm.doctors_phone} onChange={setField('doctors_phone')} type="tel" placeholder="Surgery phone number" />
+              </Field>
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 5: Emergency Contact ── */}
+        {step === 5 && (
+          <div>
+            <StepHeader icon={Phone} iconBg="bg-orange-500" title="Emergency contact" subtitle="Someone we can call in an emergency" step={5} totalSteps={TOTAL_CONTENT_STEPS} />
+            <div className="px-5 space-y-4">
+              <div className="bg-orange-50 rounded-2xl p-3 border border-orange-100 mb-2">
+                <p className="text-xs text-orange-600 leading-relaxed">Please provide someone other than yourself who we can contact in an emergency.</p>
+              </div>
+              <Field label="Full Name" required>
+                <TextInput value={childForm.emergency_contact_name} onChange={setField('emergency_contact_name')} placeholder="Contact's full name" required />
+              </Field>
+              <Field label="Phone Number" required>
+                <TextInput value={childForm.emergency_contact_phone} onChange={setField('emergency_contact_phone')} type="tel" required />
+              </Field>
+              <Field label="Relationship to Child" required>
+                <TextInput value={childForm.emergency_contact_relationship} onChange={setField('emergency_contact_relationship')} placeholder="e.g. Grandparent, Aunt" required />
+              </Field>
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 6: Photo Consent + Review ── */}
+        {step === 6 && (
+          <div>
+            <StepHeader icon={Camera} iconBg="bg-teal-500" title="Photo consent & review" subtitle="Almost there!" step={6} totalSteps={TOTAL_CONTENT_STEPS} />
+            <div className="px-5 space-y-4">
+              <button
+                type="button"
+                onClick={() => setChildForm(p => ({ ...p, photo_consent: !p.photo_consent }))}
+                className={`w-full flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${
+                  childForm.photo_consent ? 'bg-teal-50 border-teal-400' : 'bg-white border-gray-200'
+                }`}
+              >
+                <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 border-2 transition-all ${
+                  childForm.photo_consent ? 'bg-teal-500 border-teal-500' : 'border-gray-300 bg-white'
+                }`}>
+                  {childForm.photo_consent && <CheckCircle className="w-4 h-4 text-white" />}
                 </div>
-
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-gray-900 border-b pb-2">Parent Two Details (Optional)</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="parent_two_first_name">First Name</Label>
-                      <Input
-                        id="parent_two_first_name"
-                        value={childForm.parent_two_first_name}
-                        onChange={(e) => setChildForm({ ...childForm, parent_two_first_name: e.target.value, parent_two_name: `${e.target.value} ${childForm.parent_two_surname || ''}`.trim() })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="parent_two_surname">Surname</Label>
-                      <Input
-                        id="parent_two_surname"
-                        value={childForm.parent_two_surname}
-                        onChange={(e) => setChildForm({ ...childForm, parent_two_surname: e.target.value, parent_two_name: `${childForm.parent_two_first_name || ''} ${e.target.value}`.trim() })}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="parent_two_email">Email</Label>
-                    <Input
-                      id="parent_two_email"
-                      type="email"
-                      value={childForm.parent_two_email}
-                      onChange={(e) => setChildForm({ ...childForm, parent_two_email: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="parent_two_phone">Phone</Label>
-                    <Input
-                      id="parent_two_phone"
-                      type="tel"
-                      value={childForm.parent_two_phone}
-                      onChange={(e) => setChildForm({ ...childForm, parent_two_phone: e.target.value })}
-                    />
-                  </div>
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm">Photo Consent</p>
+                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+                    I give permission for photos of my child to be taken and used on the group's website and social media.
+                  </p>
                 </div>
+              </button>
 
-                {/* Medical Info */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-gray-900 border-b pb-2">Medical Information</h3>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="doctors_surgery">Doctor's Surgery Name</Label>
-                    <Input
-                      id="doctors_surgery"
-                      value={childForm.doctors_surgery}
-                      onChange={(e) => setChildForm({ ...childForm, doctors_surgery: e.target.value })}
-                      placeholder="Name of doctor's surgery"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="doctors_surgery_address">Doctor's Surgery Address</Label>
-                    <Textarea
-                      id="doctors_surgery_address"
-                      value={childForm.doctors_surgery_address}
-                      onChange={(e) => setChildForm({ ...childForm, doctors_surgery_address: e.target.value })}
-                      placeholder="Surgery address"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="doctors_phone">Doctor's Surgery Phone</Label>
-                    <Input
-                      id="doctors_phone"
-                      type="tel"
-                      value={childForm.doctors_phone}
-                      onChange={(e) => setChildForm({ ...childForm, doctors_phone: e.target.value })}
-                      placeholder="Surgery phone number"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="medical_info">Medical Conditions</Label>
-                    <Textarea
-                      id="medical_info"
-                      value={childForm.medical_info}
-                      onChange={(e) => setChildForm({ ...childForm, medical_info: e.target.value })}
-                      placeholder="Any medical conditions we should be aware of"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="allergies">Allergies</Label>
-                    <Textarea
-                      id="allergies"
-                      value={childForm.allergies}
-                      onChange={(e) => setChildForm({ ...childForm, allergies: e.target.value })}
-                      placeholder="Any allergies"
-                    />
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="dietary_requirements">Dietary Requirements</Label>
-                      <Input
-                        id="dietary_requirements"
-                        value={childForm.dietary_requirements}
-                        onChange={(e) => setChildForm({ ...childForm, dietary_requirements: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="medications">Medications</Label>
-                      <Input
-                        id="medications"
-                        value={childForm.medications}
-                        onChange={(e) => setChildForm({ ...childForm, medications: e.target.value })}
-                      />
-                    </div>
-                  </div>
+              {/* Summary review */}
+              <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Summary</p>
+                <div className="space-y-2">
+                  <SummaryRow label="Child" value={`${childForm.first_name} ${childForm.surname}`.trim() || '—'} />
+                  <SummaryRow label="Date of Birth" value={childForm.date_of_birth || '—'} />
+                  <SummaryRow label="Your Name" value={displayName || '—'} />
+                  <SummaryRow label="Your Phone" value={childForm.parent_one_phone || '—'} />
+                  <SummaryRow label="Emergency Contact" value={childForm.emergency_contact_name || '—'} />
+                  <SummaryRow label="Medical Info" value={childForm.medical_info || 'None provided'} />
                 </div>
+              </div>
 
-                {/* Emergency Contact */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-gray-900 border-b pb-2">Emergency Contact</h3>
-                  
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="emergency_contact_name">Name *</Label>
-                      <Input
-                        id="emergency_contact_name"
-                        value={childForm.emergency_contact_name}
-                        onChange={(e) => setChildForm({ ...childForm, emergency_contact_name: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="emergency_contact_phone">Phone *</Label>
-                      <Input
-                        id="emergency_contact_phone"
-                        type="tel"
-                        value={childForm.emergency_contact_phone}
-                        onChange={(e) => setChildForm({ ...childForm, emergency_contact_phone: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="emergency_contact_relationship">Relationship *</Label>
-                    <Input
-                      id="emergency_contact_relationship"
-                      value={childForm.emergency_contact_relationship}
-                      onChange={(e) => setChildForm({ ...childForm, emergency_contact_relationship: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Photo Consent */}
-                <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
-                  <Checkbox
-                    id="photo_consent"
-                    checked={childForm.photo_consent}
-                    onCheckedChange={(checked) => setChildForm({ ...childForm, photo_consent: checked })}
-                  />
-                  <div className="space-y-1">
-                    <Label htmlFor="photo_consent" className="text-sm font-medium cursor-pointer">
-                      Photo Consent
-                    </Label>
-                    <p className="text-xs text-gray-500">
-                      I give permission for photos of my child to be taken and used on the 
-                      group's website and social media.
-                    </p>
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full bg-[#7413dc] hover:bg-[#5c0fb0]"
-                >
-                  {submitting ? 'Completing Registration...' : 'Complete Registration'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+              <p className="text-xs text-gray-400 text-center leading-relaxed">
+                By continuing you confirm all information provided is accurate. You can update this at any time in the app.
+              </p>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* No Child Found Dialog */}
-      <Dialog open={noChildFound} onOpenChange={setNoChildFound}>
-        <DialogContent>
-          <DialogHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                <AlertCircle className="w-6 h-6 text-orange-600" />
-              </div>
-              <DialogTitle>No Child Found</DialogTitle>
-            </div>
-            <DialogDescription className="text-base space-y-3 pt-2">
-              <p>
-                We couldn't find a child registered with the email address <strong>{user?.email}</strong>.
-              </p>
-              <p>
-                The email address on your account must match the email address that was provided 
-                when your child was added to the system by a leader.
-              </p>
-              <p className="text-sm text-gray-600">
-                Please contact your section leader to ensure your child has been added with the correct 
-                email address, or check if you've signed in with the correct account.
-              </p>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex gap-3 mt-4">
-            <Button
-              variant="outline"
-              onClick={() => base44.auth.logout()}
-              className="flex-1"
-            >
-              Sign Out
-            </Button>
-            <Button
-              onClick={() => setNoChildFound(false)}
-              className="flex-1 bg-[#7413dc] hover:bg-[#5c0fb0]"
-            >
-              Try Again
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* ── Sticky Bottom Button ── */}
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto px-4 pb-6 bg-gray-50 pt-3 border-t border-gray-100"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 20px)' }}>
+        {step < 6 ? (
+          <button
+            onClick={goNext}
+            disabled={
+              (step === 1 && !displayName.trim()) ||
+              (step === 2 && (!childForm.first_name || !childForm.surname || !childForm.date_of_birth))
+            }
+            className="w-full bg-[#7413dc] text-white font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform disabled:opacity-40 flex items-center justify-center gap-2"
+          >
+            Continue
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        ) : (
+          <button
+            onClick={handleComplete}
+            disabled={submitting}
+            className="w-full bg-gradient-to-r from-[#7413dc] to-[#004851] text-white font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {submitting ? (
+              <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Saving…</>
+            ) : (
+              <><CheckCircle className="w-5 h-5" /> Complete Registration</>
+            )}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }) {
+  return (
+    <div className="flex items-start justify-between gap-3 py-1.5 border-b border-gray-50 last:border-0">
+      <span className="text-xs text-gray-400 flex-shrink-0">{label}</span>
+      <span className="text-xs font-semibold text-gray-700 text-right">{value}</span>
     </div>
   );
 }
