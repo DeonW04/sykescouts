@@ -91,21 +91,27 @@ const createInviteEmailTemplate = (parentName, childName, parentEmail) => {
 
 Deno.serve(async (req) => {
   try {
+    console.log('📧 sendParentPortalInvite: Request received');
+    
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
+    console.log('🔐 User authenticated:', user?.email);
 
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { parentEmail, parentName, childName } = await req.json();
+    console.log('📝 Params received:', { parentEmail, parentName, childName });
 
     if (!parentEmail || !parentName || !childName) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     // Send via Outlook using Microsoft Graph API
+    console.log('🔗 Getting Outlook connection...');
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('outlook');
+    console.log('✅ Outlook connection obtained');
 
     const emailBody = {
       message: {
@@ -125,6 +131,7 @@ Deno.serve(async (req) => {
       saveToSentItems: true
     };
 
+    console.log('📤 Sending email to:', parentEmail);
     const response = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
       method: 'POST',
       headers: {
@@ -134,18 +141,23 @@ Deno.serve(async (req) => {
       body: JSON.stringify(emailBody)
     });
 
+    console.log('📬 Response status:', response.status);
+    
     if (!response.ok) {
       const error = await response.text();
+      console.error('❌ Outlook API error:', error);
       throw new Error(`Outlook API error: ${response.status} - ${error}`);
     }
 
+    console.log('✨ Email sent successfully to', parentEmail);
     return Response.json({ 
       success: true,
       message: `Invitation sent to ${parentEmail}` 
     });
 
   } catch (error) {
-    console.error('Error:', error);
+    console.error('💥 Error in sendParentPortalInvite:', error.message);
+    console.error('Stack:', error.stack);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
