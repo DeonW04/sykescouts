@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Bell, BellOff, BellRing, LogOut, ChevronRight, User } from 'lucide-react';
+import { Bell, BellOff, BellRing, LogOut, ChevronRight, User, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 const SW_URL = '/sw.js';
@@ -19,7 +19,13 @@ function arrayBufferToBase64Url(buffer) {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-export default function MobileSettings({ user }) {
+const ROLE_LABELS = {
+  parent: { label: 'Parent / Guardian', color: 'bg-purple-100 text-purple-700', icon: '👨‍👩‍👧' },
+  leader: { label: 'Section Leader', color: 'bg-[#004851]/10 text-[#004851]', icon: '⚜️' },
+  // Future: ipad, member
+};
+
+export default function MobileSettings({ user, role = 'parent' }) {
   const [permission, setPermission] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'denied'
   );
@@ -178,8 +184,20 @@ export default function MobileSettings({ user }) {
                 <User className="w-5 h-5 text-purple-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 text-sm">{user?.full_name}</p>
+                <p className="font-semibold text-gray-900 text-sm">{user?.display_name || user?.full_name}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{user?.email}</p>
+              </div>
+            </div>
+            {/* Account type */}
+            <div className="flex items-center gap-4 p-4 border-b border-gray-50">
+              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 text-lg">
+                {ROLE_LABELS[role]?.icon || '👤'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-400">Account type</p>
+                <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full mt-0.5 ${ROLE_LABELS[role]?.color || 'bg-gray-100 text-gray-600'}`}>
+                  {ROLE_LABELS[role]?.label || role}
+                </span>
               </div>
             </div>
             <button
