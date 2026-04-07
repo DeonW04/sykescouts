@@ -10,6 +10,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AIProgrammePlanner from './pages/AIProgrammePlanner';
 import QuizBuilder from './pages/QuizBuilder';
 import MobileApp from './pages/MobileApp';
+import CompleteRegistration from './pages/CompleteRegistration';
 import { usePWA } from './hooks/usePWA';
 import PWAInstallGate from './components/pwa/PWAInstallGate';
 import { useEffect } from 'react';
@@ -119,6 +120,7 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
       <Route path="/app" element={<MobileApp />} />
+      <Route path="/CompleteRegistration" element={<CompleteRegistration />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </PWAGate>
