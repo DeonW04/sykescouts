@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, createContext, useContext } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useAppRole } from '../hooks/useAppRole';
@@ -8,10 +8,7 @@ import MobileOnboarding from './MobileOnboarding.jsx';
 import MobileSettings from '../components/mobile/MobileSettings';
 
 // ── Parent tabs ──
-import {
-  Home, User, Calendar, Tent, Award, Settings,
-  Users, CheckSquare, Camera, Receipt, LayoutGrid,
-} from 'lucide-react';
+import { Home, User, Calendar, Tent, Award, Settings, Users, CheckSquare, Camera, Receipt } from 'lucide-react';
 import MobileHome from '../components/mobile/MobileHome.jsx';
 import MobileMyChild from '../components/mobile/MobileMyChild.jsx';
 import MobileProgramme from '../components/mobile/MobileProgramme.jsx';
@@ -28,9 +25,12 @@ import LeaderBadges from '../components/mobile/leader/LeaderBadges.jsx';
 import LeaderGallery from '../components/mobile/leader/LeaderGallery.jsx';
 import LeaderExpenses from '../components/mobile/leader/LeaderExpenses.jsx';
 
+// ─── Section context (shared across all leader pages) ───────────────────────
+export const LeaderSectionContext = createContext({ selectedSectionId: 'all', setSelectedSectionId: () => {} });
+export const useLeaderSection = () => useContext(LeaderSectionContext);
+
 // ─────────────────────────────────────────────
-// Tab definitions per role.
-// Future roles (ipad, member) can be added here
+// Tab definitions per role
 // ─────────────────────────────────────────────
 const TABS_BY_ROLE = {
   parent: [
@@ -52,51 +52,23 @@ const TABS_BY_ROLE = {
     { id: 'expenses', label: 'Expenses', icon: Receipt },
     { id: 'settings', label: 'Settings', icon: Settings },
   ],
-  // Future: ipad: [...], member: [...]
 };
 
-// Accent colour per role
 const ACCENT_BY_ROLE = {
   parent: '#7413dc',
   leader: '#004851',
 };
 
+// ─────────────────────────────────────────────
+// Bottom nav — scrollable horizontal pill bar
+// ─────────────────────────────────────────────
 function BottomNav({ tabs, activeTab, onTabChange, accent }) {
-  // Leaders have 9 tabs — show a 2-row scrollable pill nav instead of the usual bar
-  if (tabs.length > 6) {
-    return (
-      <div
-        className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 z-40 px-3 pt-2"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      >
-        <div className="flex flex-wrap justify-center gap-1.5 pb-2">
-          {tabs.map(tab => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => onTabChange(tab.id)}
-                style={isActive ? { backgroundColor: accent, color: '#fff' } : {}}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${isActive ? '' : 'text-gray-500 bg-gray-100'}`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  // Standard icon bar for ≤6 tabs
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 z-40"
+      className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur border-t border-gray-200 z-40"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="flex">
+      <div className="flex overflow-x-auto scrollbar-hide px-2 py-2 gap-1">
         {tabs.map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -104,11 +76,15 @@ function BottomNav({ tabs, activeTab, onTabChange, accent }) {
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              style={isActive ? { color: accent } : {}}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 transition-colors ${isActive ? '' : 'text-gray-400'}`}
+              className={`flex-shrink-0 flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all min-w-[52px] ${
+                isActive
+                  ? 'text-white'
+                  : 'text-gray-500 hover:bg-gray-100'
+              }`}
+              style={isActive ? { backgroundColor: accent } : {}}
             >
-              <Icon className={`w-5 h-5 ${isActive ? 'scale-110' : ''} transition-transform`} />
-              <span className={`text-[10px] font-medium ${isActive ? 'font-bold' : ''}`}>{tab.label}</span>
+              <Icon className="w-4 h-4" />
+              <span className="text-[10px] font-semibold leading-none">{tab.label}</span>
             </button>
           );
         })}
@@ -143,28 +119,37 @@ function ParentApp({ user, activeTab, onTabChange }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Leader app
+// Leader app — sections loaded once, shared via context
 // ─────────────────────────────────────────────────────────────
 function LeaderApp({ user, leader, activeTab, onTabChange }) {
-  const { data: sections = [] } = useQuery({
+  const { selectedSectionId, setSelectedSectionId } = useLeaderSection();
+
+  const { data: allSections = [] } = useQuery({
     queryKey: ['leader-app-sections', leader?.id, user?.id],
     queryFn: async () => {
-      const allSections = await base44.entities.Section.filter({ active: true });
-      if (user?.role === 'admin') return allSections;
+      const allSecs = await base44.entities.Section.filter({ active: true });
+      if (user?.role === 'admin') return allSecs;
       if (!leader?.section_ids?.length) return [];
-      return allSections.filter(s => leader.section_ids.includes(s.id));
+      return allSecs.filter(s => leader.section_ids.includes(s.id));
     },
     enabled: !!user,
   });
 
+  // Sections currently "active" — either the selected one or all if 'all'
+  const activeSections = selectedSectionId === 'all'
+    ? allSections
+    : allSections.filter(s => s.id === selectedSectionId);
+
+  const commonProps = { sections: activeSections, allSections };
+
   switch (activeTab) {
-    case 'home': return <LeaderHome user={user} leader={leader} sections={sections} onTabChange={onTabChange} />;
-    case 'members': return <LeaderMembers sections={sections} />;
-    case 'programme': return <LeaderProgramme sections={sections} />;
-    case 'events': return <LeaderEvents sections={sections} />;
-    case 'attendance': return <LeaderAttendance sections={sections} />;
-    case 'badges': return <LeaderBadges sections={sections} />;
-    case 'gallery': return <LeaderGallery sections={sections} user={user} />;
+    case 'home': return <LeaderHome user={user} leader={leader} sections={activeSections} allSections={allSections} selectedSectionId={selectedSectionId} setSelectedSectionId={setSelectedSectionId} onTabChange={onTabChange} />;
+    case 'members': return <LeaderMembers {...commonProps} />;
+    case 'programme': return <LeaderProgramme {...commonProps} />;
+    case 'events': return <LeaderEvents {...commonProps} />;
+    case 'attendance': return <LeaderAttendance {...commonProps} />;
+    case 'badges': return <LeaderBadges {...commonProps} />;
+    case 'gallery': return <LeaderGallery sections={activeSections} user={user} />;
     case 'expenses': return <LeaderExpenses user={user} />;
     case 'settings': return <MobileSettings user={user} role="leader" />;
     default: return null;
@@ -177,6 +162,7 @@ function LeaderApp({ user, leader, activeTab, onTabChange }) {
 export default function MobileApp() {
   const { role, user, leader, isLoading } = useAppRole();
   const [activeTab, setActiveTab] = useState('home');
+  const [selectedSectionId, setSelectedSectionId] = useState('all');
   const { showPrompt, requestPermission, dismissPrompt } = usePushNotifications({ enabled: true });
 
   if (isLoading || !role) {
@@ -189,7 +175,6 @@ export default function MobileApp() {
 
   if (!user) return null;
 
-  // Show onboarding for parents who haven't completed it
   if (!user.onboarding_complete && role === 'parent') {
     return <MobileOnboarding user={user} onComplete={() => window.location.reload()} />;
   }
@@ -197,31 +182,26 @@ export default function MobileApp() {
   const tabs = TABS_BY_ROLE[role] || TABS_BY_ROLE.parent;
   const accent = ACCENT_BY_ROLE[role] || '#7413dc';
 
-  // Bottom nav padding: pill nav for leaders (2 rows ~72px), bar for parents (~64px)
-  const contentPb = tabs.length > 6 ? 'pb-24' : 'pb-20';
-
   const renderContent = () => {
     switch (role) {
-      case 'leader': return <LeaderApp user={user} leader={leader} activeTab={activeTab} onTabChange={setActiveTab} />;
-      case 'parent': return <ParentApp user={user} activeTab={activeTab} onTabChange={setActiveTab} />;
-      // Future: case 'ipad': return <IPadApp ... />;
-      // Future: case 'member': return <MemberApp ... />;
-      default: return <ParentApp user={user} activeTab={activeTab} onTabChange={setActiveTab} />;
+      case 'leader':
+        return (
+          <LeaderSectionContext.Provider value={{ selectedSectionId, setSelectedSectionId }}>
+            <LeaderApp user={user} leader={leader} activeTab={activeTab} onTabChange={setActiveTab} />
+          </LeaderSectionContext.Provider>
+        );
+      default:
+        return <ParentApp user={user} activeTab={activeTab} onTabChange={setActiveTab} />;
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto relative">
-      <div className={`flex-1 overflow-y-auto ${contentPb}`}>
+      <div className="flex-1 overflow-y-auto pb-16">
         {renderContent()}
       </div>
 
-      <BottomNav
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        accent={accent}
-      />
+      <BottomNav tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} accent={accent} />
 
       {showPrompt && (
         <PushNotificationPrompt onAllow={requestPermission} onDismiss={dismissPrompt} />

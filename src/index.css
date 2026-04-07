@@ -86,3 +86,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide scrollbar on overflow-x-auto nav bars */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

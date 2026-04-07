@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Search, User, ChevronDown, ChevronUp, Heart, Phone } from 'lucide-react';
+import { Search, User, ChevronDown, ChevronUp, Heart, Phone, Mail } from 'lucide-react';
 
 function MemberCard({ member }) {
   const [open, setOpen] = useState(false);
@@ -23,56 +23,98 @@ function MemberCard({ member }) {
       </button>
 
       {open && (
-        <div className="px-4 pb-4 pt-0 border-t border-gray-50 space-y-3">
-          {/* Parent contact */}
-          <div className="pt-3">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Parents</p>
-            {member.parent_one_name && (
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-sm text-gray-700">{member.parent_one_name}</span>
+        <div className="px-4 pb-4 pt-0 border-t border-gray-50 space-y-4">
+          {/* Parent 1 */}
+          {member.parent_one_name && (
+            <div className="pt-3">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+                Parent / Guardian 1
+              </p>
+              <p className="text-sm font-semibold text-gray-800">{member.parent_one_name}</p>
+              <div className="mt-1.5 space-y-1">
                 {member.parent_one_phone && (
-                  <a href={`tel:${member.parent_one_phone}`} className="text-xs text-[#004851] font-semibold flex items-center gap-1">
-                    <Phone className="w-3 h-3" /> {member.parent_one_phone}
+                  <a href={`tel:${member.parent_one_phone}`} className="flex items-center gap-2 text-xs text-[#004851] font-medium">
+                    <Phone className="w-3.5 h-3.5 flex-shrink-0" /> {member.parent_one_phone}
+                  </a>
+                )}
+                {member.parent_one_email && (
+                  <a href={`mailto:${member.parent_one_email}`} className="flex items-center gap-2 text-xs text-[#004851] font-medium truncate">
+                    <Mail className="w-3.5 h-3.5 flex-shrink-0" /> {member.parent_one_email}
                   </a>
                 )}
               </div>
-            )}
-            {member.parent_two_name && (
-              <div className="flex items-center justify-between py-1.5">
-                <span className="text-sm text-gray-700">{member.parent_two_name}</span>
+            </div>
+          )}
+
+          {/* Parent 2 */}
+          {member.parent_two_name && (
+            <div>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">
+                Parent / Guardian 2
+              </p>
+              <p className="text-sm font-semibold text-gray-800">{member.parent_two_name}</p>
+              <div className="mt-1.5 space-y-1">
                 {member.parent_two_phone && (
-                  <a href={`tel:${member.parent_two_phone}`} className="text-xs text-[#004851] font-semibold flex items-center gap-1">
-                    <Phone className="w-3 h-3" /> {member.parent_two_phone}
+                  <a href={`tel:${member.parent_two_phone}`} className="flex items-center gap-2 text-xs text-[#004851] font-medium">
+                    <Phone className="w-3.5 h-3.5 flex-shrink-0" /> {member.parent_two_phone}
+                  </a>
+                )}
+                {member.parent_two_email && (
+                  <a href={`mailto:${member.parent_two_email}`} className="flex items-center gap-2 text-xs text-[#004851] font-medium truncate">
+                    <Mail className="w-3.5 h-3.5 flex-shrink-0" /> {member.parent_two_email}
                   </a>
                 )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Medical */}
-          {(member.medical_info || member.allergies) && (
+          {(member.medical_info || member.allergies || member.dietary_requirements || member.medications) && (
             <div className="bg-red-50 border border-red-100 rounded-xl p-3">
-              <div className="flex items-center gap-1.5 mb-1">
+              <div className="flex items-center gap-1.5 mb-2">
                 <Heart className="w-3.5 h-3.5 text-red-500" />
-                <p className="text-xs font-bold text-red-700 uppercase tracking-wide">Medical</p>
+                <p className="text-xs font-bold text-red-700 uppercase tracking-wide">Medical Information</p>
               </div>
-              {member.medical_info && <p className="text-xs text-red-700">{member.medical_info}</p>}
-              {member.allergies && <p className="text-xs text-red-700 mt-0.5">Allergies: {member.allergies}</p>}
+              {member.medical_info && (
+                <div className="mb-1.5">
+                  <p className="text-[10px] font-bold text-red-600 uppercase tracking-wide">Conditions</p>
+                  <p className="text-xs text-red-800 mt-0.5">{member.medical_info}</p>
+                </div>
+              )}
+              {member.allergies && (
+                <div className="mb-1.5">
+                  <p className="text-[10px] font-bold text-red-600 uppercase tracking-wide">Allergies</p>
+                  <p className="text-xs text-red-800 mt-0.5">{member.allergies}</p>
+                </div>
+              )}
+              {member.dietary_requirements && (
+                <div className="mb-1.5">
+                  <p className="text-[10px] font-bold text-red-600 uppercase tracking-wide">Dietary</p>
+                  <p className="text-xs text-red-800 mt-0.5">{member.dietary_requirements}</p>
+                </div>
+              )}
+              {member.medications && (
+                <div>
+                  <p className="text-[10px] font-bold text-red-600 uppercase tracking-wide">Medications</p>
+                  <p className="text-xs text-red-800 mt-0.5">{member.medications}</p>
+                </div>
+              )}
             </div>
           )}
 
           {/* Emergency contact */}
           {member.emergency_contact_name && (
             <div>
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Emergency Contact</p>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-700">{member.emergency_contact_name} ({member.emergency_contact_relationship})</span>
-                {member.emergency_contact_phone && (
-                  <a href={`tel:${member.emergency_contact_phone}`} className="text-xs text-[#004851] font-semibold flex items-center gap-1">
-                    <Phone className="w-3 h-3" /> {member.emergency_contact_phone}
-                  </a>
-                )}
-              </div>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Emergency Contact</p>
+              <p className="text-sm text-gray-700">
+                {member.emergency_contact_name}
+                {member.emergency_contact_relationship ? ` (${member.emergency_contact_relationship})` : ''}
+              </p>
+              {member.emergency_contact_phone && (
+                <a href={`tel:${member.emergency_contact_phone}`} className="flex items-center gap-2 text-xs text-[#004851] font-medium mt-1">
+                  <Phone className="w-3.5 h-3.5 flex-shrink-0" /> {member.emergency_contact_phone}
+                </a>
+              )}
             </div>
           )}
         </div>
@@ -90,9 +132,10 @@ export default function LeaderMembers({ sections }) {
     queryKey: ['leader-mobile-members', sectionIds],
     queryFn: async () => {
       const all = await base44.entities.Member.filter({ active: true });
+      // Sort oldest first (ascending date_of_birth = oldest first)
       return all
         .filter(m => sectionIds.includes(m.section_id))
-        .sort((a, b) => a.full_name?.localeCompare(b.full_name));
+        .sort((a, b) => new Date(a.date_of_birth) - new Date(b.date_of_birth));
     },
     enabled: sectionIds.length > 0,
   });
@@ -112,7 +155,6 @@ export default function LeaderMembers({ sections }) {
       </div>
 
       <div className="px-4 pt-4 pb-2 space-y-3">
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
@@ -124,7 +166,6 @@ export default function LeaderMembers({ sections }) {
           />
         </div>
 
-        {/* Section filter */}
         {sections.length > 1 && (
           <div className="flex gap-2 overflow-x-auto pb-1">
             <button

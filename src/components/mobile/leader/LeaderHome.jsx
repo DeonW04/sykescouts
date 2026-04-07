@@ -1,10 +1,10 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Users, Calendar, Tent, Award, ChevronRight, AlertTriangle } from 'lucide-react';
-import { format, isThisWeek, startOfWeek, endOfWeek } from 'date-fns';
+import { Calendar, Tent, ChevronRight, AlertTriangle, ChevronDown } from 'lucide-react';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 
-export default function LeaderHome({ user, leader, sections, onTabChange }) {
+export default function LeaderHome({ user, leader, sections, allSections, selectedSectionId, setSelectedSectionId, onTabChange }) {
   const sectionIds = sections.map(s => s.id);
 
   const { data: thisWeekMeetings = [] } = useQuery({
@@ -34,45 +34,44 @@ export default function LeaderHome({ user, leader, sections, onTabChange }) {
     enabled: sectionIds.length > 0,
   });
 
-  const { data: memberCount = 0 } = useQuery({
-    queryKey: ['leader-member-count', sectionIds],
-    queryFn: async () => {
-      const members = await base44.entities.Member.filter({ active: true });
-      return members.filter(m => sectionIds.includes(m.section_id)).length;
-    },
-    enabled: sectionIds.length > 0,
-  });
-
   const displayName = leader?.display_name || user?.display_name || user?.full_name?.split(' ')[0] || 'there';
 
   return (
     <div className="flex flex-col">
-      <div className="bg-gradient-to-br from-[#004851] to-[#7413dc] px-5 pb-8 text-white"
+      <div className="bg-gradient-to-br from-[#004851] to-[#7413dc] px-5 pb-6 text-white"
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 48px)' }}>
         <p className="text-white/70 text-sm font-medium">Leader Portal 👋</p>
         <h1 className="text-2xl font-bold mt-0.5">{displayName}</h1>
-        <div className="flex gap-2 mt-3 flex-wrap">
-          {sections.map(s => (
-            <div key={s.id} className="bg-white/15 rounded-xl px-3 py-1.5 text-xs font-semibold">
-              {s.display_name}
+
+        {/* Section selector — only shown if access to more than one section */}
+        {allSections.length > 1 && (
+          <div className="mt-4 relative">
+            <label className="text-white/60 text-xs font-semibold uppercase tracking-wide block mb-1.5">Viewing Section</label>
+            <div className="relative">
+              <select
+                value={selectedSectionId}
+                onChange={e => setSelectedSectionId(e.target.value)}
+                className="w-full appearance-none bg-white/20 text-white font-semibold text-sm px-4 py-2.5 rounded-2xl pr-8 focus:outline-none focus:bg-white/30 cursor-pointer"
+              >
+                <option value="all" className="text-gray-900 bg-white">All My Sections</option>
+                {allSections.map(s => (
+                  <option key={s.id} value={s.id} className="text-gray-900 bg-white">{s.display_name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/70 pointer-events-none" />
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {/* Single section — just show label */}
+        {allSections.length === 1 && (
+          <div className="mt-3 flex gap-2 flex-wrap">
+            <div className="bg-white/15 rounded-xl px-3 py-1.5 text-xs font-semibold">{allSections[0].display_name}</div>
+          </div>
+        )}
       </div>
 
       <div className="px-4 py-5 space-y-5">
-        {/* Stats row */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-            <p className="text-2xl font-bold text-[#004851]">{memberCount}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Active Members</p>
-          </div>
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-            <p className="text-2xl font-bold text-[#7413dc]">{upcomingEvents.length}</p>
-            <p className="text-xs text-gray-500 mt-0.5">Upcoming Events</p>
-          </div>
-        </div>
-
         {/* This week */}
         <div>
           <h2 className="font-bold text-gray-900 text-base mb-3">This Week's Meetings</h2>
