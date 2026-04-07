@@ -1,39 +1,44 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { ChevronDown, ChevronUp, Pencil, User, Phone, HeartPulse, ShieldAlert, Camera } from 'lucide-react';
+import { Heart, Phone, User, Camera, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
 import EditChildDialog from './EditChildDialog';
 
-function InfoRow({ label, value }) {
-  if (!value) return null;
-  return (
-    <div className="py-2 border-b border-gray-50 last:border-0">
-      <p className="text-xs text-gray-400">{label}</p>
-      <p className="text-sm text-gray-800 font-medium mt-0.5">{value}</p>
-    </div>
-  );
-}
-
-function Section({ title, icon: Icon, iconColor, children: content, defaultOpen = false }) {
-  const [open, setOpen] = useState(defaultOpen);
+function Section({ title, icon, color, children: content }) {
+  const Icon = icon;
+  const [open, setOpen] = useState(false);
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+        className="w-full flex items-center gap-3 p-4 text-left"
       >
-        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${iconColor}`}>
-          <Icon className="w-4 h-4" />
+        <div className={`w-9 h-9 ${color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+          <Icon className="w-4 h-4 text-white" />
         </div>
-        <span className="font-semibold text-gray-900 text-sm flex-1">{title}</span>
+        <span className="font-semibold text-gray-900 flex-1">{title}</span>
         {open ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
       </button>
-      {open && <div className="px-4 pb-4 space-y-0">{content}</div>}
+      {open && (
+        <div className="px-4 pb-4 pt-0 border-t border-gray-50">
+          {content}
+        </div>
+      )}
     </div>
   );
 }
 
-function ChildCard({ child }) {
+function InfoRow({ label, value }) {
+  return (
+    <div className="py-2 border-b border-gray-50 last:border-0">
+      <p className="text-xs text-gray-400 font-medium">{label}</p>
+      <p className="text-sm text-gray-800 font-medium mt-0.5">{value || 'Not provided'}</p>
+    </div>
+  );
+}
+
+export default function MobileMyChild({ children }) {
+  const child = children[0];
   const [editing, setEditing] = useState(false);
 
   const { data: sections = [] } = useQuery({
@@ -41,132 +46,112 @@ function ChildCard({ child }) {
     queryFn: () => base44.entities.Section.filter({ active: true }),
   });
 
-  const section = sections.find(s => s.id === child.section_id);
-
-  const age = child.date_of_birth
-    ? Math.floor((new Date() - new Date(child.date_of_birth)) / (365.25 * 24 * 60 * 60 * 1000))
-    : null;
-
-  if (editing) {
-    return <EditChildDialog child={child} onClose={() => setEditing(false)} />;
-  }
-
-  return (
-    <div className="space-y-3">
-      {/* Child name bar */}
-      <div className="bg-gradient-to-r from-[#7413dc] to-[#5c0fb0] rounded-2xl px-4 py-3 flex items-center justify-between">
-        <div>
-          <p className="text-white font-bold text-base">{child.first_name} {child.surname}</p>
-          {section && <p className="text-white/70 text-xs capitalize">{section.display_name || section.name}</p>}
-          {age && <p className="text-white/60 text-xs mt-0.5">Age {age}</p>}
-        </div>
-        <button
-          onClick={() => setEditing(true)}
-          className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center"
-        >
-          <Pencil className="w-4 h-4 text-white" />
-        </button>
-      </div>
-
-      {/* Child Info */}
-      <Section title="Child Information" icon={User} iconColor="bg-purple-100 text-purple-600" defaultOpen={true}>
-        <InfoRow label="Full Name" value={`${child.first_name} ${child.surname}`} />
-        <InfoRow label="Preferred Name" value={child.preferred_name} />
-        <InfoRow label="Date of Birth" value={child.date_of_birth ? new Date(child.date_of_birth).toLocaleDateString('en-GB') : null} />
-        <InfoRow label="Gender" value={child.gender} />
-        <InfoRow label="Section" value={section?.display_name || section?.name} />
-        <InfoRow label="Patrol" value={child.patrol} />
-        <InfoRow label="Address" value={child.address} />
-      </Section>
-
-      {/* Parents */}
-      <Section title="Parent / Guardian" icon={Phone} iconColor="bg-blue-100 text-blue-600">
-        {child.parent_one_name && <InfoRow label="Parent One" value={`${child.parent_one_name}`} />}
-        {child.parent_one_email && <InfoRow label="Email" value={child.parent_one_email} />}
-        {child.parent_one_phone && <InfoRow label="Phone" value={child.parent_one_phone} />}
-        {child.parent_two_name && (
-          <>
-            <div className="my-2 border-t border-gray-100" />
-            <InfoRow label="Parent Two" value={child.parent_two_name} />
-            {child.parent_two_email && <InfoRow label="Email" value={child.parent_two_email} />}
-            {child.parent_two_phone && <InfoRow label="Phone" value={child.parent_two_phone} />}
-          </>
-        )}
-      </Section>
-
-      {/* Emergency Contact */}
-      <Section title="Emergency Contact" icon={ShieldAlert} iconColor="bg-red-100 text-red-500">
-        <InfoRow label="Name" value={child.emergency_contact_name} />
-        <InfoRow label="Phone" value={child.emergency_contact_phone} />
-        <InfoRow label="Relationship" value={child.emergency_contact_relationship} />
-      </Section>
-
-      {/* Medical */}
-      <Section title="Medical Information" icon={HeartPulse} iconColor="bg-rose-100 text-rose-500">
-        <InfoRow label="Medical Conditions" value={child.medical_info || 'None recorded'} />
-        <InfoRow label="Allergies" value={child.allergies || 'None recorded'} />
-        <InfoRow label="Dietary Requirements" value={child.dietary_requirements} />
-        <InfoRow label="Medications" value={child.medications} />
-        <InfoRow label="Doctor's Surgery" value={child.doctors_surgery} />
-        <InfoRow label="Surgery Address" value={child.doctors_surgery_address} />
-        <InfoRow label="Doctor's Phone" value={child.doctors_phone} />
-      </Section>
-
-      {/* Photo Consent */}
-      <Section title="Photo Consent" icon={Camera} iconColor="bg-amber-100 text-amber-500">
-        <div className="py-2">
-          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-semibold ${
-            child.photo_consent ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-          }`}>
-            {child.photo_consent ? '✓ Consent Given' : '✗ No Consent'}
-          </div>
-          <p className="text-xs text-gray-400 mt-2">To change photo consent, please contact your section leader.</p>
-        </div>
-      </Section>
-    </div>
-  );
-}
-
-export default function MobileMyChild({ user, children }) {
-  const [selectedIdx, setSelectedIdx] = useState(0);
-
-  if (!children || children.length === 0) {
+  if (!child) {
     return (
-      <div className="flex flex-col">
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 px-5 pt-16 pb-8 text-white">
-          <h1 className="text-2xl font-bold">My Child</h1>
-        </div>
-        <div className="px-4 py-8 text-center text-gray-400">
-          <User className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="font-medium text-gray-600">No children linked</p>
-          <p className="text-sm mt-1">Contact your section leader to link your account.</p>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-screen px-6 text-center">
+        <div className="text-5xl mb-4">👦</div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">No child linked</h2>
+        <p className="text-gray-500 text-sm">Contact your section leader to link your child's account.</p>
       </div>
     );
   }
 
+  const section = sections.find(s => s.id === child.section_id);
+  const dob = new Date(child.date_of_birth);
+  const today = new Date();
+  const ageYears = today.getFullYear() - dob.getFullYear() - (today < new Date(today.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0);
+
   return (
     <div className="flex flex-col">
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 px-5 pt-16 pb-4 text-white">
-        <h1 className="text-2xl font-bold">My Child</h1>
-        {children.length > 1 && (
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
-            {children.map((child, idx) => (
-              <button
-                key={child.id}
-                onClick={() => setSelectedIdx(idx)}
-                className={`px-3 py-1.5 rounded-full text-sm font-semibold flex-shrink-0 transition-colors ${
-                  selectedIdx === idx ? 'bg-white text-gray-900' : 'bg-white/20 text-white'
-                }`}
-              >
-                {child.preferred_name || child.first_name}
-              </button>
-            ))}
+      {editing && <EditChildDialog child={child} onClose={() => setEditing(false)} />}
+      {/* Header */}
+      <div className="bg-gradient-to-br from-blue-600 to-[#7413dc] px-5 pt-12 pb-8 text-white">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-2xl font-bold flex-shrink-0 border border-white/30">
+            {child.full_name?.charAt(0)}
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">{child.full_name}</h1>
+            <p className="text-white/80 text-sm">{section?.display_name}</p>
+            <p className="text-white/60 text-xs mt-0.5">Age {ageYears}</p>
+          </div>
+        </div>
+        {child.patrol && (
+          <div className="mt-3 bg-white/15 rounded-xl px-3 py-1.5 w-fit">
+            <p className="text-xs text-white/80">Patrol: <strong className="text-white">{child.patrol}</strong></p>
           </div>
         )}
       </div>
-      <div className="px-4 py-4 space-y-3">
-        <ChildCard child={children[selectedIdx]} />
+
+      <div className="px-4 py-5 space-y-3">
+        <Section title="Personal Info" icon={User} color="bg-blue-500">
+          <div className="pt-2">
+            <InfoRow label="First Name" value={child.first_name} />
+            <InfoRow label="Surname" value={child.surname} />
+            <InfoRow label="Preferred Name" value={child.preferred_name} />
+            <InfoRow label="Date of Birth" value={new Date(child.date_of_birth).toLocaleDateString('en-GB')} />
+            <InfoRow label="Gender" value={child.gender} />
+            <InfoRow label="Address" value={child.address} />
+          </div>
+        </Section>
+
+        <Section title="Medical Info" icon={Heart} color="bg-red-500">
+          <div className="pt-2">
+            <InfoRow label="Medical Conditions" value={child.medical_info || 'None reported'} />
+            <InfoRow label="Allergies" value={child.allergies || 'None reported'} />
+            <InfoRow label="Dietary Requirements" value={child.dietary_requirements || 'None'} />
+            <InfoRow label="Regular Medications" value={child.medications || 'None'} />
+            <InfoRow label="Doctor's Surgery" value={child.doctors_surgery} />
+            <InfoRow label="Doctor's Phone" value={child.doctors_phone} />
+          </div>
+        </Section>
+
+        <Section title="Emergency Contact" icon={Phone} color="bg-orange-500">
+          <div className="pt-2">
+            <InfoRow label="Contact Name" value={child.emergency_contact_name} />
+            <InfoRow label="Phone Number" value={child.emergency_contact_phone} />
+            <InfoRow label="Relationship" value={child.emergency_contact_relationship} />
+          </div>
+        </Section>
+
+        <Section title="Parents / Guardians" icon={User} color="bg-purple-500">
+          <div className="pt-2">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Parent One</p>
+            <InfoRow label="Name" value={child.parent_one_name} />
+            <InfoRow label="Email" value={child.parent_one_email} />
+            <InfoRow label="Phone" value={child.parent_one_phone} />
+            {child.parent_two_email && (
+              <>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 mt-4">Parent Two</p>
+                <InfoRow label="Name" value={child.parent_two_name} />
+                <InfoRow label="Email" value={child.parent_two_email} />
+                <InfoRow label="Phone" value={child.parent_two_phone} />
+              </>
+            )}
+          </div>
+        </Section>
+
+        <Section title="Photo Consent" icon={Camera} color="bg-teal-500">
+          <div className="pt-3 flex items-center gap-3">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${child.photo_consent ? 'bg-green-100' : 'bg-red-100'}`}>
+              <span className="text-lg">{child.photo_consent ? '✅' : '❌'}</span>
+            </div>
+            <p className="text-sm text-gray-700">
+              {child.photo_consent ? 'Photo consent granted' : 'Photo consent not given'}
+            </p>
+          </div>
+        </Section>
+
+        <button
+          onClick={() => setEditing(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 border border-[#7413dc] text-[#7413dc] rounded-2xl font-semibold text-sm active:scale-95 transition-transform bg-white"
+        >
+          <Pencil className="w-4 h-4" />
+          Edit Details
+        </button>
+        <p className="text-xs text-gray-400 text-center pb-2">
+          For name or date of birth changes, please contact your section leader.
+        </p>
       </div>
     </div>
   );

@@ -1,79 +1,54 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Calendar, ChevronDown, ChevronUp, Clock } from 'lucide-react';
-import { format, isThisWeek, startOfWeek, endOfWeek, isBefore, isAfter } from 'date-fns';
+import { Calendar, ChevronRight } from 'lucide-react';
+import { format, isToday, isTomorrow, isPast } from 'date-fns';
 
-function ActivityRow({ activity, sectionMeetingTime }) {
-  const showTimeWarning = sectionMeetingTime && activity.time && activity.time !== sectionMeetingTime;
-  return (
-    <div className="flex items-start gap-2 py-1.5">
-      {activity.time && (
-        <span className={`text-xs font-mono font-semibold flex-shrink-0 mt-0.5 ${showTimeWarning ? 'text-red-500' : 'text-gray-400'}`}>
-          {activity.time}
-        </span>
-      )}
-      <span className="text-sm text-gray-700 leading-snug">{activity.activity}</span>
-    </div>
-  );
-}
-
-function MeetingCard({ programme, section, isThisWeek: thisWeek }) {
-  const [open, setOpen] = useState(thisWeek);
+function MeetingCard({ programme, isPastMeeting }) {
+  const [open, setOpen] = React.useState(false);
 
   return (
-    <div className={`bg-white rounded-2xl shadow-sm border overflow-hidden ${thisWeek ? 'border-[#7413dc]/30' : 'border-gray-100'}`}>
+    <div
+      className={`rounded-2xl border overflow-hidden transition-all ${
+        isPastMeeting ? 'bg-gray-50 border-gray-200 opacity-70' : 'bg-white border-gray-100 shadow-sm'
+      }`}
+    >
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-start gap-3 px-4 py-3.5 text-left"
+        className="w-full flex items-center gap-4 p-4 text-left"
       >
-        <div className={`w-10 h-12 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${thisWeek ? 'bg-[#7413dc]' : 'bg-gray-100'}`}>
-          <span className={`font-bold text-base leading-none ${thisWeek ? 'text-white' : 'text-gray-700'}`}>
-            {format(new Date(programme.date), 'd')}
-          </span>
-          <span className={`text-[10px] font-medium uppercase ${thisWeek ? 'text-white/80' : 'text-gray-400'}`}>
-            {format(new Date(programme.date), 'MMM')}
-          </span>
+        <div className={`rounded-xl p-3 flex-shrink-0 ${isPastMeeting ? 'bg-gray-200' : 'bg-green-100'}`}>
+          <Calendar className={`w-5 h-5 ${isPastMeeting ? 'text-gray-500' : 'text-green-600'}`} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {thisWeek && (
-              <span className="bg-[#7413dc] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">THIS WEEK</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className={`font-semibold text-sm ${isPastMeeting ? 'text-gray-500' : 'text-gray-900'}`}>
+              {programme.title}
+            </p>
+            {isToday(new Date(programme.date)) && (
+              <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Today</span>
             )}
-            {section && (
-              <span className="text-[10px] text-gray-400 capitalize">{section.display_name || section.name}</span>
+            {isTomorrow(new Date(programme.date)) && (
+              <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Tomorrow</span>
             )}
           </div>
-          <p className="font-bold text-gray-900 text-sm mt-0.5 leading-tight">{programme.title}</p>
-          {programme.description && !open && (
-            <p className="text-xs text-gray-400 mt-0.5 truncate">{programme.description}</p>
-          )}
+          <p className="text-xs text-gray-400 mt-0.5">
+            {format(new Date(programme.date), 'EEEE, d MMMM yyyy')}
+          </p>
         </div>
-        {open ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" /> : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />}
+        <ChevronRight className={`w-4 h-4 text-gray-300 flex-shrink-0 transition-transform ${open ? 'rotate-90' : ''}`} />
       </button>
-      {open && (
-        <div className="px-4 pb-4 border-t border-gray-50">
-          {programme.description && (
-            <p className="text-sm text-gray-600 leading-relaxed py-3">{programme.description}</p>
-          )}
+      {open && programme.description && (
+        <div className="px-4 pb-4 pt-0 border-t border-gray-100">
+          <p className="text-sm text-gray-600 leading-relaxed">{programme.description}</p>
           {programme.activities?.length > 0 && (
-            <div className="mt-1">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Activities</p>
-              <div className="divide-y divide-gray-50">
-                {programme.activities.map((a, i) => (
-                  <ActivityRow
-                    key={i}
-                    activity={a}
-                    sectionMeetingTime={section?.meeting_time}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-          {programme.equipment_needed && (
-            <div className="mt-3 bg-amber-50 rounded-xl px-3 py-2">
-              <p className="text-xs font-bold text-amber-700 mb-0.5">📦 Equipment Needed</p>
-              <p className="text-xs text-amber-600">{programme.equipment_needed}</p>
+            <div className="mt-3 space-y-1.5">
+              {programme.activities.map((a, i) => (
+                <div key={i} className="flex items-start gap-2 text-xs text-gray-600">
+                  {a.time && <span className="text-gray-400 font-medium flex-shrink-0 w-12">{a.time}</span>}
+                  <span>{a.activity}</span>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -85,92 +60,81 @@ function MeetingCard({ programme, section, isThisWeek: thisWeek }) {
 export default function MobileProgramme({ children }) {
   const childSectionIds = [...new Set(children.map(c => c.section_id).filter(Boolean))];
 
-  const { data: programmes = [], isLoading } = useQuery({
-    queryKey: ['mobile-programme', childSectionIds],
-    queryFn: async () => {
-      const all = await base44.entities.Programme.filter({ shown_in_portal: true });
-      return all
-        .filter(p => childSectionIds.includes(p.section_id))
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
-    },
+  const { data: terms = [] } = useQuery({
+    queryKey: ['mobile-terms', childSectionIds],
+    queryFn: () => base44.entities.Term.filter({ active: true }),
     enabled: childSectionIds.length > 0,
   });
 
-  const { data: sections = [] } = useQuery({
-    queryKey: ['sections'],
-    queryFn: () => base44.entities.Section.filter({ active: true }),
+  const { data: programmes = [], isLoading } = useQuery({
+    queryKey: ['mobile-programmes'],
+    queryFn: () => base44.entities.Programme.filter({ published: true }),
+    enabled: childSectionIds.length > 0,
   });
 
   const now = new Date();
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+  const relevantTerms = terms.filter(t => childSectionIds.includes(t.section_id));
+  const currentTerm = relevantTerms.find(t => now >= new Date(t.start_date) && now <= new Date(t.end_date))
+    || relevantTerms.filter(t => new Date(t.start_date) > now).sort((a, b) => new Date(a.start_date) - new Date(b.start_date))[0];
 
-  const thisWeekProgs = programmes.filter(p => {
-    const d = new Date(p.date);
-    return d >= weekStart && d <= weekEnd;
-  });
+  const termProgrammes = currentTerm
+    ? programmes
+        .filter(p => {
+          const d = new Date(p.date);
+          return d >= new Date(currentTerm.start_date) && d <= new Date(currentTerm.end_date) && childSectionIds.includes(p.section_id);
+        })
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+    : [];
 
-  const upcomingProgs = programmes.filter(p => {
-    const d = new Date(p.date);
-    return d > weekEnd;
-  }).sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  const pastProgs = programmes.filter(p => {
-    const d = new Date(p.date);
-    return d < weekStart;
-  });
-
-  const getSection = (prog) => sections.find(s => s.id === prog.section_id);
+  const upcoming = termProgrammes.filter(p => !isPast(new Date(p.date)) || isToday(new Date(p.date)));
+  const past = termProgrammes.filter(p => isPast(new Date(p.date)) && !isToday(new Date(p.date)));
 
   return (
     <div className="flex flex-col">
-      <div className="bg-gradient-to-br from-blue-600 to-blue-800 px-5 pt-16 pb-6 text-white">
+      {/* Header */}
+      <div className="bg-gradient-to-br from-green-600 to-[#004851] px-5 pt-12 pb-6 text-white">
         <h1 className="text-2xl font-bold">Programme</h1>
-        <p className="text-white/70 text-sm mt-1">Meeting plans &amp; activities</p>
+        {currentTerm && (
+          <p className="text-white/70 text-sm mt-1">
+            {currentTerm.title} · {format(new Date(currentTerm.start_date), 'd MMM')} – {format(new Date(currentTerm.end_date), 'd MMM yyyy')}
+            {new Date(currentTerm.start_date) > now && <span className="ml-2 bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Upcoming</span>}
+          </p>
+        )}
       </div>
-      <div className="px-4 py-5 space-y-5">
+
+      <div className="px-4 py-5">
         {isLoading ? (
-          <div className="flex justify-center py-16">
-            <div className="w-7 h-7 border-3 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+          <div className="flex items-center justify-center py-16">
+            <div className="w-7 h-7 border-3 border-gray-200 border-t-[#7413dc] rounded-full animate-spin" />
           </div>
-        ) : programmes.length === 0 ? (
+        ) : !currentTerm ? (
           <div className="text-center py-16 text-gray-400">
             <Calendar className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium text-gray-600">No meetings yet</p>
-            <p className="text-sm mt-1">Programme will appear here when published.</p>
+            <p className="font-medium text-gray-600">No upcoming term</p>
+            <p className="text-sm mt-1">Check back soon.</p>
           </div>
         ) : (
           <>
-            {thisWeekProgs.length > 0 && (
-              <div>
-                <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <Clock className="w-3 h-3" /> This Week
-                </h2>
-                <div className="space-y-3">
-                  {thisWeekProgs.map(p => (
-                    <MeetingCard key={p.id} programme={p} section={getSection(p)} isThisWeek={true} />
-                  ))}
-                </div>
-              </div>
-            )}
-            {upcomingProgs.length > 0 && (
-              <div>
+            {upcoming.length > 0 && (
+              <div className="mb-6">
                 <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Upcoming</h2>
                 <div className="space-y-3">
-                  {upcomingProgs.map(p => (
-                    <MeetingCard key={p.id} programme={p} section={getSection(p)} isThisWeek={false} />
-                  ))}
+                  {upcoming.map(p => <MeetingCard key={p.id} programme={p} isPastMeeting={false} />)}
                 </div>
               </div>
             )}
-            {pastProgs.length > 0 && (
+            {past.length > 0 && (
               <div>
                 <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Previous Meetings</h2>
-                <div className="space-y-3 opacity-70">
-                  {pastProgs.map(p => (
-                    <MeetingCard key={p.id} programme={p} section={getSection(p)} isThisWeek={false} />
-                  ))}
+                <div className="space-y-3">
+                  {[...past].reverse().map(p => <MeetingCard key={p.id} programme={p} isPastMeeting={true} />)}
                 </div>
+              </div>
+            )}
+            {termProgrammes.length === 0 && (
+              <div className="text-center py-12 text-gray-400">
+                <Calendar className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">No meetings planned yet for this term.</p>
               </div>
             )}
           </>
