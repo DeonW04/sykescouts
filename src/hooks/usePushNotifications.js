@@ -55,7 +55,21 @@ export function usePushNotifications({ enabled }) {
       });
 
       console.log('Push subscribed, saving...', sub.endpoint);
-      const saveRes = await base44.functions.invoke('savePushSubscription', { subscription: sub.toJSON() });
+
+      // Manually serialise keys — sub.toJSON() can produce ArrayBuffer objects
+      // that don't survive JSON serialisation correctly (p256dh / auth arrive as {})
+      const key = sub.getKey('p256dh');
+      const auth = sub.getKey('auth');
+      const subscriptionPayload = {
+        endpoint: sub.endpoint,
+        expirationTime: sub.expirationTime,
+        keys: {
+          p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : null,
+          auth: auth ? btoa(String.fromCharCode(...new Uint8Array(auth))) : null,
+        },
+      };
+
+      const saveRes = await base44.functions.invoke('savePushSubscription', { subscription: subscriptionPayload });
       console.log('Subscription saved:', saveRes?.data);
     } catch (err) {
       console.error('Push subscription failed:', err);

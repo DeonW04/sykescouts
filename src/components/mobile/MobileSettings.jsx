@@ -53,7 +53,17 @@ export default function MobileSettings({ user }) {
         applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
       });
 
-      await base44.functions.invoke('savePushSubscription', { subscription: sub.toJSON() });
+      const key = sub.getKey('p256dh');
+      const auth = sub.getKey('auth');
+      const subscriptionPayload = {
+        endpoint: sub.endpoint,
+        expirationTime: sub.expirationTime,
+        keys: {
+          p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : null,
+          auth: auth ? btoa(String.fromCharCode(...new Uint8Array(auth))) : null,
+        },
+      };
+      await base44.functions.invoke('savePushSubscription', { subscription: subscriptionPayload });
       toast.success('Notifications enabled! ✅');
       localStorage.setItem('push_notifications_asked', '1');
     } catch (err) {
