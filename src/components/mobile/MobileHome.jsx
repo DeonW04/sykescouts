@@ -50,14 +50,19 @@ export default function MobileHome({ user, children, onTabChange }) {
     enabled: childIds.length > 0,
   });
 
-  const { data: eventAttendances = [] } = useQuery({
-    queryKey: ['mobile-event-attendances', childIds.join(',')],
+  const { data: eventActions = [] } = useQuery({
+    queryKey: ['mobile-event-actions', upcomingEvents.map(e => e.id).join(',')],
     queryFn: async () => {
-      if (childIds.length === 0) return [];
-      const all = await base44.entities.EventAttendance.filter({});
-      return all.filter(a => childIds.includes(a.member_id));
+      if (upcomingEvents.length === 0) return [];
+      const allActions = await base44.entities.ActionRequired.filter({});
+      // Filter for attendance actions on upcoming events
+      return allActions.filter(a => 
+        a.event_id && 
+        upcomingEvents.some(e => e.id === a.event_id) && 
+        a.action_purpose === 'attendance'
+      );
     },
-    enabled: childIds.length > 0,
+    enabled: upcomingEvents.length > 0,
   });
 
   const { data: actionsData = { actions: [], responses: [] } } = useQuery({
@@ -106,11 +111,22 @@ export default function MobileHome({ user, children, onTabChange }) {
   );
 
   const getEventAttendanceStatus = (eventId) => {
-    const relevant = eventAttendances.filter(a => a.event_id === eventId && childIds.includes(a.member_id));
-    if (relevant.length === 0) return 'not_invited';
-    if (relevant.some(a => a.rsvp_status === 'attending')) return 'attending';
-    if (relevant.some(a => a.rsvp_status === 'not_attending')) return 'not_attending';
-    return 'no_response'; // invited but hasn't responded
+    // Check if this event has an attendance action
+    const hasAttendanceAction = eventActions.some(a => a.event_id === eventId);
+    if (!hasAttendanceAction) return null; // No attendance action, show nothing
+    
+    // Check for responses to the attendance action
+    const attendanceAction = eventActions.find(a => a.event_id === eventId);
+    const childResponses = existingResponses.filter(r => 
+      r.action_required_id === attendanceAction.id && 
+      childIds.includes(r.member_id)
+    );
+    
+    if (childResponses.length === 0) return 'no_response';
+    const firstResponse = childResponses[0];
+    if (firstResponse.response === 'attending') return 'attending';
+    if (firstResponse.response === 'not_attending') return 'not_attending';
+    return 'no_response';
   };
 
   const child = children[0];
@@ -235,21 +251,21 @@ export default function MobileHome({ user, children, onTabChange }) {
                       <p className="font-semibold text-gray-900 text-sm truncate">{event.title}</p>
                       <p className="text-xs text-gray-500 mt-0.5">{format(new Date(event.start_date), 'EEE, d MMM yyyy')}</p>
                     </div>
-                    {status === 'attending' && (
-                      <div className="flex items-center gap-1 text-green-600 flex-shrink-0">
-                        <CheckCircle className="w-4 h-4" />
-                        <span className="text-xs font-medium">Going</span>
-                      </div>
-                    )}
-                    {status === 'not_attending' && (
-                      <div className="flex items-center gap-1 text-red-400 flex-shrink-0">
-                        <Clock className="w-4 h-4" />
-                        <span className="text-xs font-medium">Not going</span>
-                      </div>
-                    )}
-                    {status === 'no_response' && (
-                      <span className="text-xs text-orange-500 font-medium flex-shrink-0">No response</span>
-                    )}
+                    {status && status === 'attending' && (
+                       <div className="flex items-center gap-1 text-green-600 flex-shrink-0">
+                         <CheckCircle className="w-4 h-4" />
+                         <span className="text-xs font-medium">Going</span>
+                       </div>
+                     )}
+                     {status && status === 'not_attending' && (
+                       <div className="flex items-center gap-1 text-red-400 flex-shrink-0">
+                         <Clock className="w-4 h-4" />
+                         <span className="text-xs font-medium">Not going</span>
+                       </div>
+                     )}
+                     {status && status === 'no_response' && (
+                       <span className="text-xs text-orange-500 font-medium flex-shrink-0">No response</span>
+                     )}
                   </div>
                 );
               })}
