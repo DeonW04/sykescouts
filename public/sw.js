@@ -2,10 +2,10 @@ self.addEventListener('push', (event) => {
   if (!event.data) return;
   const data = event.data.json();
   event.waitUntil(
-    self.registration.showNotification(data.title || 'iScout Basecamp', {
+    self.registration.showNotification(data.title || 'Syke Scouts', {
       body: data.body || '',
-      icon: '/logo192.png',
-      badge: '/logo192.png',
+      icon: '/logo-192.png',
+      badge: '/logo-192.png',
       data: { url: data.url || '/' },
     })
   );
