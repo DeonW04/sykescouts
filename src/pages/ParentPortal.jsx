@@ -45,9 +45,9 @@ export default function ParentPortal() {
   const sendInviteMutation = useMutation({
     mutationFn: async ({ parentEmail, parentName, childName }) => {
       return base44.functions.invoke('sendParentPortalInvite', {
-        parent_email: parentEmail,
-        parent_name: parentName,
-        child_name: childName,
+        parentEmail,
+        parentName,
+        childName,
       });
     },
     onSuccess: () => {

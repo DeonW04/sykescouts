@@ -489,6 +489,7 @@ export default function MemberDetail() {
                     <Button
                       size="sm"
                       onClick={async () => {
+                        setSendingInvite(true);
                         try {
                           await base44.functions.invoke('sendParentPortalInvite', {
                             parentEmail: member.parent_one_email,
@@ -496,10 +497,14 @@ export default function MemberDetail() {
                             childName: member.full_name
                           });
                           toast.success('Invitation sent');
+                          queryClient.invalidateQueries({ queryKey: ['parent-registration'] });
                         } catch (error) {
                           toast.error('Failed to send invitation: ' + (error.message || 'Unknown error'));
+                        } finally {
+                          setSendingInvite(false);
                         }
                       }}
+                      disabled={sendingInvite}
                       className="bg-[#7413dc] hover:bg-[#5c0fb0]"
                     >
                       Invite to Parent Portal
@@ -542,6 +547,7 @@ export default function MemberDetail() {
                     <Button
                       size="sm"
                       onClick={async () => {
+                        setSendingInvite(true);
                         try {
                           await base44.functions.invoke('sendParentPortalInvite', {
                             parentEmail: member.parent_two_email,
@@ -549,10 +555,14 @@ export default function MemberDetail() {
                             childName: member.full_name
                           });
                           toast.success('Invitation sent');
+                          queryClient.invalidateQueries({ queryKey: ['parent-registration'] });
                         } catch (error) {
                           toast.error('Failed to send invitation: ' + (error.message || 'Unknown error'));
+                        } finally {
+                          setSendingInvite(false);
                         }
                       }}
+                      disabled={sendingInvite}
                       className="bg-[#7413dc] hover:bg-[#5c0fb0]"
                     >
                       Invite to Parent Portal
