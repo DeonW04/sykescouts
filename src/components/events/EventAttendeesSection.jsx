@@ -79,6 +79,7 @@ export default function EventAttendeesSection({ eventId, event }) {
                 parent_email: parentEmails[0] || '',
                 response: '',
                 status: 'pending',
+                response_date: new Date().toISOString(),
               })
             );
             
