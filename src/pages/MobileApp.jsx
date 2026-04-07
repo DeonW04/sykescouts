@@ -56,11 +56,6 @@ export default function MobileApp() {
     }
   };
 
-  // Show onboarding inline if not complete
-  if (authChecked && user && !user.onboarding_complete) {
-    return <MobileOnboarding user={user} onComplete={() => window.location.reload()} />;
-  }
-
   // Show spinner while checking auth
   if (!authChecked) {
     return (
@@ -71,6 +66,11 @@ export default function MobileApp() {
   }
 
   if (!user) return null;
+
+  // Show onboarding — rendered OUTSIDE the constrained wrapper div
+  if (!user.onboarding_complete) {
+    return <MobileOnboarding user={user} onComplete={() => window.location.reload()} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto relative">
