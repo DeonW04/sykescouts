@@ -40,8 +40,6 @@ const PWAGate = ({ children }) => {
   if (isPWA && isPublicPage) {
     if (!isSignedIn) {
       base44.auth.redirectToLogin('/app');
-    } else if (isLeaderOrAdmin) {
-      window.location.replace('/LeaderDashboard');
     } else {
       window.location.replace('/app');
     }
