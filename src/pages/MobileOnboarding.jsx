@@ -206,8 +206,13 @@ export default function MobileOnboarding({ user, onComplete }) {
   // ── Welcome Screen ──
   if (step === 0) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-[#7413dc] to-[#004851] flex flex-col"
-        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="fixed inset-0 flex flex-col"
+        style={{ 
+          background: 'linear-gradient(to bottom right, #7413dc, #004851)',
+          paddingTop: 'env(safe-area-inset-top)', 
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          backgroundColor: '#004851'  
+        }}>
         <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
           <img
             src="/logo-512.png"
