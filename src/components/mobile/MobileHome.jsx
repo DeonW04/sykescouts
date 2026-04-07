@@ -1,19 +1,30 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Calendar, Tent, ChevronRight } from 'lucide-react';
-import { format } from 'date-fns';
+import { Calendar, Tent, ChevronRight, CheckCircle, Clock } from 'lucide-react';
+import { format, isThisWeek, startOfWeek, endOfWeek } from 'date-fns';
 import ActionRequiredCard from './ActionRequiredCard';
 
 export default function MobileHome({ user, children, onTabChange }) {
   const childSectionIds = [...new Set(children.map(c => c.section_id).filter(Boolean))];
+  const childIds = children.map(c => c.id);
 
-  const { data: nextMeeting } = useQuery({
-    queryKey: ['mobile-next-meeting', childSectionIds],
+  const { data: thisWeekMeeting } = useQuery({
+    queryKey: ['mobile-this-week-meeting', childSectionIds],
     queryFn: async () => {
       const programmes = await base44.entities.Programme.filter({ shown_in_portal: true });
+      const now = new Date();
+      const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+      const thisWeek = programmes.filter(p =>
+        childSectionIds.includes(p.section_id) &&
+        new Date(p.date) >= weekStart &&
+        new Date(p.date) <= weekEnd
+      );
+      if (thisWeek.length > 0) return thisWeek[0];
+      // If no meeting this week, get the next upcoming
       const upcoming = programmes
-        .filter(p => childSectionIds.includes(p.section_id) && new Date(p.date) >= new Date())
+        .filter(p => childSectionIds.includes(p.section_id) && new Date(p.date) >= now)
         .sort((a, b) => new Date(a.date) - new Date(b.date));
       return upcoming[0] || null;
     },
@@ -32,6 +43,16 @@ export default function MobileHome({ user, children, onTabChange }) {
     enabled: childSectionIds.length > 0,
   });
 
+  const { data: eventAttendances = [] } = useQuery({
+    queryKey: ['mobile-event-attendances', childIds],
+    queryFn: async () => {
+      if (childIds.length === 0) return [];
+      const all = await base44.entities.EventAttendance.filter({});
+      return all.filter(a => childIds.includes(a.member_id));
+    },
+    enabled: childIds.length > 0,
+  });
+
   const { data: actionsData = { actions: [], responses: [] } } = useQuery({
     queryKey: ['mobile-actions', children],
     queryFn: async () => {
@@ -44,7 +65,6 @@ export default function MobileHome({ user, children, onTabChange }) {
         (relevantProgIds.includes(a.programme_id) || relevantProgIds.includes(a.event_id)) && a.is_open !== false
       );
       const allResponses = await base44.entities.ActionResponse.filter({});
-      const childIds = children.map(c => c.id);
       const relevantResponses = allResponses.filter(r => childIds.includes(r.member_id) || childIds.includes(r.child_member_id));
       return { actions: relevantActions, responses: relevantResponses };
     },
@@ -62,15 +82,28 @@ export default function MobileHome({ user, children, onTabChange }) {
     )
   );
 
+  const getEventAttendanceStatus = (eventId) => {
+    const relevant = eventAttendances.filter(a => a.event_id === eventId && childIds.includes(a.member_id));
+    if (relevant.length === 0) return null;
+    // If any child is attending, show attending
+    if (relevant.some(a => a.rsvp_status === 'attending')) return 'attending';
+    if (relevant.some(a => a.rsvp_status === 'not_attending')) return 'not_attending';
+    return null;
+  };
+
   const child = children[0];
-  const firstName = user?.full_name?.split(' ')[0] || 'there';
+  // Use display_name if available, otherwise fall back to full_name first name
+  const displayName = user?.display_name || user?.full_name?.split(' ')[0] || 'there';
+
+  const isThisWeekMeeting = thisWeekMeeting && isThisWeek(new Date(thisWeekMeeting.date), { weekStartsOn: 1 });
 
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-br from-[#7413dc] to-[#004851] px-5 pt-12 pb-8 text-white">
+      <div className="bg-gradient-to-br from-[#7413dc] to-[#004851] px-5 pb-8 text-white"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 48px)' }}>
         <p className="text-white/70 text-sm font-medium">Welcome back 👋</p>
-        <h1 className="text-2xl font-bold mt-0.5">{firstName}</h1>
+        <h1 className="text-2xl font-bold mt-0.5">{displayName}</h1>
         {child && (
           <div className="mt-3 flex items-center gap-2 bg-white/15 rounded-xl px-3 py-2 w-fit">
             <div className="w-6 h-6 bg-white/30 rounded-full flex items-center justify-center text-xs font-bold">
@@ -90,8 +123,35 @@ export default function MobileHome({ user, children, onTabChange }) {
           existingResponses={existingResponses}
         />
 
+        {/* This Week's Meeting */}
+        {thisWeekMeeting && (
+          <div>
+            <h2 className="font-bold text-gray-900 text-base mb-3">
+              {isThisWeekMeeting ? "This Week's Meeting" : "Next Meeting"}
+            </h2>
+            <button
+              onClick={() => onTabChange('programme')}
+              className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4 text-left active:bg-gray-50 transition-colors"
+            >
+              <div className="bg-green-100 rounded-xl p-3 flex-shrink-0">
+                <Calendar className="w-6 h-6 text-green-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-900 truncate">{thisWeekMeeting.title}</p>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {format(new Date(thisWeekMeeting.date), 'EEE, d MMM')}
+                </p>
+                {thisWeekMeeting.description && (
+                  <p className="text-xs text-gray-400 mt-1 line-clamp-1">{thisWeekMeeting.description}</p>
+                )}
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+            </button>
+          </div>
+        )}
+
         {/* Quick Nav Grid */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2.5">
           {[
             { id: 'child', label: 'My Child', icon: '👦', color: 'from-blue-500 to-cyan-500', desc: 'View profile & info' },
             { id: 'programme', label: 'Programme', icon: '📅', color: 'from-green-500 to-emerald-500', desc: 'Weekly meetings' },
@@ -101,36 +161,14 @@ export default function MobileHome({ user, children, onTabChange }) {
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={`bg-gradient-to-br ${item.color} text-white rounded-2xl p-4 text-left active:scale-95 transition-transform`}
+              className={`bg-gradient-to-br ${item.color} text-white rounded-2xl p-3.5 text-left active:scale-95 transition-transform`}
             >
-              <span className="text-2xl block mb-2">{item.icon}</span>
+              <span className="text-xl block mb-1.5">{item.icon}</span>
               <p className="font-bold text-sm">{item.label}</p>
               <p className="text-white/70 text-xs mt-0.5">{item.desc}</p>
             </button>
           ))}
         </div>
-
-        {/* Next Meeting */}
-        {nextMeeting && (
-          <div>
-            <h2 className="font-bold text-gray-900 text-base mb-3">Next Meeting</h2>
-            <button
-              onClick={() => onTabChange('programme')}
-              className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4 text-left active:bg-gray-50 transition-colors"
-            >
-              <div className="bg-green-100 rounded-xl p-3 flex-shrink-0">
-                <Calendar className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 truncate">{nextMeeting.title}</p>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  {format(new Date(nextMeeting.date), 'EEE, d MMM')}
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
-            </button>
-          </div>
-        )}
 
         {/* Upcoming Events */}
         {upcomingEvents.length > 0 && (
@@ -140,17 +178,35 @@ export default function MobileHome({ user, children, onTabChange }) {
               <button onClick={() => onTabChange('events')} className="text-xs text-[#7413dc] font-medium">See all</button>
             </div>
             <div className="space-y-2">
-              {upcomingEvents.map(event => (
-                <div key={event.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3">
-                  <div className="bg-purple-100 rounded-xl p-3 flex-shrink-0">
-                    <Tent className="w-5 h-5 text-[#7413dc]" />
+              {upcomingEvents.map(event => {
+                const status = getEventAttendanceStatus(event.id);
+                return (
+                  <div key={event.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3">
+                    <div className="bg-purple-100 rounded-xl p-3 flex-shrink-0">
+                      <Tent className="w-5 h-5 text-[#7413dc]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{event.title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{format(new Date(event.start_date), 'EEE, d MMM yyyy')}</p>
+                    </div>
+                    {status === 'attending' && (
+                      <div className="flex items-center gap-1 text-green-600 flex-shrink-0">
+                        <CheckCircle className="w-4 h-4" />
+                        <span className="text-xs font-medium">Going</span>
+                      </div>
+                    )}
+                    {status === 'not_attending' && (
+                      <div className="flex items-center gap-1 text-red-400 flex-shrink-0">
+                        <Clock className="w-4 h-4" />
+                        <span className="text-xs font-medium">Not going</span>
+                      </div>
+                    )}
+                    {!status && (
+                      <span className="text-xs text-orange-500 font-medium flex-shrink-0">No response</span>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm truncate">{event.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{format(new Date(event.start_date), 'EEE, d MMM yyyy')}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

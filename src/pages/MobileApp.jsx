@@ -4,11 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Home, User, Calendar, Tent, Award, Settings } from 'lucide-react';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import PushNotificationPrompt from '../components/pwa/PushNotificationPrompt';
-import MobileHome from '../components/mobile/MobileHome';
-import MobileMyChild from '../components/mobile/MobileMyChild';
-import MobileProgramme from '../components/mobile/MobileProgramme';
+import MobileHome from '../components/mobile/MobileHome.jsx';
+import MobileMyChild from '../components/mobile/MobileMyChild.jsx';
+import MobileProgramme from '../components/mobile/MobileProgramme.jsx';
 import MobileEvents from '../components/mobile/MobileEvents';
-import MobileBadges from '../components/mobile/MobileBadges';
+import MobileBadges from '../components/mobile/MobileBadges.jsx';
 import MobileSettings from '../components/mobile/MobileSettings';
 
 const TABS = [

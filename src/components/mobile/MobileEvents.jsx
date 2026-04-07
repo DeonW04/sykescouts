@@ -84,7 +84,8 @@ export default function MobileEvents({ children }) {
   if (selectedEvent) {
     return (
       <div className="flex flex-col min-h-screen">
-        <div className="bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] px-5 pt-12 pb-6 text-white">
+        <div className="bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] px-5 pb-6 text-white"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 48px)' }}>
           <button onClick={() => setSelectedEvent(null)} className="text-white/70 text-sm mb-3 flex items-center gap-1">
             ← Back
           </button>
@@ -161,7 +162,8 @@ export default function MobileEvents({ children }) {
 
   return (
     <div className="flex flex-col">
-      <div className="bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] px-5 pt-12 pb-6 text-white">
+      <div className="bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] px-5 pb-6 text-white"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 48px)' }}>
         <h1 className="text-2xl font-bold">Events & Camps</h1>
         <p className="text-white/70 text-sm mt-1">Adventures await ⛺</p>
       </div>

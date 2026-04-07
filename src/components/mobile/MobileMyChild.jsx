@@ -4,9 +4,9 @@ import { base44 } from '@/api/base44Client';
 import { Heart, Phone, User, Camera, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
 import EditChildDialog from './EditChildDialog';
 
-function Section({ title, icon, color, children: content }) {
+function Section({ title, icon, color, defaultOpen = false, children: content }) {
   const Icon = icon;
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <button
@@ -65,7 +65,8 @@ export default function MobileMyChild({ children }) {
     <div className="flex flex-col">
       {editing && <EditChildDialog child={child} onClose={() => setEditing(false)} />}
       {/* Header */}
-      <div className="bg-gradient-to-br from-blue-600 to-[#7413dc] px-5 pt-12 pb-8 text-white">
+      <div className="bg-gradient-to-br from-blue-600 to-[#7413dc] px-5 pb-8 text-white"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 48px)' }}>
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-2xl font-bold flex-shrink-0 border border-white/30">
             {child.full_name?.charAt(0)}
@@ -84,7 +85,8 @@ export default function MobileMyChild({ children }) {
       </div>
 
       <div className="px-4 py-5 space-y-3">
-        <Section title="Personal Info" icon={User} color="bg-blue-500">
+        {/* Reordered: Child, Parent, Emergency, Medical, Photo */}
+        <Section title="Child's Details" icon={User} color="bg-blue-500" defaultOpen={true}>
           <div className="pt-2">
             <InfoRow label="First Name" value={child.first_name} />
             <InfoRow label="Surname" value={child.surname} />
@@ -92,25 +94,6 @@ export default function MobileMyChild({ children }) {
             <InfoRow label="Date of Birth" value={new Date(child.date_of_birth).toLocaleDateString('en-GB')} />
             <InfoRow label="Gender" value={child.gender} />
             <InfoRow label="Address" value={child.address} />
-          </div>
-        </Section>
-
-        <Section title="Medical Info" icon={Heart} color="bg-red-500">
-          <div className="pt-2">
-            <InfoRow label="Medical Conditions" value={child.medical_info || 'None reported'} />
-            <InfoRow label="Allergies" value={child.allergies || 'None reported'} />
-            <InfoRow label="Dietary Requirements" value={child.dietary_requirements || 'None'} />
-            <InfoRow label="Regular Medications" value={child.medications || 'None'} />
-            <InfoRow label="Doctor's Surgery" value={child.doctors_surgery} />
-            <InfoRow label="Doctor's Phone" value={child.doctors_phone} />
-          </div>
-        </Section>
-
-        <Section title="Emergency Contact" icon={Phone} color="bg-orange-500">
-          <div className="pt-2">
-            <InfoRow label="Contact Name" value={child.emergency_contact_name} />
-            <InfoRow label="Phone Number" value={child.emergency_contact_phone} />
-            <InfoRow label="Relationship" value={child.emergency_contact_relationship} />
           </div>
         </Section>
 
@@ -128,6 +111,25 @@ export default function MobileMyChild({ children }) {
                 <InfoRow label="Phone" value={child.parent_two_phone} />
               </>
             )}
+          </div>
+        </Section>
+
+        <Section title="Emergency Contact" icon={Phone} color="bg-orange-500">
+          <div className="pt-2">
+            <InfoRow label="Contact Name" value={child.emergency_contact_name} />
+            <InfoRow label="Phone Number" value={child.emergency_contact_phone} />
+            <InfoRow label="Relationship" value={child.emergency_contact_relationship} />
+          </div>
+        </Section>
+
+        <Section title="Medical Info" icon={Heart} color="bg-red-500">
+          <div className="pt-2">
+            <InfoRow label="Medical Conditions" value={child.medical_info || 'None reported'} />
+            <InfoRow label="Allergies" value={child.allergies || 'None reported'} />
+            <InfoRow label="Dietary Requirements" value={child.dietary_requirements || 'None'} />
+            <InfoRow label="Regular Medications" value={child.medications || 'None'} />
+            <InfoRow label="Doctor's Surgery" value={child.doctors_surgery} />
+            <InfoRow label="Doctor's Phone" value={child.doctors_phone} />
           </div>
         </Section>
 
