@@ -95,13 +95,7 @@ Deno.serve(async (req) => {
               address: parentEmail
             }
           }
-        ],
-        from: {
-          emailAddress: {
-            address: 'noreply@40throchdalescouts.co.uk',
-            name: '40th Rochdale Scouts'
-          }
-        }
+        ]
       },
       saveToSentItems: true
     };
