@@ -61,11 +61,9 @@ export default function EventAttendeesSection({ eventId, event }) {
       );
       await Promise.all(attendancePromises);
       
-      // Create ActionResponse records for any actions required on this event and send notifications
+      // Create ActionResponse records for any actions required on this event
       if (actionsRequired.length > 0) {
         const responsePromises = [];
-        const notificationPromises = [];
-        
         memberIds.forEach(memberId => {
           actionsRequired.forEach(action => {
             responsePromises.push(
@@ -76,28 +74,17 @@ export default function EventAttendeesSection({ eventId, event }) {
                 parent_email: '',
                 response: '',
                 status: 'pending',
-                response_date: new Date().toISOString(),
               })
-            );
-            
-            // Send email and push notifications for this action
-            notificationPromises.push(
-              base44.functions.invoke('sendMemberActionNotification', {
-                actionRequiredId: action.id,
-                memberId: memberId
-              }).catch(err => console.error('Failed to send notification:', err))
             );
           });
         });
-        
         await Promise.all(responsePromises);
-        await Promise.all(notificationPromises);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event-attendances'] });
       queryClient.invalidateQueries({ queryKey: ['action-responses'] });
-      toast.success('Members added to event and parents notified');
+      toast.success('Members added to event');
       setShowAddDialog(false);
       setSelectedMembers([]);
     },
