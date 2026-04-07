@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Award, CheckCircle, Circle, Star, Trophy, ChevronDown, ChevronUp, X } from 'lucide-react';
 import BadgeCriteriaModal from './BadgeCriteriaModal';
+import GoldAwardPage from './GoldAwardPage';
 
 const CATEGORY_CONFIG = {
   challenge: {
@@ -79,7 +80,7 @@ function BadgeCard({ badge, isEarned, inProgress, percentage, onClick }) {
   );
 }
 
-function BadgeCategorySection({ title, icon, badges, isEarned, isInProgress, getBadgePercentage, onBadgeClick }) {
+function BadgeCategorySection({ title, icon, badges, isEarned, isInProgress, getBadgePercentage, onBadgeClick, showCounter = true }) {
   const [open, setOpen] = useState(false);
   const earnedCount = badges.filter(b => isEarned(b.id)).length;
 
@@ -94,15 +95,17 @@ function BadgeCategorySection({ title, icon, badges, isEarned, isInProgress, get
         <span className="text-xl flex-shrink-0">{icon}</span>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm text-gray-900">{title}</p>
-          <p className="text-xs text-gray-400 mt-0.5">{earnedCount}/{badges.length} earned</p>
+          {showCounter && <p className="text-xs text-gray-400 mt-0.5">{earnedCount}/{badges.length} earned</p>}
         </div>
-        {/* Mini progress bar */}
-        <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden flex-shrink-0">
-          <div
-            className="h-full bg-[#7413dc] rounded-full"
-            style={{ width: `${badges.length > 0 ? (earnedCount / badges.length) * 100 : 0}%` }}
-          />
-        </div>
+        {/* Mini progress bar — only for challenge/activity */}
+        {showCounter && (
+          <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden flex-shrink-0">
+            <div
+              className="h-full bg-[#7413dc] rounded-full"
+              style={{ width: `${badges.length > 0 ? (earnedCount / badges.length) * 100 : 0}%` }}
+            />
+          </div>
+        )}
         {open ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
       </button>
       {open && (
@@ -179,7 +182,8 @@ function GoldAwardBanner({ child, badges, awards, badgeProgress, sections, onLea
 export default function MobileBadges({ children }) {
   const child = children[0];
   const [selectedBadge, setSelectedBadge] = useState(null);
-  const [stagedContext, setStagedContext] = useState(null); // { highestEarnedStage, nextStageBadge }
+  const [stagedContext, setStagedContext] = useState(null);
+  const [showGoldAward, setShowGoldAward] = useState(false);
 
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
@@ -306,13 +310,29 @@ export default function MobileBadges({ children }) {
     setSelectedBadge(nextStage || highestEarned);
   };
 
+  const goldAwardBadge = badges.find(b => b.is_chief_scout_award);
+
   // Group by category
   const challengeBadges = sectionBadges.filter(b => b.category === 'challenge' && !b.is_chief_scout_award);
   const activityBadges = sectionBadges.filter(b => b.category === 'activity' && !b.is_chief_scout_award);
-  const coreBadges = sectionBadges.filter(b => b.category === 'core' || b.is_chief_scout_award);
+  // Core: exclude chief scout award, only show earned badges
+  const coreBadges = sectionBadges.filter(b => b.category === 'core' && !b.is_chief_scout_award && isEarned(b.id));
 
   return (
     <div className="flex flex-col">
+      {/* Gold Award full-page view */}
+      {showGoldAward && goldAwardBadge && (
+        <GoldAwardPage
+          badge={goldAwardBadge}
+          child={child}
+          modules={modules}
+          requirements={requirements}
+          reqProgress={reqProgress}
+          awards={awards}
+          badgeProgress={badgeProgress}
+          onClose={() => setShowGoldAward(false)}
+        />
+      )}
       {/* Badge criteria modal */}
       {selectedBadge && (
         <BadgeCriteriaModal
@@ -343,10 +363,7 @@ export default function MobileBadges({ children }) {
           awards={awards}
           badgeProgress={badgeProgress}
           sections={sections}
-          onLearnMore={() => {
-            const award = badges.find(b => b.is_chief_scout_award || b.category === 'chief_scout_award');
-            if (award) setSelectedBadge(award);
-          }}
+          onLearnMore={() => setShowGoldAward(true)}
         />
 
         {/* Sections by category */}
@@ -372,6 +389,7 @@ export default function MobileBadges({ children }) {
           title={CATEGORY_CONFIG.staged.label}
           icon={CATEGORY_CONFIG.staged.icon}
           badges={stagedBadges}
+          showCounter={false}
           isEarned={(badgeId) => {
             // For staged badges: green if ANY stage in the same family is earned
             const badge = sectionBadges.find(b => b.id === badgeId);
@@ -389,6 +407,7 @@ export default function MobileBadges({ children }) {
           title={CATEGORY_CONFIG.chief_scout_award.label}
           icon={CATEGORY_CONFIG.chief_scout_award.icon}
           badges={coreBadges}
+          showCounter={false}
           isEarned={isEarned}
           isInProgress={isInProgress}
           getBadgePercentage={getBadgePercentage}

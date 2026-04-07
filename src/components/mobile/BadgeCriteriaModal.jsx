@@ -104,18 +104,33 @@ export default function BadgeCriteriaModal({ badge, child, modules, requirements
         {/* Criteria — prefer module/requirement structure, fall back to badge.requirements */}
         {badgeModules.length > 0 ? (
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Requirements</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Requirements</h3>
+              {badge.completion_rule && (
+                <span className="text-[10px] bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded-full capitalize">
+                  {badge.completion_rule === 'all_modules' ? 'Complete all modules'
+                    : badge.completion_rule === 'one_module' ? 'Complete one module'
+                    : badge.completion_rule?.replace(/_/g, ' ')}
+                </span>
+              )}
+            </div>
             {badgeModules.map(mod => {
               const modReqs = requirements.filter(r => r.module_id === mod.id).sort((a, b) => (a.order || 0) - (b.order || 0));
               const { total, completed } = getModuleProgress(mod.id);
+              const completionLabel = mod.completion_rule === 'x_of_n_required' && mod.required_count
+                ? `${mod.required_count} of ${total} required`
+                : 'Complete all';
               return (
                 <div key={mod.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                   <div className="px-4 py-3 border-b border-gray-50">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       <p className="font-semibold text-sm text-gray-900">{mod.name}</p>
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${completed === total && total > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {completed}/{total}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className="text-[10px] bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded-full">{completionLabel}</span>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${completed === total && total > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                          {completed}/{total}
+                        </span>
+                      </div>
                     </div>
                     {total > 0 && (
                       <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
