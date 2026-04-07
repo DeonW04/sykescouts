@@ -8,12 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save, Calendar, Users, Award, Eye, EyeOff, Plus, Trash2, ListTodo, Shield, AlertCircle, Upload, FileText, Image, ArrowLeftRight, Zap } from 'lucide-react';
+import {
+  ArrowLeft, Save, Calendar, Users, Award, Eye, EyeOff, Plus, Trash2,
+  ListTodo, Shield, AlertCircle, Image, ArrowLeftRight, Zap, FileText,
+  Menu, X
+} from 'lucide-react';
 import { toast } from 'sonner';
 import TodoSection from '../components/meeting/TodoSection';
 import ParentPortalSection from '../components/meeting/ParentPortalSection';
@@ -22,7 +23,6 @@ import BadgesSection from '../components/meeting/BadgesSection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
 import LeaderRotaSection from '../components/meeting/LeaderRotaSection';
 import LeaderNav from '../components/leader/LeaderNav';
-import MobileTabSelector from '../components/ui/mobile-tab-selector';
 import IScoutSection from '../components/meeting/IScoutSection';
 
 export default function MeetingDetail() {
@@ -33,17 +33,10 @@ export default function MeetingDetail() {
   const date = urlParams.get('date');
   const termId = urlParams.get('term_id');
 
-  const [activeTab, setActiveTab] = useState(() => {
-    const tabFromUrl = new URLSearchParams(window.location.search).get('tab');
-    return tabFromUrl || 'plan';
+  const [activeSection, setActiveSection] = useState(() => {
+    return new URLSearchParams(window.location.search).get('tab') || 'plan';
   });
-
-  const handleTabChange = (newTab) => {
-    setActiveTab(newTab);
-    const params = new URLSearchParams(window.location.search);
-    params.set('tab', newTab);
-    window.history.replaceState(null, '', '?' + params.toString());
-  };
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [swapDialogOpen, setSwapDialogOpen] = useState(false);
   const [swapTargetDate, setSwapTargetDate] = useState('');
 
@@ -58,6 +51,14 @@ export default function MeetingDetail() {
     optional_start_time: '',
     optional_end_time: '',
   });
+
+  const handleSectionChange = (section) => {
+    setActiveSection(section);
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', section);
+    window.history.replaceState(null, '', '?' + params.toString());
+    setSidebarOpen(false);
+  };
 
   const { data: section } = useQuery({
     queryKey: ['section', sectionId],
@@ -91,16 +92,6 @@ export default function MeetingDetail() {
     enabled: !!sectionId && !!date,
   });
 
-  const { data: badges = [] } = useQuery({
-    queryKey: ['badges', section],
-    queryFn: async () => {
-      if (!section) return [];
-      return base44.entities.Badge.filter({ section: section.name, active: true });
-    },
-    enabled: !!section,
-  });
-
-  // All meetings in this term (for the swap dropdown)
   const { data: termMeetingDates = [] } = useQuery({
     queryKey: ['term-meeting-dates', termId],
     queryFn: async () => {
@@ -119,57 +110,12 @@ export default function MeetingDetail() {
       while (current.getDay() !== targetDay) current.setDate(current.getDate() + 1);
       while (current <= end) {
         const isHalfTerm = current >= halfTermStart && current <= halfTermEnd;
-        if (!isHalfTerm) {
-          dates.push(current.toISOString().split('T')[0]);
-        }
+        if (!isHalfTerm) dates.push(current.toISOString().split('T')[0]);
         current.setDate(current.getDate() + 7);
       }
       return dates;
     },
     enabled: !!termId,
-  });
-
-  const swapMutation = useMutation({
-    mutationFn: async (targetDate) => {
-      // Fetch both programmes (may not exist)
-      const [thisProgs, targetProgs] = await Promise.all([
-        base44.entities.Programme.filter({ section_id: sectionId, date }),
-        base44.entities.Programme.filter({ section_id: sectionId, date: targetDate }),
-      ]);
-      const thisProg = thisProgs[0];
-      const targetProg = targetProgs[0];
-
-      // Swap: update each programme to the other's date
-      if (thisProg && targetProg) {
-        await Promise.all([
-          base44.entities.Programme.update(thisProg.id, { date: targetDate }),
-          base44.entities.Programme.update(targetProg.id, { date }),
-        ]);
-      } else if (thisProg && !targetProg) {
-        await base44.entities.Programme.update(thisProg.id, { date: targetDate });
-      } else if (!thisProg && targetProg) {
-        await base44.entities.Programme.update(targetProg.id, { date });
-      }
-      // Also swap attendance records
-      const [thisAtt, targetAtt] = await Promise.all([
-        base44.entities.Attendance.filter({ section_id: sectionId, date }),
-        base44.entities.Attendance.filter({ section_id: sectionId, date: targetDate }),
-      ]);
-      await Promise.all([
-        ...thisAtt.map(a => base44.entities.Attendance.update(a.id, { date: targetDate })),
-        ...targetAtt.map(a => base44.entities.Attendance.update(a.id, { date })),
-      ]);
-    },
-    onSuccess: (_, targetDate) => {
-      queryClient.invalidateQueries({ queryKey: ['programme'] });
-      queryClient.invalidateQueries({ queryKey: ['programmes'] });
-      queryClient.invalidateQueries({ queryKey: ['attendance'] });
-      toast.success('Meetings swapped successfully');
-      setSwapDialogOpen(false);
-      // Navigate to the same meeting slot (now at targetDate)
-      navigate(createPageUrl('MeetingDetail') + `?section_id=${sectionId}&date=${targetDate}&term_id=${termId}`);
-    },
-    onError: () => toast.error('Failed to swap meetings'),
   });
 
   const { data: actionsRequired = [] } = useQuery({
@@ -196,8 +142,8 @@ export default function MeetingDetail() {
       setFormData({
         title: existingProgramme.title || '',
         description: existingProgramme.description || '',
-        activities: existingProgramme.activities?.length > 0 
-          ? existingProgramme.activities 
+        activities: existingProgramme.activities?.length > 0
+          ? existingProgramme.activities
           : [{ time: '', activity: '', badge_links: [] }],
         equipment_needed: existingProgramme.equipment_needed || '',
         published: existingProgramme.published || false,
@@ -211,12 +157,7 @@ export default function MeetingDetail() {
 
   const saveProgrammeMutation = useMutation({
     mutationFn: async (data) => {
-      const programmeData = {
-        section_id: sectionId,
-        date,
-        ...data,
-      };
-      
+      const programmeData = { section_id: sectionId, date, ...data };
       if (existingProgramme) {
         return base44.entities.Programme.update(existingProgramme.id, programmeData);
       } else {
@@ -228,27 +169,17 @@ export default function MeetingDetail() {
       queryClient.invalidateQueries({ queryKey: ['programmes'] });
       toast.success('Meeting saved successfully');
     },
-    onError: (error) => {
-      toast.error('Error saving meeting: ' + error.message);
-    },
+    onError: (error) => toast.error('Error saving meeting: ' + error.message),
   });
 
   const saveAttendanceMutation = useMutation({
     mutationFn: async ({ memberId, status }) => {
       const existing = attendance.find(a => a.member_id === memberId);
-      
       if (existing) {
         await base44.entities.Attendance.update(existing.id, { status });
       } else {
-        await base44.entities.Attendance.create({
-          member_id: memberId,
-          section_id: sectionId,
-          date,
-          status,
-        });
+        await base44.entities.Attendance.create({ member_id: memberId, section_id: sectionId, date, status });
       }
-      
-      // Auto-award badges if programme exists
       if (existingProgramme?.id) {
         await base44.functions.invoke('awardBadgesFromAttendance', { programmeId: existingProgramme.id });
       }
@@ -259,20 +190,52 @@ export default function MeetingDetail() {
     },
   });
 
-  const handleSave = () => {
-    saveProgrammeMutation.mutate(formData);
-  };
+  const swapMutation = useMutation({
+    mutationFn: async (targetDate) => {
+      const [thisProgs, targetProgs] = await Promise.all([
+        base44.entities.Programme.filter({ section_id: sectionId, date }),
+        base44.entities.Programme.filter({ section_id: sectionId, date: targetDate }),
+      ]);
+      const thisProg = thisProgs[0];
+      const targetProg = targetProgs[0];
+      if (thisProg && targetProg) {
+        await Promise.all([
+          base44.entities.Programme.update(thisProg.id, { date: targetDate }),
+          base44.entities.Programme.update(targetProg.id, { date }),
+        ]);
+      } else if (thisProg && !targetProg) {
+        await base44.entities.Programme.update(thisProg.id, { date: targetDate });
+      } else if (!thisProg && targetProg) {
+        await base44.entities.Programme.update(targetProg.id, { date });
+      }
+      const [thisAtt, targetAtt] = await Promise.all([
+        base44.entities.Attendance.filter({ section_id: sectionId, date }),
+        base44.entities.Attendance.filter({ section_id: sectionId, date: targetDate }),
+      ]);
+      await Promise.all([
+        ...thisAtt.map(a => base44.entities.Attendance.update(a.id, { date: targetDate })),
+        ...targetAtt.map(a => base44.entities.Attendance.update(a.id, { date })),
+      ]);
+    },
+    onSuccess: (_, targetDate) => {
+      queryClient.invalidateQueries({ queryKey: ['programme'] });
+      queryClient.invalidateQueries({ queryKey: ['programmes'] });
+      queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      toast.success('Meetings swapped successfully');
+      setSwapDialogOpen(false);
+      navigate(createPageUrl('MeetingDetail') + `?section_id=${sectionId}&date=${targetDate}&term_id=${termId}`);
+    },
+    onError: () => toast.error('Failed to swap meetings'),
+  });
+
+  const handleSave = () => saveProgrammeMutation.mutate(formData);
 
   const handleAddActivity = () => {
-    setFormData({
-      ...formData,
-      activities: [...formData.activities, { time: '', activity: '', badge_links: [] }],
-    });
+    setFormData({ ...formData, activities: [...formData.activities, { time: '', activity: '', badge_links: [] }] });
   };
 
   const handleRemoveActivity = (index) => {
-    const newActivities = formData.activities.filter((_, i) => i !== index);
-    setFormData({ ...formData, activities: newActivities });
+    setFormData({ ...formData, activities: formData.activities.filter((_, i) => i !== index) });
   };
 
   const handleActivityChange = (index, field, value) => {
@@ -295,7 +258,6 @@ export default function MeetingDetail() {
     return response?.response || null;
   };
 
-  // Check if meeting is in the past (day after)
   const isPastMeeting = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -304,29 +266,52 @@ export default function MeetingDetail() {
     return meetingDate < today;
   };
 
+  const navigationItems = [
+    { id: 'plan', label: 'Meeting Plan', icon: Calendar },
+    { id: 'todo', label: 'To-Do List', icon: ListTodo },
+    { id: 'attendance', label: 'Attendance', icon: Users },
+    { id: 'parent', label: 'Parent Portal', icon: Eye },
+    { id: 'risk', label: 'Risk Assessment', icon: Shield },
+    { id: 'badges', label: 'Badges', icon: Award },
+    { id: 'iscout', label: 'iScout', icon: Zap },
+  ];
+
+  const getSectionTitle = () => navigationItems.find(i => i.id === activeSection)?.label || 'Meeting Plan';
+
   return (
     <div className="min-h-screen bg-gray-50">
       <LeaderNav />
-      <div className="bg-[#004851] text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">          
+
+      {/* Header */}
+      <div className="bg-gradient-to-br from-[#004851] to-[#006b7a] text-white py-6 shadow-lg sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-4 mb-3 lg:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="text-white hover:bg-white/10"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+            <div className="flex-1 text-center font-semibold">{getSectionTitle()}</div>
+          </div>
+
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-            <div>
+            <div className="flex-1">
               <h1 className="text-2xl sm:text-3xl font-bold">
-                {new Date(date).toLocaleDateString('en-GB', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
+                {new Date(date).toLocaleDateString('en-GB', {
+                  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
                 })}
               </h1>
-              <p className="mt-1 text-white/80">{section?.display_name}</p>
+              <p className="text-white/80 mt-1">{section?.display_name}</p>
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               {isPastMeeting() && (
                 <Button
                   variant="outline"
                   onClick={() => navigate(createPageUrl('Gallery') + `?view=meeting&id=${existingProgramme?.id}`)}
-                  className="bg-white/10 text-white border-white/30 hover:bg-white/20 flex-1 sm:flex-none"
+                  className="bg-white/10 text-white border-white/30 hover:bg-white/20 min-h-[44px]"
                 >
                   <Image className="w-4 h-4 sm:mr-2" />
                   <span className="hidden sm:inline">Gallery</span>
@@ -335,405 +320,376 @@ export default function MeetingDetail() {
               <Button
                 variant="outline"
                 onClick={() => setFormData({ ...formData, published: !formData.published })}
-                className="bg-white/10 text-white border-white hover:bg-white/20 flex-1 sm:flex-none"
+                className="bg-white/10 text-white border-white/30 hover:bg-white/20 min-h-[44px]"
               >
                 {formData.published ? (
-                  <>
-                    <Eye className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Published</span>
-                  </>
+                  <><Eye className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Published</span></>
                 ) : (
-                  <>
-                    <EyeOff className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Draft</span>
-                  </>
+                  <><EyeOff className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Draft</span></>
                 )}
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={saveProgrammeMutation.isPending}
-                className={`${isPastMeeting() ? 'bg-gray-400 hover:bg-gray-500' : 'bg-[#7413dc] hover:bg-[#5c0fb0]'} flex-1 sm:flex-none`}
+                className={`${isPastMeeting() ? 'bg-gray-400 hover:bg-gray-500' : 'bg-green-600 hover:bg-green-700'} text-white min-h-[44px]`}
               >
                 <Save className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Save {isPastMeeting() && '(Not Recommended)'}</span>
+                <span className="hidden sm:inline">Save{isPastMeeting() ? ' (Not Recommended)' : ''}</span>
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <MobileTabSelector
-          tabs={[
-            { value: 'plan', label: 'Plan', icon: <Calendar /> },
-            { value: 'todo', label: 'To Do', icon: <ListTodo /> },
-            { value: 'attendance', label: 'Attendance', icon: <Users /> },
-            { value: 'parent', label: 'Parent Portal', icon: <Eye /> },
-            { value: 'risk', label: 'Risk Assessment', icon: <Shield /> },
-            { value: 'badges', label: 'Badges', icon: <Award /> },
-            { value: 'iscout', label: 'iScout', icon: <Zap /> },
-          ]}
-          value={activeTab}
-          onValueChange={handleTabChange}
-        />
-
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <div className="hidden md:block">
-            <TabsList className="bg-white border grid grid-cols-7">
-              <TabsTrigger value="plan" className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                <span>Plan</span>
-              </TabsTrigger>
-              <TabsTrigger value="todo" className="flex items-center gap-2">
-                <ListTodo className="w-4 h-4" />
-                <span>To Do</span>
-              </TabsTrigger>
-              <TabsTrigger value="attendance" className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                <span>Attendance</span>
-              </TabsTrigger>
-              <TabsTrigger value="parent" className="flex items-center gap-2">
-                <Eye className="w-4 h-4" />
-                <span>Parent</span>
-              </TabsTrigger>
-              <TabsTrigger value="risk" className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                <span>Risk</span>
-              </TabsTrigger>
-              <TabsTrigger value="badges" className="flex items-center gap-2">
-                <Award className="w-4 h-4" />
-                <span>Badges</span>
-              </TabsTrigger>
-              <TabsTrigger value="iscout" className="flex items-center gap-2">
-                <Zap className="w-4 h-4" />
-                <span>iScout</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="todo" className="space-y-6">
-            <TodoSection programmeId={existingProgramme?.id} />
-          </TabsContent>
-
-          <TabsContent value="plan" className="space-y-6">
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => { setSwapTargetDate(''); setSwapDialogOpen(true); }}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeftRight className="w-4 h-4" />
-                Rearrange
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 lg:hidden" onClick={() => setSidebarOpen(false)}>
+          <div className="bg-white w-64 h-full shadow-2xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b flex justify-between items-center">
+              <h2 className="font-bold text-lg">Navigation</h2>
+              <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
+                <X className="w-5 h-5" />
               </Button>
             </div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Meeting Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Meeting Title *</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="e.g., Fire Safety & Cooking"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Overview of the meeting activities"
-                    className="min-h-[100px]"
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            <nav className="p-4 space-y-1">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleSectionChange(item.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all min-h-[44px] ${
+                      activeSection === item.id
+                        ? 'bg-[#004851] text-white shadow-md'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="font-medium">{item.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+      )}
 
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <CardTitle>Activities</CardTitle>
-                  <Button onClick={handleAddActivity} size="sm" variant="outline" className="w-full sm:w-auto">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Activity
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="flex gap-6">
+          {/* Desktop Sidebar */}
+          <aside className="hidden lg:block w-64 flex-shrink-0">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sticky top-28">
+              <nav className="space-y-1">
+                {navigationItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleSectionChange(item.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                        activeSection === item.id
+                          ? 'bg-[#004851] text-white shadow-md'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span className="font-medium">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          </aside>
+
+          {/* Main Content */}
+          <main className="flex-1 min-w-0">
+
+            {/* ── Meeting Plan ── */}
+            {activeSection === 'plan' && (
+              <div className="space-y-6">
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setSwapTargetDate(''); setSwapDialogOpen(true); }}
+                    className="flex items-center gap-2 min-h-[44px]"
+                  >
+                    <ArrowLeftRight className="w-4 h-4" />
+                    Rearrange
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {formData.activities.map((activity, index) => (
-                  <div key={index} className="p-3 sm:p-4 border rounded-lg space-y-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-sm sm:text-base">Activity {index + 1}</Label>
-                      {formData.activities.length > 1 && (
-                        <Button
-                          onClick={() => handleRemoveActivity(index)}
-                          size="sm"
-                          variant="ghost"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
+
+                <Card className="shadow-sm border-gray-200">
+                  <CardHeader className="border-b border-gray-100">
+                    <CardTitle className="text-xl">Meeting Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pt-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Meeting Title *</Label>
+                      <Input
+                        id="title"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        placeholder="e.g., Fire Safety & Cooking"
+                        className="min-h-[44px]"
+                      />
                     </div>
-                    <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Description</Label>
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Overview of the meeting activities"
+                        className="min-h-[100px]"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-sm border-gray-200">
+                  <CardHeader className="border-b border-gray-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <CardTitle className="text-xl">Activities</CardTitle>
+                      <Button onClick={handleAddActivity} size="sm" variant="outline" className="w-full sm:w-auto min-h-[44px]">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Activity
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pt-6">
+                    {formData.activities.map((activity, index) => (
+                      <div key={index} className="p-4 border border-gray-200 rounded-lg space-y-3 bg-white hover:shadow-sm transition-shadow">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-base font-medium">Activity {index + 1}</Label>
+                          {formData.activities.length > 1 && (
+                            <Button
+                              onClick={() => handleRemoveActivity(index)}
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 min-h-[44px]"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                        <div className="grid gap-4 sm:grid-cols-3">
+                          <div className="space-y-2">
+                            <Label className="text-sm">Time</Label>
+                            <Input
+                              value={activity.time}
+                              onChange={(e) => handleActivityChange(index, 'time', e.target.value)}
+                              placeholder="e.g., 6:15pm"
+                              className="min-h-[44px]"
+                            />
+                          </div>
+                          <div className="sm:col-span-2 space-y-2">
+                            <Label className="text-sm">Activity</Label>
+                            <Input
+                              value={activity.activity}
+                              onChange={(e) => handleActivityChange(index, 'activity', e.target.value)}
+                              placeholder="e.g., Fire safety talk"
+                              className="min-h-[44px]"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-sm border-gray-200">
+                  <CardHeader className="border-b border-gray-100">
+                    <CardTitle className="text-xl">Equipment Needed</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <Textarea
+                      value={formData.equipment_needed}
+                      onChange={(e) => setFormData({ ...formData, equipment_needed: e.target.value })}
+                      placeholder="List any equipment needed for this meeting"
+                      className="min-h-[100px]"
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-sm border-orange-200 bg-orange-50">
+                  <CardHeader className="border-b border-orange-100">
+                    <CardTitle className="text-orange-800 flex items-center gap-2 text-xl">
+                      <AlertCircle className="w-5 h-5" />
+                      Optional: Unusual Changes Only
+                    </CardTitle>
+                    <p className="text-sm text-orange-600 mt-1">Only fill these in if something is <strong>different from normal</strong> this week. If set, they will appear in red on the parent app.</p>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pt-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="optional_location">Different Location</Label>
+                      <Input
+                        id="optional_location"
+                        value={formData.optional_location}
+                        onChange={(e) => setFormData({ ...formData, optional_location: e.target.value })}
+                        placeholder="e.g. St John's Church Hall (leave blank if usual venue)"
+                        className="min-h-[44px]"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-sm">Time</Label>
+                        <Label htmlFor="optional_start_time">Different Start Time</Label>
                         <Input
-                          value={activity.time}
-                          onChange={(e) => handleActivityChange(index, 'time', e.target.value)}
-                          placeholder="e.g., 6:15pm"
+                          id="optional_start_time"
+                          value={formData.optional_start_time}
+                          onChange={(e) => setFormData({ ...formData, optional_start_time: e.target.value })}
+                          placeholder="e.g. 18:00"
+                          className="min-h-[44px]"
                         />
                       </div>
-                      <div className="sm:col-span-2 space-y-2">
-                        <Label className="text-sm">Activity</Label>
+                      <div className="space-y-2">
+                        <Label htmlFor="optional_end_time">Different End Time</Label>
                         <Input
-                          value={activity.activity}
-                          onChange={(e) => handleActivityChange(index, 'activity', e.target.value)}
-                          placeholder="e.g., Fire safety talk"
+                          id="optional_end_time"
+                          value={formData.optional_end_time}
+                          onChange={(e) => setFormData({ ...formData, optional_end_time: e.target.value })}
+                          placeholder="e.g. 20:00"
+                          className="min-h-[44px]"
                         />
                       </div>
                     </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Equipment Needed</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  value={formData.equipment_needed}
-                  onChange={(e) => setFormData({ ...formData, equipment_needed: e.target.value })}
-                  placeholder="List any equipment needed for this meeting"
-                  className="min-h-[100px]"
-                />
-              </CardContent>
-            </Card>
+            {/* ── To-Do ── */}
+            {activeSection === 'todo' && (
+              <TodoSection programmeId={existingProgramme?.id} />
+            )}
 
-            <Card className="border-orange-200 bg-orange-50">
-              <CardHeader>
-                <CardTitle className="text-orange-800 flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5" />
-                  Optional Info (unusual changes only)
-                </CardTitle>
-                <p className="text-sm text-orange-600">Only fill these in if something is <strong>different from normal</strong> this week. If set, they will appear in red on the parent app.</p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="optional_location">Different Location</Label>
-                  <Input
-                    id="optional_location"
-                    value={formData.optional_location}
-                    onChange={(e) => setFormData({ ...formData, optional_location: e.target.value })}
-                    placeholder="e.g. St John's Church Hall (leave blank if usual venue)"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="optional_start_time">Different Start Time</Label>
-                    <Input
-                      id="optional_start_time"
-                      value={formData.optional_start_time}
-                      onChange={(e) => setFormData({ ...formData, optional_start_time: e.target.value })}
-                      placeholder="e.g. 18:00"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="optional_end_time">Different End Time</Label>
-                    <Input
-                      id="optional_end_time"
-                      value={formData.optional_end_time}
-                      onChange={(e) => setFormData({ ...formData, optional_end_time: e.target.value })}
-                      placeholder="e.g. 20:00"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            {/* ── Attendance ── */}
+            {activeSection === 'attendance' && (
+              <div className="space-y-6">
+                <LeaderRotaSection programmeId={existingProgramme?.id} sectionId={sectionId} />
 
-          <TabsContent value="parent" className="space-y-6">
-            <ParentPortalSection 
-              programmeId={existingProgramme?.id}
-              formData={formData}
-              setFormData={setFormData}
-            />
-          </TabsContent>
-
-          <TabsContent value="risk" className="space-y-6">
-            <RiskAssessmentSection programmeId={existingProgramme?.id} />
-          </TabsContent>
-
-          <TabsContent value="badges" className="space-y-6">
-            <ProgrammeBadgeCriteriaSection programmeId={existingProgramme?.id} />
-          </TabsContent>
-
-          <TabsContent value="iscout" className="space-y-6">
-            <IScoutSection programmeId={existingProgramme?.id} />
-          </TabsContent>
-
-          <TabsContent value="attendance" className="space-y-6">
-            <LeaderRotaSection programmeId={existingProgramme?.id} sectionId={sectionId} />
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg sm:text-xl">Mark Attendance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* Mobile View */}
-                <div className="md:hidden space-y-4">
-                  {members.map(member => {
-                    const status = getAttendanceStatus(member.id);
-                    return (
-                      <div key={member.id} className="p-4 border rounded-lg space-y-3 bg-gray-50">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 bg-[#7413dc] rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
-                            {member.full_name.charAt(0)}
-                          </div>
-                          <div>
-                            <p className="font-medium">{member.full_name}</p>
-                            {member.patrol && (
-                              <p className="text-sm text-gray-500">{member.patrol}</p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant={status === 'present' ? 'default' : 'outline'}
-                            onClick={() => handleAttendanceChange(member.id, 'present')}
-                            className={`flex-1 ${status === 'present' ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                          >
-                            Present
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={status === 'absent' ? 'default' : 'outline'}
-                            onClick={() => handleAttendanceChange(member.id, 'absent')}
-                            className={`flex-1 ${status === 'absent' ? 'bg-red-600 hover:bg-red-700' : ''}`}
-                          >
-                            Absent
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={status === 'apologies' ? 'default' : 'outline'}
-                            onClick={() => handleAttendanceChange(member.id, 'apologies')}
-                            className={`flex-1 ${status === 'apologies' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}`}
-                          >
-                            Apologies
-                          </Button>
-                        </div>
-                        {actionsRequired.length > 0 && (
-                          <div className="space-y-2 pt-2 border-t">
-                            {actionsRequired.map(action => {
-                              const response = getActionResponse(action.id, member.id);
-                              return (
-                                <div key={action.id} className="flex justify-between items-center">
-                                  <span className="text-sm text-gray-600">{action.column_title}:</span>
-                                  {response ? (
-                                    <span className="text-sm font-medium text-gray-700">{response}</span>
-                                  ) : (
-                                    <span className="text-sm text-red-600">Awaiting...</span>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Desktop View */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-3 font-semibold">Member</th>
-                        <th className="text-left p-3 font-semibold">Attendance</th>
-                        {actionsRequired.map(action => (
-                          <th key={action.id} className="text-left p-3 font-semibold whitespace-nowrap">
-                            {action.column_title}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
+                <Card className="shadow-sm border-gray-200">
+                  <CardHeader className="border-b border-gray-100">
+                    <CardTitle className="text-xl">Mark Attendance</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    {/* Mobile View */}
+                    <div className="md:hidden space-y-4">
                       {members.map(member => {
                         const status = getAttendanceStatus(member.id);
                         return (
-                          <tr key={member.id} className="border-b hover:bg-gray-50">
-                            <td className="p-3">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-[#7413dc] rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
-                                  {member.full_name.charAt(0)}
-                                </div>
-                                <div>
-                                  <p className="font-medium">{member.full_name}</p>
-                                  {member.patrol && (
-                                    <p className="text-sm text-gray-500">{member.patrol}</p>
-                                  )}
-                                </div>
+                          <div key={member.id} className="p-4 border rounded-lg space-y-3 bg-gray-50">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-[#004851] rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                                {member.full_name.charAt(0)}
                               </div>
-                            </td>
-                            <td className="p-3">
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant={status === 'present' ? 'default' : 'outline'}
-                                  onClick={() => handleAttendanceChange(member.id, 'present')}
-                                  className={status === 'present' ? 'bg-green-600 hover:bg-green-700' : ''}
-                                >
-                                  Present
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant={status === 'absent' ? 'default' : 'outline'}
-                                  onClick={() => handleAttendanceChange(member.id, 'absent')}
-                                  className={status === 'absent' ? 'bg-red-600 hover:bg-red-700' : ''}
-                                >
-                                  Absent
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant={status === 'apologies' ? 'default' : 'outline'}
-                                  onClick={() => handleAttendanceChange(member.id, 'apologies')}
-                                  className={status === 'apologies' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
-                                >
-                                  Apologies
-                                </Button>
+                              <div>
+                                <p className="font-medium">{member.full_name}</p>
+                                {member.patrol && <p className="text-sm text-gray-500">{member.patrol}</p>}
                               </div>
-                            </td>
-                            {actionsRequired.map(action => {
-                              const response = getActionResponse(action.id, member.id);
-                              return (
-                                <td key={action.id} className="p-3">
-                                  {response ? (
-                                    <span className="text-sm text-gray-700">{response}</span>
-                                  ) : (
-                                    <span className="text-sm text-red-600">Awaiting...</span>
-                                  )}
-                                </td>
-                              );
-                            })}
-                          </tr>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant={status === 'present' ? 'default' : 'outline'} onClick={() => handleAttendanceChange(member.id, 'present')} className={`flex-1 min-h-[44px] ${status === 'present' ? 'bg-green-600 hover:bg-green-700' : ''}`}>Present</Button>
+                              <Button size="sm" variant={status === 'absent' ? 'default' : 'outline'} onClick={() => handleAttendanceChange(member.id, 'absent')} className={`flex-1 min-h-[44px] ${status === 'absent' ? 'bg-red-600 hover:bg-red-700' : ''}`}>Absent</Button>
+                              <Button size="sm" variant={status === 'apologies' ? 'default' : 'outline'} onClick={() => handleAttendanceChange(member.id, 'apologies')} className={`flex-1 min-h-[44px] ${status === 'apologies' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}`}>Apologies</Button>
+                            </div>
+                            {actionsRequired.length > 0 && (
+                              <div className="space-y-1.5 pt-2 border-t">
+                                {actionsRequired.map(action => {
+                                  const response = getActionResponse(action.id, member.id);
+                                  return (
+                                    <div key={action.id} className="flex justify-between items-center text-sm">
+                                      <span className="text-gray-600">{action.column_title}:</span>
+                                      {response ? <span className="font-medium text-gray-700">{response}</span> : <span className="text-red-500">Awaiting...</span>}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
                         );
                       })}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                    </div>
+
+                    {/* Desktop View */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left p-3 font-semibold">Member</th>
+                            <th className="text-left p-3 font-semibold">Attendance</th>
+                            {actionsRequired.map(action => (
+                              <th key={action.id} className="text-left p-3 font-semibold whitespace-nowrap">{action.column_title}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {members.map(member => {
+                            const status = getAttendanceStatus(member.id);
+                            return (
+                              <tr key={member.id} className="border-b hover:bg-gray-50">
+                                <td className="p-3">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-[#004851] rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                                      {member.full_name.charAt(0)}
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">{member.full_name}</p>
+                                      {member.patrol && <p className="text-sm text-gray-500">{member.patrol}</p>}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="p-3">
+                                  <div className="flex gap-2">
+                                    <Button size="sm" variant={status === 'present' ? 'default' : 'outline'} onClick={() => handleAttendanceChange(member.id, 'present')} className={status === 'present' ? 'bg-green-600 hover:bg-green-700' : ''}>Present</Button>
+                                    <Button size="sm" variant={status === 'absent' ? 'default' : 'outline'} onClick={() => handleAttendanceChange(member.id, 'absent')} className={status === 'absent' ? 'bg-red-600 hover:bg-red-700' : ''}>Absent</Button>
+                                    <Button size="sm" variant={status === 'apologies' ? 'default' : 'outline'} onClick={() => handleAttendanceChange(member.id, 'apologies')} className={status === 'apologies' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}>Apologies</Button>
+                                  </div>
+                                </td>
+                                {actionsRequired.map(action => {
+                                  const response = getActionResponse(action.id, member.id);
+                                  return (
+                                    <td key={action.id} className="p-3">
+                                      {response ? <span className="text-sm text-gray-700">{response}</span> : <span className="text-sm text-red-500">Awaiting...</span>}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* ── Parent Portal ── */}
+            {activeSection === 'parent' && (
+              <ParentPortalSection
+                programmeId={existingProgramme?.id}
+                formData={formData}
+                setFormData={setFormData}
+              />
+            )}
+
+            {/* ── Risk Assessment ── */}
+            {activeSection === 'risk' && (
+              <RiskAssessmentSection programmeId={existingProgramme?.id} />
+            )}
+
+            {/* ── Badges ── */}
+            {activeSection === 'badges' && (
+              <ProgrammeBadgeCriteriaSection programmeId={existingProgramme?.id} />
+            )}
+
+            {/* ── iScout ── */}
+            {activeSection === 'iscout' && (
+              <IScoutSection programmeId={existingProgramme?.id} />
+            )}
+          </main>
+        </div>
       </div>
 
       {/* Swap Dialog */}
@@ -754,20 +710,18 @@ export default function MeetingDetail() {
                 <SelectValue placeholder="Select a meeting to swap with..." />
               </SelectTrigger>
               <SelectContent>
-                {termMeetingDates
-                  .filter(d => d !== date)
-                  .map(d => (
-                    <SelectItem key={d} value={d}>
-                      {new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                    </SelectItem>
-                  ))}
+                {termMeetingDates.filter(d => d !== date).map(d => (
+                  <SelectItem key={d} value={d}>
+                    {new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSwapDialogOpen(false)}>Cancel</Button>
             <Button
-              className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white"
+              className="bg-[#004851] hover:bg-[#003840] text-white"
               disabled={!swapTargetDate || swapMutation.isPending}
               onClick={() => swapMutation.mutate(swapTargetDate)}
             >
