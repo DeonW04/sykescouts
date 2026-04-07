@@ -11,7 +11,7 @@ const createInviteEmailTemplate = (parentName, childName, parentEmail) => {
         body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5; }
         .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
         .header { background: linear-gradient(135deg, #7413dc 0%, #004851 100%); padding: 40px 20px; text-align: center; }
-        .logo { max-width: 240px; height: auto; }
+        .logo { max-width: 240px; height: auto; filter: brightness(0) invert(1); }
         .content { padding: 40px 30px; }
         .title { color: #1a1a1a; font-size: 24px; font-weight: 600; margin: 0 0 20px 0; }
         .subtitle { color: #1a1a1a; font-size: 18px; font-weight: 600; margin: 25px 0 15px 0; }
@@ -40,11 +40,11 @@ const createInviteEmailTemplate = (parentName, childName, parentEmail) => {
           
           <div class="step-box">
             <span class="step-number">1</span>
-            <strong>Download the PWA App</strong>
-            <p class="message" style="margin-top: 8px;">We recommend downloading our app for the best experience:</p>
+            <strong>Download the PWA App (Required)</strong>
+            <p class="message" style="margin-top: 8px;">You must download our app to access the parent portal:</p>
             <ul style="margin: 10px 0; padding-left: 20px;">
-              <li><strong>iOS:</strong> Open our website in Safari, tap the Share button, and select "Add to Home Screen"</li>
-              <li><strong>Android:</strong> Open our website in Chrome, tap the three-dot menu, and select "Install app" or "Add to Home Screen"</li>
+              <li><strong>iOS:</strong> Open <a href="https://40throchdale.sykescouts.org" style="color: #7413dc; text-decoration: none; font-weight: 600;">our website</a> in Safari, tap the Share button, and select "Add to Home Screen"</li>
+              <li><strong>Android:</strong> Open <a href="https://40throchdale.sykescouts.org" style="color: #7413dc; text-decoration: none; font-weight: 600;">our website</a> in Chrome, tap the three-dot menu, and select "Install app" or "Add to Home Screen"</li>
             </ul>
           </div>
 
