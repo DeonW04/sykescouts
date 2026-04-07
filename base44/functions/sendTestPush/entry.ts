@@ -2,7 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import webpush from 'npm:web-push@3.6.7';
 
 // ✅ VAPID credentials hardcoded directly — replace these values with your actual keys
-const VAPID_SUBJECT = 'mailto: <deon@sykescouts.org>'; // ← replace
+const VAPID_SUBJECT = 'mailto:deon@sykescouts.org'; // ← replace
 const VAPID_PUBLIC_KEY = 'BMxgoAuwVVPfAwIBN1tuQNmlGOUzYPqUQrGNZ1yO-wRMckk5zbJkV1LDRdKE0Z2T4_XnR0LLJg2z0ZQWTk3p644';   // ← replace
 const VAPID_PRIVATE_KEY = 'Ul5ZJEMl_8DcNMiB-tNwhDcxEq2Oenf2uX9jFcJm4Pk'; // ← replace
 
