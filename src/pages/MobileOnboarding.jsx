@@ -220,7 +220,15 @@ export default function MobileOnboarding({ user, onComplete }) {
       <>
         {/* Extends gradient colour into the overscroll/safe-area zones on iOS */}
         <div className="fixed inset-0" style={{ background: '#004851' }} />
-        <div className="fixed inset-0 flex flex-col" style={{ background: 'linear-gradient(to bottom right, #7413dc, #004851)', paddingTop: 'env(safe-area-inset-top)' }}>
+        <div
+          className="fixed inset-0 flex flex-col"
+          style={{
+            background: 'linear-gradient(to bottom right, #7413dc, #004851)',
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+            bottom: '-env(safe-area-inset-bottom)'
+          }}
+        >
           <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
             <img
               src="/logo-512.png"
