@@ -109,9 +109,9 @@ Deno.serve(async (req) => {
     }
 
     // Send via Outlook using Microsoft Graph API
-    console.log('🔗 Getting Outlook connection...');
-    const { accessToken } = await base44.asServiceRole.connectors.getConnection('outlook');
-    console.log('✅ Outlook connection obtained');
+    console.log('🔗 Getting Outlook access token...');
+    const accessToken = await base44.asServiceRole.connectors.getConnectorAccessToken('outlook');
+    console.log('✅ Outlook access token obtained');
 
     const emailBody = {
       message: {
