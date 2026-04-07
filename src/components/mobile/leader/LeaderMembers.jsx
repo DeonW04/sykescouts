@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Search, User, ChevronDown, ChevronUp, Heart, Phone, Mail } from 'lucide-react';
+import { Search, User, ChevronDown, ChevronUp, Heart, Phone, Mail, Grid3x3, List } from 'lucide-react';
 
 function MemberCard({ member }) {
   const [open, setOpen] = useState(false);
@@ -126,6 +126,7 @@ function MemberCard({ member }) {
 export default function LeaderMembers({ sections }) {
   const [search, setSearch] = useState('');
   const [selectedSectionId, setSelectedSectionId] = useState('all');
+  const [viewMode, setViewMode] = useState('tile'); // 'tile' or 'patrol'
   const sectionIds = sections.map(s => s.id);
 
   const { data: members = [], isLoading } = useQuery({
@@ -166,28 +167,48 @@ export default function LeaderMembers({ sections }) {
           />
         </div>
 
-        {sections.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            <button
-              onClick={() => setSelectedSectionId('all')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${selectedSectionId === 'all' ? 'bg-[#004851] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}
-            >
-              All
-            </button>
-            {sections.map(s => (
+        <div className="flex items-center justify-between gap-2">
+          {sections.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 flex-1">
               <button
-                key={s.id}
-                onClick={() => setSelectedSectionId(s.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${selectedSectionId === s.id ? 'bg-[#004851] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}
+                onClick={() => setSelectedSectionId('all')}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${selectedSectionId === 'all' ? 'bg-[#004851] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}
               >
-                {s.display_name}
+                All
               </button>
-            ))}
+              {sections.map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => setSelectedSectionId(s.id)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${selectedSectionId === s.id ? 'bg-[#004851] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}
+                >
+                  {s.display_name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* View mode toggle */}
+          <div className="flex gap-1 bg-gray-100 rounded-full p-1 flex-shrink-0">
+            <button
+              onClick={() => setViewMode('tile')}
+              className={`p-2 rounded-full transition-colors ${viewMode === 'tile' ? 'bg-[#004851] text-white' : 'text-gray-500'}`}
+              title="Tile view"
+            >
+              <Grid3x3 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('patrol')}
+              className={`p-2 rounded-full transition-colors ${viewMode === 'patrol' ? 'bg-[#004851] text-white' : 'text-gray-500'}`}
+              title="Patrol view"
+            >
+              <List className="w-4 h-4" />
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
-      <div className="px-4 pb-5 space-y-2">
+      <div className="px-4 pb-5">
         {isLoading ? (
           <div className="flex justify-center py-12">
             <div className="w-6 h-6 border-2 border-gray-200 border-t-[#004851] rounded-full animate-spin" />
@@ -197,10 +218,58 @@ export default function LeaderMembers({ sections }) {
             <User className="w-10 h-10 mx-auto mb-2 opacity-30" />
             <p className="text-sm">No members found</p>
           </div>
+        ) : viewMode === 'tile' ? (
+          <div className="space-y-2">
+            {filtered.map(m => <MemberCard key={m.id} member={m} />)}
+          </div>
         ) : (
-          filtered.map(m => <MemberCard key={m.id} member={m} />)
+          <PatrolView members={filtered} />
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Patrol View Component ─────────────────────────────────────────────────────
+function PatrolView({ members }) {
+  // Group members by patrol
+  const patrols = {};
+  members.forEach(m => {
+    const patrol = m.patrol || 'No Patrol';
+    if (!patrols[patrol]) patrols[patrol] = [];
+    patrols[patrol].push(m);
+  });
+
+  const patrolNames = Object.keys(patrols).sort();
+
+  return (
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {patrolNames.map(patrolName => (
+        <div key={patrolName} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-br from-blue-500 to-[#004851] px-4 py-3 text-white">
+            <p className="font-bold text-sm">{patrolName}</p>
+            <p className="text-xs text-white/70 mt-0.5">{patrols[patrolName].length} members</p>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {patrols[patrolName].map(member => {
+              const dob = new Date(member.date_of_birth);
+              const today = new Date();
+              const age = today.getFullYear() - dob.getFullYear() - (today < new Date(today.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0);
+              return (
+                <div key={member.id} className="px-4 py-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-[10px] font-bold text-blue-700 flex-shrink-0">
+                      {member.full_name?.charAt(0)}
+                    </div>
+                    <p className="text-xs font-semibold text-gray-900 truncate">{member.full_name}</p>
+                  </div>
+                  <p className="text-[10px] text-gray-400">Age {age}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
