@@ -43,8 +43,8 @@ const createInviteEmailTemplate = (parentName, childName, parentEmail) => {
             <strong>Download the PWA App (Required)</strong>
             <p class="message" style="margin-top: 8px;">You must download our app to access the parent portal:</p>
             <ul style="margin: 10px 0; padding-left: 20px;">
-              <li><strong>iOS:</strong> Open <a href="https://40throchdale.sykescouts.org" style="color: #7413dc; text-decoration: none; font-weight: 600;">our website</a> in Safari, tap the Share button, and select "Add to Home Screen"</li>
-              <li><strong>Android:</strong> Open <a href="https://40throchdale.sykescouts.org" style="color: #7413dc; text-decoration: none; font-weight: 600;">our website</a> in Chrome, tap the three-dot menu, and select "Install app" or "Add to Home Screen"</li>
+              <li><strong>iOS:</strong> Open <a href="https://sykescouts.org" style="color: #7413dc; text-decoration: none; font-weight: 600;">our website</a> in Safari, tap the Share button, and select "Add to Home Screen"</li>
+              <li><strong>Android:</strong> Open <a href="https://sykescouts.org" style="color: #7413dc; text-decoration: none; font-weight: 600;">our website</a> in Chrome, tap the three-dot menu, and select "Install app" or "Add to Home Screen"</li>
             </ul>
           </div>
 
