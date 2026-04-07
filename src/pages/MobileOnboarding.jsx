@@ -212,17 +212,17 @@ export default function MobileOnboarding({ user, onComplete }) {
           <img
             src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png"
             alt="40th Rochdale Scouts"
-            className="w-24 h-24 object-contain mb-6 drop-shadow-2xl"
+            className="w-24 h-24 object-cover rounded-[22%] mb-6 shadow-2xl"
           />
           <h1 className="text-3xl font-extrabold text-white mb-3 leading-tight">
-            Welcome to the<br />Scout Portal
+            Welcome to the<br />Parent Portal
           </h1>
           <p className="text-white/75 text-base leading-relaxed mb-2">
             Let's get your profile set up — it only takes a few minutes.
           </p>
           <p className="text-white/50 text-sm">40th Rochdale (Syke) Scouts</p>
         </div>
-        <div className="px-6 pb-8 space-y-3">
+        <div className="px-6 space-y-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 32px)' }}>
           <button
             onClick={next}
             className="w-full bg-white text-[#7413dc] font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform shadow-lg"
