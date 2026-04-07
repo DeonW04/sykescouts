@@ -77,15 +77,48 @@ Deno.serve(async (req) => {
     // First, invite the user to the app so they can receive emails
     await base44.asServiceRole.users.inviteUser(parentEmail, 'user');
 
-    // Now send the custom invitation email
+    // Send via Outlook using Microsoft Graph API
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection('outlook');
+    
     const inviteLink = `${req.headers.get('origin') || 'https://your-app.base44.io'}/`;
 
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      from_name: '40th Rochdale Scouts',
-      to: parentEmail,
-      subject: 'Invitation to 40th Rochdale Scouts Parent Portal',
-      body: createInviteEmailTemplate(parentName, childName, inviteLink)
+    const emailBody = {
+      message: {
+        subject: 'Invitation to 40th Rochdale Scouts Parent Portal',
+        body: {
+          contentType: 'HTML',
+          content: createInviteEmailTemplate(parentName, childName, inviteLink)
+        },
+        toRecipients: [
+          {
+            emailAddress: {
+              address: parentEmail
+            }
+          }
+        ],
+        from: {
+          emailAddress: {
+            address: 'noreply@40throchdalescouts.co.uk',
+            name: '40th Rochdale Scouts'
+          }
+        }
+      },
+      saveToSentItems: true
+    };
+
+    const response = await fetch('https://graph.microsoft.com/v1.0/me/sendMail', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(emailBody)
     });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Outlook API error: ${response.status} - ${error}`);
+    }
 
     return Response.json({ 
       success: true,
