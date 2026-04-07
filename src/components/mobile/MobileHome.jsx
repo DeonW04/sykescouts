@@ -100,15 +100,17 @@ export default function MobileHome({ user, children, onTabChange }) {
   });
 
   const { actions: allActions, responses: existingResponses } = actionsData;
-  const actionsRequired = allActions.filter(action =>
-    !children.every(child =>
-      existingResponses.some(r =>
+  const actionsRequired = allActions.filter(action => {
+    // Show action if ANY child doesn't have a completed response with a value
+    return children.some(child => {
+      const hasCompletedResponse = existingResponses.some(r =>
         (r.action_required_id === action.id || r.action_id === action.id) &&
         (r.member_id === child.id || r.child_member_id === child.id) &&
         r.status === 'completed' && r.response
-      )
-    )
-  );
+      );
+      return !hasCompletedResponse;
+    });
+  });
 
   const getEventAttendanceStatus = (eventId) => {
     // Check if this event has an attendance action
