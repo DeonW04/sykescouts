@@ -126,7 +126,7 @@ function BadgeCategorySection({ title, icon, badges, isEarned, isInProgress, get
 }
 
 function GoldAwardBanner({ child, badges, awards, badgeProgress, sections, onLearnMore }) {
-  const chiefScoutBadges = badges.filter(b => b.is_chief_scout_award || b.category === 'chief_scout_award');
+  const chiefScoutBadges = badges.filter(b => b.is_chief_scout_award);
   const chiefScoutAward = chiefScoutBadges[0];
   if (!chiefScoutAward) return null;
 
@@ -309,7 +309,7 @@ export default function MobileBadges({ children }) {
   // Group by category
   const challengeBadges = sectionBadges.filter(b => b.category === 'challenge' && !b.is_chief_scout_award);
   const activityBadges = sectionBadges.filter(b => b.category === 'activity' && !b.is_chief_scout_award);
-  const coreBadges = sectionBadges.filter(b => b.category === 'chief_scout_award' || b.is_chief_scout_award);
+  const coreBadges = sectionBadges.filter(b => b.category === 'core' || b.is_chief_scout_award);
 
   return (
     <div className="flex flex-col">
@@ -372,7 +372,15 @@ export default function MobileBadges({ children }) {
           title={CATEGORY_CONFIG.staged.label}
           icon={CATEGORY_CONFIG.staged.icon}
           badges={stagedBadges}
-          isEarned={isEarned}
+          isEarned={(badgeId) => {
+            // For staged badges: green if ANY stage in the same family is earned
+            const badge = sectionBadges.find(b => b.id === badgeId);
+            if (badge?.badge_family_id) {
+              const familyIds = (stagedFamilies[badge.badge_family_id] || []).map(b => b.id);
+              return familyIds.some(id => isEarned(id));
+            }
+            return isEarned(badgeId);
+          }}
           isInProgress={isInProgress}
           getBadgePercentage={getBadgePercentage}
           onBadgeClick={handleStagedBadgeClick}

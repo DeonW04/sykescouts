@@ -30,6 +30,10 @@ export default function BadgeCriteriaModal({ badge, child, modules, requirements
     return { total: modReqs.length, completed };
   };
 
+  // For a requirement, check completion via requirement_id
+  const isReqCompleted = (reqId) =>
+    reqProgress.some(p => p.member_id === child?.id && p.requirement_id === reqId && p.completed);
+
   // Uniform guide: just the image with a single dot for this badge's position + the example image
   const uniformPosition = badge.uniform_position;
   const uniformImageUrl = uniformConfig?.image_url;
@@ -128,9 +132,7 @@ export default function BadgeCriteriaModal({ badge, child, modules, requirements
                   {modReqs.length > 0 && (
                     <div className="divide-y divide-gray-50">
                       {modReqs.map(req => {
-                        const done = reqProgress.some(p =>
-                          p.member_id === child?.id && p.requirement_id === req.id && p.completed
-                        );
+                        const done = isReqCompleted(req.id);
                         return (
                           <div key={req.id} className="flex items-start gap-3 px-4 py-3">
                             <div className="flex-shrink-0 mt-0.5">
@@ -140,7 +142,7 @@ export default function BadgeCriteriaModal({ badge, child, modules, requirements
                               }
                             </div>
                             <p className={`text-sm leading-snug flex-1 ${done ? 'text-green-700 font-medium' : 'text-gray-700'}`}>
-                              {req.description}
+                              {req.text || req.description}
                             </p>
                           </div>
                         );
