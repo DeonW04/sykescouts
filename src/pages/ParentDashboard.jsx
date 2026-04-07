@@ -195,17 +195,17 @@ export default function ParentDashboard() {
         // Don't show closed actions
         if (action.is_open === false) return false;
         
-        // Check if ALL children have a completed response for this action —
-        // regardless of whether it was entered by the parent or a leader manually
-        const allChildrenResponded = children.every(child =>
-          childResponses.some(r =>
+        // Show action if ANY child doesn't have a completed response with a value
+        const anyChildNeedsResponse = children.some(child => {
+          const hasCompletedResponse = childResponses.some(r =>
             (r.action_required_id === action.id || r.action_id === action.id) &&
             (r.member_id === child.id || r.child_member_id === child.id) &&
             r.status === 'completed' &&
             r.response // Only count if there's actually a response value
-          )
-        );
-        return !allChildrenResponded;
+          );
+          return !hasCompletedResponse;
+        });
+        return anyChildNeedsResponse;
       });
     },
     enabled: children.length > 0 && !!user,
