@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     }
 
     // First, invite the user to the app so they can receive emails
-    await base44.asServiceRole.users.inviteUser(parentEmail, 'user');
+    await base44.users.inviteUser(parentEmail, 'user');
 
     // Send via Outlook using Microsoft Graph API
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('outlook');
