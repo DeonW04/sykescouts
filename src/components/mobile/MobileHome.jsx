@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Calendar, Tent, ChevronRight, CheckCircle, Clock } from 'lucide-react';
+import { Calendar, Tent, ChevronRight, CheckCircle, Clock, MapPin, AlertTriangle } from 'lucide-react';
 import { format, isThisWeek, startOfWeek, endOfWeek } from 'date-fns';
 import ActionRequiredCard from './ActionRequiredCard';
 
@@ -32,19 +32,26 @@ export default function MobileHome({ user, children, onTabChange }) {
   });
 
   const { data: upcomingEvents = [] } = useQuery({
-    queryKey: ['mobile-events', childSectionIds],
+    queryKey: ['mobile-events', childIds.join(',')],
     queryFn: async () => {
+      if (childIds.length === 0) return [];
+      // Get events the child has an attendance record for (i.e. was invited)
+      const allAttendances = await base44.entities.EventAttendance.filter({});
+      const invitedEventIds = [...new Set(
+        allAttendances.filter(a => childIds.includes(a.member_id)).map(a => a.event_id)
+      )];
+      if (invitedEventIds.length === 0) return [];
       const events = await base44.entities.Event.filter({ published: true });
       return events
-        .filter(e => e.section_ids?.some(sid => childSectionIds.includes(sid)) && new Date(e.start_date) > new Date())
+        .filter(e => invitedEventIds.includes(e.id) && new Date(e.start_date) > new Date())
         .sort((a, b) => new Date(a.start_date) - new Date(b.start_date))
         .slice(0, 3);
     },
-    enabled: childSectionIds.length > 0,
+    enabled: childIds.length > 0,
   });
 
   const { data: eventAttendances = [] } = useQuery({
-    queryKey: ['mobile-event-attendances', childIds],
+    queryKey: ['mobile-event-attendances', childIds.join(',')],
     queryFn: async () => {
       if (childIds.length === 0) return [];
       const all = await base44.entities.EventAttendance.filter({});
@@ -58,12 +65,28 @@ export default function MobileHome({ user, children, onTabChange }) {
     queryFn: async () => {
       if (children.length === 0) return { actions: [], responses: [] };
       const sectionIds = [...new Set(children.map(c => c.section_id))];
+
+      // Programme-linked actions: match by section
       const programmes = await base44.entities.Programme.filter({});
       const relevantProgIds = programmes.filter(p => sectionIds.includes(p.section_id)).map(p => p.id);
+
+      // Event-linked actions: only for events the child is actually invited to
+      // (has an EventAttendance record)
+      const eventAttendancesForActions = await base44.entities.EventAttendance.filter({});
+      const invitedEventIds = [...new Set(
+        eventAttendancesForActions
+          .filter(a => childIds.includes(a.member_id))
+          .map(a => a.event_id)
+      )];
+
       const allActions = await base44.entities.ActionRequired.filter({});
-      const relevantActions = allActions.filter(a =>
-        (relevantProgIds.includes(a.programme_id) || relevantProgIds.includes(a.event_id)) && a.is_open !== false
-      );
+      const relevantActions = allActions.filter(a => {
+        if (a.is_open === false) return false;
+        if (a.programme_id) return relevantProgIds.includes(a.programme_id);
+        if (a.event_id) return invitedEventIds.includes(a.event_id);
+        return false;
+      });
+
       const allResponses = await base44.entities.ActionResponse.filter({});
       const relevantResponses = allResponses.filter(r => childIds.includes(r.member_id) || childIds.includes(r.child_member_id));
       return { actions: relevantActions, responses: relevantResponses };
@@ -84,11 +107,10 @@ export default function MobileHome({ user, children, onTabChange }) {
 
   const getEventAttendanceStatus = (eventId) => {
     const relevant = eventAttendances.filter(a => a.event_id === eventId && childIds.includes(a.member_id));
-    if (relevant.length === 0) return null;
-    // If any child is attending, show attending
+    if (relevant.length === 0) return 'not_invited';
     if (relevant.some(a => a.rsvp_status === 'attending')) return 'attending';
     if (relevant.some(a => a.rsvp_status === 'not_attending')) return 'not_attending';
-    return null;
+    return 'no_response'; // invited but hasn't responded
   };
 
   const child = children[0];
@@ -123,15 +145,22 @@ export default function MobileHome({ user, children, onTabChange }) {
           existingResponses={existingResponses}
         />
 
-        {/* This Week's Meeting */}
-        {thisWeekMeeting && (
-          <div>
-            <h2 className="font-bold text-gray-900 text-base mb-3">
-              {isThisWeekMeeting ? "This Week's Meeting" : "Next Meeting"}
-            </h2>
+        {/* This Week's Meeting — always shown */}
+        <div>
+          <h2 className="font-bold text-gray-900 text-base mb-3">
+            {isThisWeekMeeting ? "This Week's Meeting" : thisWeekMeeting ? "Next Meeting" : "This Week's Meeting"}
+          </h2>
+          {!thisWeekMeeting ? (
+            <div className="w-full bg-gray-50 rounded-2xl p-4 border border-gray-200 flex items-center gap-4">
+              <div className="bg-gray-200 rounded-xl p-3 flex-shrink-0">
+                <Calendar className="w-6 h-6 text-gray-400" />
+              </div>
+              <p className="text-sm text-gray-500 font-medium">No meeting this week!</p>
+            </div>
+          ) : (
             <button
               onClick={() => onTabChange('programme')}
-              className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4 text-left active:bg-gray-50 transition-colors"
+              className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-start gap-4 text-left active:bg-gray-50 transition-colors"
             >
               <div className="bg-green-100 rounded-xl p-3 flex-shrink-0">
                 <Calendar className="w-6 h-6 text-green-600" />
@@ -141,14 +170,31 @@ export default function MobileHome({ user, children, onTabChange }) {
                 <p className="text-sm text-gray-500 mt-0.5">
                   {format(new Date(thisWeekMeeting.date), 'EEE, d MMM')}
                 </p>
-                {thisWeekMeeting.description && (
+                {/* Optional unusual time — shown in red */}
+                {thisWeekMeeting.optional_start_time && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <AlertTriangle className="w-3 h-3 text-red-500 flex-shrink-0" />
+                    <p className="text-xs text-red-600 font-semibold">
+                      Different time: {thisWeekMeeting.optional_start_time}
+                      {thisWeekMeeting.optional_end_time ? ` – ${thisWeekMeeting.optional_end_time}` : ''}
+                    </p>
+                  </div>
+                )}
+                {/* Optional unusual location — shown in red */}
+                {thisWeekMeeting.optional_location && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <MapPin className="w-3 h-3 text-red-500 flex-shrink-0" />
+                    <p className="text-xs text-red-600 font-semibold">Different location: {thisWeekMeeting.optional_location}</p>
+                  </div>
+                )}
+                {thisWeekMeeting.description && !thisWeekMeeting.optional_start_time && !thisWeekMeeting.optional_location && (
                   <p className="text-xs text-gray-400 mt-1 line-clamp-1">{thisWeekMeeting.description}</p>
                 )}
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0" />
+              <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0 mt-1" />
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Quick Nav Grid */}
         <div className="grid grid-cols-2 gap-2.5">
@@ -201,7 +247,7 @@ export default function MobileHome({ user, children, onTabChange }) {
                         <span className="text-xs font-medium">Not going</span>
                       </div>
                     )}
-                    {!status && (
+                    {status === 'no_response' && (
                       <span className="text-xs text-orange-500 font-medium flex-shrink-0">No response</span>
                     )}
                   </div>

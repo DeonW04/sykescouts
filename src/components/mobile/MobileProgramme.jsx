@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Calendar, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Calendar, ChevronRight, AlertTriangle, MapPin } from 'lucide-react';
 import { format, isToday, isTomorrow, isPast, isThisWeek, startOfWeek, endOfWeek } from 'date-fns';
 
 function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMeeting }) {
@@ -48,19 +48,35 @@ function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMee
             {!isThisWeeksMeeting && isTomorrow(new Date(programme.date)) && (
               <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Tomorrow</span>
             )}
-            {hasTimeChange && (
+            {(hasTimeChange || programme.optional_start_time) && (
               <span className="flex items-center gap-0.5 bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
                 <AlertTriangle className="w-2.5 h-2.5" />
                 Time change
+              </span>
+            )}
+            {programme.optional_location && (
+              <span className="flex items-center gap-0.5 bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                <MapPin className="w-2.5 h-2.5" />
+                Different location
               </span>
             )}
           </div>
           <p className="text-xs text-gray-400 mt-0.5">
             {format(new Date(programme.date), 'EEEE, d MMMM yyyy')}
           </p>
-          {hasTimeChange && programme.activities?.[0]?.time && (
+          {programme.optional_start_time && (
+            <p className="text-xs text-red-600 font-semibold mt-0.5">
+              ⏰ {programme.optional_start_time}{programme.optional_end_time ? ` – ${programme.optional_end_time}` : ''}
+            </p>
+          )}
+          {!programme.optional_start_time && hasTimeChange && programme.activities?.[0]?.time && (
             <p className="text-xs text-red-600 font-semibold mt-0.5">
               Starts at {programme.activities[0].time} (usual: {termMeetingTime})
+            </p>
+          )}
+          {programme.optional_location && (
+            <p className="text-xs text-red-600 font-semibold mt-0.5">
+              📍 {programme.optional_location}
             </p>
           )}
         </div>
@@ -68,6 +84,20 @@ function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMee
       </button>
       {open && (
         <div className="px-4 pb-4 pt-0 border-t border-gray-100">
+          {/* Unusual info shown prominently in red */}
+          {(programme.optional_location || programme.optional_start_time) && (
+            <div className="mt-3 bg-red-50 border border-red-200 rounded-xl p-3 space-y-1">
+              <p className="text-xs font-bold text-red-700 uppercase tracking-wide">⚠️ Different from usual</p>
+              {programme.optional_start_time && (
+                <p className="text-sm text-red-700 font-semibold">
+                  Time: {programme.optional_start_time}{programme.optional_end_time ? ` – ${programme.optional_end_time}` : ''}
+                </p>
+              )}
+              {programme.optional_location && (
+                <p className="text-sm text-red-700 font-semibold">Location: {programme.optional_location}</p>
+              )}
+            </div>
+          )}
           {programme.description && (
             <p className="text-sm text-gray-600 leading-relaxed mt-3">{programme.description}</p>
           )}

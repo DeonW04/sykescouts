@@ -54,6 +54,9 @@ export default function MeetingDetail() {
     equipment_needed: '',
     published: false,
     shown_in_portal: false,
+    optional_location: '',
+    optional_start_time: '',
+    optional_end_time: '',
   });
 
   const { data: section } = useQuery({
@@ -199,6 +202,9 @@ export default function MeetingDetail() {
         equipment_needed: existingProgramme.equipment_needed || '',
         published: existingProgramme.published || false,
         shown_in_portal: existingProgramme.shown_in_portal || false,
+        optional_location: existingProgramme.optional_location || '',
+        optional_start_time: existingProgramme.optional_start_time || '',
+        optional_end_time: existingProgramme.optional_end_time || '',
       });
     }
   }, [existingProgramme]);
@@ -508,6 +514,47 @@ export default function MeetingDetail() {
                   placeholder="List any equipment needed for this meeting"
                   className="min-h-[100px]"
                 />
+              </CardContent>
+            </Card>
+
+            <Card className="border-orange-200 bg-orange-50">
+              <CardHeader>
+                <CardTitle className="text-orange-800 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5" />
+                  Optional Info (unusual changes only)
+                </CardTitle>
+                <p className="text-sm text-orange-600">Only fill these in if something is <strong>different from normal</strong> this week. If set, they will appear in red on the parent app.</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="optional_location">Different Location</Label>
+                  <Input
+                    id="optional_location"
+                    value={formData.optional_location}
+                    onChange={(e) => setFormData({ ...formData, optional_location: e.target.value })}
+                    placeholder="e.g. St John's Church Hall (leave blank if usual venue)"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="optional_start_time">Different Start Time</Label>
+                    <Input
+                      id="optional_start_time"
+                      value={formData.optional_start_time}
+                      onChange={(e) => setFormData({ ...formData, optional_start_time: e.target.value })}
+                      placeholder="e.g. 18:00"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="optional_end_time">Different End Time</Label>
+                    <Input
+                      id="optional_end_time"
+                      value={formData.optional_end_time}
+                      onChange={(e) => setFormData({ ...formData, optional_end_time: e.target.value })}
+                      placeholder="e.g. 20:00"
+                    />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
