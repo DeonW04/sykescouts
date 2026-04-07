@@ -1,6 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import webpush from 'npm:web-push@3.6.7';
 
+// ✅ VAPID credentials hardcoded directly — replace these values with your actual keys
+const VAPID_SUBJECT = 'mailto: <deon@sykescouts.org>'; // ← replace
+const VAPID_PUBLIC_KEY = 'BMxgoAuwVVPfAwIBN1tuQNmlGOUzYPqUQrGNZ1yO-wRMckk5zbJkV1LDRdKE0Z2T4_XnR0LLJg2z0ZQWTk3p644';   // ← replace
+const VAPID_PRIVATE_KEY = 'Ul5ZJEMl_8DcNMiB-tNwhDcxEq2Oenf2uX9jFcJm4Pk'; // ← replace
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -11,17 +16,15 @@ Deno.serve(async (req) => {
 
     const { subscriptionId } = await req.json();
 
+    // Set VAPID details using hardcoded values above
     webpush.setVapidDetails(
-      Deno.env.get('VAPID_SUBJECT'),
-      Deno.env.get('VAPID_PUBLIC_KEY'),
-      Deno.env.get('VAPID_PRIVATE_KEY')
+      VAPID_SUBJECT,
+      VAPID_PUBLIC_KEY,
+      VAPID_PRIVATE_KEY
     );
 
     const subs = await base44.asServiceRole.entities.PushSubscription.filter({});
-    const target = subscriptionId
-      ? subs.find(s => s.id === subscriptionId)
-      : null;
-
+    const target = subscriptionId ? subs.find(s => s.id === subscriptionId) : null;
     const targets = target ? [target] : subs;
 
     if (targets.length === 0) {
@@ -43,22 +46,58 @@ Deno.serve(async (req) => {
         results.push({ email: sub.user_email, status: 'skipped', reason: 'no endpoint' });
         continue;
       }
+
+      // ✅ Explicitly reconstruct the subscription object to ensure correct shape.
+      // Passing the raw DB object can cause web-push to misread the keys, silently
+      // constructing a bad JWT and getting a 403 back from the push service.
+      const pushSubscription = {
+        endpoint: sub.subscription.endpoint,
+        keys: {
+          p256dh: sub.subscription.keys.p256dh,
+          auth: sub.subscription.keys.auth,
+        },
+      };
+
+      // ✅ Log the push service being targeted — useful to confirm the aud in the JWT
+      // will match (fcm.googleapis.com, web.push.apple.com, etc.)
+      let pushServiceHost = 'unknown';
+      try { pushServiceHost = new URL(sub.subscription.endpoint).hostname; } catch {}
+      console.log(`[Push] Sending to ${sub.user_email} via ${pushServiceHost}`);
+
       try {
-        await webpush.sendNotification(sub.subscription, payload);
+        await webpush.sendNotification(pushSubscription, payload);
         sent++;
-        results.push({ email: sub.user_email, status: 'sent' });
+        results.push({ email: sub.user_email, status: 'sent', pushService: pushServiceHost });
+        console.log(`[Push] ✅ Sent to ${sub.user_email}`);
       } catch (err) {
         failed++;
-        results.push({ email: sub.user_email, status: 'failed', reason: err.message, statusCode: err.statusCode });
-        // 410 = expired, 403 = key mismatch — both mean stale subscription
-        if (err.statusCode === 410 || err.statusCode === 403) {
+        const code = err.statusCode;
+        console.error(`[Push] ❌ Failed for ${sub.user_email}: HTTP ${code} — ${err.message}`);
+        console.error(`[Push] Endpoint: ${sub.subscription.endpoint}`);
+
+        results.push({
+          email: sub.user_email,
+          status: 'failed',
+          reason: err.message,
+          statusCode: code,
+          pushService: pushServiceHost,
+        });
+
+        // ✅ FIXED: Only delete on 410 (Gone) or 404 (Not Found).
+        // These mean the subscription has been revoked by the push service and is
+        // genuinely invalid. A 403 means our auth/JWT is wrong — the subscription
+        // itself is still valid and must NOT be deleted.
+        if (code === 410 || code === 404) {
+          console.log(`[Push] Subscription gone (${code}), removing from DB...`);
           await base44.asServiceRole.entities.PushSubscription.delete(sub.id).catch(() => {});
         }
       }
     }
 
+    console.log(`[Push] Done. Sent: ${sent}, Failed: ${failed}`);
     return Response.json({ sent, failed, results });
   } catch (error) {
+    console.error('[Push] Unexpected error:', error);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
