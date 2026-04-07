@@ -61,30 +61,50 @@ export default function EventAttendeesSection({ eventId, event }) {
       );
       await Promise.all(attendancePromises);
       
-      // Create ActionResponse records for any actions required on this event
+      // Create ActionResponse records for any actions required on this event and send notifications
       if (actionsRequired.length > 0) {
         const responsePromises = [];
+        const emailPromises = [];
+        
         memberIds.forEach(memberId => {
+          const member = allMembers.find(m => m.id === memberId);
+          const parentEmails = [member?.parent_one_email, member?.parent_two_email].filter(Boolean);
+          
           actionsRequired.forEach(action => {
             responsePromises.push(
               base44.entities.ActionResponse.create({
                 action_required_id: action.id,
                 member_id: memberId,
                 entity_id: eventId,
-                parent_email: '',
+                parent_email: parentEmails[0] || '',
                 response: '',
                 status: 'pending',
               })
             );
+            
+            // Send email notification to parents for each action
+            parentEmails.forEach(email => {
+              emailPromises.push(
+                base44.functions.invoke('sendActionRequiredEmail', {
+                  member_id: memberId,
+                  action_id: action.id,
+                  parent_email: email,
+                  entity_type: 'event',
+                  entity_id: eventId,
+                }).catch(err => console.error('Failed to send email:', err))
+              );
+            });
           });
         });
+        
         await Promise.all(responsePromises);
+        await Promise.all(emailPromises);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event-attendances'] });
       queryClient.invalidateQueries({ queryKey: ['action-responses'] });
-      toast.success('Members added to event');
+      toast.success('Members added to event and parents notified');
       setShowAddDialog(false);
       setSelectedMembers([]);
     },
