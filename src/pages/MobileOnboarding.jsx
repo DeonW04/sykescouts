@@ -202,7 +202,8 @@ export default function MobileOnboarding({ user, onComplete }) {
   // Set body bg for overscroll area, reset on unmount
   useEffect(() => {
     const prev = document.body.style.backgroundColor;
-    document.body.style.backgroundColor = step === 0 || step === 8 ? '#004851' : '#f9fafb';
+    document.body.style.background = 'linear-gradient(to bottom right,#7413dc,#004851)'
+    document.documentElement.style.background = 'linear-gradient(to bottom right,#7413dc,#004851)'
     document.documentElement.style.backgroundColor = step === 0 || step === 8 ? '#004851' : '#f9fafb';
     return () => {
       document.body.style.backgroundColor = prev;
