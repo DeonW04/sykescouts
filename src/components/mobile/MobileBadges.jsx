@@ -179,6 +179,7 @@ function GoldAwardBanner({ child, badges, awards, badgeProgress, sections, onLea
 export default function MobileBadges({ children }) {
   const child = children[0];
   const [selectedBadge, setSelectedBadge] = useState(null);
+  const [stagedContext, setStagedContext] = useState(null); // { highestEarnedStage, nextStageBadge }
 
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
@@ -269,10 +270,45 @@ export default function MobileBadges({ children }) {
     return reqProgress.some(p => p.member_id === child.id && modIds.includes(p.module_id) && p.completed);
   };
 
+  // Group staged badges by family — show only the highest relevant stage per family
+  const stagedFamilies = {};
+  sectionBadges.filter(b => b.category === 'staged' && !b.is_chief_scout_award && b.badge_family_id).forEach(b => {
+    if (!stagedFamilies[b.badge_family_id]) stagedFamilies[b.badge_family_id] = [];
+    stagedFamilies[b.badge_family_id].push(b);
+  });
+
+  // For each family, pick the highest earned stage (or stage 1 if none earned)
+  const stagedRepresentatives = Object.values(stagedFamilies).map(stages => {
+    const sorted = stages.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
+    const earnedStages = sorted.filter(b => isEarned(b.id));
+    const highestEarned = earnedStages.length > 0 ? earnedStages[earnedStages.length - 1] : null;
+    const nextStage = highestEarned
+      ? sorted.find(b => (b.stage_number || 0) > (highestEarned.stage_number || 0))
+      : sorted[0];
+    // Show: next stage to work towards (or highest earned if all done)
+    return nextStage || highestEarned;
+  }).filter(Boolean);
+
+  // Also include staged badges without a family_id
+  const stagedNoFamily = sectionBadges.filter(b => b.category === 'staged' && !b.is_chief_scout_award && !b.badge_family_id);
+  const stagedBadges = [...stagedRepresentatives, ...stagedNoFamily];
+
+  const handleStagedBadgeClick = (badge) => {
+    if (!badge.badge_family_id) { setSelectedBadge(badge); setStagedContext(null); return; }
+    const family = stagedFamilies[badge.badge_family_id] || [];
+    const sorted = family.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
+    const earnedStages = sorted.filter(b => isEarned(b.id));
+    const highestEarned = earnedStages.length > 0 ? earnedStages[earnedStages.length - 1] : null;
+    const nextStage = highestEarned
+      ? sorted.find(b => (b.stage_number || 0) > (highestEarned.stage_number || 0))
+      : sorted[0];
+    setStagedContext({ highestEarned, nextStageBadge: nextStage || null, allStages: sorted });
+    setSelectedBadge(nextStage || highestEarned);
+  };
+
   // Group by category
   const challengeBadges = sectionBadges.filter(b => b.category === 'challenge' && !b.is_chief_scout_award);
   const activityBadges = sectionBadges.filter(b => b.category === 'activity' && !b.is_chief_scout_award);
-  const stagedBadges = sectionBadges.filter(b => b.category === 'staged' && !b.is_chief_scout_award);
   const coreBadges = sectionBadges.filter(b => b.category === 'chief_scout_award' || b.is_chief_scout_award);
 
   return (
@@ -287,7 +323,8 @@ export default function MobileBadges({ children }) {
           reqProgress={reqProgress}
           awards={awards}
           badgeProgress={badgeProgress}
-          onClose={() => setSelectedBadge(null)}
+          stagedContext={stagedContext}
+          onClose={() => { setSelectedBadge(null); setStagedContext(null); }}
         />
       )}
 
@@ -338,7 +375,7 @@ export default function MobileBadges({ children }) {
           isEarned={isEarned}
           isInProgress={isInProgress}
           getBadgePercentage={getBadgePercentage}
-          onBadgeClick={setSelectedBadge}
+          onBadgeClick={handleStagedBadgeClick}
         />
         <BadgeCategorySection
           title={CATEGORY_CONFIG.chief_scout_award.label}

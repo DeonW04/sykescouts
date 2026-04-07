@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { X, CheckCircle, Circle, ChevronDown, ChevronUp, Shirt } from 'lucide-react';
 
-export default function BadgeCriteriaModal({ badge, child, modules, requirements, reqProgress, awards, badgeProgress, onClose }) {
+export default function BadgeCriteriaModal({ badge, child, modules, requirements, reqProgress, awards, badgeProgress, stagedContext, onClose }) {
   const [showUniform, setShowUniform] = useState(false);
 
   const { data: uniformConfigs = [] } = useQuery({
@@ -25,7 +25,8 @@ export default function BadgeCriteriaModal({ badge, child, modules, requirements
 
   const getModuleProgress = (modId) => {
     const modReqs = requirements.filter(r => r.module_id === modId);
-    const completed = reqProgress.filter(p => p.member_id === child?.id && p.module_id === modId && p.completed).length;
+    const reqIds = modReqs.map(r => r.id);
+    const completed = reqProgress.filter(p => p.member_id === child?.id && reqIds.includes(p.requirement_id) && p.completed).length;
     return { total: modReqs.length, completed };
   };
 
@@ -37,7 +38,7 @@ export default function BadgeCriteriaModal({ badge, child, modules, requirements
   const exampleImg = uniformPosition
     ? (uniformConfig?.section_example_images || []).find(i => i.position === uniformPosition)
     : null;
-  const hasUniformInfo = uniformImageUrl && (dotCoords || exampleImg);
+  const hasUniformInfo = !!badge.uniform_position && (uniformImageUrl || exampleImg);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-50">
@@ -69,6 +70,30 @@ export default function BadgeCriteriaModal({ badge, child, modules, requirements
         {badge.description && (
           <div className="bg-white rounded-2xl p-4 border border-gray-100">
             <p className="text-sm text-gray-600 leading-relaxed">{badge.description}</p>
+          </div>
+        )}
+
+        {/* Staged badge context banner */}
+        {stagedContext && (
+          <div className="space-y-2">
+            {stagedContext.highestEarned ? (
+              <div className="bg-green-50 border border-green-200 rounded-2xl px-4 py-3 flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-bold text-green-800">Stage {stagedContext.highestEarned.stage_number} achieved!</p>
+                  <p className="text-xs text-green-600 mt-0.5">You've completed {stagedContext.highestEarned.name}.</p>
+                </div>
+              </div>
+            ) : null}
+            {stagedContext.nextStageBadge && (
+              <div className="bg-purple-50 border border-purple-200 rounded-2xl px-4 py-3">
+                <p className="text-xs font-bold text-purple-700 uppercase tracking-wide">
+                  {stagedContext.highestEarned ? 'Next up' : 'Working towards'}
+                </p>
+                <p className="text-sm font-semibold text-purple-900 mt-0.5">{stagedContext.nextStageBadge.name}</p>
+                <p className="text-xs text-purple-600 mt-0.5">Criteria below ↓</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -104,7 +129,7 @@ export default function BadgeCriteriaModal({ badge, child, modules, requirements
                     <div className="divide-y divide-gray-50">
                       {modReqs.map(req => {
                         const done = reqProgress.some(p =>
-                          p.member_id === child?.id && p.module_id === mod.id && p.requirement_id === req.id && p.completed
+                          p.member_id === child?.id && p.requirement_id === req.id && p.completed
                         );
                         return (
                           <div key={req.id} className="flex items-start gap-3 px-4 py-3">
