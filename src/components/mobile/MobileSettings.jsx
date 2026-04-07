@@ -109,7 +109,7 @@ export default function MobileSettings({ user }) {
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 px-5 pt-12 pb-8 text-white">
+      <div className="bg-gradient-to-br from-gray-800 to-gray-900 px-5 pt-16 pb-8 text-white">
         <h1 className="text-2xl font-bold">Settings</h1>
         {user && <p className="text-white/60 text-sm mt-1">{user.email}</p>}
       </div>

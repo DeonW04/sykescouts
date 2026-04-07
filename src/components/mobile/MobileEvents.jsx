@@ -161,7 +161,7 @@ export default function MobileEvents({ children }) {
 
   return (
     <div className="flex flex-col">
-      <div className="bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] px-5 pt-12 pb-6 text-white">
+      <div className="bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] px-5 pt-16 pb-6 text-white">
         <h1 className="text-2xl font-bold">Events & Camps</h1>
         <p className="text-white/70 text-sm mt-1">Adventures await ⛺</p>
       </div>
