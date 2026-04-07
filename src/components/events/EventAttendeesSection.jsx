@@ -82,7 +82,7 @@ export default function EventAttendeesSection({ eventId, event }) {
               })
             );
             
-            // Send email notification to parents for each action
+            // Send email and push notifications to parents for each action
             parentEmails.forEach(email => {
               emailPromises.push(
                 base44.functions.invoke('sendActionRequiredEmail', {
@@ -92,6 +92,16 @@ export default function EventAttendeesSection({ eventId, event }) {
                   entity_type: 'event',
                   entity_id: eventId,
                 }).catch(err => console.error('Failed to send email:', err))
+              );
+              
+              emailPromises.push(
+                base44.functions.invoke('sendActionNotification', {
+                  member_id: memberId,
+                  action_id: action.id,
+                  parent_email: email,
+                  entity_type: 'event',
+                  entity_id: eventId,
+                }).catch(err => console.error('Failed to send push notification:', err))
               );
             });
           });
