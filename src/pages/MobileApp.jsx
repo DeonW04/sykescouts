@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Home, User, Calendar, Tent, Award, Settings } from 'lucide-react';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import PushNotificationPrompt from '../components/pwa/PushNotificationPrompt';
+import MobileOnboarding from './MobileOnboarding.jsx';
 import MobileHome from '../components/mobile/MobileHome.jsx';
 import MobileMyChild from '../components/mobile/MobileMyChild.jsx';
 import MobileProgramme from '../components/mobile/MobileProgramme.jsx';
@@ -55,14 +56,9 @@ export default function MobileApp() {
     }
   };
 
-  // Redirect to onboarding if not complete
+  // Show onboarding inline if not complete
   if (authChecked && user && !user.onboarding_complete) {
-    window.location.replace('/CompleteRegistration');
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-[#7413dc] rounded-full animate-spin" />
-      </div>
-    );
+    return <MobileOnboarding user={user} onComplete={() => window.location.reload()} />;
   }
 
   // Show spinner while checking auth

@@ -54,7 +54,6 @@ import AwardBadges from './pages/AwardBadges';
 import BadgeDetail from './pages/BadgeDetail';
 import BadgeStockManagement from './pages/BadgeStockManagement';
 import Communications from './pages/Communications';
-import CompleteRegistration from './pages/CompleteRegistration';
 import Contact from './pages/Contact';
 import EditBadgeStructure from './pages/EditBadgeStructure';
 import EventDetail from './pages/EventDetail';
@@ -114,7 +113,6 @@ export const PAGES = {
     "BadgeDetail": BadgeDetail,
     "BadgeStockManagement": BadgeStockManagement,
     "Communications": Communications,
-    "CompleteRegistration": CompleteRegistration,
     "Contact": Contact,
     "EditBadgeStructure": EditBadgeStructure,
     "EventDetail": EventDetail,

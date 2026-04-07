@@ -113,6 +113,13 @@ export default function CompleteRegistration() {
   });
 
   useEffect(() => {
+    // If on PWA, redirect to the app where onboarding is handled inline
+    const isMobilePWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isMobilePWA) {
+      window.location.replace('/app');
+      return;
+    }
+
     base44.auth.me()
       .then(async (u) => {
         setUser(u);
