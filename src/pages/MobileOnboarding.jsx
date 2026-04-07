@@ -210,7 +210,7 @@ export default function MobileOnboarding({ user, onComplete }) {
         style={{ 
           background: 'linear-gradient(to bottom right, #7413dc, #004851)',
           paddingTop: 'env(safe-area-inset-top)', 
-          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingBottom: '',
           backgroundColor: '#004851'  
         }}>
         <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
