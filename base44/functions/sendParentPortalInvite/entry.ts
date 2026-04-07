@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 const createInviteEmailTemplate = (parentName, childName, parentEmail) => {
   return `
@@ -109,8 +109,8 @@ Deno.serve(async (req) => {
     }
 
     // Send via Outlook using Microsoft Graph API
-    console.log('🔗 Getting Outlook access token...');
-    const accessToken = await base44.asServiceRole.connectors.getConnectorAccessToken('outlook');
+    console.log('🔗 Getting Outlook connection...');
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection('outlook');
     console.log('✅ Outlook access token obtained');
 
     const emailBody = {
