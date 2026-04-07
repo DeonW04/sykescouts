@@ -84,7 +84,7 @@ export default function MobileHome({ user, children, onTabChange }) {
       <div className="px-4 py-5 space-y-5">
         {/* Actions Required */}
         <ActionRequiredCard
-          actionsRequired={allActions}
+          actionsRequired={actionsRequired}
           children={children}
           user={user}
           existingResponses={existingResponses}

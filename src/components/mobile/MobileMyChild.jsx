@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Heart, Phone, User, Camera, ChevronDown, ChevronUp } from 'lucide-react';
+import { Heart, Phone, User, Camera, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
+import EditChildDialog from './EditChildDialog';
 
 function Section({ title, icon, color, children: content }) {
   const Icon = icon;
@@ -38,6 +39,7 @@ function InfoRow({ label, value }) {
 
 export default function MobileMyChild({ children }) {
   const child = children[0];
+  const [editing, setEditing] = useState(false);
 
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
@@ -61,6 +63,7 @@ export default function MobileMyChild({ children }) {
 
   return (
     <div className="flex flex-col">
+      {editing && <EditChildDialog child={child} onClose={() => setEditing(false)} />}
       {/* Header */}
       <div className="bg-gradient-to-br from-blue-600 to-[#7413dc] px-5 pt-12 pb-8 text-white">
         <div className="flex items-center gap-4">
@@ -139,8 +142,15 @@ export default function MobileMyChild({ children }) {
           </div>
         </Section>
 
+        <button
+          onClick={() => setEditing(true)}
+          className="w-full flex items-center justify-center gap-2 py-3 border border-[#7413dc] text-[#7413dc] rounded-2xl font-semibold text-sm active:scale-95 transition-transform bg-white"
+        >
+          <Pencil className="w-4 h-4" />
+          Edit Details
+        </button>
         <p className="text-xs text-gray-400 text-center pb-2">
-          To update any details, please contact your section leader.
+          For name or date of birth changes, please contact your section leader.
         </p>
       </div>
     </div>

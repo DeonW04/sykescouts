@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Home, User, Calendar, Tent, Award } from 'lucide-react';
+import { Home, User, Calendar, Tent, Award, Settings } from 'lucide-react';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import PushNotificationPrompt from '../components/pwa/PushNotificationPrompt';
 import MobileHome from '../components/mobile/MobileHome';
@@ -9,6 +9,7 @@ import MobileMyChild from '../components/mobile/MobileMyChild';
 import MobileProgramme from '../components/mobile/MobileProgramme';
 import MobileEvents from '../components/mobile/MobileEvents';
 import MobileBadges from '../components/mobile/MobileBadges';
+import MobileSettings from '../components/mobile/MobileSettings';
 
 const TABS = [
   { id: 'home', label: 'Home', icon: Home },
@@ -16,6 +17,7 @@ const TABS = [
   { id: 'programme', label: 'Programme', icon: Calendar },
   { id: 'events', label: 'Events', icon: Tent },
   { id: 'badges', label: 'Badges', icon: Award },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 export default function MobileApp() {
@@ -45,6 +47,7 @@ export default function MobileApp() {
       case 'programme': return <MobileProgramme children={children} />;
       case 'events': return <MobileEvents children={children} />;
       case 'badges': return <MobileBadges children={children} />;
+      case 'settings': return <MobileSettings user={user} />;
       default: return null;
     }
   };

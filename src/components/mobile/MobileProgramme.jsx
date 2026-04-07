@@ -36,11 +36,9 @@ function MeetingCard({ programme, isPastMeeting }) {
             {format(new Date(programme.date), 'EEEE, d MMMM yyyy')}
           </p>
         </div>
-        {programme.description && (
-          <ChevronRight className={`w-4 h-4 text-gray-300 flex-shrink-0 transition-transform ${open ? 'rotate-90' : ''}`} />
-        )}
+        <ChevronRight className={`w-4 h-4 text-gray-300 flex-shrink-0 transition-transform ${open ? 'rotate-90' : ''}`} />
       </button>
-      {open && programme.shown_in_portal && programme.description && (
+      {open && programme.description && (
         <div className="px-4 pb-4 pt-0 border-t border-gray-100">
           <p className="text-sm text-gray-600 leading-relaxed">{programme.description}</p>
           {programme.activities?.length > 0 && (
