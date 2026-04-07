@@ -217,38 +217,41 @@ export default function MobileOnboarding({ user, onComplete }) {
   // ── Welcome Screen ──
   if (step === 0) {
     return (
-      <div className="fixed inset-0 flex flex-col"
-        style={{ background: 'linear-gradient(to bottom right, #7413dc, #004851)', paddingTop: 'env(safe-area-inset-top)' }}>
-        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-          <img
-            src="/logo-512.png"
-            alt="40th Rochdale Scouts"
-            className="w-24 h-24 object-cover rounded-[22%] mb-6 shadow-2xl"
-          />
-          <h1 className="text-3xl font-extrabold text-white mb-3 leading-tight">
-            Welcome to the<br />Parent Portal
-          </h1>
-          <p className="text-white/75 text-base leading-relaxed mb-2">
-            Let's get your profile set up — it only takes a few minutes.
-          </p>
-          <p className="text-white/50 text-sm">40th Rochdale (Syke) Scouts</p>
+      <>
+        {/* Extends gradient colour into the overscroll/safe-area zones on iOS */}
+        <div className="fixed inset-0" style={{ background: '#004851' }} />
+        <div className="fixed inset-0 flex flex-col" style={{ background: 'linear-gradient(to bottom right, #7413dc, #004851)', paddingTop: 'env(safe-area-inset-top)' }}>
+          <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+            <img
+              src="/logo-512.png"
+              alt="40th Rochdale Scouts"
+              className="w-24 h-24 object-cover rounded-[22%] mb-6 shadow-2xl"
+            />
+            <h1 className="text-3xl font-extrabold text-white mb-3 leading-tight">
+              Welcome to the<br />Parent Portal
+            </h1>
+            <p className="text-white/75 text-base leading-relaxed mb-2">
+              Let's get your profile set up — it only takes a few minutes.
+            </p>
+            <p className="text-white/50 text-sm">40th Rochdale (Syke) Scouts</p>
+          </div>
+          <div className="px-6 space-y-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 32px)' }}>
+            <button
+              onClick={next}
+              className="w-full bg-white text-[#7413dc] font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform shadow-lg"
+            >
+              Get Started →
+            </button>
+            <button
+              onClick={() => base44.auth.logout()}
+              className="w-full text-white/60 text-sm py-2 flex items-center justify-center gap-1.5"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign out
+            </button>
+          </div>
         </div>
-        <div className="px-6 space-y-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 32px)' }}>
-          <button
-            onClick={next}
-            className="w-full bg-white text-[#7413dc] font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform shadow-lg"
-          >
-            Get Started →
-          </button>
-          <button
-            onClick={() => base44.auth.logout()}
-            className="w-full text-white/60 text-sm py-2 flex items-center justify-center gap-1.5"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </button>
-        </div>
-      </div>
+      </>
     );
   }
 
