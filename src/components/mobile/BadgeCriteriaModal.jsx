@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { X, CheckCircle, Circle, ChevronDown, ChevronUp, Shirt } from 'lucide-react';
-import UniformDiagram from '../uniform/UniformDiagram';
 
 export default function BadgeCriteriaModal({ badge, child, modules, requirements, reqProgress, awards, badgeProgress, onClose }) {
   const [showUniform, setShowUniform] = useState(false);
@@ -30,7 +29,15 @@ export default function BadgeCriteriaModal({ badge, child, modules, requirements
     return { total: modReqs.length, completed };
   };
 
-  const earnedBadges = awards.filter(a => a.member_id === child?.id);
+  // Uniform guide: just the image with a single dot for this badge's position + the example image
+  const uniformPosition = badge.uniform_position;
+  const uniformImageUrl = uniformConfig?.image_url;
+  const dotPositions = uniformConfig?.dot_positions || {};
+  const dotCoords = uniformPosition ? dotPositions[uniformPosition] : null;
+  const exampleImg = uniformPosition
+    ? (uniformConfig?.section_example_images || []).find(i => i.position === uniformPosition)
+    : null;
+  const hasUniformInfo = uniformImageUrl && (dotCoords || exampleImg);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-gray-50">
@@ -46,7 +53,7 @@ export default function BadgeCriteriaModal({ badge, child, modules, requirements
           )}
           <div className="min-w-0">
             <h2 className="font-bold text-gray-900 text-sm leading-tight truncate">{badge.name}</h2>
-            <p className="text-xs text-gray-400 capitalize">{badge.category} Badge</p>
+            <p className="text-xs text-gray-400 capitalize">{badge.category?.replace('_', ' ')} Badge</p>
           </div>
         </div>
         {isEarned && (
@@ -65,7 +72,7 @@ export default function BadgeCriteriaModal({ badge, child, modules, requirements
           </div>
         )}
 
-        {/* Criteria / Modules */}
+        {/* Criteria — prefer module/requirement structure, fall back to badge.requirements */}
         {badgeModules.length > 0 ? (
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Requirements</h3>
@@ -93,74 +100,106 @@ export default function BadgeCriteriaModal({ badge, child, modules, requirements
                       <p className="text-xs text-gray-400 mt-1.5">{mod.description}</p>
                     )}
                   </div>
-                  <div className="divide-y divide-gray-50">
-                    {modReqs.map(req => {
-                      const done = reqProgress.some(p =>
-                        p.member_id === child?.id && p.module_id === mod.id && p.requirement_id === req.id && p.completed
-                      );
-                      return (
-                        <div key={req.id} className="flex items-start gap-3 px-4 py-3">
-                          <div className="flex-shrink-0 mt-0.5">
-                            {done
-                              ? <CheckCircle className="w-4 h-4 text-green-500" />
-                              : <Circle className="w-4 h-4 text-gray-300" />
-                            }
+                  {modReqs.length > 0 && (
+                    <div className="divide-y divide-gray-50">
+                      {modReqs.map(req => {
+                        const done = reqProgress.some(p =>
+                          p.member_id === child?.id && p.module_id === mod.id && p.requirement_id === req.id && p.completed
+                        );
+                        return (
+                          <div key={req.id} className="flex items-start gap-3 px-4 py-3">
+                            <div className="flex-shrink-0 mt-0.5">
+                              {done
+                                ? <CheckCircle className="w-4 h-4 text-green-500" />
+                                : <Circle className="w-4 h-4 text-gray-300" />
+                              }
+                            </div>
+                            <p className={`text-sm leading-snug flex-1 ${done ? 'text-green-700 font-medium' : 'text-gray-700'}`}>
+                              {req.description}
+                            </p>
                           </div>
-                          <p className={`text-sm leading-snug flex-1 ${done ? 'text-green-700 font-medium' : 'text-gray-700'}`}>
-                            {req.description}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
-        ) : (
-          badge.requirements?.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Requirements</h3>
-              <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
-                {badge.requirements.map((req, i) => (
-                  <div key={i} className="flex items-start gap-3 px-4 py-3">
-                    <Circle className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-gray-700 leading-snug">{req.description || req}</p>
-                  </div>
-                ))}
-              </div>
+        ) : badge.requirements?.length > 0 ? (
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Requirements</h3>
+            <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50">
+              {badge.requirements.map((req, i) => (
+                <div key={i} className="flex items-start gap-3 px-4 py-3">
+                  <Circle className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-gray-700 leading-snug">{req.description || req}</p>
+                </div>
+              ))}
             </div>
-          )
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl border border-gray-100 p-4">
+            <p className="text-sm text-gray-400 text-center">No detailed criteria available for this badge.</p>
+          </div>
         )}
 
-        {/* Uniform Guide Dropdown */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <button
-            onClick={() => setShowUniform(!showUniform)}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left"
-          >
-            <div className="w-8 h-8 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Shirt className="w-4 h-4 text-purple-600" />
-            </div>
-            <span className="font-semibold text-gray-900 flex-1 text-sm">Uniform Guide</span>
-            {showUniform
-              ? <ChevronUp className="w-4 h-4 text-gray-400" />
-              : <ChevronDown className="w-4 h-4 text-gray-400" />
-            }
-          </button>
-          {showUniform && (
-            <div className="px-4 pb-4 pt-0 border-t border-gray-50">
-              <div className="pt-3">
-                <UniformDiagram
-                  uniformConfig={uniformConfig}
-                  earnedBadges={earnedBadges}
-                  allBadges={[badge]}
-                  highlightPosition={badge.uniform_position}
-                />
+        {/* Uniform Guide — only shown if there's a position for this badge */}
+        {hasUniformInfo && (
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <button
+              onClick={() => setShowUniform(!showUniform)}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left"
+            >
+              <div className="w-8 h-8 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Shirt className="w-4 h-4 text-purple-600" />
               </div>
-            </div>
-          )}
-        </div>
+              <span className="font-semibold text-gray-900 flex-1 text-sm">Where to sew this badge</span>
+              {showUniform
+                ? <ChevronUp className="w-4 h-4 text-gray-400" />
+                : <ChevronDown className="w-4 h-4 text-gray-400" />
+              }
+            </button>
+            {showUniform && (
+              <div className="px-4 pb-4 pt-0 border-t border-gray-50">
+                <div className="pt-3 space-y-3">
+                  {/* Uniform diagram with single dot */}
+                  {uniformImageUrl && (
+                    <div className="relative inline-block w-full">
+                      <img
+                        src={uniformImageUrl}
+                        alt="Uniform"
+                        className="w-full rounded-xl"
+                        style={{ maxHeight: 320, objectFit: 'contain' }}
+                      />
+                      {dotCoords && (
+                        <div
+                          style={{
+                            left: `${dotCoords.x}%`,
+                            top: `${dotCoords.y}%`,
+                            transform: 'translate(-50%, -50%)',
+                          }}
+                          className="absolute w-5 h-5 rounded-full bg-[#7413dc] border-2 border-white shadow-lg ring-4 ring-[#7413dc]/30"
+                        />
+                      )}
+                    </div>
+                  )}
+                  {/* Example image */}
+                  {exampleImg && (
+                    <div>
+                      <p className="text-xs text-gray-500 mb-2 font-medium">Example:</p>
+                      <img
+                        src={exampleImg.image_url}
+                        alt="Example placement"
+                        className="w-full rounded-xl object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

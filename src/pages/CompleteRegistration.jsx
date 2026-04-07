@@ -217,7 +217,9 @@ export default function CompleteRegistration() {
       await base44.auth.updateMe({ onboarding_complete: true });
 
       toast.success('Registration completed successfully!');
-      window.location.href = createPageUrl('ParentDashboard');
+      // If on mobile/PWA, redirect to mobile app
+      const isMobilePWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      window.location.href = isMobilePWA ? '/app' : createPageUrl('ParentDashboard');
     } catch (error) {
       toast.error('Error completing registration: ' + error.message);
     } finally {
@@ -237,7 +239,8 @@ export default function CompleteRegistration() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#7413dc]/5 to-[#004851]/5 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#7413dc]/5 to-[#004851]/5 py-6 px-4 md:py-12"
+      style={{ paddingTop: 'max(env(safe-area-inset-top), 24px)' }}>
       <div className="max-w-3xl mx-auto">
         {/* Progress Indicator */}
         <div className="mb-8">

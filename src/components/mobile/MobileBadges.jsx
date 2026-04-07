@@ -79,8 +79,8 @@ function BadgeCard({ badge, isEarned, inProgress, percentage, onClick }) {
   );
 }
 
-function BadgeCategorySection({ title, icon, badges, isEarned, isInProgress, getBadgePercentage, onBadgeClick, defaultOpen = false }) {
-  const [open, setOpen] = useState(defaultOpen);
+function BadgeCategorySection({ title, icon, badges, isEarned, isInProgress, getBadgePercentage, onBadgeClick }) {
+  const [open, setOpen] = useState(false);
   const earnedCount = badges.filter(b => isEarned(b.id)).length;
 
   if (badges.length === 0) return null;
@@ -126,7 +126,6 @@ function BadgeCategorySection({ title, icon, badges, isEarned, isInProgress, get
 }
 
 function GoldAwardBanner({ child, badges, awards, badgeProgress, sections, onLearnMore }) {
-  const childSection = sections.find(s => s.id === child?.section_id);
   const chiefScoutBadges = badges.filter(b => b.is_chief_scout_award || b.category === 'chief_scout_award');
   const chiefScoutAward = chiefScoutBadges[0];
   if (!chiefScoutAward) return null;
@@ -135,38 +134,42 @@ function GoldAwardBanner({ child, badges, awards, badgeProgress, sections, onLea
     || badgeProgress.some(p => p.member_id === child?.id && p.badge_id === chiefScoutAward.id && p.status === 'completed');
 
   return (
-    <button
-      onClick={onLearnMore}
-      className="w-full text-left active:scale-98 transition-transform"
-    >
-      <div className={`rounded-2xl overflow-hidden ${isEarned ? 'bg-gradient-to-r from-yellow-400 to-orange-400' : 'bg-gradient-to-r from-gray-700 to-gray-800'}`}>
-        <div className="flex items-center gap-4 p-4">
+    <button onClick={onLearnMore} className="w-full text-left active:scale-[0.98] transition-transform">
+      <div className="rounded-2xl overflow-hidden relative" style={{
+        background: isEarned
+          ? 'linear-gradient(135deg, #f59e0b 0%, #ef4444 35%, #8b5cf6 70%, #06b6d4 100%)'
+          : 'linear-gradient(135deg, #78350f 0%, #92400e 40%, #b45309 70%, #d97706 100%)'
+      }}>
+        {/* Decorative sparkle overlay */}
+        <div className="absolute inset-0 opacity-20"
+          style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px), radial-gradient(circle at 60% 80%, white 1px, transparent 1px)', backgroundSize: '40px 40px, 60px 60px, 30px 30px' }} />
+        <div className="relative flex items-center gap-4 p-4">
           <div className="flex-shrink-0">
             {chiefScoutAward.image_url ? (
               <img
                 src={chiefScoutAward.image_url}
                 alt={chiefScoutAward.name}
-                className={`w-14 h-14 object-contain rounded-xl ${!isEarned ? 'grayscale opacity-60' : ''}`}
+                className={`w-16 h-16 object-contain rounded-xl shadow-lg ${!isEarned ? 'grayscale opacity-70' : ''}`}
               />
             ) : (
-              <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center text-2xl">
-                🏆
-              </div>
+              <div className="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center text-3xl">🏆</div>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="font-bold text-white text-sm">{chiefScoutAward.name}</p>
-              {isEarned && <span className="bg-white/30 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Achieved!</span>}
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-bold text-white text-base drop-shadow">{chiefScoutAward.name}</p>
+              {isEarned && (
+                <span className="bg-white text-yellow-600 text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow">
+                  ⭐ Achieved!
+                </span>
+              )}
             </div>
-            <p className="text-white/80 text-xs mt-0.5">
-              {isEarned ? 'Congratulations on this achievement!' : 'The highest award for this section'}
+            <p className="text-white/85 text-xs mt-1">
+              {isEarned ? 'Congratulations on this amazing achievement!' : 'The highest award for your section'}
             </p>
-            <p className="text-white/60 text-[10px] mt-1.5 font-medium">Tap to view criteria →</p>
+            <p className="text-white/60 text-[10px] mt-2 font-semibold tracking-wide">TAP TO VIEW CRITERIA →</p>
           </div>
-          {isEarned && (
-            <Trophy className="w-8 h-8 text-white/80 flex-shrink-0" />
-          )}
+          <Trophy className="w-8 h-8 text-white/60 flex-shrink-0 drop-shadow" />
         </div>
       </div>
     </button>
@@ -272,9 +275,6 @@ export default function MobileBadges({ children }) {
   const stagedBadges = sectionBadges.filter(b => b.category === 'staged' && !b.is_chief_scout_award);
   const coreBadges = sectionBadges.filter(b => b.category === 'chief_scout_award' || b.is_chief_scout_award);
 
-  const totalEarned = sectionBadges.filter(b => isEarned(b.id)).length;
-  const totalInProgress = sectionBadges.filter(b => !isEarned(b.id) && isInProgress(b.id)).length;
-
   return (
     <div className="flex flex-col">
       {/* Badge criteria modal */}
@@ -295,20 +295,7 @@ export default function MobileBadges({ children }) {
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 48px)' }}>
         <h1 className="text-2xl font-bold">Badges & Awards</h1>
         <p className="text-white/70 text-sm mt-1">{child.full_name}'s progress</p>
-        <div className="flex gap-4 mt-4">
-          <div className="bg-white/15 rounded-xl px-3 py-2 text-center">
-            <p className="text-xl font-bold">{totalEarned}</p>
-            <p className="text-xs text-white/70">Earned</p>
-          </div>
-          <div className="bg-white/15 rounded-xl px-3 py-2 text-center">
-            <p className="text-xl font-bold">{totalInProgress}</p>
-            <p className="text-xs text-white/70">In Progress</p>
-          </div>
-          <div className="bg-white/15 rounded-xl px-3 py-2 text-center">
-            <p className="text-xl font-bold">{sectionBadges.length - totalEarned - totalInProgress}</p>
-            <p className="text-xs text-white/70">To Start</p>
-          </div>
-        </div>
+
       </div>
 
       <div className="px-4 py-5 space-y-4">
@@ -334,7 +321,6 @@ export default function MobileBadges({ children }) {
           isInProgress={isInProgress}
           getBadgePercentage={getBadgePercentage}
           onBadgeClick={setSelectedBadge}
-          defaultOpen={true}
         />
         <BadgeCategorySection
           title={CATEGORY_CONFIG.activity.label}
@@ -344,7 +330,6 @@ export default function MobileBadges({ children }) {
           isInProgress={isInProgress}
           getBadgePercentage={getBadgePercentage}
           onBadgeClick={setSelectedBadge}
-          defaultOpen={true}
         />
         <BadgeCategorySection
           title={CATEGORY_CONFIG.staged.label}

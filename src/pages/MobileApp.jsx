@@ -23,9 +23,12 @@ const TABS = [
 export default function MobileApp() {
   const [activeTab, setActiveTab] = useState('home');
   const [user, setUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => {});
+    base44.auth.me()
+      .then(u => { setUser(u); setAuthChecked(true); })
+      .catch(() => { setAuthChecked(true); base44.auth.redirectToLogin('/app'); });
   }, []);
 
   const { data: children = [] } = useQuery({
@@ -51,6 +54,27 @@ export default function MobileApp() {
       default: return null;
     }
   };
+
+  // Redirect to onboarding if not complete
+  if (authChecked && user && !user.onboarding_complete) {
+    window.location.replace('/CompleteRegistration');
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-[#7413dc] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Show spinner while checking auth
+  if (!authChecked) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-[#7413dc] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto relative">
