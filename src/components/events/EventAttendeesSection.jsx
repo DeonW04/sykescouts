@@ -48,21 +48,42 @@ export default function EventAttendeesSection({ eventId, event }) {
   });
 
   const addAttendanceMutation = useMutation({
-    mutationFn: (memberIds) => {
-      return Promise.all(
-        memberIds.map(memberId =>
-          base44.entities.EventAttendance.create({
-            event_id: eventId,
-            member_id: memberId,
-            rsvp_status: 'not_responded',
-            consent_given: false,
-            payment_status: event.cost > 0 ? 'pending' : 'not_required',
-          })
-        )
+    mutationFn: async (memberIds) => {
+      // Add EventAttendance records
+      const attendancePromises = memberIds.map(memberId =>
+        base44.entities.EventAttendance.create({
+          event_id: eventId,
+          member_id: memberId,
+          rsvp_status: 'not_responded',
+          consent_given: false,
+          payment_status: event.cost > 0 ? 'pending' : 'not_required',
+        })
       );
+      await Promise.all(attendancePromises);
+      
+      // Create ActionResponse records for any actions required on this event
+      if (actionsRequired.length > 0) {
+        const responsePromises = [];
+        memberIds.forEach(memberId => {
+          actionsRequired.forEach(action => {
+            responsePromises.push(
+              base44.entities.ActionResponse.create({
+                action_required_id: action.id,
+                member_id: memberId,
+                entity_id: eventId,
+                parent_email: '',
+                response: '',
+                status: 'pending',
+              })
+            );
+          });
+        });
+        await Promise.all(responsePromises);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event-attendances'] });
+      queryClient.invalidateQueries({ queryKey: ['action-responses'] });
       toast.success('Members added to event');
       setShowAddDialog(false);
       setSelectedMembers([]);
