@@ -99,7 +99,7 @@ function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMee
             </div>
           )}
           {programme.description && (
-            <p className="text-sm text-gray-600 leading-relaxed mt-3">{programme.description}</p>
+            <p className="text-sm text-gray-600 leading-relaxed mt-3 whitespace-pre-wrap">{programme.description}</p>
           )}
           {programme.activities?.length > 0 && (
             <div className="mt-3 space-y-1.5">
@@ -224,15 +224,36 @@ export default function MobileProgramme({ children }) {
               <div>
                 <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Upcoming</h2>
                 <div className="space-y-3">
-                  {otherUpcoming.map(p => (
-                    <MeetingCard
-                      key={p.id}
-                      programme={p}
-                      isPastMeeting={false}
-                      termMeetingTime={termMeetingTime}
-                      isThisWeeksMeeting={false}
-                    />
-                  ))}
+                  {(() => {
+                    const halfTermStart = currentTerm?.half_term_start ? new Date(currentTerm.half_term_start) : null;
+                    const halfTermEnd = currentTerm?.half_term_end ? new Date(currentTerm.half_term_end) : null;
+                    let halfTermDividerShown = false;
+                    return otherUpcoming.map(p => {
+                      const items = [];
+                      if (!halfTermDividerShown && halfTermStart && halfTermEnd && new Date(p.date) > halfTermEnd) {
+                        halfTermDividerShown = true;
+                        items.push(
+                          <div key="half-term-divider" className="flex items-center gap-3 py-1">
+                            <div className="flex-1 h-px bg-amber-200" />
+                            <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wide bg-amber-50 border border-amber-200 rounded-full px-3 py-1 flex-shrink-0">
+                              🌟 Half Term · {format(halfTermStart, 'd MMM')} – {format(halfTermEnd, 'd MMM')}
+                            </span>
+                            <div className="flex-1 h-px bg-amber-200" />
+                          </div>
+                        );
+                      }
+                      items.push(
+                        <MeetingCard
+                          key={p.id}
+                          programme={p}
+                          isPastMeeting={false}
+                          termMeetingTime={termMeetingTime}
+                          isThisWeeksMeeting={false}
+                        />
+                      );
+                      return items;
+                    });
+                  })()}
                 </div>
               </div>
             )}
