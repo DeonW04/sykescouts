@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Calendar, Tent, ChevronRight, CheckCircle, Clock, MapPin, AlertTriangle } from 'lucide-react';
 import { format, isThisWeek, startOfWeek, endOfWeek } from 'date-fns';
 import ActionRequiredCard from './ActionRequiredCard';
+import VolunteerRequestCard from './VolunteerRequestCard';
 
 export default function MobileHome({ user, children, onTabChange }) {
   const childSectionIds = [...new Set(children.map(c => c.section_id).filter(Boolean))];
@@ -92,7 +93,8 @@ export default function MobileHome({ user, children, onTabChange }) {
     enabled: children.length > 0,
   });
 
-  const { actions: allActions, responses: existingResponses } = actionsData;
+  const { actions: allNonVolunteerActions, responses: existingResponses } = actionsData;
+  const allActions = allNonVolunteerActions.filter(a => a.action_purpose !== 'volunteer');
   // Show action on dashboard if any child has an assignment but no completed response
   const actionsRequired = allActions.filter(action =>
     !children.every(child =>
@@ -125,6 +127,66 @@ export default function MobileHome({ user, children, onTabChange }) {
   // Use display_name if available, otherwise fall back to full_name first name
   const displayName = user?.display_name || user?.full_name?.split(' ')[0] || 'there';
 
+  // Volunteer actions query
+  const { data: volunteerActionsData = [] } = useQuery({
+    queryKey: ['mobile-volunteer-actions', childIds.join(','), childSectionIds.join(',')],
+    queryFn: async () => {
+      if (children.length === 0) return [];
+      const allActionsAll = await base44.entities.ActionRequired.filter({});
+      const volunteerActions = allActionsAll.filter(a => a.action_purpose === 'volunteer' && a.is_open !== false);
+      if (volunteerActions.length === 0) return [];
+
+      // Get sections for meetings, and event attendances for events
+      const [allAttendances, allEvents, allProgrammes, allResponses] = await Promise.all([
+        base44.entities.EventAttendance.filter({}),
+        base44.entities.Event.filter({ published: true }),
+        base44.entities.Programme.filter({ shown_in_portal: true }),
+        base44.entities.ActionResponse.filter({}),
+      ]);
+
+      const myEventIds = [...new Set(allAttendances.filter(a => childIds.includes(a.member_id)).map(a => a.event_id))];
+
+      return volunteerActions.map(action => {
+        // Determine entity info
+        let entityInfo = null;
+        let relevantMemberId = children[0]?.id;
+
+        if (action.event_id) {
+          // Only show if one of my children is invited to this event
+          if (!myEventIds.includes(action.event_id)) return null;
+          const event = allEvents.find(e => e.id === action.event_id);
+          if (event) entityInfo = { type: 'event', name: event.title, date: event.start_date, location: event.location || '', onTabChange: () => {} };
+        } else if (action.programme_id) {
+          const prog = allProgrammes.find(p => p.id === action.programme_id);
+          if (!prog) return null;
+          // Show if any child is in the section
+          if (!childSectionIds.includes(prog.section_id)) return null;
+          entityInfo = { type: 'meeting', name: prog.title, date: prog.date, location: prog.optional_location || '', onTabChange: () => {} };
+        }
+
+        // Get total yes responses
+        const totalYes = allResponses.filter(r => r.action_required_id === action.id && r.response_value === 'Yes, I will volunteer').length;
+
+        // Get this parent's response (by email match)
+        const parentResponse = allResponses.find(r =>
+          r.action_required_id === action.id &&
+          childIds.includes(r.member_id) &&
+          r.parent_email === user?.email
+        );
+
+        return {
+          ...action,
+          _entityInfo: entityInfo,
+          _memberId: relevantMemberId,
+          _parentResponse: parentResponse?.response_value || null,
+          _existingResponseId: parentResponse?.id || null,
+          _totalYes: totalYes,
+        };
+      }).filter(Boolean);
+    },
+    enabled: children.length > 0,
+  });
+
   const isThisWeekMeeting = thisWeekMeeting && isThisWeek(new Date(thisWeekMeeting.date), { weekStartsOn: 1 });
 
   return (
@@ -151,6 +213,13 @@ export default function MobileHome({ user, children, onTabChange }) {
           children={children}
           user={user}
           existingResponses={existingResponses}
+        />
+
+        {/* Volunteer Requests */}
+        <VolunteerRequestCard
+          volunteerActions={volunteerActionsData}
+          user={user}
+          onTabChange={onTabChange}
         />
 
         {/* This Week's Meeting — always shown */}

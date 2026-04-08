@@ -24,7 +24,8 @@
         "attendance",
         "consent",
         "custom_dropdown",
-        "text_input"
+        "text_input",
+        "volunteer"
       ],
       "description": "Purpose of the action"
     },
@@ -34,6 +35,15 @@
         "type": "string"
       },
       "description": "Options for custom dropdown"
+    },
+    "volunteer_limit": {
+      "type": "number",
+      "description": "Max number of volunteers needed (null = no limit)"
+    },
+    "volunteer_no_limit": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, any number of volunteers can sign up"
     },
     "is_open": {
       "type": "boolean",
@@ -49,6 +59,11 @@
       "type": "string",
       "format": "date-time",
       "description": "Timestamp of when the last reminder was sent to parents"
+    },
+    "day_before_reminder_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the day-before volunteer reminder has been sent"
     }
   },
   "required": [

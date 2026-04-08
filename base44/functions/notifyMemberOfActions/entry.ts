@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
 
   // Get open actions for this event
   const allActions = await base44.asServiceRole.entities.ActionRequired.filter({ event_id: eventId });
-  const openActions = allActions.filter(a => a.is_open !== false);
+  const openActions = allActions.filter(a => a.is_open !== false && a.action_purpose !== 'volunteer');
 
   if (openActions.length === 0) {
     return Response.json({ success: true, message: 'No open actions for this event', emailsSent: 0, pushSent: 0 });

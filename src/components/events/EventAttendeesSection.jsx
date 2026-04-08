@@ -269,6 +269,9 @@ export default function EventAttendeesSection({ eventId, event }) {
     if (action.action_purpose === 'consent') {
       return { display: val === 'yes' || val === 'I give consent' ? '✓ Consent' : '✗ No consent', response };
     }
+    if (action.action_purpose === 'volunteer') {
+      return { display: val === 'Yes, I will volunteer' ? '🙋 Yes' : '✗ No', response };
+    }
     return { display: val, response };
   };
 
@@ -396,7 +399,20 @@ export default function EventAttendeesSection({ eventId, event }) {
               <div key={action.id} className="space-y-2">
                 <Label>{action.column_title}</Label>
                 <p className="text-sm text-gray-600">{action.action_text}</p>
-                {action.action_purpose === 'attendance' ? (
+                {action.action_purpose === 'volunteer' ? (
+                  <Select
+                    value={editResponses[action.id] || ''}
+                    onValueChange={(value) => setEditResponses({ ...editResponses, [action.id]: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select response" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Yes, I will volunteer">Yes, I will volunteer</SelectItem>
+                      <SelectItem value="No, not this time">No, not this time</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : action.action_purpose === 'attendance' ? (
                   <Select
                     value={editResponses[action.id] || ''}
                     onValueChange={(value) => setEditResponses({ ...editResponses, [action.id]: value })}

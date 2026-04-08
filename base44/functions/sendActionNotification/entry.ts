@@ -77,14 +77,33 @@ Deno.serve(async (req) => {
     if (events.length > 0) entityName = events[0].title || 'Event';
   }
 
-  // Only notify members who are ASSIGNED to this specific action and haven't responded
-  const assignments = await base44.asServiceRole.entities.ActionAssignment.filter({ action_required_id: actionRequiredId });
-  const assignedMemberIds = assignments.map(a => a.member_id);
-
   const existingResponses = await base44.asServiceRole.entities.ActionResponse.filter({ action_required_id: actionRequiredId });
-  const respondedMemberIds = new Set(existingResponses.filter(r => r.response_value).map(r => r.member_id));
 
-  const outstandingMemberIds = assignedMemberIds.filter(id => !respondedMemberIds.has(id));
+  let outstandingMemberIds = [];
+
+  if (action.action_purpose === 'volunteer') {
+    // For volunteer: notify all relevant members who haven't responded yet
+    // Event = invited members; Meeting = section members
+    if (action.event_id) {
+      const attendances = await base44.asServiceRole.entities.EventAttendance.filter({ event_id: action.event_id });
+      outstandingMemberIds = attendances.map(a => a.member_id);
+    } else if (action.programme_id) {
+      const progs = await base44.asServiceRole.entities.Programme.filter({ id: action.programme_id });
+      if (progs.length > 0 && progs[0].section_id) {
+        const members = await base44.asServiceRole.entities.Member.filter({ section_id: progs[0].section_id, active: true });
+        outstandingMemberIds = members.map(m => m.id);
+      }
+    }
+    // Filter out those who already responded
+    const respondedMemberIds = new Set(existingResponses.filter(r => r.response_value).map(r => r.member_id));
+    outstandingMemberIds = outstandingMemberIds.filter(id => !respondedMemberIds.has(id));
+  } else {
+    // Only notify members who are ASSIGNED and haven't responded
+    const assignments = await base44.asServiceRole.entities.ActionAssignment.filter({ action_required_id: actionRequiredId });
+    const assignedMemberIds = assignments.map(a => a.member_id);
+    const respondedMemberIds = new Set(existingResponses.filter(r => r.response_value).map(r => r.member_id));
+    outstandingMemberIds = assignedMemberIds.filter(id => !respondedMemberIds.has(id));
+  }
 
   const allMembers = await base44.asServiceRole.entities.Member.filter({ active: true });
   const memberMap = Object.fromEntries(allMembers.map(m => [m.id, m]));
@@ -111,7 +130,9 @@ Deno.serve(async (req) => {
       for (const email of emails) {
         if (parentEmailsSent.has(email)) continue;
         parentEmailsSent.add(email);
-        const subject = `Action Required for ${member.full_name}`;
+        const subject = action.action_purpose === 'volunteer'
+          ? `Volunteer Request: ${action.action_text.substring(0, 60)}${entityName ? ' — ' + entityName : ''}`
+          : `Action Required for ${member.full_name}`;
         promises.push(
           base44.asServiceRole.integrations.Core.SendEmail({
             from_name: '40th Rochdale Scouts',

@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, FileText, Trash2, Download, Plus, Lock, Unlock } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, Plus, Lock, Unlock, HandHeart } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import ActionSummaryPanel from '@/components/actions/ActionSummaryPanel';
 
@@ -27,6 +28,8 @@ export default function EventParentPortalSection({ eventId, event }) {
     action_purpose: '',
     dropdown_options: [''],
     deadline: '',
+    volunteer_limit: '',
+    volunteer_no_limit: false,
   });
 
   const documents = event?.documents || [];
@@ -54,6 +57,12 @@ export default function EventParentPortalSection({ eventId, event }) {
         is_open: true,
       };
       if (!actionData.deadline) delete actionData.deadline;
+      if (actionData.action_purpose !== 'volunteer') {
+        delete actionData.volunteer_limit;
+        delete actionData.volunteer_no_limit;
+      } else {
+        actionData.volunteer_limit = actionData.volunteer_no_limit ? null : (parseInt(actionData.volunteer_limit) || null);
+      }
       const action = await base44.entities.ActionRequired.create(actionData);
 
       // Immediately create ActionAssignment for all current attendees
@@ -81,7 +90,7 @@ export default function EventParentPortalSection({ eventId, event }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-required'] });
       setShowActionDialog(false);
-      setActionForm({ action_text: '', column_title: '', action_purpose: '', dropdown_options: [''], deadline: '' });
+      setActionForm({ action_text: '', column_title: '', action_purpose: '', dropdown_options: [''], deadline: '', volunteer_limit: '', volunteer_no_limit: false });
       toast.success('Action required added — notifications sent');
     },
   });
@@ -181,6 +190,7 @@ export default function EventParentPortalSection({ eventId, event }) {
             <SelectItem value="consent">Consent</SelectItem>
             <SelectItem value="custom_dropdown">Custom Dropdown</SelectItem>
             <SelectItem value="text_input">Text Input</SelectItem>
+            <SelectItem value="volunteer">Volunteer Request</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -204,6 +214,29 @@ export default function EventParentPortalSection({ eventId, event }) {
           <Button onClick={handleAddOption} size="sm" variant="outline">
             <Plus className="w-4 h-4 mr-2" />Add Option
           </Button>
+        </div>
+      )}
+      {actionForm.action_purpose === 'volunteer' && (
+        <div className="space-y-3">
+          <Label>Volunteers Needed</Label>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="no-limit"
+              checked={actionForm.volunteer_no_limit}
+              onCheckedChange={(v) => setActionForm({ ...actionForm, volunteer_no_limit: v, volunteer_limit: '' })}
+            />
+            <label htmlFor="no-limit" className="text-sm cursor-pointer">No limit (anyone can volunteer)</label>
+          </div>
+          {!actionForm.volunteer_no_limit && (
+            <Input
+              type="number"
+              min="1"
+              value={actionForm.volunteer_limit}
+              onChange={(e) => setActionForm({ ...actionForm, volunteer_limit: e.target.value })}
+              placeholder="e.g. 3"
+            />
+          )}
+          <p className="text-xs text-gray-500">Once the limit is reached, the request will automatically disappear from parent dashboards.</p>
         </div>
       )}
       <div className="space-y-2">
