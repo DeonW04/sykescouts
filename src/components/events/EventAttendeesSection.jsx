@@ -396,7 +396,7 @@ export default function EventAttendeesSection({ eventId, event }) {
               <div key={action.id} className="space-y-2">
                 <Label>{action.column_title}</Label>
                 <p className="text-sm text-gray-600">{action.action_text}</p>
-                {action.action_purpose === 'attendance' || action.action_purpose === 'consent' ? (
+                {action.action_purpose === 'attendance' ? (
                   <Select
                     value={editResponses[action.id] || ''}
                     onValueChange={(value) => setEditResponses({ ...editResponses, [action.id]: value })}
@@ -405,8 +405,21 @@ export default function EventAttendeesSection({ eventId, event }) {
                       <SelectValue placeholder="Select response" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="yes">Yes</SelectItem>
-                      <SelectItem value="no">No</SelectItem>
+                      <SelectItem value="Yes, attending">Yes, attending</SelectItem>
+                      <SelectItem value="No, not attending">No, not attending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : action.action_purpose === 'consent' ? (
+                  <Select
+                    value={editResponses[action.id] || ''}
+                    onValueChange={(value) => setEditResponses({ ...editResponses, [action.id]: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select response" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="I give consent">I give consent</SelectItem>
+                      <SelectItem value="I do not give consent">I do not give consent</SelectItem>
                     </SelectContent>
                   </Select>
                 ) : action.action_purpose === 'custom_dropdown' ? (

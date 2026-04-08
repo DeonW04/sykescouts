@@ -235,7 +235,7 @@ export default function MobileHome({ user, children, onTabChange }) {
               {upcomingEvents.map(event => {
                 const status = getEventAttendanceStatus(event.id);
                 return (
-                  <div key={event.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3">
+                  <button key={event.id} onClick={() => onTabChange('events')} className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-3 text-left active:bg-gray-50 transition-colors">
                     <div className="bg-purple-100 rounded-xl p-3 flex-shrink-0">
                       <Tent className="w-5 h-5 text-[#7413dc]" />
                     </div>
@@ -258,7 +258,7 @@ export default function MobileHome({ user, children, onTabChange }) {
                      {status && status === 'no_response' && (
                        <span className="text-xs text-orange-500 font-medium flex-shrink-0">No response</span>
                      )}
-                  </div>
+                  </button>
                 );
               })}
             </div>

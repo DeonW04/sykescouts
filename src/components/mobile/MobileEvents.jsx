@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Tent, MapPin, CalendarDays, ChevronRight, Clock } from 'lucide-react';
+import { Tent, MapPin, CalendarDays, ChevronRight, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 
 function EventCard({ event, onClick }) {
@@ -62,9 +63,11 @@ function EventCard({ event, onClick }) {
   );
 }
 
-export default function MobileEvents({ children }) {
+export default function MobileEvents({ children, user }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const queryClient = useQueryClient();
   const childSectionIds = [...new Set(children.map(c => c.section_id).filter(Boolean))];
+  const childIds = children.map(c => c.id);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['mobile-events-full', childSectionIds],
@@ -76,6 +79,47 @@ export default function MobileEvents({ children }) {
     },
     enabled: childSectionIds.length > 0,
   });
+
+  const { data: eventActions = [] } = useQuery({
+    queryKey: ['mobile-event-actions-detail', selectedEvent?.id],
+    queryFn: () => base44.entities.ActionRequired.filter({ event_id: selectedEvent.id }),
+    enabled: !!selectedEvent,
+  });
+
+  const { data: actionResponses = [] } = useQuery({
+    queryKey: ['mobile-event-responses-detail', selectedEvent?.id, childIds.join(',')],
+    queryFn: async () => {
+      const all = await base44.entities.ActionResponse.filter({});
+      const actionIds = eventActions.map(a => a.id);
+      return all.filter(r => actionIds.includes(r.action_required_id) && childIds.includes(r.member_id));
+    },
+    enabled: !!selectedEvent && eventActions.length > 0,
+  });
+
+  const saveResponseMutation = useMutation({
+    mutationFn: async ({ actionId, memberId, value, parentEmail }) => {
+      const existing = actionResponses.find(r => r.action_required_id === actionId && r.member_id === memberId);
+      if (existing) {
+        await base44.entities.ActionResponse.update(existing.id, { response_value: value, responded_at: new Date().toISOString() });
+      } else {
+        await base44.entities.ActionResponse.create({
+          action_required_id: actionId,
+          member_id: memberId,
+          parent_email: parentEmail || '',
+          response_value: value,
+          responded_at: new Date().toISOString(),
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mobile-event-responses-detail', selectedEvent?.id] });
+      toast.success('Response saved!');
+    },
+    onError: () => toast.error('Failed to save response'),
+  });
+
+  const getResponse = (actionId, memberId) =>
+    actionResponses.find(r => r.action_required_id === actionId && r.member_id === memberId);
 
   const now = new Date();
   const upcoming = events.filter(e => new Date(e.start_date) >= now);
@@ -132,6 +176,77 @@ export default function MobileEvents({ children }) {
               <p className="text-sm text-gray-700 leading-relaxed">{selectedEvent.description}</p>
             </div>
           )}
+
+          {/* Action Required responses */}
+          {eventActions.filter(a => a.is_open !== false).map(action => (
+            <div key={action.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+              <p className="text-xs text-gray-400 mb-1 font-medium uppercase tracking-wide">{action.column_title}</p>
+              <p className="text-sm text-gray-700 mb-3">{action.action_text}</p>
+              {children.map(child => {
+                const response = getResponse(action.id, child.id);
+                const currentVal = response?.response_value || '';
+                const getOptions = () => {
+                  if (action.action_purpose === 'attendance') return ['Yes, attending', 'No, not attending'];
+                  if (action.action_purpose === 'consent') return ['I give consent', 'I do not give consent'];
+                  if (action.action_purpose === 'custom_dropdown') return action.dropdown_options || [];
+                  return null;
+                };
+                const options = getOptions();
+                return (
+                  <div key={child.id} className="mb-3 last:mb-0">
+                    {children.length > 1 && <p className="text-xs font-semibold text-gray-500 mb-1">{child.full_name}</p>}
+                    {options ? (
+                      <div className="flex flex-wrap gap-2">
+                        {options.map(opt => (
+                          <button
+                            key={opt}
+                            disabled={saveResponseMutation.isPending}
+                            onClick={() => saveResponseMutation.mutate({
+                              actionId: action.id,
+                              memberId: child.id,
+                              value: opt,
+                              parentEmail: user?.email || '',
+                            })}
+                            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                              currentVal === opt
+                                ? 'bg-[#7413dc] text-white border-[#7413dc]'
+                                : 'bg-white text-gray-700 border-gray-200 active:bg-gray-50'
+                            }`}
+                          >
+                            {currentVal === opt && <span className="mr-1">✓</span>}
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          className="flex-1 border rounded-lg px-3 py-1.5 text-sm"
+                          defaultValue={currentVal}
+                          placeholder="Enter response..."
+                          onBlur={(e) => {
+                            if (e.target.value && e.target.value !== currentVal) {
+                              saveResponseMutation.mutate({
+                                actionId: action.id,
+                                memberId: child.id,
+                                value: e.target.value,
+                                parentEmail: user?.email || '',
+                              });
+                            }
+                          }}
+                        />
+                      </div>
+                    )}
+                    {currentVal && (
+                      <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" /> Response recorded
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
           {(selectedEvent.cost > 0 || selectedEvent.consent_deadline || selectedEvent.payment_deadline) && (
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
               <p className="text-xs text-gray-400 mb-2 font-medium">Key Details</p>
