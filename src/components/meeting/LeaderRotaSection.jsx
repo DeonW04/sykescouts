@@ -297,7 +297,16 @@ export default function LeaderRotaSection({ programmeId, eventId, sectionId }) {
                   r => r.action_required_id === action.id && r.response_value === 'Yes, I will volunteer'
                 );
                 const volunteers = yesResponses
-                  .map(r => allMembers.find(m => m.id === r.member_id))
+                  .map(r => {
+                    const member = allMembers.find(m => m.id === r.member_id);
+                    if (!member) return null;
+                    // Use the email from the response to determine which parent responded
+                    const responderEmail = r.parent_email;
+                    const isParentTwo = responderEmail && responderEmail === member.parent_two_email;
+                    const parentName = isParentTwo ? (member.parent_two_name || member.parent_one_name) : (member.parent_one_name || member.full_name);
+                    const parentEmail = isParentTwo ? member.parent_two_email : (member.parent_one_email || responderEmail);
+                    return { member, parentName, parentEmail };
+                  })
                   .filter(Boolean);
                 const limit = action.volunteer_limit;
                 const isFull = !action.volunteer_no_limit && limit && yesResponses.length >= limit;
@@ -345,14 +354,14 @@ export default function LeaderRotaSection({ programmeId, eventId, sectionId }) {
                       {volunteers.length === 0 ? (
                         <p className="text-sm text-gray-400 px-3 py-2.5 italic">No volunteers yet</p>
                       ) : (
-                        volunteers.map(member => (
+                        volunteers.map(({ member, parentName, parentEmail }) => (
                           <div key={member.id} className="flex items-center gap-2.5 px-3 py-2.5">
                             <div className="w-7 h-7 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                              {(member.parent_one_name || member.full_name).charAt(0)}
+                              {parentName.charAt(0)}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-gray-800">{member.parent_one_name || member.full_name}'s parent</p>
-                              <p className="text-xs text-gray-500 truncate">{member.parent_one_email}</p>
+                              <p className="text-sm font-medium text-gray-800">{parentName}'s parent</p>
+                              <p className="text-xs text-gray-500 truncate">{parentEmail}</p>
                             </div>
                           </div>
                         ))
