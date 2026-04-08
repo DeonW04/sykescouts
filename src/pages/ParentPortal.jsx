@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Users, UserCheck, UserX, AlertTriangle, Mail, CheckCircle, RefreshCw, X } from 'lucide-react';
+import { Users, UserCheck, UserX, AlertTriangle, Mail, CheckCircle, RefreshCw, X, Bell, BellOff, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -86,6 +86,33 @@ export default function ParentPortal() {
     queryKey: ['parent-registration-cache'],
     queryFn: () => base44.entities.ParentRegistrationCache.filter({}),
   });
+
+  const { data: pushSubscriptions = [] } = useQuery({
+    queryKey: ['push-subscriptions'],
+    queryFn: () => base44.entities.PushSubscription.list(),
+  });
+
+  const [testingPush, setTestingPush] = useState(null);
+
+  const hasPushSubscription = (email) => {
+    if (!email) return false;
+    return pushSubscriptions.some(s => s.user_email?.toLowerCase() === email.toLowerCase());
+  };
+
+  const handleTestPush = async (email) => {
+    setTestingPush(email);
+    try {
+      const sub = pushSubscriptions.find(s => s.user_email?.toLowerCase() === email.toLowerCase());
+      if (!sub) { toast.error('No push subscription found for this account'); return; }
+      const res = await base44.functions.invoke('sendTestPush', { subscriptionId: sub.id });
+      if (res.data?.sent > 0) toast.success('Test notification sent!');
+      else toast.error('Failed to send: ' + (res.data?.results?.[0]?.reason || 'Unknown error'));
+    } catch (err) {
+      toast.error('Error: ' + err.message);
+    } finally {
+      setTestingPush(null);
+    }
+  };
 
   // Check if parent is registered from cache
   const isParentRegistered = (email) => {
@@ -264,6 +291,28 @@ export default function ParentPortal() {
                               )}
                             </div>
                             <p className="text-xs text-gray-500">{member.parent_one_email}</p>
+                            <div className="flex items-center gap-1">
+                             {hasPushSubscription(member.parent_one_email) ? (
+                               <Badge className="bg-green-100 text-green-700 text-xs">
+                                 <Bell className="w-3 h-3 mr-1" />Push On
+                               </Badge>
+                             ) : (
+                               <Badge className="bg-gray-100 text-gray-500 text-xs">
+                                 <BellOff className="w-3 h-3 mr-1" />No Push
+                               </Badge>
+                             )}
+                             {hasPushSubscription(member.parent_one_email) && (
+                               <Button
+                                 size="sm" variant="ghost"
+                                 className="h-6 px-2 text-xs text-purple-600"
+                                 disabled={testingPush === member.parent_one_email}
+                                 onClick={() => handleTestPush(member.parent_one_email)}
+                               >
+                                 <Send className="w-3 h-3 mr-1" />
+                                 {testingPush === member.parent_one_email ? '...' : 'Test'}
+                               </Button>
+                             )}
+                            </div>
                             {!parent1Registered && (
                               <Button
                                 size="sm"
@@ -305,6 +354,28 @@ export default function ParentPortal() {
                               )}
                             </div>
                             <p className="text-xs text-gray-500">{member.parent_two_email}</p>
+                            <div className="flex items-center gap-1">
+                             {hasPushSubscription(member.parent_two_email) ? (
+                               <Badge className="bg-green-100 text-green-700 text-xs">
+                                 <Bell className="w-3 h-3 mr-1" />Push On
+                               </Badge>
+                             ) : (
+                               <Badge className="bg-gray-100 text-gray-500 text-xs">
+                                 <BellOff className="w-3 h-3 mr-1" />No Push
+                               </Badge>
+                             )}
+                             {hasPushSubscription(member.parent_two_email) && (
+                               <Button
+                                 size="sm" variant="ghost"
+                                 className="h-6 px-2 text-xs text-purple-600"
+                                 disabled={testingPush === member.parent_two_email}
+                                 onClick={() => handleTestPush(member.parent_two_email)}
+                               >
+                                 <Send className="w-3 h-3 mr-1" />
+                                 {testingPush === member.parent_two_email ? '...' : 'Test'}
+                               </Button>
+                             )}
+                            </div>
                             {!parent2Registered && (
                               <Button
                                 size="sm"

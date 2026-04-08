@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { actionRequiredId, entityType, sendEmail = true, sendPush = false } = await req.json();
+  const { actionRequiredId, entityType, sendEmail = true, sendPush = true } = await req.json();
 
   webpush.setVapidDetails(
     Deno.env.get('VAPID_SUBJECT'),
@@ -64,7 +64,6 @@ Deno.serve(async (req) => {
   if (actions.length === 0) return Response.json({ error: 'Action not found' }, { status: 404 });
   const action = actions[0];
 
-  // Update reminder_sent_at
   await base44.asServiceRole.entities.ActionRequired.update(actionRequiredId, {
     reminder_sent_at: new Date().toISOString(),
   });
@@ -78,15 +77,13 @@ Deno.serve(async (req) => {
     if (events.length > 0) entityName = events[0].title || 'Event';
   }
 
-  // Get assignments for this action (only members who haven't responded)
+  // Only notify members who are ASSIGNED to this specific action and haven't responded
   const assignments = await base44.asServiceRole.entities.ActionAssignment.filter({ action_required_id: actionRequiredId });
   const assignedMemberIds = assignments.map(a => a.member_id);
 
-  // Get existing responses with non-empty response_value
   const existingResponses = await base44.asServiceRole.entities.ActionResponse.filter({ action_required_id: actionRequiredId });
   const respondedMemberIds = new Set(existingResponses.filter(r => r.response_value).map(r => r.member_id));
 
-  // Outstanding members = assigned but not responded
   const outstandingMemberIds = assignedMemberIds.filter(id => !respondedMemberIds.has(id));
 
   const allMembers = await base44.asServiceRole.entities.Member.filter({ active: true });
@@ -95,6 +92,16 @@ Deno.serve(async (req) => {
   const dashboardLink = `${req.headers.get('origin') || 'https://your-app.base44.io'}/app`;
   const promises = [];
   const parentEmailsSent = new Set();
+  const now = new Date().toISOString();
+
+  // Collect all parent emails for push matching
+  const parentEmailsForPush = new Set();
+  for (const memberId of outstandingMemberIds) {
+    const member = memberMap[memberId];
+    if (!member) continue;
+    if (member.parent_one_email) parentEmailsForPush.add(member.parent_one_email.toLowerCase());
+    if (member.parent_two_email) parentEmailsForPush.add(member.parent_two_email.toLowerCase());
+  }
 
   if (sendEmail) {
     for (const memberId of outstandingMemberIds) {
@@ -104,35 +111,65 @@ Deno.serve(async (req) => {
       for (const email of emails) {
         if (parentEmailsSent.has(email)) continue;
         parentEmailsSent.add(email);
+        const subject = `Action Required for ${member.full_name}`;
         promises.push(
           base44.asServiceRole.integrations.Core.SendEmail({
             from_name: '40th Rochdale Scouts',
             to: email,
-            subject: `Action Required for ${member.full_name}`,
+            subject,
             body: createEmailTemplate(member.full_name, action.action_text, entityName, dashboardLink),
-          }).catch(err => console.error(`Email failed for ${email}:`, err))
+          })
+          .then(() => base44.asServiceRole.entities.NotificationLog.create({
+            recipient_name: email === member.parent_one_email ? (member.parent_one_name || '') : (member.parent_two_name || ''),
+            recipient_email: email,
+            notification_type: 'email',
+            subject,
+            action_required_id: actionRequiredId,
+            entity_type: entityType,
+            entity_name: entityName,
+            member_name: member.full_name,
+            sent_at: now,
+          }))
+          .catch(err => console.error(`Email failed for ${email}:`, err))
         );
       }
     }
   }
 
   let pushSent = 0;
-  let pushFailed = 0;
   if (sendPush) {
+    // Only send push to subscribers whose email matches a parent of an outstanding member
     const allSubs = await base44.asServiceRole.entities.PushSubscription.filter({});
+    const targetSubs = allSubs.filter(s => s.user_email && parentEmailsForPush.has(s.user_email.toLowerCase()));
+
     const payload = JSON.stringify({
       title: 'Action Required',
       body: action.action_text + (entityName ? ` — ${entityName}` : ''),
       url: '/app',
     });
-    for (const sub of allSubs) {
+
+    for (const sub of targetSubs) {
       if (!sub.subscription?.endpoint) continue;
+      const pushSubscription = {
+        endpoint: sub.subscription.endpoint,
+        keys: { p256dh: sub.subscription.keys.p256dh, auth: sub.subscription.keys.auth },
+      };
       try {
-        await webpush.sendNotification(sub.subscription, payload);
+        await webpush.sendNotification(pushSubscription, payload);
         pushSent++;
+        await base44.asServiceRole.entities.NotificationLog.create({
+          recipient_name: sub.user_email,
+          recipient_email: sub.user_email,
+          notification_type: 'push',
+          subject: 'Action Required: ' + action.action_text.substring(0, 60),
+          action_required_id: actionRequiredId,
+          entity_type: entityType,
+          entity_name: entityName,
+          member_name: '',
+          sent_at: now,
+        }).catch(() => {});
       } catch (err) {
-        pushFailed++;
-        if (err.statusCode === 410 || err.statusCode === 403) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
           await base44.asServiceRole.entities.PushSubscription.delete(sub.id).catch(() => {});
         }
       }
@@ -141,5 +178,5 @@ Deno.serve(async (req) => {
 
   await Promise.all(promises);
 
-  return Response.json({ success: true, emailsSent: parentEmailsSent.size, pushSent, pushFailed });
+  return Response.json({ success: true, emailsSent: parentEmailsSent.size, pushSent });
 });

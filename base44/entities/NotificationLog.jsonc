@@ -1,0 +1,53 @@
+{
+  "name": "NotificationLog",
+  "type": "object",
+  "properties": {
+    "recipient_name": {
+      "type": "string",
+      "description": "Name of the person notified (parent or member name)"
+    },
+    "recipient_email": {
+      "type": "string",
+      "description": "Email address of the recipient"
+    },
+    "notification_type": {
+      "type": "string",
+      "enum": [
+        "email",
+        "push",
+        "both"
+      ],
+      "description": "Type of notification sent"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Notification subject/title"
+    },
+    "action_required_id": {
+      "type": "string",
+      "description": "Related ActionRequired ID"
+    },
+    "entity_type": {
+      "type": "string",
+      "description": "event or programme"
+    },
+    "entity_name": {
+      "type": "string",
+      "description": "Name of the related event or meeting"
+    },
+    "member_name": {
+      "type": "string",
+      "description": "Name of the child member this is for"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the notification was sent"
+    }
+  },
+  "required": [
+    "recipient_email",
+    "notification_type",
+    "sent_at"
+  ]
+}

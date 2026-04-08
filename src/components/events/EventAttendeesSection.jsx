@@ -92,6 +92,17 @@ export default function EventAttendeesSection({ eventId, event }) {
           )
         );
       }
+
+      // 3. Notify each newly added member's parents about open actions
+      if (openActions.length > 0) {
+        await Promise.all(
+          memberIds.map(memberId =>
+            base44.functions.invoke('notifyMemberOfActions', { memberId, eventId }).catch(err =>
+              console.error('Notification failed for member', memberId, err)
+            )
+          )
+        );
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event-attendances'] });

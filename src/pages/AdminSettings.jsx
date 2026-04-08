@@ -20,6 +20,7 @@ import ReceiptManagement from '../components/admin/ReceiptManagement';
 import BulkBadgeUpdate from '../components/badges/BulkBadgeUpdate';
 import UniformPositionEditor from '../components/uniform/UniformPositionEditor';
 import PushNotificationsTab from '../components/admin/PushNotificationsTab';
+import NotificationLogTab from '../components/admin/NotificationLogTab';
 
 export default function AdminSettings() {
   const navigate = useNavigate();
@@ -363,6 +364,7 @@ export default function AdminSettings() {
             <TabsTrigger value="receipts">Receipts</TabsTrigger>
             <TabsTrigger value="export">Data</TabsTrigger>
             <TabsTrigger value="push">Push Notifications</TabsTrigger>
+            <TabsTrigger value="notif-log">Notification Log</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -756,6 +758,10 @@ export default function AdminSettings() {
 
           <TabsContent value="push">
             <PushNotificationsTab />
+          </TabsContent>
+
+          <TabsContent value="notif-log">
+            <NotificationLogTab />
           </TabsContent>
 
           <TabsContent value="export">
