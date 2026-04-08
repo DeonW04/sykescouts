@@ -415,52 +415,34 @@ export default function ParentEventDetail() {
             </div>
           )}
 
-          {/* Responded Actions - show current responses with edit option */}
+          {/* Responded Actions - compact inline green pills */}
           {resolvedActions.length > 0 && (
-            <div className="mb-6 p-6 bg-gradient-to-br from-green-50 via-emerald-50 to-green-50 border-2 border-green-200 rounded-2xl shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/20 to-transparent rounded-full blur-2xl" />
-              <div className="relative">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Responses Submitted</h2>
-                    <p className="text-gray-600">Your responses to the following requests</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {resolvedActions.map(action => (
-                    <div key={action.id} className="bg-white/80 backdrop-blur rounded-xl p-5 border border-green-200 shadow-sm">
-                      <p className="font-semibold text-gray-900 mb-3">{action.action_text}</p>
-                      {myChildrenInEvent.map(child => {
-                        const existingResponse = getChildResponse(action.id, child.id);
-                        if (!existingResponse) return null;
-                        return (
-                          <div key={child.id} className="flex items-center justify-between py-2 border-t border-green-100 first:border-t-0 first:pt-0">
-                            <div>
-                              <p className="text-sm text-gray-500">{child.full_name}</p>
-                              <p className="font-medium text-green-800 mt-0.5">
-                                {formatResponseDisplay(action, existingResponse.response)}
-                              </p>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openEditDialog(action, child)}
-                              className="border-green-300 text-green-700 hover:bg-green-50 gap-1.5"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                              Edit
-                            </Button>
-                          </div>
-                        );
-                      })}
+            <div className="mb-4 flex flex-wrap gap-2">
+              {resolvedActions.map(action => (
+                myChildrenInEvent.map(child => {
+                  const existingResponse = getChildResponse(action.id, child.id);
+                  if (!existingResponse) return null;
+                  return (
+                    <div key={`${action.id}-${child.id}`} className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                      <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500 leading-none">{action.column_title}{myChildrenInEvent.length > 1 ? ` · ${child.full_name}` : ''}</p>
+                        <p className="text-sm font-semibold text-green-800 leading-tight mt-0.5">
+                          {formatResponseDisplay(action, existingResponse.response)}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => openEditDialog(action, child)}
+                        className="h-7 px-2 text-green-600 hover:bg-green-100 flex-shrink-0"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
-                  ))}
-                </div>
-              </div>
+                  );
+                })
+              ))}
             </div>
           )}
 

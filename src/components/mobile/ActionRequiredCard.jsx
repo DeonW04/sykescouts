@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Bell, CheckCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Bell, CheckCircle, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
 function ActionItem({ action, children, user, existingResponses }) {
   const queryClient = useQueryClient();
-  const [expanded, setExpanded] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [localResponses, setLocalResponses] = useState({});
+  const [editing, setEditing] = useState(false);
 
-  // Check if a child has a completed response (non-empty response_value)
   const getExistingResponse = (childId) =>
     existingResponses.find(r =>
       r.action_required_id === action.id &&
@@ -18,7 +16,7 @@ function ActionItem({ action, children, user, existingResponses }) {
       r.response_value
     );
 
-  const allAnswered = children.every(c => getExistingResponse(c.id) || localResponses[c.id]);
+  const allAnswered = children.every(c => getExistingResponse(c.id));
 
   const handleSubmit = async (child, response_value) => {
     setSubmitting(true);
@@ -38,9 +36,9 @@ function ActionItem({ action, children, user, existingResponses }) {
           responded_at: new Date().toISOString(),
         });
       }
-      setLocalResponses(prev => ({ ...prev, [child.id]: response_value }));
       queryClient.invalidateQueries({ queryKey: ['mobile-actions'] });
       toast.success('Response saved!');
+      setEditing(false);
     } catch (err) {
       toast.error('Failed to save: ' + err.message);
     } finally {
@@ -57,31 +55,62 @@ function ActionItem({ action, children, user, existingResponses }) {
 
   const options = getOptions();
 
-  return (
-    <div className={`bg-white rounded-2xl overflow-hidden border transition-all ${allAnswered ? 'border-green-200' : 'border-orange-100'}`}>
-      <button
-        className="w-full flex items-start gap-3 p-4 text-left"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${allAnswered ? 'bg-green-100' : 'bg-orange-100'}`}>
-          {allAnswered
-            ? <CheckCircle className="w-4 h-4 text-green-600" />
-            : <Bell className="w-4 h-4 text-orange-500" />
-          }
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm text-gray-900 leading-snug">{action.action_text}</p>
-          {allAnswered && <p className="text-xs text-green-600 mt-0.5 font-medium">All responded ✓</p>}
-        </div>
-        {expanded ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" /> : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />}
-      </button>
+  const formatResponse = (val) => {
+    if (!val) return val;
+    if (val === 'Yes, attending') return '✓ Attending';
+    if (val === 'No, not attending') return '✗ Not attending';
+    if (val === 'I give consent') return '✓ Consent given';
+    if (val === 'I do not consent') return '✗ No consent';
+    return val;
+  };
 
-      {expanded && (
-        <div className="px-4 pb-4 space-y-4 border-t border-gray-50 pt-3">
+  // If all answered and not in edit mode, show compact "responded" state
+  if (allAnswered && !editing) {
+    return (
+      <div className="bg-white rounded-2xl border border-green-200 p-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-gray-800 leading-snug truncate">{action.action_text}</p>
+            {children.map(child => {
+              const r = getExistingResponse(child.id);
+              return (
+                <p key={child.id} className="text-xs text-green-700 font-medium">
+                  {children.length > 1 ? `${child.full_name || child.first_name}: ` : ''}{formatResponse(r?.response_value)}
+                </p>
+              );
+            })}
+          </div>
+        </div>
+        <button
+          onClick={() => setEditing(true)}
+          className="flex items-center gap-1 text-xs text-gray-500 border border-gray-200 rounded-lg px-2 py-1 hover:bg-gray-50 flex-shrink-0"
+        >
+          <Pencil className="w-3 h-3" />
+          Edit
+        </button>
+      </div>
+    );
+  }
+
+  // Unanswered (or editing) — show full form
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden border border-orange-100">
+      <div className="p-4">
+        <div className="flex items-start gap-2 mb-3">
+          <Bell className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm text-gray-900 leading-snug">{action.action_text}</p>
+            {editing && <p className="text-xs text-gray-400 mt-0.5">Updating your response</p>}
+          </div>
+          {editing && (
+            <button onClick={() => setEditing(false)} className="text-xs text-gray-400 flex-shrink-0">Cancel</button>
+          )}
+        </div>
+        <div className="space-y-3">
           {children.map(child => {
             const existing = getExistingResponse(child.id);
-            const currentResponse = localResponses[child.id] || existing?.response_value;
-
+            const currentVal = existing?.response_value || '';
             return (
               <div key={child.id}>
                 {children.length > 1 && (
@@ -90,7 +119,7 @@ function ActionItem({ action, children, user, existingResponses }) {
                 {options ? (
                   <div className="flex flex-wrap gap-2">
                     {options.map(opt => {
-                      const selected = currentResponse === opt;
+                      const selected = currentVal === opt;
                       return (
                         <button
                           key={opt}
@@ -109,7 +138,7 @@ function ActionItem({ action, children, user, existingResponses }) {
                   </div>
                 ) : (
                   <TextResponseInput
-                    currentResponse={currentResponse}
+                    currentResponse={currentVal}
                     onSubmit={(val) => handleSubmit(child, val)}
                     submitting={submitting}
                   />
@@ -118,7 +147,7 @@ function ActionItem({ action, children, user, existingResponses }) {
             );
           })}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -145,10 +174,8 @@ function TextResponseInput({ currentResponse, onSubmit, submitting }) {
 }
 
 export default function ActionRequiredCard({ actionsRequired, children, user, existingResponses }) {
-  if (actionsRequired.length === 0) return null;
-
-  // An action is pending if any child has no completed response for it
-  const pendingCount = actionsRequired.filter(action =>
+  // Only show actions that have at least one unanswered child
+  const pendingActions = actionsRequired.filter(action =>
     !children.every(child =>
       existingResponses.some(r =>
         r.action_required_id === action.id &&
@@ -156,21 +183,21 @@ export default function ActionRequiredCard({ actionsRequired, children, user, ex
         r.response_value
       )
     )
-  ).length;
+  );
+
+  if (pendingActions.length === 0) return null;
 
   return (
     <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4">
       <div className="flex items-center gap-2 mb-3">
         <Bell className="w-4 h-4 text-orange-600" />
         <h2 className="font-bold text-orange-900 text-sm">Action Required</h2>
-        {pendingCount > 0 && (
-          <span className="ml-auto bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-            {pendingCount}
-          </span>
-        )}
+        <span className="ml-auto bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+          {pendingActions.length}
+        </span>
       </div>
       <div className="space-y-3">
-        {actionsRequired.map(action => (
+        {pendingActions.map(action => (
           <ActionItem
             key={action.id}
             action={action}

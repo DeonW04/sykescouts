@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Tent, MapPin, CalendarDays, ChevronRight, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Tent, MapPin, CalendarDays, ChevronRight, Clock, CheckCircle, XCircle, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -60,6 +60,121 @@ function EventCard({ event, onClick }) {
         <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0 mt-1" />
       </div>
     </button>
+  );
+}
+
+function ActionCard({ action, children, user, getResponse, saveResponseMutation }) {
+  const [editing, setEditing] = useState(false);
+  const [textVal, setTextVal] = useState('');
+
+  const getOptions = () => {
+    if (action.action_purpose === 'attendance') return ['Yes, attending', 'No, not attending'];
+    if (action.action_purpose === 'consent') return ['I give consent', 'I do not give consent'];
+    if (action.action_purpose === 'volunteer') return ['Yes, I will volunteer', 'No, not this time'];
+    if (action.action_purpose === 'custom_dropdown') return action.dropdown_options || [];
+    return null;
+  };
+
+  const formatResponse = (val) => {
+    if (!val) return val;
+    if (val === 'Yes, attending' || val === 'Yes, I will volunteer') return '✓ ' + val;
+    if (val === 'No, not attending' || val === 'No, not this time' || val === 'I do not give consent') return '✗ ' + val;
+    if (val === 'I give consent') return '✓ ' + val;
+    return val;
+  };
+
+  const allAnswered = children.every(c => getResponse(action.id, c.id)?.response_value);
+  const options = getOptions();
+
+  if (allAnswered && !editing) {
+    return (
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-200">
+        <p className="text-xs text-gray-400 mb-1 font-medium uppercase tracking-wide">{action.column_title}</p>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            {children.map(child => {
+              const r = getResponse(action.id, child.id);
+              return (
+                <div key={child.id}>
+                  {children.length > 1 && <p className="text-xs text-gray-500 font-semibold">{child.full_name}</p>}
+                  <p className="text-sm font-medium text-green-700">{formatResponse(r?.response_value)}</p>
+                </div>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => setEditing(true)}
+            className="flex items-center gap-1 text-xs text-gray-500 border border-gray-200 rounded-lg px-2 py-1.5 hover:bg-gray-50 flex-shrink-0"
+          >
+            <Pencil className="w-3 h-3" />
+            Edit
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">{action.column_title}</p>
+        {editing && <button onClick={() => setEditing(false)} className="text-xs text-gray-400">Cancel</button>}
+      </div>
+      <p className="text-sm text-gray-700 mb-3">{action.action_text}</p>
+      {children.map(child => {
+        const response = getResponse(action.id, child.id);
+        const currentVal = response?.response_value || '';
+        return (
+          <div key={child.id} className="mb-3 last:mb-0">
+            {children.length > 1 && <p className="text-xs font-semibold text-gray-500 mb-1">{child.full_name}</p>}
+            {options ? (
+              <div className="flex flex-wrap gap-2">
+                {options.map(opt => (
+                  <button
+                    key={opt}
+                    disabled={saveResponseMutation.isPending}
+                    onClick={() => {
+                      saveResponseMutation.mutate({ actionId: action.id, memberId: child.id, value: opt, parentEmail: user?.email || '' });
+                      setEditing(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                      currentVal === opt
+                        ? 'bg-[#7413dc] text-white border-[#7413dc]'
+                        : 'bg-white text-gray-700 border-gray-200 active:bg-gray-50'
+                    }`}
+                  >
+                    {currentVal === opt && <span className="mr-1">✓</span>}
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 border rounded-lg px-3 py-1.5 text-sm"
+                  value={textVal || currentVal}
+                  onChange={e => setTextVal(e.target.value)}
+                  placeholder="Enter response..."
+                />
+                <button
+                  disabled={saveResponseMutation.isPending || !textVal.trim()}
+                  onClick={() => {
+                    if (textVal.trim()) {
+                      saveResponseMutation.mutate({ actionId: action.id, memberId: child.id, value: textVal.trim(), parentEmail: user?.email || '' });
+                      setTextVal('');
+                      setEditing(false);
+                    }
+                  }}
+                  className="px-3 py-1.5 bg-[#7413dc] text-white rounded-lg text-sm font-medium disabled:opacity-40"
+                >
+                  Save
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -179,73 +294,14 @@ export default function MobileEvents({ children, user }) {
 
           {/* Action Required responses */}
           {eventActions.filter(a => a.is_open !== false).map(action => (
-            <div key={action.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-              <p className="text-xs text-gray-400 mb-1 font-medium uppercase tracking-wide">{action.column_title}</p>
-              <p className="text-sm text-gray-700 mb-3">{action.action_text}</p>
-              {children.map(child => {
-                const response = getResponse(action.id, child.id);
-                const currentVal = response?.response_value || '';
-                const getOptions = () => {
-                  if (action.action_purpose === 'attendance') return ['Yes, attending', 'No, not attending'];
-                  if (action.action_purpose === 'consent') return ['I give consent', 'I do not give consent'];
-                  if (action.action_purpose === 'custom_dropdown') return action.dropdown_options || [];
-                  return null;
-                };
-                const options = getOptions();
-                return (
-                  <div key={child.id} className="mb-3 last:mb-0">
-                    {children.length > 1 && <p className="text-xs font-semibold text-gray-500 mb-1">{child.full_name}</p>}
-                    {options ? (
-                      <div className="flex flex-wrap gap-2">
-                        {options.map(opt => (
-                          <button
-                            key={opt}
-                            disabled={saveResponseMutation.isPending}
-                            onClick={() => saveResponseMutation.mutate({
-                              actionId: action.id,
-                              memberId: child.id,
-                              value: opt,
-                              parentEmail: user?.email || '',
-                            })}
-                            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                              currentVal === opt
-                                ? 'bg-[#7413dc] text-white border-[#7413dc]'
-                                : 'bg-white text-gray-700 border-gray-200 active:bg-gray-50'
-                            }`}
-                          >
-                            {currentVal === opt && <span className="mr-1">✓</span>}
-                            {opt}
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <input
-                          className="flex-1 border rounded-lg px-3 py-1.5 text-sm"
-                          defaultValue={currentVal}
-                          placeholder="Enter response..."
-                          onBlur={(e) => {
-                            if (e.target.value && e.target.value !== currentVal) {
-                              saveResponseMutation.mutate({
-                                actionId: action.id,
-                                memberId: child.id,
-                                value: e.target.value,
-                                parentEmail: user?.email || '',
-                              });
-                            }
-                          }}
-                        />
-                      </div>
-                    )}
-                    {currentVal && (
-                      <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" /> Response recorded
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <ActionCard
+              key={action.id}
+              action={action}
+              children={children}
+              user={user}
+              getResponse={getResponse}
+              saveResponseMutation={saveResponseMutation}
+            />
           ))}
           {(selectedEvent.cost > 0 || selectedEvent.consent_deadline || selectedEvent.payment_deadline) && (
             <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
