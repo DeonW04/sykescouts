@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UserPlus, Users, Search, Pencil, Mail, Copy } from 'lucide-react';
+import { UserPlus, Users, Search, Pencil, Mail } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -37,20 +37,31 @@ export default function EventAttendeesSection({ eventId, event }) {
     queryFn: () => base44.entities.Section.list(),
   });
 
-  const { data: actionResponses = [] } = useQuery({
-    queryKey: ['action-responses', eventId],
-    queryFn: () => base44.entities.ActionResponse.filter({ entity_id: eventId }),
-  });
-
   const { data: actionsRequired = [] } = useQuery({
     queryKey: ['action-required', eventId],
     queryFn: () => base44.entities.ActionRequired.filter({ event_id: eventId }),
   });
 
+  const { data: actionResponses = [] } = useQuery({
+    queryKey: ['action-responses', eventId],
+    queryFn: async () => {
+      if (actionsRequired.length === 0) return [];
+      const allResponses = await base44.entities.ActionResponse.filter({});
+      const actionIds = actionsRequired.map(a => a.id);
+      return allResponses.filter(r => actionIds.includes(r.action_required_id));
+    },
+    enabled: actionsRequired.length > 0,
+  });
+
+  const { data: leaders = [] } = useQuery({
+    queryKey: ['leaders'],
+    queryFn: () => base44.entities.Leader.list(),
+  });
+
   const addAttendanceMutation = useMutation({
     mutationFn: async (memberIds) => {
-      // Add EventAttendance records
-      const attendancePromises = memberIds.map(memberId =>
+      // 1. Create EventAttendance records
+      await Promise.all(memberIds.map(memberId =>
         base44.entities.EventAttendance.create({
           event_id: eventId,
           member_id: memberId,
@@ -58,27 +69,28 @@ export default function EventAttendeesSection({ eventId, event }) {
           consent_given: false,
           payment_status: event.cost > 0 ? 'pending' : 'not_required',
         })
-      );
-      await Promise.all(attendancePromises);
-      
-      // Create ActionResponse records for any actions required on this event
-      if (actionsRequired.length > 0) {
-        const responsePromises = [];
-        memberIds.forEach(memberId => {
-          actionsRequired.forEach(action => {
-            responsePromises.push(
-              base44.entities.ActionResponse.create({
-                action_required_id: action.id,
-                member_id: memberId,
-                entity_id: eventId,
-                parent_email: '',
-                response: '',
-                status: 'pending',
-              })
-            );
-          });
-        });
-        await Promise.all(responsePromises);
+      ));
+
+      // 2. Create ActionAssignment records for all open actions on this event
+      const openActions = actionsRequired.filter(a => a.is_open !== false);
+      if (openActions.length > 0) {
+        const now = new Date().toISOString();
+        const existingAssignments = await base44.entities.ActionAssignment.filter({});
+        await Promise.all(
+          memberIds.flatMap(memberId =>
+            openActions
+              .filter(action => !existingAssignments.some(
+                ea => ea.action_required_id === action.id && ea.member_id === memberId
+              ))
+              .map(action =>
+                base44.entities.ActionAssignment.create({
+                  action_required_id: action.id,
+                  member_id: memberId,
+                  assigned_at: now,
+                })
+              )
+          )
+        );
       }
     },
     onSuccess: () => {
@@ -91,31 +103,80 @@ export default function EventAttendeesSection({ eventId, event }) {
   });
 
   const removeAttendanceMutation = useMutation({
-    mutationFn: (attendanceId) => base44.entities.EventAttendance.delete(attendanceId),
+    mutationFn: async (attendance) => {
+      // Delete EventAttendance
+      await base44.entities.EventAttendance.delete(attendance.id);
+      // Delete ActionAssignment records for this member + event's actions
+      const assignments = await base44.entities.ActionAssignment.filter({});
+      const actionIds = actionsRequired.map(a => a.id);
+      const toDelete = assignments.filter(
+        a => a.member_id === attendance.member_id && actionIds.includes(a.action_required_id)
+      );
+      // Also delete ActionResponse records
+      const toDeleteResponses = actionResponses.filter(
+        r => r.member_id === attendance.member_id && actionIds.includes(r.action_required_id)
+      );
+      await Promise.all([
+        ...toDelete.map(a => base44.entities.ActionAssignment.delete(a.id)),
+        ...toDeleteResponses.map(r => base44.entities.ActionResponse.delete(r.id)),
+      ]);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['event-attendances'] });
+      queryClient.invalidateQueries({ queryKey: ['action-responses'] });
       toast.success('Member removed from event');
     },
   });
 
-  const updateResponseMutation = useMutation({
-    mutationFn: ({ responseId, value }) =>
-      base44.entities.ActionResponse.update(responseId, {
-        response: value,
-        // Always mark as completed when a leader manually sets a value —
-        // this hides the action from the parent portal pending list
-        status: 'completed',
-        responded_at: new Date().toISOString(),
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['action-responses'] });
-    },
-  });
+  const saveResponsesMutation = useMutation({
+    mutationFn: async () => {
+      const now = new Date().toISOString();
+      const existingAssignments = await base44.entities.ActionAssignment.filter({});
 
-  const createResponseMutation = useMutation({
-    mutationFn: (data) => base44.entities.ActionResponse.create(data),
+      await Promise.all(
+        actionsRequired.map(async (action) => {
+          const newValue = editResponses[action.id];
+          if (!newValue) return;
+
+          // Ensure assignment exists
+          const hasAssignment = existingAssignments.some(
+            a => a.action_required_id === action.id && a.member_id === editingMember.id
+          );
+          if (!hasAssignment) {
+            await base44.entities.ActionAssignment.create({
+              action_required_id: action.id,
+              member_id: editingMember.id,
+              assigned_at: now,
+            });
+          }
+
+          // Upsert ActionResponse
+          const existing = actionResponses.find(
+            r => r.action_required_id === action.id && r.member_id === editingMember.id
+          );
+          if (existing) {
+            await base44.entities.ActionResponse.update(existing.id, {
+              response_value: newValue,
+              responded_at: now,
+            });
+          } else {
+            await base44.entities.ActionResponse.create({
+              action_required_id: action.id,
+              member_id: editingMember.id,
+              parent_email: editingMember?.parent_one_email || '',
+              response_value: newValue,
+              responded_at: now,
+            });
+          }
+        })
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-responses'] });
+      toast.success('Responses updated');
+      setShowEditDialog(false);
+      setEditingMember(null);
+      setEditResponses({});
     },
   });
 
@@ -140,11 +201,9 @@ export default function EventAttendeesSection({ eventId, event }) {
   };
 
   const handleToggleMember = (memberId) => {
-    if (selectedMembers.includes(memberId)) {
-      setSelectedMembers(selectedMembers.filter(id => id !== memberId));
-    } else {
-      setSelectedMembers([...selectedMembers, memberId]);
-    }
+    setSelectedMembers(prev =>
+      prev.includes(memberId) ? prev.filter(id => id !== memberId) : [...prev, memberId]
+    );
   };
 
   const handleAddMembers = () => {
@@ -155,25 +214,17 @@ export default function EventAttendeesSection({ eventId, event }) {
     addAttendanceMutation.mutate(selectedMembers);
   };
 
-  const getMemberSection = (sectionId) => {
-    return sections.find(s => s.id === sectionId)?.display_name || 'Unknown';
-  };
+  const getMemberSection = (sectionId) =>
+    sections.find(s => s.id === sectionId)?.display_name || 'Unknown';
 
   const eventSections = sections.filter(s => event.section_ids?.includes(s.id));
 
-  const { data: leaders = [] } = useQuery({
-    queryKey: ['leaders'],
-    queryFn: () => base44.entities.Leader.list(),
-  });
-
   const generateEmailList = () => {
     const memberEmails = attendances
-      .map((attendance) => {
+      .flatMap((attendance) => {
         const member = allMembers.find(m => m.id === attendance.member_id);
         return member ? [member.parent_one_email, member.parent_two_email].filter(Boolean) : [];
-      })
-      .flat();
-
+      });
     const leaderEmails = leaders
       .filter(leader => leader.section_ids?.some(sid => event.section_ids?.includes(sid)))
       .map(leader => {
@@ -181,9 +232,7 @@ export default function EventAttendeesSection({ eventId, event }) {
         return user?.email;
       })
       .filter(Boolean);
-
-    const allEmails = [...new Set([...memberEmails, ...leaderEmails])];
-    return allEmails.join(', ');
+    return [...new Set([...memberEmails, ...leaderEmails])].join(', ');
   };
 
   const handleCopyEmails = () => {
@@ -192,31 +241,24 @@ export default function EventAttendeesSection({ eventId, event }) {
     toast.success(`${emailList.split(', ').length} email addresses copied to clipboard`);
   };
 
+  // Get response for a member+action — only check response_value
   const getActionResponse = (memberId, actionId) => {
     const response = actionResponses.find(
-      r => r.member_id === memberId && r.action_required_id === actionId
+      r => r.action_required_id === actionId && r.member_id === memberId
     );
-    if (!response) return { display: '-', response: null };
-
-    if (response.status !== 'completed') return { display: 'Pending', response };
+    if (!response || !response.response_value) return { display: '—', response: null };
 
     const action = actionsRequired.find(a => a.id === actionId);
-    const responseValue = response.response || response.response_value;
-    if (!action) return { display: responseValue || 'Yes', response };
+    const val = response.response_value;
+    if (!action) return { display: val, response };
 
     if (action.action_purpose === 'attendance') {
-      return {
-        display: responseValue === 'yes' ? '✓' : '✗',
-        response
-      };
+      return { display: val === 'yes' || val === 'Yes, attending' ? '✓' : '✗', response };
     }
     if (action.action_purpose === 'consent') {
-      return {
-        display: responseValue === 'yes' ? '✓ Consent Given' : '✗ Not Given',
-        response
-      };
+      return { display: val === 'yes' || val === 'I give consent' ? '✓ Consent' : '✗ No consent', response };
     }
-    return { display: responseValue || '-', response };
+    return { display: val, response };
   };
 
   const handleOpenEditDialog = (member) => {
@@ -224,55 +266,12 @@ export default function EventAttendeesSection({ eventId, event }) {
     const responses = {};
     actionsRequired.forEach(action => {
       const response = actionResponses.find(
-        r => r.member_id === member.id && r.action_required_id === action.id
+        r => r.action_required_id === action.id && r.member_id === member.id
       );
-      responses[action.id] = response?.response || response?.response_value || '';
+      responses[action.id] = response?.response_value || '';
     });
     setEditResponses(responses);
     setShowEditDialog(true);
-  };
-
-  const handleSaveAllResponses = async () => {
-    const promises = [];
-    const today = new Date().toISOString();
-
-    actionsRequired.forEach(action => {
-      const existingResponse = actionResponses.find(
-        r => r.member_id === editingMember.id && r.action_required_id === action.id
-      );
-      const newValue = editResponses[action.id];
-
-      if (existingResponse && newValue) {
-        // Update existing response — always set status to completed and
-        // stamp responded_at so the parent portal knows this has been answered
-        promises.push(
-          updateResponseMutation.mutateAsync({
-            responseId: existingResponse.id,
-            value: newValue,
-          })
-        );
-      } else if (newValue) {
-        // Create new response — mark as completed immediately since a leader
-        // is entering it manually on behalf of the parent
-        promises.push(
-          createResponseMutation.mutateAsync({
-            action_required_id: action.id,
-            member_id: editingMember.id,
-            entity_id: eventId,
-            parent_email: editingMember?.parent_one_email || 'admin@manual.entry',
-            response: newValue,
-            status: 'completed',
-            responded_at: today,
-          })
-        );
-      }
-    });
-
-    await Promise.all(promises);
-    toast.success('Responses updated');
-    setShowEditDialog(false);
-    setEditingMember(null);
-    setEditResponses({});
   };
 
   return (
@@ -327,47 +326,47 @@ export default function EventAttendeesSection({ eventId, event }) {
                   {attendances
                     .map((attendance) => ({
                       attendance,
-                      member: allMembers.find(m => m.id === attendance.member_id)
+                      member: allMembers.find(m => m.id === attendance.member_id),
                     }))
                     .filter(({ member }) => member)
                     .sort((a, b) => new Date(a.member.date_of_birth).getTime() - new Date(b.member.date_of_birth).getTime())
-                    .map(({ attendance, member }) => {
-                      return (
-                        <TableRow key={attendance.id}>
-                          <TableCell className="font-medium">{member.full_name}</TableCell>
-                          <TableCell>{getMemberSection(member.section_id)}</TableCell>
-                          {actionsRequired.map((action) => {
-                            const { display } = getActionResponse(member.id, action.id);
-                            return (
-                              <TableCell key={action.id}>
+                    .map(({ attendance, member }) => (
+                      <TableRow key={attendance.id}>
+                        <TableCell className="font-medium">{member.full_name}</TableCell>
+                        <TableCell>{getMemberSection(member.section_id)}</TableCell>
+                        {actionsRequired.map((action) => {
+                          const { display, response } = getActionResponse(member.id, action.id);
+                          return (
+                            <TableCell key={action.id}>
+                              <span className={`text-sm font-medium ${response ? 'text-green-700' : 'text-gray-400'}`}>
                                 {display}
-                              </TableCell>
-                            );
-                          })}
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleOpenEditDialog(member)}
-                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              >
-                                <Pencil className="w-4 h-4 mr-1" />
-                                Edit
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeAttendanceMutation.mutate(attendance.id)}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                Remove
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                              </span>
+                            </TableCell>
+                          );
+                        })}
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleOpenEditDialog(member)}
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <Pencil className="w-4 h-4 mr-1" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeAttendanceMutation.mutate(attendance)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </div>
@@ -375,6 +374,7 @@ export default function EventAttendeesSection({ eventId, event }) {
         </CardContent>
       </Card>
 
+      {/* Edit Response Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -385,7 +385,6 @@ export default function EventAttendeesSection({ eventId, event }) {
               <div key={action.id} className="space-y-2">
                 <Label>{action.column_title}</Label>
                 <p className="text-sm text-gray-600">{action.action_text}</p>
-
                 {action.action_purpose === 'attendance' || action.action_purpose === 'consent' ? (
                   <Select
                     value={editResponses[action.id] || ''}
@@ -424,22 +423,20 @@ export default function EventAttendeesSection({ eventId, event }) {
             ))}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveAllResponses}>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
+            <Button onClick={() => saveResponsesMutation.mutate()} disabled={saveResponsesMutation.isPending}>
               Save All
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Add Members Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Add Members to Event</DialogTitle>
           </DialogHeader>
-
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="relative flex-1">
@@ -455,7 +452,6 @@ export default function EventAttendeesSection({ eventId, event }) {
                 {selectedMembers.length === filteredMembers.length ? 'Deselect All' : 'Select All'}
               </Button>
             </div>
-
             {filteredMembers.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <p>No available members to add</p>
@@ -480,15 +476,10 @@ export default function EventAttendeesSection({ eventId, event }) {
                 ))}
               </div>
             )}
-
             <div className="flex items-center justify-between pt-4 border-t">
-              <p className="text-sm text-gray-600">
-                {selectedMembers.length} member(s) selected
-              </p>
+              <p className="text-sm text-gray-600">{selectedMembers.length} member(s) selected</p>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                  Cancel
-                </Button>
+                <Button variant="outline" onClick={() => setShowAddDialog(false)}>Cancel</Button>
                 <Button
                   onClick={handleAddMembers}
                   disabled={selectedMembers.length === 0 || addAttendanceMutation.isPending}

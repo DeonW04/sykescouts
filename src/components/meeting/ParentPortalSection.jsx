@@ -9,19 +9,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Bell } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import ReminderDialog from '@/components/actions/ReminderDialog';
+import ActionSummaryPanel from '@/components/actions/ActionSummaryPanel';
 
 export default function ParentPortalSection({ programmeId, formData, setFormData }) {
   const queryClient = useQueryClient();
   const [showActionDialog, setShowActionDialog] = useState(false);
-  const [reminderAction, setReminderAction] = useState(null);
   const [actionForm, setActionForm] = useState({
     action_text: '',
     column_title: '',
     action_purpose: '',
     dropdown_options: [''],
+    deadline: '',
   });
 
   const { data: actions = [] } = useQuery({
@@ -30,9 +30,33 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
     enabled: !!programmeId,
   });
 
+  const { data: programme } = useQuery({
+    queryKey: ['programme', programmeId],
+    queryFn: () => base44.entities.Programme.filter({ id: programmeId }).then(r => r[0]),
+    enabled: !!programmeId,
+  });
+
   const createActionMutation = useMutation({
     mutationFn: async (data) => {
-      const action = await base44.entities.ActionRequired.create({ ...data, programme_id: programmeId });
+      const actionData = { ...data, programme_id: programmeId, is_open: true };
+      if (!actionData.deadline) delete actionData.deadline;
+      const action = await base44.entities.ActionRequired.create(actionData);
+
+      // Immediately create ActionAssignment for all members in this section
+      if (programme?.section_id) {
+        const members = await base44.entities.Member.filter({ section_id: programme.section_id, active: true });
+        const now = new Date().toISOString();
+        await Promise.all(
+          members.map(m =>
+            base44.entities.ActionAssignment.create({
+              action_required_id: action.id,
+              member_id: m.id,
+              assigned_at: now,
+            })
+          )
+        );
+      }
+
       await base44.functions.invoke('sendActionNotification', {
         actionRequiredId: action.id,
         entityType: 'programme',
@@ -44,30 +68,32 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-required'] });
       setShowActionDialog(false);
-      setActionForm({ action_text: '', column_title: '', action_purpose: '', dropdown_options: [''] });
-      toast.success('Action required added — email & push notifications sent');
+      setActionForm({ action_text: '', column_title: '', action_purpose: '', dropdown_options: [''], deadline: '' });
+      toast.success('Action required added — notifications sent');
     },
   });
 
   const deleteActionMutation = useMutation({
-    mutationFn: (id) => base44.entities.ActionRequired.delete(id),
+    mutationFn: async (id) => {
+      const assignments = await base44.entities.ActionAssignment.filter({ action_required_id: id });
+      const responses = await base44.entities.ActionResponse.filter({ action_required_id: id });
+      await Promise.all([
+        ...assignments.map(a => base44.entities.ActionAssignment.delete(a.id)),
+        ...responses.map(r => base44.entities.ActionResponse.delete(r.id)),
+        base44.entities.ActionRequired.delete(id),
+      ]);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-required'] });
       toast.success('Action deleted');
     },
   });
 
-  const handleAddOption = () => {
-    setActionForm({
-      ...actionForm,
-      dropdown_options: [...actionForm.dropdown_options, ''],
-    });
-  };
+  const handleAddOption = () =>
+    setActionForm({ ...actionForm, dropdown_options: [...actionForm.dropdown_options, ''] });
 
-  const handleRemoveOption = (index) => {
-    const newOptions = actionForm.dropdown_options.filter((_, i) => i !== index);
-    setActionForm({ ...actionForm, dropdown_options: newOptions });
-  };
+  const handleRemoveOption = (index) =>
+    setActionForm({ ...actionForm, dropdown_options: actionForm.dropdown_options.filter((_, i) => i !== index) });
 
   const handleOptionChange = (index, value) => {
     const newOptions = [...actionForm.dropdown_options];
@@ -78,9 +104,7 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle>Meeting Information for Parents</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Meeting Information for Parents</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Meeting Title</Label>
@@ -105,9 +129,7 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
               checked={formData.shown_in_portal}
               onCheckedChange={(checked) => setFormData({ ...formData, shown_in_portal: checked })}
             />
-            <Label htmlFor="shown_in_portal" className="cursor-pointer">
-              Show in parent portal
-            </Label>
+            <Label htmlFor="shown_in_portal" className="cursor-pointer">Show in parent portal</Label>
           </div>
         </CardContent>
       </Card>
@@ -117,8 +139,7 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
           <div className="flex items-center justify-between">
             <CardTitle>Actions Required from Parents</CardTitle>
             <Button onClick={() => setShowActionDialog(true)} size="sm" variant="outline">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Action
+              <Plus className="w-4 h-4 mr-2" />Add Action
             </Button>
           </div>
         </CardHeader>
@@ -133,26 +154,16 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
                     <p className="font-medium">{action.action_text}</p>
                     <p className="text-sm text-gray-500">
                       Column: {action.column_title} • Type: {action.action_purpose}
+                      {action.deadline && ' • Deadline set'}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setReminderAction(action)}
-                      title="Send reminder"
-                    >
-                      <Bell className="w-4 h-4 text-purple-600" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => deleteActionMutation.mutate(action.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  <Button
+                    size="sm" variant="ghost"
+                    onClick={() => deleteActionMutation.mutate(action.id)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               ))}
             </div>
@@ -160,18 +171,18 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
         </CardContent>
       </Card>
 
-      <ReminderDialog
-        open={!!reminderAction}
-        onOpenChange={(open) => !open && setReminderAction(null)}
-        actionRequiredId={reminderAction?.id}
-        entityType="programme"
-      />
+      {actions.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle>Response Summary & Reminders</CardTitle></CardHeader>
+          <CardContent>
+            <ActionSummaryPanel actions={actions} entityType="programme" />
+          </CardContent>
+        </Card>
+      )}
 
       <Dialog open={showActionDialog} onOpenChange={setShowActionDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Add Action Required</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Add Action Required</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-4">
             <div className="space-y-2">
               <Label>Required Action *</Label>
@@ -191,13 +202,8 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
             </div>
             <div className="space-y-2">
               <Label>Action Purpose *</Label>
-              <Select
-                value={actionForm.action_purpose}
-                onValueChange={(value) => setActionForm({ ...actionForm, action_purpose: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select purpose" />
-                </SelectTrigger>
+              <Select value={actionForm.action_purpose} onValueChange={(value) => setActionForm({ ...actionForm, action_purpose: value })}>
+                <SelectTrigger><SelectValue placeholder="Select purpose" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="attendance">Attendance</SelectItem>
                   <SelectItem value="consent">Consent</SelectItem>
@@ -206,7 +212,6 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
                 </SelectContent>
               </Select>
             </div>
-
             {actionForm.action_purpose === 'custom_dropdown' && (
               <div className="space-y-2">
                 <Label>Dropdown Options</Label>
@@ -218,26 +223,29 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
                       placeholder={`Option ${index + 1}`}
                     />
                     {actionForm.dropdown_options.length > 1 && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleRemoveOption(index)}
-                      >
+                      <Button size="sm" variant="ghost" onClick={() => handleRemoveOption(index)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     )}
                   </div>
                 ))}
                 <Button onClick={handleAddOption} size="sm" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Option
+                  <Plus className="w-4 h-4 mr-2" />Add Option
                 </Button>
               </div>
             )}
-
+            <div className="space-y-2">
+              <Label>Deadline (optional)</Label>
+              <Input
+                type="datetime-local"
+                value={actionForm.deadline}
+                onChange={(e) => setActionForm({ ...actionForm, deadline: e.target.value })}
+              />
+              <p className="text-xs text-gray-500">Once the deadline passes, this action automatically closes and disappears from parent dashboards.</p>
+            </div>
             <Button
               onClick={() => createActionMutation.mutate(actionForm)}
-              disabled={!actionForm.action_text || !actionForm.column_title || !actionForm.action_purpose}
+              disabled={!actionForm.action_text || !actionForm.column_title || !actionForm.action_purpose || createActionMutation.isPending}
               className="w-full"
             >
               Add Action Required

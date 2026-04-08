@@ -69,63 +69,55 @@ export default function MobileHome({ user, children, onTabChange }) {
     queryKey: ['mobile-actions', children],
     queryFn: async () => {
       if (children.length === 0) return { actions: [], responses: [] };
-      const sectionIds = [...new Set(children.map(c => c.section_id))];
 
-      // Programme-linked actions: match by section
-      const programmes = await base44.entities.Programme.filter({});
-      const relevantProgIds = programmes.filter(p => sectionIds.includes(p.section_id)).map(p => p.id);
+      // 1. Fetch all ActionAssignments for my children
+      const allAssignments = await base44.entities.ActionAssignment.filter({});
+      const myAssignments = allAssignments.filter(a => childIds.includes(a.member_id));
+      if (myAssignments.length === 0) return { actions: [], responses: [] };
 
-      // Event-linked actions: only for events the child is actually invited to
-      // (has an EventAttendance record)
-      const eventAttendancesForActions = await base44.entities.EventAttendance.filter({});
-      const invitedEventIds = [...new Set(
-        eventAttendancesForActions
-          .filter(a => childIds.includes(a.member_id))
-          .map(a => a.event_id)
-      )];
+      const assignedActionIds = [...new Set(myAssignments.map(a => a.action_required_id))];
 
+      // 2. Fetch open ActionRequired records that my children are assigned to
       const allActions = await base44.entities.ActionRequired.filter({});
-      const relevantActions = allActions.filter(a => {
-        if (a.is_open === false) return false;
-        if (a.programme_id) return relevantProgIds.includes(a.programme_id);
-        if (a.event_id) return invitedEventIds.includes(a.event_id);
-        return false;
-      });
+      const relevantActions = allActions.filter(a =>
+        assignedActionIds.includes(a.id) && a.is_open !== false
+      );
 
+      // 3. Fetch ActionResponses for my children
       const allResponses = await base44.entities.ActionResponse.filter({});
-      const relevantResponses = allResponses.filter(r => childIds.includes(r.member_id) || childIds.includes(r.child_member_id));
+      const relevantResponses = allResponses.filter(r => childIds.includes(r.member_id));
+
       return { actions: relevantActions, responses: relevantResponses };
     },
     enabled: children.length > 0,
   });
 
   const { actions: allActions, responses: existingResponses } = actionsData;
+  // Show action on dashboard if any child has an assignment but no completed response
   const actionsRequired = allActions.filter(action =>
     !children.every(child =>
       existingResponses.some(r =>
-        (r.action_required_id === action.id || r.action_id === action.id) &&
-        (r.member_id === child.id || r.child_member_id === child.id) &&
-        r.status === 'completed' && r.response
+        r.action_required_id === action.id &&
+        r.member_id === child.id &&
+        r.response_value
       )
     )
   );
 
   const getEventAttendanceStatus = (eventId) => {
-    // Check if this event has an attendance action
-    const hasAttendanceAction = eventActions.some(a => a.event_id === eventId);
-    if (!hasAttendanceAction) return null; // No attendance action, show nothing
-    
-    // Check for responses to the attendance action
     const attendanceAction = eventActions.find(a => a.event_id === eventId);
-    const childResponses = existingResponses.filter(r => 
-      r.action_required_id === attendanceAction.id && 
-      childIds.includes(r.member_id)
+    if (!attendanceAction) return null;
+
+    const childResponses = existingResponses.filter(r =>
+      r.action_required_id === attendanceAction.id &&
+      childIds.includes(r.member_id) &&
+      r.response_value
     );
-    
+
     if (childResponses.length === 0) return 'no_response';
-    const firstResponse = childResponses[0];
-    if (firstResponse.response === 'attending') return 'attending';
-    if (firstResponse.response === 'not_attending') return 'not_attending';
+    const val = childResponses[0].response_value;
+    if (val === 'attending' || val === 'Yes, attending') return 'attending';
+    if (val === 'not_attending' || val === 'No, not attending') return 'not_attending';
     return 'no_response';
   };
 

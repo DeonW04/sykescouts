@@ -8,9 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, FileText, Trash2, Download, Plus, Lock, Unlock, Bell } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, Plus, Lock, Unlock } from 'lucide-react';
 import { toast } from 'sonner';
-import ReminderDialog from '@/components/actions/ReminderDialog';
+import ActionSummaryPanel from '@/components/actions/ActionSummaryPanel';
 
 export default function EventParentPortalSection({ eventId, event }) {
   const queryClient = useQueryClient();
@@ -21,12 +21,12 @@ export default function EventParentPortalSection({ eventId, event }) {
   const [showActionDialog, setShowActionDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingAction, setEditingAction] = useState(null);
-  const [reminderAction, setReminderAction] = useState(null);
   const [actionForm, setActionForm] = useState({
     action_text: '',
     column_title: '',
     action_purpose: '',
     dropdown_options: [''],
+    deadline: '',
   });
 
   const documents = event?.documents || [];
@@ -47,7 +47,29 @@ export default function EventParentPortalSection({ eventId, event }) {
 
   const createActionMutation = useMutation({
     mutationFn: async (data) => {
-      const action = await base44.entities.ActionRequired.create({ ...data, event_id: eventId });
+      // Create the action
+      const actionData = {
+        ...data,
+        event_id: eventId,
+        is_open: true,
+      };
+      if (!actionData.deadline) delete actionData.deadline;
+      const action = await base44.entities.ActionRequired.create(actionData);
+
+      // Immediately create ActionAssignment for all current attendees
+      const attendances = await base44.entities.EventAttendance.filter({ event_id: eventId });
+      const now = new Date().toISOString();
+      await Promise.all(
+        attendances.map(att =>
+          base44.entities.ActionAssignment.create({
+            action_required_id: action.id,
+            member_id: att.member_id,
+            assigned_at: now,
+          })
+        )
+      );
+
+      // Send notifications
       await base44.functions.invoke('sendActionNotification', {
         actionRequiredId: action.id,
         entityType: 'event',
@@ -59,13 +81,22 @@ export default function EventParentPortalSection({ eventId, event }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-required'] });
       setShowActionDialog(false);
-      setActionForm({ action_text: '', column_title: '', action_purpose: '', dropdown_options: [''] });
-      toast.success('Action required added — email & push notifications sent');
+      setActionForm({ action_text: '', column_title: '', action_purpose: '', dropdown_options: [''], deadline: '' });
+      toast.success('Action required added — notifications sent');
     },
   });
 
   const deleteActionMutation = useMutation({
-    mutationFn: (id) => base44.entities.ActionRequired.delete(id),
+    mutationFn: async (id) => {
+      // Delete all assignments and responses for this action
+      const assignments = await base44.entities.ActionAssignment.filter({ action_required_id: id });
+      const responses = await base44.entities.ActionResponse.filter({ action_required_id: id });
+      await Promise.all([
+        ...assignments.map(a => base44.entities.ActionAssignment.delete(a.id)),
+        ...responses.map(r => base44.entities.ActionResponse.delete(r.id)),
+        base44.entities.ActionRequired.delete(id),
+      ]);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-required'] });
       toast.success('Action deleted');
@@ -73,9 +104,7 @@ export default function EventParentPortalSection({ eventId, event }) {
   });
 
   const toggleActionOpenMutation = useMutation({
-    mutationFn: async ({ id, is_open }) => {
-      return base44.entities.ActionRequired.update(id, { is_open });
-    },
+    mutationFn: ({ id, is_open }) => base44.entities.ActionRequired.update(id, { is_open }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-required'] });
       toast.success('Action status updated');
@@ -83,12 +112,12 @@ export default function EventParentPortalSection({ eventId, event }) {
   });
 
   const updateActionMutation = useMutation({
-    mutationFn: async ({ id, data }) => {
-      return base44.entities.ActionRequired.update(id, data);
-    },
+    mutationFn: ({ id, data }) => base44.entities.ActionRequired.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-required'] });
       toast.success('Action updated');
+      setShowEditDialog(false);
+      setEditingAction(null);
     },
   });
 
@@ -97,14 +126,11 @@ export default function EventParentPortalSection({ eventId, event }) {
       toast.error('Please provide a name and select a file');
       return;
     }
-
     setUploadingDoc(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file: docFile });
-      
       const updatedDocs = [...documents, { name: docName, url: file_url }];
       await updateEventMutation.mutateAsync({ documents: updatedDocs });
-      
       setShowUploadDialog(false);
       setDocName('');
       setDocFile(null);
@@ -116,23 +142,11 @@ export default function EventParentPortalSection({ eventId, event }) {
     }
   };
 
-  const handleDeleteDocument = async (docUrl) => {
-    const updatedDocs = documents.filter(d => d.url !== docUrl);
-    await updateEventMutation.mutateAsync({ documents: updatedDocs });
-    toast.success('Document removed');
-  };
+  const handleAddOption = () =>
+    setActionForm({ ...actionForm, dropdown_options: [...actionForm.dropdown_options, ''] });
 
-  const handleAddOption = () => {
-    setActionForm({
-      ...actionForm,
-      dropdown_options: [...actionForm.dropdown_options, ''],
-    });
-  };
-
-  const handleRemoveOption = (index) => {
-    const newOptions = actionForm.dropdown_options.filter((_, i) => i !== index);
-    setActionForm({ ...actionForm, dropdown_options: newOptions });
-  };
+  const handleRemoveOption = (index) =>
+    setActionForm({ ...actionForm, dropdown_options: actionForm.dropdown_options.filter((_, i) => i !== index) });
 
   const handleOptionChange = (index, value) => {
     const newOptions = [...actionForm.dropdown_options];
@@ -140,23 +154,84 @@ export default function EventParentPortalSection({ eventId, event }) {
     setActionForm({ ...actionForm, dropdown_options: newOptions });
   };
 
+  const ActionFormFields = ({ form, setForm }) => (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Required Action *</Label>
+        <Textarea
+          value={form.action_text}
+          onChange={(e) => setForm({ ...form, action_text: e.target.value })}
+          placeholder="e.g., Please confirm attendance for the camp"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Column Title *</Label>
+        <Input
+          value={form.column_title}
+          onChange={(e) => setForm({ ...form, column_title: e.target.value })}
+          placeholder="e.g., Camp Attendance"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Action Purpose *</Label>
+        <Select value={form.action_purpose} onValueChange={(value) => setForm({ ...form, action_purpose: value })}>
+          <SelectTrigger><SelectValue placeholder="Select purpose" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="attendance">Attendance</SelectItem>
+            <SelectItem value="consent">Consent</SelectItem>
+            <SelectItem value="custom_dropdown">Custom Dropdown</SelectItem>
+            <SelectItem value="text_input">Text Input</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {form.action_purpose === 'custom_dropdown' && (
+        <div className="space-y-2">
+          <Label>Dropdown Options</Label>
+          {form.dropdown_options.map((option, index) => (
+            <div key={index} className="flex gap-2">
+              <Input
+                value={option}
+                onChange={(e) => handleOptionChange(index, e.target.value)}
+                placeholder={`Option ${index + 1}`}
+              />
+              {form.dropdown_options.length > 1 && (
+                <Button size="sm" variant="ghost" onClick={() => handleRemoveOption(index)}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          ))}
+          <Button onClick={handleAddOption} size="sm" variant="outline">
+            <Plus className="w-4 h-4 mr-2" />Add Option
+          </Button>
+        </div>
+      )}
+      <div className="space-y-2">
+        <Label>Deadline (optional)</Label>
+        <Input
+          type="datetime-local"
+          value={form.deadline}
+          onChange={(e) => setForm({ ...form, deadline: e.target.value })}
+        />
+        <p className="text-xs text-gray-500">Once the deadline passes, this action will automatically close and disappear from parent dashboards.</p>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
+      {/* Documents */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Documents for Parents</CardTitle>
             <Button onClick={() => setShowUploadDialog(true)} size="sm">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Document
+              <Upload className="w-4 h-4 mr-2" />Upload Document
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-gray-600 mb-4">
-            Upload documents (kit lists, information sheets, etc.) that parents can view when they access this event.
-          </p>
-          
+          <p className="text-sm text-gray-600 mb-4">Upload documents (kit lists, information sheets, etc.) that parents can view.</p>
           {documents.length === 0 ? (
             <p className="text-gray-500 text-sm text-center py-8">No documents uploaded yet</p>
           ) : (
@@ -169,15 +244,12 @@ export default function EventParentPortalSection({ eventId, event }) {
                   </div>
                   <div className="flex items-center gap-2">
                     <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                      <Button variant="ghost" size="sm">
-                        <Download className="w-4 h-4" />
-                      </Button>
+                      <Button variant="ghost" size="sm"><Download className="w-4 h-4" /></Button>
                     </a>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteDocument(doc.url)}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => {
+                      const updatedDocs = documents.filter(d => d.url !== doc.url);
+                      updateEventMutation.mutate({ documents: updatedDocs });
+                    }}>
                       <Trash2 className="w-4 h-4 text-red-600" />
                     </Button>
                   </div>
@@ -188,71 +260,40 @@ export default function EventParentPortalSection({ eventId, event }) {
         </CardContent>
       </Card>
 
+      {/* Actions Required */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Actions Required from Parents</CardTitle>
             <Button onClick={() => setShowActionDialog(true)} size="sm" variant="outline">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Action
+              <Plus className="w-4 h-4 mr-2" />Add Action
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-gray-600 mb-4">
-            Schedule reminder emails for parents with attending children
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              try {
-                await base44.functions.invoke('sendEventReminder', { eventId });
-                toast.success('Reminder emails sent');
-              } catch (error) {
-                toast.error('Failed to send reminders: ' + error.message);
-              }
-            }}
-            className="mb-4"
-          >
-            Send Reminder Now
-          </Button>
-        </CardContent>
-        <CardHeader>
-          <CardTitle>Action Required</CardTitle>
         </CardHeader>
         <CardContent>
           {actions.length === 0 ? (
             <p className="text-gray-500 text-center py-4">No actions required yet</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 mb-6">
               {actions.map(action => (
                 <div key={action.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <p className="font-medium">{action.action_text}</p>
                       {action.is_open === false && (
-                        <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                          Closed
+                        <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">Closed</span>
+                      )}
+                      {action.deadline && (
+                        <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded-full">
+                          Deadline set
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500">
-                      Column: {action.column_title} • Type: {action.action_purpose}
-                    </p>
+                    <p className="text-sm text-gray-500">Column: {action.column_title} • Type: {action.action_purpose}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setReminderAction(action)}
-                      title="Send reminder"
-                    >
-                      <Bell className="w-4 h-4 text-purple-600" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
+                      size="sm" variant="ghost"
                       onClick={() => {
                         setEditingAction(action);
                         setActionForm({
@@ -260,34 +301,24 @@ export default function EventParentPortalSection({ eventId, event }) {
                           column_title: action.column_title,
                           action_purpose: action.action_purpose,
                           dropdown_options: action.dropdown_options || [''],
+                          deadline: action.deadline ? action.deadline.slice(0, 16) : '',
                         });
                         setShowEditDialog(true);
                       }}
-                      title="Edit action"
                     >
                       <Plus className="w-4 h-4 text-blue-600" />
                     </Button>
                     <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => toggleActionOpenMutation.mutate({ 
-                        id: action.id, 
-                        is_open: action.is_open === false 
-                      })}
+                      size="sm" variant="ghost"
+                      onClick={() => toggleActionOpenMutation.mutate({ id: action.id, is_open: action.is_open === false })}
                       title={action.is_open === false ? 'Open responses' : 'Close responses'}
                     >
-                      {action.is_open === false ? (
-                        <Unlock className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <Lock className="w-4 h-4 text-gray-600" />
-                      )}
+                      {action.is_open === false
+                        ? <Unlock className="w-4 h-4 text-green-600" />
+                        : <Lock className="w-4 h-4 text-gray-600" />
+                      }
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => deleteActionMutation.mutate(action.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
+                    <Button size="sm" variant="ghost" onClick={() => deleteActionMutation.mutate(action.id)} className="text-red-600 hover:text-red-700">
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -298,41 +329,34 @@ export default function EventParentPortalSection({ eventId, event }) {
         </CardContent>
       </Card>
 
-      <ReminderDialog
-        open={!!reminderAction}
-        onOpenChange={(open) => !open && setReminderAction(null)}
-        actionRequiredId={reminderAction?.id}
-        entityType="event"
-      />
+      {/* Response Summary Panel */}
+      {actions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Response Summary & Reminders</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ActionSummaryPanel actions={actions} entityType="event" />
+          </CardContent>
+        </Card>
+      )}
 
+      {/* Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Upload Document</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Upload Document</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="docName">Document Name</Label>
-              <Input
-                id="docName"
-                value={docName}
-                onChange={(e) => setDocName(e.target.value)}
-                placeholder="e.g., Kit List, Information Sheet"
-              />
+              <Label>Document Name</Label>
+              <Input value={docName} onChange={(e) => setDocName(e.target.value)} placeholder="e.g., Kit List" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="docFile">File</Label>
-              <Input
-                id="docFile"
-                type="file"
-                onChange={(e) => setDocFile(e.target.files[0])}
-              />
+              <Label>File</Label>
+              <Input type="file" onChange={(e) => setDocFile(e.target.files[0])} />
             </div>
           </div>
           <div className="flex justify-end gap-3 mt-4">
-            <Button variant="outline" onClick={() => setShowUploadDialog(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setShowUploadDialog(false)}>Cancel</Button>
             <Button onClick={handleUploadDocument} disabled={uploadingDoc}>
               {uploadingDoc ? 'Uploading...' : 'Upload'}
             </Button>
@@ -340,78 +364,16 @@ export default function EventParentPortalSection({ eventId, event }) {
         </DialogContent>
       </Dialog>
 
+      {/* Add Action Dialog */}
       <Dialog open={showActionDialog} onOpenChange={setShowActionDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Add Action Required</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label>Required Action *</Label>
-              <Textarea
-                value={actionForm.action_text}
-                onChange={(e) => setActionForm({ ...actionForm, action_text: e.target.value })}
-                placeholder="e.g., Please confirm attendance for the camp"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Column Title *</Label>
-              <Input
-                value={actionForm.column_title}
-                onChange={(e) => setActionForm({ ...actionForm, column_title: e.target.value })}
-                placeholder="e.g., Camp Attendance"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Action Purpose *</Label>
-              <Select
-                value={actionForm.action_purpose}
-                onValueChange={(value) => setActionForm({ ...actionForm, action_purpose: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select purpose" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="attendance">Attendance</SelectItem>
-                  <SelectItem value="consent">Consent</SelectItem>
-                  <SelectItem value="custom_dropdown">Custom Dropdown</SelectItem>
-                  <SelectItem value="text_input">Text Input</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {actionForm.action_purpose === 'custom_dropdown' && (
-              <div className="space-y-2">
-                <Label>Dropdown Options</Label>
-                {actionForm.dropdown_options.map((option, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={option}
-                      onChange={(e) => handleOptionChange(index, e.target.value)}
-                      placeholder={`Option ${index + 1}`}
-                    />
-                    {actionForm.dropdown_options.length > 1 && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleRemoveOption(index)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button onClick={handleAddOption} size="sm" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Option
-                </Button>
-              </div>
-            )}
-
+          <DialogHeader><DialogTitle>Add Action Required</DialogTitle></DialogHeader>
+          <div className="mt-4">
+            <ActionFormFields form={actionForm} setForm={setActionForm} />
             <Button
               onClick={() => createActionMutation.mutate(actionForm)}
-              disabled={!actionForm.action_text || !actionForm.column_title || !actionForm.action_purpose}
-              className="w-full"
+              disabled={!actionForm.action_text || !actionForm.column_title || !actionForm.action_purpose || createActionMutation.isPending}
+              className="w-full mt-4"
             >
               Add Action Required
             </Button>
@@ -419,95 +381,28 @@ export default function EventParentPortalSection({ eventId, event }) {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Action Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Action Required</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label>Required Action *</Label>
-              <Textarea
-                value={actionForm.action_text}
-                onChange={(e) => setActionForm({ ...actionForm, action_text: e.target.value })}
-                placeholder="e.g., Please confirm attendance for the camp"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Column Title *</Label>
-              <Input
-                value={actionForm.column_title}
-                onChange={(e) => setActionForm({ ...actionForm, column_title: e.target.value })}
-                placeholder="e.g., Camp Attendance"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Action Purpose *</Label>
-              <Select
-                value={actionForm.action_purpose}
-                onValueChange={(value) => setActionForm({ ...actionForm, action_purpose: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select purpose" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="attendance">Attendance</SelectItem>
-                  <SelectItem value="consent">Consent</SelectItem>
-                  <SelectItem value="custom_dropdown">Custom Dropdown</SelectItem>
-                  <SelectItem value="text_input">Text Input</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {actionForm.action_purpose === 'custom_dropdown' && (
-              <div className="space-y-2">
-                <Label>Dropdown Options</Label>
-                {actionForm.dropdown_options.map((option, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={option}
-                      onChange={(e) => handleOptionChange(index, e.target.value)}
-                      placeholder={`Option ${index + 1}`}
-                    />
-                    {actionForm.dropdown_options.length > 1 && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleRemoveOption(index)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button onClick={handleAddOption} size="sm" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Option
-                </Button>
-              </div>
-            )}
-
+          <DialogHeader><DialogTitle>Edit Action Required</DialogTitle></DialogHeader>
+          <div className="mt-4">
+            <ActionFormFields form={actionForm} setForm={setActionForm} />
             <Button
               onClick={() => {
-                if (editingAction) {
-                  const updateData = {
-                    action_text: actionForm.action_text,
-                    column_title: actionForm.column_title,
-                    action_purpose: actionForm.action_purpose,
-                  };
-                  if (actionForm.action_purpose === 'custom_dropdown') {
-                    updateData.dropdown_options = actionForm.dropdown_options.filter(o => o.trim() !== '');
-                  }
-                  updateActionMutation.mutate({
-                    id: editingAction.id,
-                    data: updateData
-                  });
-                  setShowEditDialog(false);
-                  setEditingAction(null);
+                if (!editingAction) return;
+                const updateData = {
+                  action_text: actionForm.action_text,
+                  column_title: actionForm.column_title,
+                  action_purpose: actionForm.action_purpose,
+                  deadline: actionForm.deadline || null,
+                };
+                if (actionForm.action_purpose === 'custom_dropdown') {
+                  updateData.dropdown_options = actionForm.dropdown_options.filter(o => o.trim() !== '');
                 }
+                updateActionMutation.mutate({ id: editingAction.id, data: updateData });
               }}
               disabled={!actionForm.action_text || !actionForm.column_title || !actionForm.action_purpose || updateActionMutation.isPending}
-              className="w-full"
+              className="w-full mt-4"
             >
               Save Changes
             </Button>

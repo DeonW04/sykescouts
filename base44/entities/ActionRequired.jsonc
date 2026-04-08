@@ -1,0 +1,59 @@
+{
+  "name": "ActionRequired",
+  "type": "object",
+  "properties": {
+    "programme_id": {
+      "type": "string",
+      "description": "Programme ID if linked to meeting"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Event ID if linked to event"
+    },
+    "action_text": {
+      "type": "string",
+      "description": "The action required from parents"
+    },
+    "column_title": {
+      "type": "string",
+      "description": "Title for the attendance column"
+    },
+    "action_purpose": {
+      "type": "string",
+      "enum": [
+        "attendance",
+        "consent",
+        "custom_dropdown",
+        "text_input"
+      ],
+      "description": "Purpose of the action"
+    },
+    "dropdown_options": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Options for custom dropdown"
+    },
+    "is_open": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether responses are still being accepted"
+    },
+    "deadline": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this action automatically closes"
+    },
+    "reminder_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of when the last reminder was sent to parents"
+    }
+  },
+  "required": [
+    "action_text",
+    "column_title",
+    "action_purpose"
+  ]
+}

@@ -48,119 +48,98 @@ const createEmailTemplate = (childName, actionText, entityName, dashboardLink) =
 `;
 
 Deno.serve(async (req) => {
-  try {
-    const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const base44 = createClientFromRequest(req);
+  const user = await base44.auth.me();
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { actionRequiredId, entityType, sendEmail = true, sendPush = false } = await req.json();
+  const { actionRequiredId, entityType, sendEmail = true, sendPush = false } = await req.json();
 
-    // Set up VAPID
-    webpush.setVapidDetails(
-      Deno.env.get('VAPID_SUBJECT'),
-      Deno.env.get('VAPID_PUBLIC_KEY'),
-      Deno.env.get('VAPID_PRIVATE_KEY')
-    );
+  webpush.setVapidDetails(
+    Deno.env.get('VAPID_SUBJECT'),
+    Deno.env.get('VAPID_PUBLIC_KEY'),
+    Deno.env.get('VAPID_PRIVATE_KEY')
+  );
 
-    // Get action
-    const actions = await base44.asServiceRole.entities.ActionRequired.filter({ id: actionRequiredId });
-    if (actions.length === 0) return Response.json({ error: 'Action not found' }, { status: 404 });
-    const action = actions[0];
+  const actions = await base44.asServiceRole.entities.ActionRequired.filter({ id: actionRequiredId });
+  if (actions.length === 0) return Response.json({ error: 'Action not found' }, { status: 404 });
+  const action = actions[0];
 
-    // Get entity name
-    let entityName = '';
-    if (entityType === 'programme' && action.programme_id) {
-      const progs = await base44.asServiceRole.entities.Programme.filter({ id: action.programme_id });
-      if (progs.length > 0) entityName = progs[0].title || 'Meeting';
-    } else if (entityType === 'event' && action.event_id) {
-      const events = await base44.asServiceRole.entities.Event.filter({ id: action.event_id });
-      if (events.length > 0) entityName = events[0].title || 'Event';
-    }
+  // Update reminder_sent_at
+  await base44.asServiceRole.entities.ActionRequired.update(actionRequiredId, {
+    reminder_sent_at: new Date().toISOString(),
+  });
 
-    // Get all active members
-    const allMembers = await base44.asServiceRole.entities.Member.filter({ active: true });
-
-    // Get existing responses to skip already-responded
-    const existingResponses = await base44.asServiceRole.entities.ActionResponse.filter({
-      action_required_id: actionRequiredId
-    });
-    const respondedMemberIds = new Set(existingResponses.map(r => r.member_id));
-
-    // Collect unique parent emails for affected members
-    const parentEmails = new Set();
-    for (const member of allMembers) {
-      if (respondedMemberIds.has(member.id)) continue;
-      if (member.parent_one_email) parentEmails.add(member.parent_one_email);
-      if (member.parent_two_email) parentEmails.add(member.parent_two_email);
-    }
-
-    const dashboardLink = `${req.headers.get('origin') || 'https://your-app.base44.io'}/app`;
-    const promises = [];
-
-    // Send emails
-    if (sendEmail) {
-      for (const member of allMembers) {
-        if (respondedMemberIds.has(member.id)) continue;
-        const emails = [member.parent_one_email, member.parent_two_email].filter(Boolean);
-        for (const email of emails) {
-          promises.push(
-            base44.asServiceRole.integrations.Core.SendEmail({
-              from_name: '40th Rochdale Scouts',
-              to: email,
-              subject: `Action Required for ${member.full_name}`,
-              body: createEmailTemplate(member.full_name, action.action_text, entityName, dashboardLink)
-            }).catch(err => console.error(`Email failed for ${email}:`, err))
-          );
-        }
-      }
-    }
-
-    // Send push notifications
-    let pushSent = 0;
-    let pushFailed = 0;
-    if (sendPush) {
-      // Get ALL push subscriptions - send to all registered parent users
-      const allSubs = await base44.asServiceRole.entities.PushSubscription.filter({});
-      console.log(`Found ${allSubs.length} total push subscriptions`);
-
-      const payload = JSON.stringify({
-        title: 'Action Required',
-        body: action.action_text + (entityName ? ` — ${entityName}` : ''),
-        url: '/app'
-      });
-
-      for (const sub of allSubs) {
-        if (!sub.subscription?.endpoint) {
-          console.log(`Skipping sub for ${sub.user_email} - no valid endpoint`);
-          continue;
-        }
-        try {
-          await webpush.sendNotification(sub.subscription, payload);
-          console.log(`Push sent to ${sub.user_email}`);
-          pushSent++;
-        } catch (err) {
-          console.error(`Push failed for ${sub.user_email}:`, err.message, 'status:', err.statusCode);
-          pushFailed++;
-          // Remove stale subscriptions (410 Gone)
-          // 410 = expired, 403 = key mismatch — both mean stale subscription
-          if (err.statusCode === 410 || err.statusCode === 403) {
-            await base44.asServiceRole.entities.PushSubscription.delete(sub.id).catch(() => {});
-          }
-        }
-      }
-    }
-
-    await Promise.all(promises);
-
-    return Response.json({
-      success: true,
-      emailsSent: sendEmail ? parentEmails.size : 0,
-      pushSent,
-      pushFailed
-    });
-
-  } catch (error) {
-    console.error('Error:', error);
-    return Response.json({ error: error.message }, { status: 500 });
+  let entityName = '';
+  if (entityType === 'programme' && action.programme_id) {
+    const progs = await base44.asServiceRole.entities.Programme.filter({ id: action.programme_id });
+    if (progs.length > 0) entityName = progs[0].title || 'Meeting';
+  } else if (entityType === 'event' && action.event_id) {
+    const events = await base44.asServiceRole.entities.Event.filter({ id: action.event_id });
+    if (events.length > 0) entityName = events[0].title || 'Event';
   }
+
+  // Get assignments for this action (only members who haven't responded)
+  const assignments = await base44.asServiceRole.entities.ActionAssignment.filter({ action_required_id: actionRequiredId });
+  const assignedMemberIds = assignments.map(a => a.member_id);
+
+  // Get existing responses with non-empty response_value
+  const existingResponses = await base44.asServiceRole.entities.ActionResponse.filter({ action_required_id: actionRequiredId });
+  const respondedMemberIds = new Set(existingResponses.filter(r => r.response_value).map(r => r.member_id));
+
+  // Outstanding members = assigned but not responded
+  const outstandingMemberIds = assignedMemberIds.filter(id => !respondedMemberIds.has(id));
+
+  const allMembers = await base44.asServiceRole.entities.Member.filter({ active: true });
+  const memberMap = Object.fromEntries(allMembers.map(m => [m.id, m]));
+
+  const dashboardLink = `${req.headers.get('origin') || 'https://your-app.base44.io'}/app`;
+  const promises = [];
+  const parentEmailsSent = new Set();
+
+  if (sendEmail) {
+    for (const memberId of outstandingMemberIds) {
+      const member = memberMap[memberId];
+      if (!member) continue;
+      const emails = [member.parent_one_email, member.parent_two_email].filter(Boolean);
+      for (const email of emails) {
+        if (parentEmailsSent.has(email)) continue;
+        parentEmailsSent.add(email);
+        promises.push(
+          base44.asServiceRole.integrations.Core.SendEmail({
+            from_name: '40th Rochdale Scouts',
+            to: email,
+            subject: `Action Required for ${member.full_name}`,
+            body: createEmailTemplate(member.full_name, action.action_text, entityName, dashboardLink),
+          }).catch(err => console.error(`Email failed for ${email}:`, err))
+        );
+      }
+    }
+  }
+
+  let pushSent = 0;
+  let pushFailed = 0;
+  if (sendPush) {
+    const allSubs = await base44.asServiceRole.entities.PushSubscription.filter({});
+    const payload = JSON.stringify({
+      title: 'Action Required',
+      body: action.action_text + (entityName ? ` — ${entityName}` : ''),
+      url: '/app',
+    });
+    for (const sub of allSubs) {
+      if (!sub.subscription?.endpoint) continue;
+      try {
+        await webpush.sendNotification(sub.subscription, payload);
+        pushSent++;
+      } catch (err) {
+        pushFailed++;
+        if (err.statusCode === 410 || err.statusCode === 403) {
+          await base44.asServiceRole.entities.PushSubscription.delete(sub.id).catch(() => {});
+        }
+      }
+    }
+  }
+
+  await Promise.all(promises);
+
+  return Response.json({ success: true, emailsSent: parentEmailsSent.size, pushSent, pushFailed });
 });

@@ -86,10 +86,16 @@ Deno.serve(async (req) => {
     // Get all members for this entity
     const allMembers = await base44.asServiceRole.entities.Member.filter({ active: true });
     
-    // Get existing responses to see who hasn't responded
+    // Get existing responses to see who hasn't responded (only count non-empty response_value)
     const existingResponses = await base44.asServiceRole.entities.ActionResponse.filter({ 
       action_required_id: actionRequiredId 
     });
+
+    // Use ActionAssignment to determine who should receive this
+    const assignments = await base44.asServiceRole.entities.ActionAssignment.filter({
+      action_required_id: actionRequiredId,
+    });
+    const assignedMemberIds = new Set(assignments.map(a => a.member_id));
 
     const dashboardLink = `${req.headers.get('origin') || 'https://your-app.base44.io'}/ParentDashboard`;
 
@@ -98,8 +104,9 @@ Deno.serve(async (req) => {
     const sentEmails = new Set();
 
     for (const member of allMembers) {
-      // Check if already responded
-      const hasResponded = existingResponses.some(r => r.member_id === member.id);
+      // Only send to assigned members who haven't provided a response_value
+      if (!assignedMemberIds.has(member.id)) continue;
+      const hasResponded = existingResponses.some(r => r.member_id === member.id && r.response_value);
       if (hasResponded) continue;
 
       // Send to parent one

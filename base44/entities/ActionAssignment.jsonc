@@ -1,0 +1,27 @@
+{
+  "name": "ActionAssignment",
+  "type": "object",
+  "properties": {
+    "action_required_id": {
+      "type": "string",
+      "description": "Foreign key to ActionRequired"
+    },
+    "member_id": {
+      "type": "string",
+      "description": "Foreign key to the child member"
+    },
+    "assigned_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the assignment was created"
+    },
+    "assigned_by": {
+      "type": "string",
+      "description": "Leader user ID who created the assignment"
+    }
+  },
+  "required": [
+    "action_required_id",
+    "member_id"
+  ]
+}

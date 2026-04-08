@@ -1,0 +1,31 @@
+{
+  "name": "ActionResponse",
+  "type": "object",
+  "properties": {
+    "action_required_id": {
+      "type": "string",
+      "description": "Action required ID"
+    },
+    "member_id": {
+      "type": "string",
+      "description": "Member ID"
+    },
+    "parent_email": {
+      "type": "string",
+      "description": "Parent email who responded"
+    },
+    "response_value": {
+      "type": "string",
+      "description": "Response value"
+    },
+    "responded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date of response"
+    }
+  },
+  "required": [
+    "action_required_id",
+    "member_id"
+  ]
+}

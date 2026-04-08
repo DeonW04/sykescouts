@@ -10,35 +10,35 @@ function ActionItem({ action, children, user, existingResponses }) {
   const [submitting, setSubmitting] = useState(false);
   const [localResponses, setLocalResponses] = useState({});
 
-  // For each child, check if they already responded
+  // Check if a child has a completed response (non-empty response_value)
   const getExistingResponse = (childId) =>
     existingResponses.find(r =>
-      (r.action_required_id === action.id || r.action_id === action.id) &&
-      (r.member_id === childId || r.child_member_id === childId) &&
-      r.status === 'completed' && r.response
+      r.action_required_id === action.id &&
+      r.member_id === childId &&
+      r.response_value
     );
 
   const allAnswered = children.every(c => getExistingResponse(c.id) || localResponses[c.id]);
 
-  const handleSubmit = async (child, response) => {
+  const handleSubmit = async (child, response_value) => {
     setSubmitting(true);
     try {
       const existing = getExistingResponse(child.id);
       if (existing) {
-        await base44.entities.ActionResponse.update(existing.id, { response, status: 'completed' });
+        await base44.entities.ActionResponse.update(existing.id, {
+          response_value,
+          responded_at: new Date().toISOString(),
+        });
       } else {
         await base44.entities.ActionResponse.create({
           action_required_id: action.id,
-          action_id: action.id,
           member_id: child.id,
-          child_member_id: child.id,
           parent_email: user.email,
-          response,
-          status: 'completed',
-          response_date: new Date().toISOString(),
+          response_value,
+          responded_at: new Date().toISOString(),
         });
       }
-      setLocalResponses(prev => ({ ...prev, [child.id]: response }));
+      setLocalResponses(prev => ({ ...prev, [child.id]: response_value }));
       queryClient.invalidateQueries({ queryKey: ['mobile-actions'] });
       toast.success('Response saved!');
     } catch (err) {
@@ -59,7 +59,6 @@ function ActionItem({ action, children, user, existingResponses }) {
 
   return (
     <div className={`bg-white rounded-2xl overflow-hidden border transition-all ${allAnswered ? 'border-green-200' : 'border-orange-100'}`}>
-      {/* Header */}
       <button
         className="w-full flex items-start gap-3 p-4 text-left"
         onClick={() => setExpanded(!expanded)}
@@ -81,15 +80,13 @@ function ActionItem({ action, children, user, existingResponses }) {
         <div className="px-4 pb-4 space-y-4 border-t border-gray-50 pt-3">
           {children.map(child => {
             const existing = getExistingResponse(child.id);
-            const currentResponse = localResponses[child.id] || existing?.response;
+            const currentResponse = localResponses[child.id] || existing?.response_value;
 
             return (
               <div key={child.id}>
                 {children.length > 1 && (
                   <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{child.full_name || child.first_name}</p>
                 )}
-
-                {/* Options-based (dropdown/attendance/consent) */}
                 {options ? (
                   <div className="flex flex-wrap gap-2">
                     {options.map(opt => {
@@ -111,7 +108,6 @@ function ActionItem({ action, children, user, existingResponses }) {
                     })}
                   </div>
                 ) : (
-                  /* Text input */
                   <TextResponseInput
                     currentResponse={currentResponse}
                     onSubmit={(val) => handleSubmit(child, val)}
@@ -151,12 +147,13 @@ function TextResponseInput({ currentResponse, onSubmit, submitting }) {
 export default function ActionRequiredCard({ actionsRequired, children, user, existingResponses }) {
   if (actionsRequired.length === 0) return null;
 
+  // An action is pending if any child has no completed response for it
   const pendingCount = actionsRequired.filter(action =>
     !children.every(child =>
       existingResponses.some(r =>
-        (r.action_required_id === action.id || r.action_id === action.id) &&
-        (r.member_id === child.id || r.child_member_id === child.id) &&
-        r.status === 'completed' && r.response
+        r.action_required_id === action.id &&
+        r.member_id === child.id &&
+        r.response_value
       )
     )
   ).length;
