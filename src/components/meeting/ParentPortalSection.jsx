@@ -28,7 +28,10 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
 
   const { data: actions = [] } = useQuery({
     queryKey: ['action-required', programmeId],
-    queryFn: () => base44.entities.ActionRequired.filter({ programme_id: programmeId }),
+    queryFn: async () => {
+      const all = await base44.entities.ActionRequired.filter({ programme_id: programmeId });
+      return all.filter(a => a.action_purpose !== 'volunteer');
+    },
     enabled: !!programmeId,
   });
 
@@ -217,7 +220,7 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
                   <SelectItem value="consent">Consent</SelectItem>
                   <SelectItem value="custom_dropdown">Custom Dropdown</SelectItem>
                   <SelectItem value="text_input">Text Input</SelectItem>
-                  <SelectItem value="volunteer">Volunteer Request</SelectItem>
+
                 </SelectContent>
               </Select>
             </div>

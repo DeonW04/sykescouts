@@ -190,7 +190,7 @@ export default function EventParentPortalSection({ eventId, event }) {
             <SelectItem value="consent">Consent</SelectItem>
             <SelectItem value="custom_dropdown">Custom Dropdown</SelectItem>
             <SelectItem value="text_input">Text Input</SelectItem>
-            <SelectItem value="volunteer">Volunteer Request</SelectItem>
+
           </SelectContent>
         </Select>
       </div>

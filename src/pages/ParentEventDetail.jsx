@@ -82,7 +82,7 @@ export default function ParentEventDetail() {
     queryKey: ['actions-required', eventId],
     queryFn: async () => {
       const actions = await base44.entities.ActionRequired.filter({ event_id: eventId });
-      return actions.filter(action => action.is_open !== false);
+      return actions.filter(action => action.is_open !== false && action.action_purpose !== 'volunteer');
     },
     enabled: !!eventId,
   });
