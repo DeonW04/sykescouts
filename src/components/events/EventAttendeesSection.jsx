@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import LeaderRotaSection from '../meeting/LeaderRotaSection';
-import VolunteerSummaryCard from '../volunteers/VolunteerSummaryCard';
 
 export default function EventAttendeesSection({ eventId, event }) {
   const queryClient = useQueryClient();
@@ -292,7 +291,6 @@ export default function EventAttendeesSection({ eventId, event }) {
   return (
     <div className="space-y-6">
       <LeaderRotaSection eventId={eventId} sectionId={eventSections[0]?.id} />
-      <VolunteerSummaryCard eventId={eventId} />
 
       <Card>
         <CardHeader>

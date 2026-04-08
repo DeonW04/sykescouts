@@ -24,7 +24,6 @@ import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeC
 import LeaderRotaSection from '../components/meeting/LeaderRotaSection';
 import LeaderNav from '../components/leader/LeaderNav';
 import IScoutSection from '../components/meeting/IScoutSection';
-import VolunteerSummaryCard from '../components/volunteers/VolunteerSummaryCard';
 
 export default function MeetingDetail() {
   const navigate = useNavigate();
@@ -568,7 +567,6 @@ export default function MeetingDetail() {
             {activeSection === 'attendance' && (
               <div className="space-y-6">
                 <LeaderRotaSection programmeId={existingProgramme?.id} sectionId={sectionId} />
-                <VolunteerSummaryCard programmeId={existingProgramme?.id} />
 
                 <Card className="shadow-sm border-gray-200">
                   <CardHeader className="border-b border-gray-100">
