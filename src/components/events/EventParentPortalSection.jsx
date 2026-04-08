@@ -154,27 +154,27 @@ export default function EventParentPortalSection({ eventId, event }) {
     setActionForm({ ...actionForm, dropdown_options: newOptions });
   };
 
-  const ActionFormFields = ({ form, setForm }) => (
+  const renderActionFormFields = () => (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label>Required Action *</Label>
         <Textarea
-          value={form.action_text}
-          onChange={(e) => setForm({ ...form, action_text: e.target.value })}
+          value={actionForm.action_text}
+          onChange={(e) => setActionForm({ ...actionForm, action_text: e.target.value })}
           placeholder="e.g., Please confirm attendance for the camp"
         />
       </div>
       <div className="space-y-2">
         <Label>Column Title *</Label>
         <Input
-          value={form.column_title}
-          onChange={(e) => setForm({ ...form, column_title: e.target.value })}
+          value={actionForm.column_title}
+          onChange={(e) => setActionForm({ ...actionForm, column_title: e.target.value })}
           placeholder="e.g., Camp Attendance"
         />
       </div>
       <div className="space-y-2">
         <Label>Action Purpose *</Label>
-        <Select value={form.action_purpose} onValueChange={(value) => setForm({ ...form, action_purpose: value })}>
+        <Select value={actionForm.action_purpose} onValueChange={(value) => setActionForm({ ...actionForm, action_purpose: value })}>
           <SelectTrigger><SelectValue placeholder="Select purpose" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="attendance">Attendance</SelectItem>
@@ -184,17 +184,17 @@ export default function EventParentPortalSection({ eventId, event }) {
           </SelectContent>
         </Select>
       </div>
-      {form.action_purpose === 'custom_dropdown' && (
+      {actionForm.action_purpose === 'custom_dropdown' && (
         <div className="space-y-2">
           <Label>Dropdown Options</Label>
-          {form.dropdown_options.map((option, index) => (
+          {actionForm.dropdown_options.map((option, index) => (
             <div key={index} className="flex gap-2">
               <Input
                 value={option}
                 onChange={(e) => handleOptionChange(index, e.target.value)}
                 placeholder={`Option ${index + 1}`}
               />
-              {form.dropdown_options.length > 1 && (
+              {actionForm.dropdown_options.length > 1 && (
                 <Button size="sm" variant="ghost" onClick={() => handleRemoveOption(index)}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -210,8 +210,8 @@ export default function EventParentPortalSection({ eventId, event }) {
         <Label>Deadline (optional)</Label>
         <Input
           type="datetime-local"
-          value={form.deadline}
-          onChange={(e) => setForm({ ...form, deadline: e.target.value })}
+          value={actionForm.deadline}
+          onChange={(e) => setActionForm({ ...actionForm, deadline: e.target.value })}
         />
         <p className="text-xs text-gray-500">Once the deadline passes, this action will automatically close and disappear from parent dashboards.</p>
       </div>
@@ -369,7 +369,7 @@ export default function EventParentPortalSection({ eventId, event }) {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Add Action Required</DialogTitle></DialogHeader>
           <div className="mt-4">
-            <ActionFormFields form={actionForm} setForm={setActionForm} />
+            {renderActionFormFields()}
             <Button
               onClick={() => createActionMutation.mutate(actionForm)}
               disabled={!actionForm.action_text || !actionForm.column_title || !actionForm.action_purpose || createActionMutation.isPending}
@@ -386,7 +386,7 @@ export default function EventParentPortalSection({ eventId, event }) {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Edit Action Required</DialogTitle></DialogHeader>
           <div className="mt-4">
-            <ActionFormFields form={actionForm} setForm={setActionForm} />
+            {renderActionFormFields()}
             <Button
               onClick={() => {
                 if (!editingAction) return;
