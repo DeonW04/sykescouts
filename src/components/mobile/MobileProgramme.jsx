@@ -161,8 +161,8 @@ function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMee
   );
 }
 
-export default function MobileProgramme({ children }) {
-  const childSectionIds = [...new Set(children.map(c => c.section_id).filter(Boolean))];
+export default function MobileProgramme({ memberChildren = [] }) {
+  const childSectionIds = [...new Set(memberChildren.map(c => c.section_id).filter(Boolean))];
 
   const { data: terms = [] } = useQuery({
     queryKey: ['mobile-terms', childSectionIds],

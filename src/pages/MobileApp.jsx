@@ -133,7 +133,7 @@ function ParentApp({ user, activeTab, onTabChange }) {
   switch (activeTab) {
     case 'home': return <MobileHome user={user} children={children} onTabChange={onTabChange} onOpenConsentForm={handleOpenConsentForm} />;
     case 'child': return <MobileMyChild user={user} children={children} />;
-    case 'programme': return <MobileProgramme children={children} />;
+    case 'programme': return <MobileProgramme memberChildren={children} />;
     case 'events': return <MobileEvents children={children} user={user} />;
     case 'badges': return <MobileBadges children={children} />;
     case 'settings': return <MobileSettings user={user} role="parent" />;
