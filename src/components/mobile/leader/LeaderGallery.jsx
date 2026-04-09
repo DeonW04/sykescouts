@@ -1,19 +1,22 @@
 import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Camera, Upload, X, ChevronDown, ChevronUp, Image } from 'lucide-react';
+import { Camera, Upload, X, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
 export default function LeaderGallery({ sections, user }) {
   const queryClient = useQueryClient();
-  const [uploading, setUploading] = useState(false);
+  const [uploadStates, setUploadStates] = useState([]); // [{status: 'pending'|'uploading'|'done'|'error'}]
   const [selectedProgrammeId, setSelectedProgrammeId] = useState('');
   const [selectedEventId, setSelectedEventId] = useState('');
   const [caption, setCaption] = useState('');
   const [previewUrls, setPreviewUrls] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [uploadComplete, setUploadComplete] = useState(false);
   const fileInputRef = useRef(null);
+
+  const uploading = uploadStates.some(s => s.status === 'uploading');
   const sectionIds = sections.map(s => s.id);
 
   const { data: programmes = [] } = useQuery({
@@ -47,22 +50,21 @@ export default function LeaderGallery({ sections, user }) {
     if (files.length === 0) return;
     setSelectedFiles(files);
     setPreviewUrls(files.map(f => URL.createObjectURL(f)));
+    setUploadStates(files.map(() => ({ status: 'pending' })));
+    setUploadComplete(false);
   };
 
   const handleUpload = async () => {
-    if (selectedFiles.length === 0) {
-      toast.error('Please select photos first');
-      return;
-    }
-    if (!selectedProgrammeId && !selectedEventId) {
-      toast.error('Please link to a meeting or event');
-      return;
-    }
+    if (selectedFiles.length === 0) { toast.error('Please select photos first'); return; }
+    if (!selectedProgrammeId && !selectedEventId) { toast.error('Please link to a meeting or event'); return; }
 
-    setUploading(true);
-    try {
-      for (const file of selectedFiles) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const states = selectedFiles.map(() => ({ status: 'pending' }));
+    setUploadStates([...states]);
+
+    for (let i = 0; i < selectedFiles.length; i++) {
+      setUploadStates(prev => prev.map((s, idx) => idx === i ? { status: 'uploading' } : s));
+      try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: selectedFiles[i] });
         await base44.entities.EventPhoto.create({
           file_url,
           caption,
@@ -70,19 +72,23 @@ export default function LeaderGallery({ sections, user }) {
           ...(selectedProgrammeId ? { programme_id: selectedProgrammeId } : {}),
           ...(selectedEventId ? { event_id: selectedEventId } : {}),
         });
+        setUploadStates(prev => prev.map((s, idx) => idx === i ? { status: 'done' } : s));
+      } catch (err) {
+        setUploadStates(prev => prev.map((s, idx) => idx === i ? { status: 'error' } : s));
       }
-      toast.success(`${selectedFiles.length} photo${selectedFiles.length > 1 ? 's' : ''} uploaded!`);
+    }
+
+    setUploadComplete(true);
+    queryClient.invalidateQueries({ queryKey: ['leader-gallery-photos'] });
+    setTimeout(() => {
       setSelectedFiles([]);
       setPreviewUrls([]);
       setCaption('');
       setSelectedProgrammeId('');
       setSelectedEventId('');
-      queryClient.invalidateQueries({ queryKey: ['leader-gallery-photos'] });
-    } catch (err) {
-      toast.error('Upload failed: ' + err.message);
-    } finally {
-      setUploading(false);
-    }
+      setUploadStates([]);
+      setUploadComplete(false);
+    }, 2500);
   };
 
   return (
@@ -108,20 +114,62 @@ export default function LeaderGallery({ sections, user }) {
             <p className="text-sm font-medium">{selectedFiles.length > 0 ? `${selectedFiles.length} photo${selectedFiles.length > 1 ? 's' : ''} selected` : 'Tap to choose photos'}</p>
           </button>
 
-          {/* Previews */}
+          {/* Previews with upload state */}
           {previewUrls.length > 0 && (
             <div className="flex gap-2 overflow-x-auto pb-1">
-              {previewUrls.map((url, i) => (
-                <div key={i} className="relative flex-shrink-0">
-                  <img src={url} alt="" className="w-16 h-16 rounded-xl object-cover" />
-                  <button onClick={() => {
-                    setPreviewUrls(prev => prev.filter((_, idx) => idx !== i));
-                    setSelectedFiles(prev => prev.filter((_, idx) => idx !== i));
-                  }} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                    <X className="w-3 h-3 text-white" />
-                  </button>
-                </div>
-              ))}
+              {previewUrls.map((url, i) => {
+                const state = uploadStates[i]?.status || 'pending';
+                return (
+                  <div key={i} className="relative flex-shrink-0">
+                    <img src={url} alt="" className={`w-16 h-16 rounded-xl object-cover transition-all ${state === 'done' ? 'brightness-75' : ''}`} />
+                    {/* Overlay for uploading */}
+                    {state === 'uploading' && (
+                      <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/40">
+                        <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      </div>
+                    )}
+                    {/* Tick for done */}
+                    {state === 'done' && (
+                      <div className="absolute inset-0 flex items-center justify-center rounded-xl">
+                        <CheckCircle className="w-8 h-8 text-green-400 drop-shadow-lg" />
+                      </div>
+                    )}
+                    {/* Error */}
+                    {state === 'error' && (
+                      <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-red-500/40">
+                        <X className="w-6 h-6 text-white" />
+                      </div>
+                    )}
+                    {/* Remove button — only when not uploading */}
+                    {state === 'pending' && !uploading && (
+                      <button onClick={() => {
+                        setPreviewUrls(prev => prev.filter((_, idx) => idx !== i));
+                        setSelectedFiles(prev => prev.filter((_, idx) => idx !== i));
+                        setUploadStates(prev => prev.filter((_, idx) => idx !== i));
+                      }} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                        <X className="w-3 h-3 text-white" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Progress bar */}
+          {uploadStates.length > 0 && (uploading || uploadComplete) && (
+            <div className="space-y-1">
+              <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                <div
+                  className="h-full bg-pink-500 rounded-full transition-all duration-500"
+                  style={{ width: `${uploadStates.length > 0 ? (uploadStates.filter(s => s.status === 'done').length / uploadStates.length) * 100 : 0}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500 text-center">
+                {uploadComplete
+                  ? `✓ All ${uploadStates.length} photos uploaded!`
+                  : `Uploading ${uploadStates.filter(s => s.status === 'done').length + 1} of ${uploadStates.length}…`}
+              </p>
             </div>
           )}
 
@@ -159,17 +207,24 @@ export default function LeaderGallery({ sections, user }) {
             <input value={caption} onChange={e => setCaption(e.target.value)} placeholder="Add a caption..." className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pink-400" />
           </div>
 
-          <button
-            onClick={handleUpload}
-            disabled={uploading || selectedFiles.length === 0}
-            className="w-full py-3.5 bg-pink-600 text-white rounded-2xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 transition-transform"
-          >
-            {uploading ? (
-              <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Uploading…</>
-            ) : (
-              <><Upload className="w-4 h-4" /> Upload {selectedFiles.length > 0 ? `${selectedFiles.length} Photo${selectedFiles.length > 1 ? 's' : ''}` : 'Photos'}</>
-            )}
-          </button>
+          {uploadComplete ? (
+            <div className="w-full py-4 bg-green-50 border-2 border-green-300 rounded-2xl flex items-center justify-center gap-3">
+              <CheckCircle className="w-6 h-6 text-green-500" />
+              <span className="text-green-700 font-bold text-sm">Upload complete!</span>
+            </div>
+          ) : (
+            <button
+              onClick={handleUpload}
+              disabled={uploading || selectedFiles.length === 0}
+              className="w-full py-3.5 bg-pink-600 text-white rounded-2xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 transition-transform"
+            >
+              {uploading ? (
+                <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Uploading…</>
+              ) : (
+                <><Upload className="w-4 h-4" /> Upload {selectedFiles.length > 0 ? `${selectedFiles.length} Photo${selectedFiles.length > 1 ? 's' : ''}` : 'Photos'}</>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Recent photos */}
