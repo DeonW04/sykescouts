@@ -83,6 +83,17 @@ export default function MobileConsentFormFlow({ action, submission, user, child,
   const [tcAccepted, setTcAccepted] = useState(submission?.tc_accepted || false);
   const [saving, setSaving] = useState(false);
 
+  const { data: leaderRecord } = useQuery({
+    queryKey: ['leader-for-user', user?.id],
+    queryFn: async () => {
+      const results = await base44.entities.Leader.filter({ user_id: user.id });
+      return results[0] || null;
+    },
+    enabled: !!user?.id,
+  });
+
+  const signerName = leaderRecord?.display_name || user?.full_name;
+
   const { data: form } = useQuery({
     queryKey: ['consent-form-detail', action.consent_form_id],
     queryFn: () => base44.entities.ConsentForm.filter({ id: action.consent_form_id }).then(r => r[0]),
@@ -120,7 +131,7 @@ export default function MobileConsentFormFlow({ action, submission, user, child,
         tc_accepted: tcAccepted,
         signature_data_url: signatureDataUrl,
         status: 'signed',
-        parent_name: user.full_name,
+        parent_name: signerName,
         signed_via_app: true,
         submitted_at: new Date().toISOString(),
       };
@@ -304,7 +315,7 @@ export default function MobileConsentFormFlow({ action, submission, user, child,
             <>
               <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-1">
                 <p className="text-sm text-gray-500">Signing as</p>
-                <p className="font-semibold text-gray-900">{user.full_name}</p>
+                <p className="font-semibold text-gray-900">{signerName}</p>
                 <p className="text-xs text-gray-400">On behalf of {child?.full_name}</p>
               </div>
 
@@ -330,7 +341,7 @@ export default function MobileConsentFormFlow({ action, submission, user, child,
               <p className="text-gray-500 text-sm max-w-xs mb-2">
                 <strong>{form.title}</strong> has been signed for <strong>{child?.full_name}</strong>.
               </p>
-              <p className="text-xs text-gray-400 mb-8">Signed via SykeScouts App · {user.full_name}</p>
+              <p className="text-xs text-gray-400 mb-8">Signed via SykeScouts App · {signerName}</p>
               <button
                 onClick={onDone}
                 className="bg-[#7413dc] text-white rounded-2xl px-8 py-3.5 font-bold text-base active:scale-95 transition-transform"

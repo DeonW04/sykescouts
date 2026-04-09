@@ -58,6 +58,12 @@ export default function DocumentStorageSection({ programmeId, entityType }) {
     enabled: !!programmeId,
   });
 
+  const { data: members = [] } = useQuery({
+    queryKey: ['doc-members'],
+    queryFn: () => base44.entities.Member.filter({}),
+    enabled: signedSubmissions?.length > 0 || submissions.length > 0,
+  });
+
   const saveDocsMutation = useMutation({
     mutationFn: (docs) => {
       if (entityType === 'event') {
@@ -203,11 +209,13 @@ export default function DocumentStorageSection({ programmeId, entityType }) {
           <CardContent className="pt-4 space-y-2">
             {signedSubmissions.map(sub => {
               const form = linkedForms.find(f => f.id === sub.form_id);
+              const member = members.find(m => m.id === sub.member_id);
+              const label = member ? `${member.full_name} — ${form?.title || 'Consent Form'}` : (form?.title || 'Consent Form');
               return (
                 <div key={sub.id} className="flex items-center gap-3 p-3 bg-teal-50 border border-teal-200 rounded-lg">
                   <FileText className="w-4 h-4 text-teal-600 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">{form?.title || 'Consent Form'}</p>
+                    <p className="font-medium text-sm">{label}</p>
                     <p className="text-xs text-gray-500">Signed by {sub.parent_name || 'parent'}</p>
                   </div>
                   <Button

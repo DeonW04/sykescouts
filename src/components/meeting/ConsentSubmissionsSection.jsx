@@ -132,15 +132,17 @@ export default function ConsentSubmissionsSection({ programmeId, entityType, lin
   const { data: members = [] } = useQuery({
     queryKey: ['consent-members', entityType, programmeId],
     queryFn: async () => {
+      let result;
       if (entityType === 'programme') {
-        return base44.entities.Member.filter({ section_id: entityData?.section_id, active: true });
+        result = await base44.entities.Member.filter({ section_id: entityData?.section_id, active: true });
       } else {
         const attendances = await base44.entities.EventAttendance.filter({ event_id: programmeId });
         if (!attendances.length) return [];
         const memberIds = attendances.map(a => a.member_id);
         const allMembers = await base44.entities.Member.filter({});
-        return allMembers.filter(m => memberIds.includes(m.id));
+        result = allMembers.filter(m => memberIds.includes(m.id));
       }
+      return result.sort((a, b) => new Date(a.date_of_birth) - new Date(b.date_of_birth));
     },
     enabled: !!programmeId && !!entityData,
   });
