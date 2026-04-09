@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Calendar, ChevronRight, AlertTriangle, MapPin } from 'lucide-react';
+import { Calendar, ChevronRight, AlertTriangle, MapPin, Ban } from 'lucide-react';
 import { format, isToday, isTomorrow, isPast, startOfWeek, endOfWeek } from 'date-fns';
 
 const BADGE_EMOJI = {
@@ -13,6 +13,23 @@ const BADGE_EMOJI = {
 
 function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMeeting, badges = [] }) {
   const [open, setOpen] = useState(isThisWeeksMeeting);
+
+  if (programme.no_meeting) {
+    return (
+      <div className={`rounded-2xl border overflow-hidden flex items-center gap-4 p-4 ${isPastMeeting ? 'bg-gray-50 border-gray-200 opacity-70' : 'bg-red-50 border-red-200'}`}>
+        <div className="rounded-xl p-3 flex-shrink-0 bg-red-100">
+          <Ban className="w-5 h-5 text-red-500" />
+        </div>
+        <div>
+          <p className="font-semibold text-sm text-red-700">No Meeting</p>
+          <p className="text-xs text-gray-400 mt-0.5">{format(new Date(programme.date), 'EEEE, d MMMM yyyy')}</p>
+          {programme.no_meeting_reason && (
+            <p className="text-xs text-gray-500 mt-1">{programme.no_meeting_reason}</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const hasTimeChange = (() => {
     if (!termMeetingTime || !programme.activities?.length) return false;

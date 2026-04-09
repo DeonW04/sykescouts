@@ -110,7 +110,10 @@ export default function LeaderBadges() {
   const selectedSectionName = selectedSectionObj?.name;
 
   const filteredBadges = badges.filter(badge => {
-    const matchesSearch = badge.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const lower = searchTerm.toLowerCase();
+    const matchesSearch = !searchTerm
+      || badge.name.toLowerCase().includes(lower)
+      || (searchTerm.length >= 3 && requirements.some(r => r.badge_id === badge.id && r.text?.toLowerCase().includes(lower)));
     const isSectionAgnostic = badge.section === 'all' || badge.category === 'staged';
     const matchesSection = !selectedSectionName || isSectionAgnostic || badge.section === selectedSectionName;
     const matchesCategory = categoryFilter === 'all' || badge.category === categoryFilter;

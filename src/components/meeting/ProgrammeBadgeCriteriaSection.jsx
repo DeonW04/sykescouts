@@ -117,9 +117,16 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
     });
   };
 
-  const filteredBadges = badges.filter(b => 
-    b.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredBadges = badges.filter(b => {
+    if (!searchTerm) return true;
+    const lower = searchTerm.toLowerCase();
+    if (b.name.toLowerCase().includes(lower)) return true;
+    // Also search within requirement text (min 3 chars to avoid noise)
+    if (searchTerm.length >= 3) {
+      return allRequirements.some(r => r.badge_id === b.id && r.text?.toLowerCase().includes(lower));
+    }
+    return false;
+  });
 
   const badgeFamilies = badges
     .filter(b => b.category === 'staged' && b.badge_family_id)

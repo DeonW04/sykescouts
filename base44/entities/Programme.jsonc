@@ -1,0 +1,96 @@
+{
+  "name": "Programme",
+  "type": "object",
+  "properties": {
+    "section_id": {
+      "type": "string",
+      "description": "Section ID"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Programme date"
+    },
+    "title": {
+      "type": "string",
+      "description": "Programme title/theme"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of activities"
+    },
+    "shown_in_portal": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show in parent portal"
+    },
+    "activities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "string"
+          },
+          "activity": {
+            "type": "string"
+          },
+          "badge_links": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "List of activities"
+    },
+    "equipment_needed": {
+      "type": "string",
+      "description": "Equipment required"
+    },
+    "leader_in_charge": {
+      "type": "string",
+      "description": "Leader ID"
+    },
+    "published": {
+      "type": "boolean",
+      "default": false,
+      "description": "Visible to parents"
+    },
+    "risk_assessment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Linked risk assessment IDs"
+    },
+    "optional_location": {
+      "type": "string",
+      "description": "Meeting location (leave blank if usual venue)"
+    },
+    "optional_start_time": {
+      "type": "string",
+      "description": "Meeting start time (leave blank if usual time, e.g. 18:30)"
+    },
+    "optional_end_time": {
+      "type": "string",
+      "description": "Meeting end time (leave blank if usual time)"
+    },
+    "no_meeting": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, there is no meeting this session"
+    },
+    "no_meeting_reason": {
+      "type": "string",
+      "description": "Optional reason for no meeting, shown to parents"
+    }
+  },
+  "required": [
+    "section_id",
+    "date",
+    "title"
+  ]
+}
