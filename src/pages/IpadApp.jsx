@@ -136,11 +136,19 @@ export default function IpadApp() {
     enabled: view === 'consent_event',
   });
 
-  const { data: forms = [] } = useQuery({
+  const { data: allActiveForms = [] } = useQuery({
     queryKey: ['ipad-consent-forms'],
     queryFn: () => base44.entities.ConsentForm.filter({ active: true }),
     enabled: view === 'consent_form',
   });
+
+  // Filter forms to only those linked to the selected event/meeting
+  const forms = useMemo(() => {
+    if (!selectedEvent) return allActiveForms;
+    const linked = selectedEvent.consent_form_ids || [];
+    if (linked.length === 0) return allActiveForms; // fallback: show all if none linked
+    return allActiveForms.filter(f => linked.includes(f.id));
+  }, [allActiveForms, selectedEvent]);
 
   const { data: allMembers = [] } = useQuery({
     queryKey: ['members'],

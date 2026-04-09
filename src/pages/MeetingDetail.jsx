@@ -18,7 +18,7 @@ import {
 import { toast } from 'sonner';
 import TodoSection from '../components/meeting/TodoSection';
 import ParentPortalSection from '../components/meeting/ParentPortalSection';
-import RiskAssessmentSection from '../components/meeting/RiskAssessmentSection';
+import SafetySection from '../components/meeting/SafetySection';
 import BadgesSection from '../components/meeting/BadgesSection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
 import LeaderRotaSection from '../components/meeting/LeaderRotaSection';
@@ -271,7 +271,7 @@ export default function MeetingDetail() {
     { id: 'todo', label: 'To-Do List', icon: ListTodo },
     { id: 'attendance', label: 'Attendance', icon: Users },
     { id: 'parent', label: 'Parent Portal', icon: Eye },
-    { id: 'risk', label: 'Risk Assessment', icon: Shield },
+    { id: 'safety', label: 'Safety', icon: Shield },
     { id: 'badges', label: 'Badges', icon: Award },
     { id: 'iscout', label: 'iScout', icon: Zap },
   ];
@@ -674,9 +674,9 @@ export default function MeetingDetail() {
               />
             )}
 
-            {/* ── Risk Assessment ── */}
-            {activeSection === 'risk' && (
-              <RiskAssessmentSection programmeId={existingProgramme?.id} />
+            {/* ── Safety ── */}
+            {activeSection === 'safety' && (
+              <SafetySection programmeId={existingProgramme?.id} entityType="programme" />
             )}
 
             {/* ── Badges ── */}

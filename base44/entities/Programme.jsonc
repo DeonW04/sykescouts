@@ -66,6 +66,14 @@
       "default": [],
       "description": "Linked risk assessment IDs"
     },
+    "consent_form_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Linked consent form IDs"
+    },
     "optional_location": {
       "type": "string",
       "description": "Meeting location (leave blank if usual venue)"

@@ -1,0 +1,168 @@
+{
+  "name": "Event",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Event title"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "Camp",
+        "Day Event",
+        "Other"
+      ],
+      "description": "Event type"
+    },
+    "section_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Sections invited"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Start date and time"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "End date and time"
+    },
+    "meeting_time": {
+      "type": "string",
+      "description": "Meeting time (e.g., 09:00)"
+    },
+    "pickup_time": {
+      "type": "string",
+      "description": "Pickup time (e.g., 15:00)"
+    },
+    "location": {
+      "type": "string",
+      "description": "Event location"
+    },
+    "description": {
+      "type": "string",
+      "description": "Event description"
+    },
+    "cost": {
+      "type": "number",
+      "description": "Cost per person"
+    },
+    "leader_in_charge": {
+      "type": "string",
+      "description": "Leader ID"
+    },
+    "requires_consent": {
+      "type": "boolean",
+      "default": true,
+      "description": "Requires parent consent"
+    },
+    "consent_deadline": {
+      "type": "string",
+      "format": "date",
+      "description": "Consent deadline"
+    },
+    "payment_deadline": {
+      "type": "string",
+      "format": "date",
+      "description": "Payment deadline"
+    },
+    "max_attendees": {
+      "type": "number",
+      "description": "Maximum number of attendees"
+    },
+    "published": {
+      "type": "boolean",
+      "default": false,
+      "description": "Visible to parents"
+    },
+    "show_schedule_in_portal": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show schedule to parents"
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Uploaded documents (kit lists, etc)"
+    },
+    "schedule_by_day": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "day_name": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "time": {
+                  "type": "string"
+                },
+                "activity": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "description": "Event schedule organized by days"
+    },
+    "equipment_list": {
+      "type": "string",
+      "description": "Equipment needed for the event"
+    },
+    "instructions": {
+      "type": "string",
+      "description": "Instructions and notes for leaders"
+    },
+    "risk_assessment_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Linked risk assessment IDs"
+    },
+    "consent_form_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Linked consent form IDs"
+    },
+    "nights_away_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of nights away for this event"
+    }
+  },
+  "required": [
+    "title",
+    "type",
+    "start_date",
+    "section_ids"
+  ]
+}

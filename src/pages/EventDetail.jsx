@@ -17,7 +17,7 @@ import AwardNightsAwayDialog from '../components/events/AwardNightsAwayDialog';
 import TodoSection from '../components/meeting/TodoSection';
 import EventParentPortalSection from '../components/events/EventParentPortalSection';
 import EventAttendeesSection from '../components/events/EventAttendeesSection';
-import RiskAssessmentSection from '../components/meeting/RiskAssessmentSection';
+import SafetySection from '../components/meeting/SafetySection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
 import LeaderNav from '../components/leader/LeaderNav';
 
@@ -226,7 +226,7 @@ export default function EventDetail() {
   const planningSubItems = [
     { id: 'schedule', label: 'Schedule', icon: Calendar },
     { id: 'todo', label: 'To-Do', icon: ListTodo },
-    { id: 'risk', label: 'Risk', icon: Shield },
+    { id: 'safety', label: 'Safety', icon: Shield },
     { id: 'equipment', label: 'Equipment', icon: FileText },
     { id: 'financial', label: 'Financial', icon: DollarSign },
   ];
@@ -621,8 +621,8 @@ export default function EventDetail() {
                   <TodoSection programmeId={eventId} entityType="event" />
                 )}
 
-                {activePlanningTab === 'risk' && (
-                  <RiskAssessmentSection programmeId={eventId} entityType="event" />
+                {activePlanningTab === 'safety' && (
+                  <SafetySection programmeId={eventId} entityType="event" />
                 )}
 
                 {activePlanningTab === 'equipment' && (
