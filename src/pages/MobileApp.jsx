@@ -6,6 +6,7 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import PushNotificationPrompt from '../components/pwa/PushNotificationPrompt';
 import MobileOnboarding from './MobileOnboarding.jsx';
 import MobileSettings from '../components/mobile/MobileSettings';
+import MobileConsentFormFlow from '../components/mobile/MobileConsentFormFlow';
 
 // ── Parent tabs ──
 import { Home, User, Calendar, Tent, Award, Settings, Users, CheckSquare, Camera, Receipt } from 'lucide-react';
@@ -97,6 +98,8 @@ function BottomNav({ tabs, activeTab, onTabChange, accent }) {
 // Parent app
 // ─────────────────────────────────────────────────────────────
 function ParentApp({ user, activeTab, onTabChange }) {
+  const [consentFlow, setConsentFlow] = useState(null); // { action, child, submission }
+
   const { data: children = [] } = useQuery({
     queryKey: ['mobile-children', user?.email],
     queryFn: async () => {
@@ -107,8 +110,28 @@ function ParentApp({ user, activeTab, onTabChange }) {
     enabled: !!user?.email,
   });
 
+  const handleOpenConsentForm = async (action, child) => {
+    // Load existing submission for this child
+    const subs = await base44.entities.ConsentFormSubmission.filter({ form_id: action.consent_form_id, member_id: child.id });
+    const submission = subs[0] || null;
+    setConsentFlow({ action, child, submission });
+  };
+
+  if (consentFlow) {
+    return (
+      <MobileConsentFormFlow
+        action={consentFlow.action}
+        submission={consentFlow.submission}
+        user={user}
+        child={consentFlow.child}
+        onBack={() => setConsentFlow(null)}
+        onDone={() => setConsentFlow(null)}
+      />
+    );
+  }
+
   switch (activeTab) {
-    case 'home': return <MobileHome user={user} children={children} onTabChange={onTabChange} />;
+    case 'home': return <MobileHome user={user} children={children} onTabChange={onTabChange} onOpenConsentForm={handleOpenConsentForm} />;
     case 'child': return <MobileMyChild user={user} children={children} />;
     case 'programme': return <MobileProgramme children={children} />;
     case 'events': return <MobileEvents children={children} user={user} />;

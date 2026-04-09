@@ -47,6 +47,11 @@
     "parent_name": {
       "type": "string"
     },
+    "signed_via_app": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if signed through the SykeScouts app"
+    },
     "submitted_at": {
       "type": "string",
       "format": "date-time"

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Bell, CheckCircle, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
+import { Bell, CheckCircle, ChevronDown, ChevronUp, Pencil, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 function ActionItem({ action, children, user, existingResponses }) {
@@ -173,7 +173,7 @@ function TextResponseInput({ currentResponse, onSubmit, submitting }) {
   );
 }
 
-export default function ActionRequiredCard({ actionsRequired, children, user, existingResponses }) {
+export default function ActionRequiredCard({ actionsRequired, children, user, existingResponses, onOpenConsentForm }) {
   // Only show actions that have at least one unanswered child
   const pendingActions = actionsRequired.filter(action =>
     !children.every(child =>
@@ -197,15 +197,56 @@ export default function ActionRequiredCard({ actionsRequired, children, user, ex
         </span>
       </div>
       <div className="space-y-3">
-        {pendingActions.map(action => (
-          <ActionItem
-            key={action.id}
-            action={action}
-            children={children}
-            user={user}
-            existingResponses={existingResponses}
-          />
-        ))}
+        {pendingActions.map(action => {
+          if (action.action_purpose === 'consent_form') {
+            // Find relevant child and their submission status
+            const child = children.find(c => {
+              return existingResponses.some(r => r.action_required_id === action.id && r.member_id === c.id && r.response_value === 'signed');
+            });
+            const allSigned = children.every(c =>
+              existingResponses.some(r => r.action_required_id === action.id && r.member_id === c.id && r.response_value === 'signed')
+            );
+            if (allSigned) return null;
+            return (
+              <div key={action.id} className="bg-white rounded-2xl overflow-hidden border border-orange-100">
+                <div className="p-4">
+                  <div className="flex items-start gap-2 mb-3">
+                    <FileText className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
+                    <p className="font-semibold text-sm text-gray-900 leading-snug">{action.action_text}</p>
+                  </div>
+                  {children.map(c => {
+                    const signed = existingResponses.some(r => r.action_required_id === action.id && r.member_id === c.id && r.response_value === 'signed');
+                    if (signed) return (
+                      <div key={c.id} className="flex items-center gap-2 py-1">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span className="text-sm text-green-700 font-medium">{children.length > 1 ? `${c.full_name}: ` : ''}Signed</span>
+                      </div>
+                    );
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => onOpenConsentForm && onOpenConsentForm(action, c)}
+                        className="w-full mt-1 bg-[#7413dc] text-white rounded-xl py-2.5 text-sm font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                      >
+                        <FileText className="w-4 h-4" />
+                        {children.length > 1 ? `Sign for ${c.full_name}` : 'Sign Consent Form'}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          }
+          return (
+            <ActionItem
+              key={action.id}
+              action={action}
+              children={children}
+              user={user}
+              existingResponses={existingResponses}
+            />
+          );
+        }).filter(Boolean)}
       </div>
     </div>
   );

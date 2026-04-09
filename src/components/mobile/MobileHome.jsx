@@ -6,7 +6,7 @@ import { format, isThisWeek, startOfWeek, endOfWeek } from 'date-fns';
 import ActionRequiredCard from './ActionRequiredCard';
 import VolunteerRequestCard from './VolunteerRequestCard';
 
-export default function MobileHome({ user, children, onTabChange }) {
+export default function MobileHome({ user, children, onTabChange, onOpenConsentForm }) {
   const childSectionIds = [...new Set(children.map(c => c.section_id).filter(Boolean))];
   const childIds = children.map(c => c.id);
 
@@ -213,6 +213,7 @@ export default function MobileHome({ user, children, onTabChange }) {
           children={children}
           user={user}
           existingResponses={existingResponses}
+          onOpenConsentForm={onOpenConsentForm}
         />
 
         {/* Volunteer Requests */}

@@ -92,6 +92,7 @@ export default function IpadApp() {
   const [selectedMember, setSelectedMember] = useState(null);
   const [responses, setResponses] = useState({});
   const [tcAccepted, setTcAccepted] = useState(false);
+  const [parentName, setParentName] = useState('');
   const [currentSubmission, setCurrentSubmission] = useState(null);
   const [signatureReceived, setSignatureReceived] = useState(false);
   const [signatureData, setSignatureData] = useState(null);
@@ -194,6 +195,7 @@ export default function IpadApp() {
     setSelectedMember(member);
     setResponses({});
     setTcAccepted(false);
+    setParentName('');
     setCurrentSubmission(null);
     setSignatureReceived(false);
     setSignatureData(null);
@@ -202,6 +204,7 @@ export default function IpadApp() {
 
   const handleGenerateQR = async () => {
     if (!tcAccepted) return;
+    if (!parentName.trim()) { alert('Please enter the parent/guardian name'); return; }
     setSubmitting(true);
     try {
       const token = generateToken();
@@ -212,6 +215,7 @@ export default function IpadApp() {
         status: 'awaiting_signature',
         responses,
         tc_accepted: true,
+        parent_name: parentName.trim(),
         ...(selectedEventType === 'event' ? { event_id: selectedEvent.id } : { programme_id: selectedEvent.id }),
       };
       const sub = await base44.entities.ConsentFormSubmission.create(submissionData);
@@ -482,6 +486,18 @@ export default function IpadApp() {
               <p className="font-bold text-lg">{selectedMember?.full_name || `${selectedMember?.first_name} ${selectedMember?.surname}`}</p>
               <p className="text-white/60 text-sm">{selectedEvent?.title}</p>
             </div>
+          </div>
+
+          {/* Parent name field */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-gray-700">Parent / Guardian Name <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              value={parentName}
+              onChange={e => setParentName(e.target.value)}
+              placeholder="Full name of parent or guardian signing"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#004851]"
+            />
           </div>
 
           {/* Form blocks */}

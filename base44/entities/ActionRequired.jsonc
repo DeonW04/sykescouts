@@ -25,9 +25,14 @@
         "consent",
         "custom_dropdown",
         "text_input",
-        "volunteer"
+        "volunteer",
+        "consent_form"
       ],
       "description": "Purpose of the action"
+    },
+    "consent_form_id": {
+      "type": "string",
+      "description": "Linked ConsentForm ID (for consent_form type)"
     },
     "dropdown_options": {
       "type": "array",

@@ -262,6 +262,12 @@ export default function ConsentFormBuilder() {
           </CardContent>
         </Card>
 
+        {/* Info: parent name always collected */}
+        <div className="flex items-start gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl text-sm text-blue-800">
+          <span className="text-blue-500 font-bold text-base leading-tight">ℹ</span>
+          <span>A <strong>Parent/Guardian Name</strong> field is automatically added to every form. If signed via the app, the parent's account name is used instead.</span>
+        </div>
+
         {/* Blocks */}
         <div className="space-y-3">
           {blocks.map((block, idx) => (
