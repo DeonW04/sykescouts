@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, FileText, Trash2, Save, Eye, Plus, Calendar, Users, Award, ListTodo, Shield, Menu, X, DollarSign, TrendingUp, TrendingDown, Image } from 'lucide-react';
+import { ArrowLeft, FileText, Trash2, Save, Eye, Plus, Calendar, Users, Award, ListTodo, Shield, Menu, X, DollarSign, TrendingUp, TrendingDown, Image, FolderOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
@@ -19,6 +19,7 @@ import EventParentPortalSection from '../components/events/EventParentPortalSect
 import EventAttendeesSection from '../components/events/EventAttendeesSection';
 import SafetySection from '../components/meeting/SafetySection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
+import DocumentStorageSection from '../components/meeting/DocumentStorageSection';
 import LeaderNav from '../components/leader/LeaderNav';
 
 export default function EventDetail() {
@@ -221,6 +222,7 @@ export default function EventDetail() {
     { id: 'attendance', label: 'Attendance', icon: Users },
     { id: 'parent', label: 'Parent Portal', icon: Eye },
     { id: 'badges', label: 'Badges', icon: Award },
+    { id: 'documents', label: 'Documents', icon: FolderOpen },
   ];
 
   const planningSubItems = [
@@ -872,6 +874,10 @@ export default function EventDetail() {
                 )}
                 <ProgrammeBadgeCriteriaSection programmeId={eventId} entityType="event" />
               </div>
+            )}
+
+            {activeSection === 'documents' && (
+              <DocumentStorageSection programmeId={eventId} entityType="event" />
             )}
           </main>
         </div>

@@ -74,6 +74,30 @@
       "default": [],
       "description": "Linked consent form IDs"
     },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "uploaded_at": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Stored documents for this meeting"
+    },
     "optional_location": {
       "type": "string",
       "description": "Meeting location (leave blank if usual venue)"

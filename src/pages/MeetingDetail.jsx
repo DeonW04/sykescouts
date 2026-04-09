@@ -13,12 +13,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   ArrowLeft, Save, Calendar, Users, Award, Eye, EyeOff, Plus, Trash2,
   ListTodo, Shield, AlertCircle, Image, ArrowLeftRight, Zap, FileText,
-  Menu, X
+  Menu, X, FolderOpen
 } from 'lucide-react';
 import { toast } from 'sonner';
 import TodoSection from '../components/meeting/TodoSection';
 import ParentPortalSection from '../components/meeting/ParentPortalSection';
 import SafetySection from '../components/meeting/SafetySection';
+import DocumentStorageSection from '../components/meeting/DocumentStorageSection';
 import BadgesSection from '../components/meeting/BadgesSection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
 import LeaderRotaSection from '../components/meeting/LeaderRotaSection';
@@ -273,6 +274,7 @@ export default function MeetingDetail() {
     { id: 'parent', label: 'Parent Portal', icon: Eye },
     { id: 'safety', label: 'Safety', icon: Shield },
     { id: 'badges', label: 'Badges', icon: Award },
+    { id: 'documents', label: 'Documents', icon: FolderOpen },
     { id: 'iscout', label: 'iScout', icon: Zap },
   ];
 
@@ -682,6 +684,11 @@ export default function MeetingDetail() {
             {/* ── Badges ── */}
             {activeSection === 'badges' && (
               <ProgrammeBadgeCriteriaSection programmeId={existingProgramme?.id} />
+            )}
+
+            {/* ── Documents ── */}
+            {activeSection === 'documents' && (
+              <DocumentStorageSection programmeId={existingProgramme?.id} entityType="programme" />
             )}
 
             {/* ── iScout ── */}

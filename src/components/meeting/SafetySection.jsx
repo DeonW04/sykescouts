@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ShieldAlert, FileText, Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
 import RiskAssessmentSelector from '../risk/RiskAssessmentSelector';
 import RiskAssessmentList from '../risk/RiskAssessmentList';
+import ConsentSubmissionsSection from './ConsentSubmissionsSection';
 
 export default function SafetySection({ programmeId, entityType = 'programme' }) {
   const queryClient = useQueryClient();
@@ -164,6 +165,19 @@ export default function SafetySection({ programmeId, entityType = 'programme' })
           )}
         </CardContent>
       </Card>
+
+      {/* Consent Form Submissions */}
+      {linkedForms.length > 0 && programmeId && (
+        <>
+          <h3 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">Form Submissions</h3>
+          <ConsentSubmissionsSection
+            programmeId={programmeId}
+            entityType={entityType}
+            linkedForms={linkedForms}
+            entityData={entity}
+          />
+        </>
+      )}
     </div>
   );
 }
