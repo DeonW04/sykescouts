@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
-import { FileText, LogOut, ChevronLeft, CheckCircle, Pen, User } from 'lucide-react';
+import { FileText, LogOut, ChevronLeft, CheckCircle, Pen, User, Award } from 'lucide-react';
+import IpadBadges from '../components/ipad/IpadBadges';
 import { format } from 'date-fns';
 
 const IPAD_EMAIL = 'ipad1@sykescouts.org';
@@ -85,7 +86,7 @@ export default function IpadApp() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('dashboard'); // dashboard | consent_event | consent_form | consent_member | consent_fill | consent_confirm
+  const [view, setView] = useState('dashboard'); // dashboard | badges | consent_event | consent_form | consent_member | consent_fill | consent_confirm
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedEventType, setSelectedEventType] = useState(null); // 'event' | 'meeting'
   const [selectedForm, setSelectedForm] = useState(null);
@@ -305,6 +306,15 @@ export default function IpadApp() {
             </div>
             <span className="text-white font-semibold text-sm">Consent Forms</span>
           </button>
+          <button
+            onClick={() => setView('badges')}
+            className="flex flex-col items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur rounded-3xl p-8 transition-all hover:scale-105 group"
+          >
+            <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 to-[#7413dc] rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-yellow-400/30">
+              <Award className="w-10 h-10 text-white" />
+            </div>
+            <span className="text-white font-semibold text-sm">Badges</span>
+          </button>
         </div>
 
         {/* Logout */}
@@ -317,6 +327,11 @@ export default function IpadApp() {
         </button>
       </div>
     );
+  }
+
+  // ── Badges view ──────────────────────────────────────────────
+  if (view === 'badges') {
+    return <IpadBadges onBack={resetFlow} />;
   }
 
   // ── Shared header for consent flow ──────────────────────────
