@@ -58,10 +58,12 @@ export default function LeaderGallery({ sections, user }) {
     if (selectedFiles.length === 0) { toast.error('Please select photos first'); return; }
     if (!selectedProgrammeId && !selectedEventId) { toast.error('Please link to a meeting or event'); return; }
 
-    const states = selectedFiles.map(() => ({ status: 'pending' }));
-    setUploadStates([...states]);
+    const total = selectedFiles.length;
+    // Initialise all as pending
+    setUploadStates(selectedFiles.map(() => ({ status: 'pending' })));
 
-    for (let i = 0; i < selectedFiles.length; i++) {
+    let anyError = false;
+    for (let i = 0; i < total; i++) {
       setUploadStates(prev => prev.map((s, idx) => idx === i ? { status: 'uploading' } : s));
       try {
         const { file_url } = await base44.integrations.Core.UploadFile({ file: selectedFiles[i] });
@@ -74,21 +76,25 @@ export default function LeaderGallery({ sections, user }) {
         });
         setUploadStates(prev => prev.map((s, idx) => idx === i ? { status: 'done' } : s));
       } catch (err) {
+        anyError = true;
         setUploadStates(prev => prev.map((s, idx) => idx === i ? { status: 'error' } : s));
+        toast.error(`Photo ${i + 1} failed: ${err.message}`);
       }
     }
 
-    setUploadComplete(true);
     queryClient.invalidateQueries({ queryKey: ['leader-gallery-photos'] });
-    setTimeout(() => {
-      setSelectedFiles([]);
-      setPreviewUrls([]);
-      setCaption('');
-      setSelectedProgrammeId('');
-      setSelectedEventId('');
-      setUploadStates([]);
-      setUploadComplete(false);
-    }, 2500);
+    if (!anyError) {
+      setUploadComplete(true);
+      setTimeout(() => {
+        setSelectedFiles([]);
+        setPreviewUrls([]);
+        setCaption('');
+        setSelectedProgrammeId('');
+        setSelectedEventId('');
+        setUploadStates([]);
+        setUploadComplete(false);
+      }, 2500);
+    }
   };
 
   return (
