@@ -174,10 +174,12 @@ export default function AdminSettings() {
     },
   });
 
-  const getUserType = (userId) => {
+  const getUserType = (user) => {
+    const userId = typeof user === 'string' ? user : user?.id;
+    const accountType = typeof user === 'object' ? user?.account_type : null;
+    if (accountType === 'ipad') return { type: 'iPad', color: 'bg-indigo-100 text-indigo-800' };
     const isLeader = leaders.some(l => l.user_id === userId);
     const isParent = parents.some(p => p.user_id === userId);
-    
     if (isLeader) return { type: 'Leader', color: 'bg-blue-100 text-blue-800' };
     if (isParent) return { type: 'Parent', color: 'bg-green-100 text-green-800' };
     return { type: 'User', color: 'bg-gray-100 text-gray-800' };
@@ -185,9 +187,11 @@ export default function AdminSettings() {
 
   const handleEditUser = (user) => {
     setSelectedUser(user);
-    const userType = getUserType(user.id);
-    let typeValue = userType.type.toLowerCase();
-    if (user.role === 'admin') {
+    const userType = getUserType(user);
+    let typeValue;
+    if (user.account_type === 'ipad') {
+      typeValue = 'ipad';
+    } else if (user.role === 'admin') {
       typeValue = 'admin';
     } else if (userType.type === 'Parent') {
       typeValue = 'parent';
@@ -284,8 +288,8 @@ export default function AdminSettings() {
 
   const handleSaveUser = async () => {
     try {
-      // Update user info and role
       const role = (editForm.user_type === 'admin') ? 'admin' : 'user';
+      const account_type = editForm.user_type === 'ipad' ? 'ipad' : null;
 
       const response = await base44.functions.invoke('updateUser', {
         userId: selectedUser.id,
@@ -294,15 +298,18 @@ export default function AdminSettings() {
         default_section_id: editForm.default_section_id || null,
       });
 
+      await base44.entities.User.update(selectedUser.id, { account_type });
+
       if (response.data?.error) {
         throw new Error(response.data.error);
       }
 
-      const currentType = getUserType(selectedUser.id).type.toLowerCase();
       const leaderRecord = leaders.find(l => l.user_id === selectedUser.id);
+      const currentType = getUserType(selectedUser).type.toLowerCase();
 
-      if (editForm.user_type === 'leader') {
-        // Handle becoming a leader
+      if (editForm.user_type === 'ipad') {
+        if (leaderRecord) await base44.entities.Leader.delete(leaderRecord.id);
+      } else if (editForm.user_type === 'leader') {
         if (currentType !== 'leader') {
           await base44.entities.Leader.create({
             user_id: selectedUser.id,
@@ -317,13 +324,9 @@ export default function AdminSettings() {
           });
         }
       } else {
-        // Handle changing from leader to parent or other role
-        if (leaderRecord) {
-          await base44.entities.Leader.delete(leaderRecord.id);
-        }
+        if (leaderRecord) await base44.entities.Leader.delete(leaderRecord.id);
       }
 
-      // Refresh data
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['all-users'] }),
         queryClient.invalidateQueries({ queryKey: ['all-leaders'] }),
@@ -390,9 +393,7 @@ export default function AdminSettings() {
                   <div className="text-right">Actions</div>
                 </div>
                 {users.map(user => {
-                  const userType = getUserType(user.id);
-                  const isLeader = leaders.some(l => l.user_id === user.id);
-                  
+                  const userType = getUserType(user);
                   return (
                     <div key={user.id} className="grid grid-cols-4 gap-4 px-4 py-3 bg-white border rounded-lg items-center">
                       <div className="font-medium">{user.display_name || user.full_name}</div>
@@ -403,17 +404,12 @@ export default function AdminSettings() {
                         </Badge>
                       </div>
                       <div className="flex justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditUser(user)}
-                        >
+                        <Button size="sm" variant="outline" onClick={() => handleEditUser(user)}>
                           <Edit className="w-3 h-3 mr-1" />
                           Edit
                         </Button>
                         <Button
-                          size="sm"
-                          variant="outline"
+                          size="sm" variant="outline"
                           onClick={() => sendPasswordResetMutation.mutate(user.email)}
                           disabled={sendPasswordResetMutation.isPending}
                         >
@@ -963,6 +959,7 @@ export default function AdminSettings() {
                   <SelectItem value="parent">Parent</SelectItem>
                   <SelectItem value="leader">Leader</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="ipad">iPad (Kiosk)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

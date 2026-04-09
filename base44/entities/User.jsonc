@@ -1,0 +1,38 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "user"
+      ],
+      "default": "user",
+      "description": "User role"
+    },
+    "account_type": {
+      "type": "string",
+      "enum": [
+        "parent",
+        "leader",
+        "ipad",
+        null
+      ],
+      "description": "Special account type - ipad opens the kiosk view automatically"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Display name for the user"
+    },
+    "default_section_id": {
+      "type": "string",
+      "description": "Default section to show for leaders/admins"
+    },
+    "onboarding_complete": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the user has completed onboarding"
+    }
+  }
+}

@@ -91,10 +91,12 @@ export default function Layout({ children, currentPageName }) {
           const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
           setIsLeader(leaders.length > 0);
         }
-        if (!currentUser.onboarding_complete && currentPageName !== 'CompleteRegistration') {
-          window.location.href = createPageUrl('CompleteRegistration');
+        // Redirect iPad accounts straight to the iPad kiosk
+        if (currentUser.account_type === 'ipad' && currentPageName !== 'IpadApp') {
+          window.location.href = '/ipad';
           return;
         }
+        if (!currentUser.onboarding_complete && currentPageName !== 'CompleteRegistration' && currentUser.account_type !== 'ipad') {
       }
     } catch (error) {
       setUser(null);
