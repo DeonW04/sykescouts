@@ -96,7 +96,6 @@ export default function Layout({ children, currentPageName }) {
           window.location.href = '/ipad';
           return;
         }
-        if (!currentUser.onboarding_complete && currentPageName !== 'CompleteRegistration' && currentUser.account_type !== 'ipad') {
       }
     } catch (error) {
       setUser(null);
