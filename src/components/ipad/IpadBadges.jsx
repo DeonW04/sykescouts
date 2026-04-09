@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Award, CheckCircle, Circle, Filter, Trophy, ChevronLeft, MapPin, Shirt, Star } from 'lucide-react';
+import { Award, CheckCircle, Circle, Filter, Trophy, ChevronLeft, MapPin, Shirt, Star, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import UniformDiagram from '../uniform/UniformDiagram';
 
+// ── Staged family dialog (same as ParentBadges) ──────────────
 function StagedFamilyDialog({ selectedBadge, child, badgeProgress, getBadgeModules, getModuleRequirements, isRequirementCompleted, onUniformClick }) {
   const realStages = selectedBadge.family.stages.filter(s => s.stage_number != null && s.stage_number !== '');
   const uniformPosition = selectedBadge.family.stages.find(s => s.uniform_position)?.uniform_position;
@@ -71,6 +71,7 @@ function StagedFamilyDialog({ selectedBadge, child, badgeProgress, getBadgeModul
   );
 }
 
+// ── Main Component ────────────────────────────────────────────
 export default function IpadBadges({ onBack }) {
   const [selectedMemberId, setSelectedMemberId] = useState('');
   const [selectedBadge, setSelectedBadge] = useState(null);
@@ -81,7 +82,7 @@ export default function IpadBadges({ onBack }) {
 
   const { data: allMembers = [] } = useQuery({
     queryKey: ['ipad-badges-members'],
-    queryFn: () => base44.entities.Member.filter({ active: true }, 'full_name'),
+    queryFn: () => base44.entities.Member.filter({ active: true }),
   });
 
   const child = allMembers.find(m => m.id === selectedMemberId) || null;
@@ -135,7 +136,7 @@ export default function IpadBadges({ onBack }) {
     queryFn: () => base44.entities.UniformConfig.filter({}),
   });
 
-  // ── Badge logic (same as ParentBadges) ──────────────────────
+  // ── Badge logic ──────────────────────────────────────────────
   const isRequirementCompleted = (reqId, memberId) =>
     reqProgress.some(p => p.member_id === memberId && p.requirement_id === reqId && p.completed);
 
@@ -287,7 +288,8 @@ export default function IpadBadges({ onBack }) {
   ];
 
   const incompleteBadges = allAvailableBadges.filter(bp => !bp.progress.isCompleted && bp.progress.percentage < 100);
-  const inProgressBadges = incompleteBadges.filter(bp => { const cat = bp.type === 'family' ? bp.family.category : bp.badge.category; return cat === 'challenge' || bp.progress.inProgress; })
+  const inProgressBadges = incompleteBadges
+    .filter(bp => { const cat = bp.type === 'family' ? bp.family.category : bp.badge.category; return cat === 'challenge' || bp.progress.inProgress; })
     .sort((a, b) => { const catA = a.type === 'family' ? a.family.category : a.badge.category, catB = b.type === 'family' ? b.family.category : b.badge.category; const catOrder = ['challenge', 'activity', 'staged', 'core']; return (catOrder.indexOf(catA) - catOrder.indexOf(catB)) || b.progress.percentage - a.progress.percentage; });
   const notStartedBadges = incompleteBadges.filter(bp => { const cat = bp.type === 'family' ? bp.family.category : bp.badge.category; return cat !== 'challenge' && !bp.progress.inProgress; });
 
@@ -301,221 +303,313 @@ export default function IpadBadges({ onBack }) {
 
   const totalNightsAway = child?.total_nights_away || nightsAwayLogs.reduce((sum, log) => sum + (log.nights_count || 0), 0);
   const totalHikesAway = child?.total_hikes_away || 0;
+  const goldAward = badges.find(b => b.is_chief_scout_award && b.section === childSectionName);
+
+  const sortedMembers = [...allMembers].sort((a, b) => new Date(a.date_of_birth) - new Date(b.date_of_birth));
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-purple-50">
-      {/* Header */}
-      <div className="relative bg-gradient-to-br from-yellow-600 to-[#7413dc] text-white py-10 overflow-hidden">
-        <div className="max-w-5xl mx-auto px-6 relative flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button onClick={onBack} className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-colors">
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-              <Award className="w-7 h-7" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">Badges & Awards</h1>
-              <p className="text-yellow-100">{child ? child.full_name : 'Select a member below'}</p>
-            </div>
+    <div className="flex flex-col h-screen bg-gradient-to-br from-yellow-50 via-white to-purple-50 overflow-hidden">
+      {/* Top Header Bar */}
+      <div className="relative bg-gradient-to-r from-yellow-600 to-[#7413dc] text-white py-5 px-8 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-colors">
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+            <Award className="w-7 h-7" />
           </div>
-          {child && (
-            <Button onClick={() => setUniformDialog(true)} className="bg-white/20 hover:bg-white/30 text-white border border-white/30 gap-2">
-              <Shirt className="w-4 h-4" /> Uniform Guide
-            </Button>
-          )}
+          <div>
+            <h1 className="text-3xl font-bold">Badges & Awards</h1>
+            <p className="text-yellow-100 text-sm">{child ? child.full_name : 'Select a member to get started'}</p>
+          </div>
         </div>
+        {child && (
+          <Button onClick={() => setUniformDialog(true)} className="bg-white/20 hover:bg-white/30 text-white border border-white/30 gap-2 text-base px-5 py-2.5">
+            <Shirt className="w-5 h-5" /> Uniform Guide
+          </Button>
+        )}
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
-        {/* Member selector */}
-        <div className="bg-white rounded-2xl shadow-md p-5 flex items-center gap-4">
-          <div className="w-10 h-10 bg-[#7413dc]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Star className="w-5 h-5 text-[#7413dc]" />
+      {/* Split-panel body */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* ── Left sidebar: member selector + stats ── */}
+        <div className="w-72 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-y-auto">
+          {/* Member selector */}
+          <div className="p-5 border-b border-gray-100">
+            <div className="flex items-center gap-2 mb-3">
+              <Users className="w-4 h-4 text-[#7413dc]" />
+              <p className="text-sm font-bold text-gray-700 uppercase tracking-wide">Select Member</p>
+            </div>
+            <div className="space-y-1 max-h-72 overflow-y-auto">
+              {sortedMembers.map(m => (
+                <button
+                  key={m.id}
+                  onClick={() => { setSelectedMemberId(m.id); setFilterType('all'); }}
+                  className={`w-full text-left px-3 py-2.5 rounded-xl transition-all flex items-center gap-3 ${m.id === selectedMemberId ? 'bg-[#7413dc] text-white' : 'hover:bg-gray-100 text-gray-700'}`}
+                >
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0 ${m.id === selectedMemberId ? 'bg-white/20 text-white' : 'bg-[#7413dc]/10 text-[#7413dc]'}`}>
+                    {(m.first_name || '?').charAt(0)}
+                  </div>
+                  <span className="font-medium text-sm truncate">{m.full_name || `${m.first_name} ${m.surname}`}</span>
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-700 mb-1">Select a young person</p>
-            <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choose a member…" />
-              </SelectTrigger>
-              <SelectContent>
-                {allMembers.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '')).map(m => (
-                  <SelectItem key={m.id} value={m.id}>{m.full_name || `${m.first_name} ${m.surname}`}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+
+          {/* Stats panel (only when member selected) */}
+          {child && (
+            <div className="p-5 space-y-4 flex-1">
+              {/* Section */}
+              <div className="bg-purple-50 rounded-xl p-4">
+                <p className="text-xs font-semibold text-purple-500 uppercase tracking-wide mb-1">Section</p>
+                <p className="font-bold text-purple-800 capitalize">{childSectionRecord?.display_name || childSectionName || '—'}</p>
+              </div>
+
+              {/* Earned count */}
+              <div className="bg-green-50 rounded-xl p-4">
+                <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">Badges Earned</p>
+                <p className="text-3xl font-bold text-green-700">{completedBadges.length}</p>
+              </div>
+
+              {/* In-progress count */}
+              <div className="bg-orange-50 rounded-xl p-4">
+                <p className="text-xs font-semibold text-orange-500 uppercase tracking-wide mb-1">In Progress</p>
+                <p className="text-3xl font-bold text-orange-600">{inProgressBadges.length}</p>
+              </div>
+
+              {/* Nights away */}
+              {(nightsAwayBadges.length > 0 || totalNightsAway > 0) && (
+                <div className="bg-blue-50 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide mb-1">Nights Away</p>
+                  <p className="text-3xl font-bold text-blue-600">{totalNightsAway}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {!child && (
-          <div className="text-center py-20 text-gray-400">
-            <Award className="w-16 h-16 mx-auto mb-4 opacity-30" />
-            <p className="text-lg">Select a member above to view their badges</p>
-          </div>
-        )}
-
-        {child && (
-          <>
-            {/* Earned Badges */}
-            <div>
-              <div className="flex items-center gap-3 mb-5">
-                <div className="h-1 w-12 bg-gradient-to-r from-yellow-600 to-transparent rounded-full"></div>
-                <h2 className="text-2xl font-bold">Earned Badges</h2>
-              </div>
-              {completedBadges.length === 0 ? (
-                <Card><CardContent className="p-10 text-center"><Award className="w-10 h-10 text-yellow-300 mx-auto mb-3" /><p className="text-gray-500">No badges earned yet — keep going!</p></CardContent></Card>
-              ) : (
-                <Card className="bg-green-50 border-green-200 shadow-lg">
-                  <CardContent className="p-4">
-                    <div className="flex flex-wrap gap-2">
-                      {earnedNonStaged.map(progress => {
-                        const badge = badges.find(b => b.id === progress.badge_id);
-                        if (!badge) return null;
-                        const bp = { type: 'single', badge, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } };
-                        return (
-                          <motion.button key={progress.badge_id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                            onClick={() => setSelectedBadge(bp)}
-                            className="w-14 h-14 rounded-lg overflow-hidden hover:ring-2 hover:ring-green-500 transition-all hover:scale-110 bg-white" title={badge.name}>
-                            <img src={badge.image_url} alt={badge.name} className="w-full h-full object-contain p-1" />
-                          </motion.button>
-                        );
-                      })}
-                      {Object.entries(stagedBadgeFamilies).map(([familyId, family]) => {
-                        const highestStage = getHighestCompletedStage(familyId);
-                        if (!highestStage) return null;
-                        const bp = { type: 'single', badge: highestStage, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } };
-                        return (
-                          <motion.button key={familyId} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                            onClick={() => setSelectedBadge(bp)}
-                            className="w-14 h-14 rounded-lg overflow-hidden hover:ring-2 hover:ring-green-500 transition-all hover:scale-110 bg-white" title={`${family.name} – Stage ${highestStage.stage_number}`}>
-                            <img src={highestStage.image_url} alt={highestStage.name} className="w-full h-full object-contain p-1" />
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+        {/* ── Right main content ── */}
+        <div className="flex-1 overflow-y-auto">
+          {!child ? (
+            <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
+              <Award className="w-20 h-20 mb-4 opacity-20" />
+              <p className="text-xl font-semibold">Select a member</p>
+              <p className="text-sm mt-1">Choose a young person from the left panel</p>
             </div>
+          ) : (
+            <div className="p-8 space-y-10 max-w-5xl">
+              {/* Gold Award banner */}
+              {goldAward && (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                  <Card className="cursor-pointer bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 border-amber-300 hover:shadow-xl transition-all hover:scale-[1.01]"
+                    onClick={() => setSelectedBadge({ type: 'single', badge: goldAward, progress: { isCompleted: isBadgeComplete(goldAward.id), inProgress: false, percentage: 0, completed: 0, total: 0 } })}>
+                    <CardContent className="p-5 flex items-center gap-5">
+                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
+                        <Trophy className="w-9 h-9 text-amber-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-white">Chief Scout's Award</h3>
+                        <p className="text-yellow-100 text-sm mt-0.5">The highest award — tap to view progress</p>
+                      </div>
+                      {isBadgeComplete(goldAward.id) && (
+                        <div className="flex items-center gap-1 bg-white/20 text-white rounded-full px-3 py-1">
+                          <CheckCircle className="w-4 h-4" />
+                          <span className="text-sm font-semibold">Earned!</span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
 
-            {/* Activity Awards */}
-            {(nightsAwayBadges.length > 0 || hikesAwayBadges.length > 0 || joiningInBadges.length > 0) && (
-              <div>
+              {/* ── Earned Badges ── */}
+              <section>
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="h-1 w-12 bg-gradient-to-r from-blue-600 to-transparent rounded-full"></div>
-                  <h2 className="text-2xl font-bold">Activity Awards</h2>
+                  <div className="h-1 w-12 bg-gradient-to-r from-yellow-600 to-transparent rounded-full" />
+                  <h2 className="text-2xl font-bold">Earned Badges</h2>
+                  <span className="text-sm text-gray-400 font-medium">({completedBadges.length})</span>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { label: 'Nights Away', family: nightsAwayBadges, key: 'nights' },
-                    { label: 'Hikes Away', family: hikesAwayBadges, key: 'hikes' },
-                    { label: 'Joining In', family: joiningInBadges, key: 'joining' },
-                  ].map(({ label, family, key }) => {
-                    if (family.length === 0) return null;
-                    const highestEarned = getHighestEarnedInFamily(family);
-                    return (
-                      <Card key={key} className="cursor-pointer hover:shadow-xl transition-all hover:scale-[1.02]" onClick={() => setActivityDialog(key)}>
-                        <CardContent className="p-4 text-center">
-                          <h3 className="font-bold text-sm mb-3 text-gray-800">{label}</h3>
-                          {highestEarned ? (
-                            <div className="space-y-2">
-                              <img src={highestEarned.image_url} alt={highestEarned.name} className="w-16 h-16 mx-auto rounded-lg object-contain" />
-                              <p className="font-semibold text-xs leading-tight">{highestEarned.name}</p>
-                              <div className="flex items-center justify-center gap-1"><CheckCircle className="w-3 h-3 text-green-600" /><span className="text-xs text-green-700 font-medium">Highest earned</span></div>
-                            </div>
-                          ) : (
-                            <div className="space-y-2 py-2"><div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto"><Award className="w-7 h-7 text-gray-400" /></div><p className="text-gray-500 text-xs">Not earned yet</p></div>
-                          )}
-                          <p className="text-xs text-[#7413dc] mt-2 font-medium">View →</p>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+                {completedBadges.length === 0 ? (
+                  <Card><CardContent className="p-10 text-center"><Award className="w-10 h-10 text-yellow-300 mx-auto mb-3" /><p className="text-gray-500">No badges earned yet — keep going!</p></CardContent></Card>
+                ) : (
+                  <Card className="bg-green-50 border-green-200 shadow-md">
+                    <CardContent className="p-5">
+                      <div className="flex flex-wrap gap-3">
+                        {earnedNonStaged.map(progress => {
+                          const badge = badges.find(b => b.id === progress.badge_id);
+                          if (!badge) return null;
+                          const bp = { type: 'single', badge, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } };
+                          return (
+                            <motion.button key={progress.badge_id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                              onClick={() => setSelectedBadge(bp)}
+                              className="w-16 h-16 rounded-xl overflow-hidden hover:ring-2 hover:ring-green-500 transition-all hover:scale-110 bg-white shadow-sm" title={badge.name}>
+                              <img src={badge.image_url} alt={badge.name} className="w-full h-full object-contain p-1" />
+                            </motion.button>
+                          );
+                        })}
+                        {Object.entries(stagedBadgeFamilies).map(([familyId, family]) => {
+                          const highestStage = getHighestCompletedStage(familyId);
+                          if (!highestStage) return null;
+                          const bp = { type: 'single', badge: highestStage, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } };
+                          return (
+                            <motion.button key={familyId} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                              onClick={() => setSelectedBadge(bp)}
+                              className="w-16 h-16 rounded-xl overflow-hidden hover:ring-2 hover:ring-green-500 transition-all hover:scale-110 bg-white shadow-sm" title={`${family.name} – Stage ${highestStage.stage_number}`}>
+                              <img src={highestStage.image_url} alt={highestStage.name} className="w-full h-full object-contain p-1" />
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </section>
 
-            {/* In Progress */}
-            <div>
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-3"><div className="h-1 w-12 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div><h2 className="text-2xl font-bold">In Progress</h2></div>
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-gray-500" />
-                  <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="challenge">Challenge</SelectItem>
-                      <SelectItem value="activity">Activity</SelectItem>
-                      <SelectItem value="staged">Staged</SelectItem>
-                      <SelectItem value="core">Core</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              {filteredInProgress.length === 0 ? (
-                <Card><CardContent className="p-8 text-center"><p className="text-gray-500 text-sm">No badges in progress</p></CardContent></Card>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {filteredInProgress.map((bp, idx) => {
-                    const displayName = bp.type === 'family' ? bp.family.name : bp.badge.name;
-                    const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
-                    return (
-                      <motion.div key={bp.type === 'family' ? bp.family.familyId : bp.badge.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.02 }}>
-                        <Card onClick={() => setSelectedBadge(bp)} className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] bg-white">
-                          <CardContent className="p-4 flex items-center gap-4">
-                            <div className="relative flex-shrink-0">
-                              <img src={bp.badge.image_url} alt={displayName} className="w-16 h-16 rounded-lg object-contain" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-gray-900 truncate">{displayName}</p>
-                              <p className="text-xs text-gray-500 capitalize">{category}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <div className="flex-1 h-1.5 bg-gray-200 rounded-full"><div className="h-full bg-orange-400 rounded-full" style={{ width: `${bp.progress.percentage}%` }} /></div>
-                                <span className="text-xs font-medium text-orange-600">{bp.progress.percentage}%</span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Badges to Work Towards */}
-            <div>
-              <div className="flex items-center gap-3 mb-5"><div className="h-1 w-12 bg-gradient-to-r from-purple-600 to-transparent rounded-full"></div><h2 className="text-2xl font-bold">Badges to Work Towards</h2></div>
-              {filteredNotStarted.length === 0 ? (
-                <Card><CardContent className="p-8 text-center"><Award className="w-12 h-12 text-gray-300 mx-auto mb-3" /><p className="text-gray-500">No more badges to start!</p></CardContent></Card>
-              ) : sortedNotStartedCategories.map(category => (
-                <div key={category} className="mb-6">
-                  <h3 className="text-lg font-bold capitalize mb-3 text-gray-700">{category} Badges</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {notStartedByCategory[category].map((bp, idx) => {
-                      const displayName = bp.type === 'family' ? bp.family.name : bp.badge.name;
+              {/* ── Activity Awards ── */}
+              {(nightsAwayBadges.length > 0 || hikesAwayBadges.length > 0 || joiningInBadges.length > 0) && (
+                <section>
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="h-1 w-12 bg-gradient-to-r from-blue-600 to-transparent rounded-full" />
+                    <h2 className="text-2xl font-bold">Activity Awards</h2>
+                  </div>
+                  <div className="grid grid-cols-3 gap-5">
+                    {[
+                      { label: 'Nights Away', family: nightsAwayBadges, key: 'nights', count: totalNightsAway, unit: 'nights' },
+                      { label: 'Hikes Away', family: hikesAwayBadges, key: 'hikes', count: totalHikesAway, unit: 'hikes' },
+                      { label: 'Joining In', family: joiningInBadges, key: 'joining', count: null, unit: null },
+                    ].map(({ label, family, key, count, unit }) => {
+                      if (family.length === 0) return null;
+                      const highestEarned = getHighestEarnedInFamily(family);
                       return (
-                        <motion.div key={bp.type === 'family' ? bp.family.familyId : bp.badge.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.02 }}>
-                          <Card onClick={() => setSelectedBadge(bp)} className="cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] bg-white opacity-80 hover:opacity-100">
-                            <CardContent className="p-3 flex items-center gap-3">
-                              <img src={bp.badge.image_url} alt={displayName} className="w-12 h-12 rounded-lg object-contain flex-shrink-0" />
-                              <p className="font-medium text-gray-700 text-sm truncate">{displayName}</p>
+                        <motion.div key={key} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                          <Card className="cursor-pointer hover:shadow-xl transition-all hover:scale-[1.02] h-full" onClick={() => setActivityDialog(key)}>
+                            <CardContent className="p-6 text-center">
+                              <h3 className="font-bold text-base mb-4 text-gray-800">{label}</h3>
+                              {highestEarned ? (
+                                <div className="space-y-3">
+                                  <img src={highestEarned.image_url} alt={highestEarned.name} className="w-20 h-20 mx-auto rounded-xl object-contain" />
+                                  <p className="font-semibold text-sm leading-tight">{highestEarned.name}</p>
+                                  {count !== null && (
+                                    <div className="bg-blue-50 rounded-lg px-3 py-2">
+                                      <p className="text-2xl font-bold text-blue-600">{count}</p>
+                                      <p className="text-xs text-blue-500 capitalize">{unit}</p>
+                                    </div>
+                                  )}
+                                  <div className="flex items-center justify-center gap-1"><CheckCircle className="w-4 h-4 text-green-600" /><span className="text-xs text-green-700 font-medium">Highest earned</span></div>
+                                </div>
+                              ) : (
+                                <div className="space-y-3 py-2">
+                                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto"><Award className="w-8 h-8 text-gray-400" /></div>
+                                  {count !== null && count > 0 && (
+                                    <div className="bg-blue-50 rounded-lg px-3 py-2">
+                                      <p className="text-2xl font-bold text-blue-600">{count}</p>
+                                      <p className="text-xs text-blue-500 capitalize">{unit}</p>
+                                    </div>
+                                  )}
+                                  <p className="text-gray-500 text-sm">Not earned yet</p>
+                                </div>
+                              )}
+                              <p className="text-xs text-[#7413dc] mt-3 font-medium">View all stages →</p>
                             </CardContent>
                           </Card>
                         </motion.div>
                       );
                     })}
                   </div>
+                </section>
+              )}
+
+              {/* ── In Progress ── */}
+              <section>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="h-1 w-12 bg-gradient-to-r from-orange-500 to-transparent rounded-full" />
+                    <h2 className="text-2xl font-bold">In Progress</h2>
+                    <span className="text-sm text-gray-400 font-medium">({filteredInProgress.length})</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-gray-500" />
+                    <Select value={filterType} onValueChange={setFilterType}>
+                      <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        <SelectItem value="challenge">Challenge</SelectItem>
+                        <SelectItem value="activity">Activity</SelectItem>
+                        <SelectItem value="staged">Staged</SelectItem>
+                        <SelectItem value="core">Core</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              ))}
+                {filteredInProgress.length === 0 ? (
+                  <Card><CardContent className="p-8 text-center"><p className="text-gray-500">No badges in progress</p></CardContent></Card>
+                ) : (
+                  <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+                    {filteredInProgress.map((bp, idx) => {
+                      const displayName = bp.type === 'family' ? bp.family.name : bp.badge.name;
+                      const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
+                      return (
+                        <motion.div key={bp.type === 'family' ? bp.family.familyId : bp.badge.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.02 }}>
+                          <Card onClick={() => setSelectedBadge(bp)} className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] bg-white">
+                            <CardContent className="p-4 flex items-center gap-4">
+                              <div className="relative flex-shrink-0">
+                                <img src={bp.badge.image_url} alt={displayName} className="w-16 h-16 rounded-xl object-contain" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-gray-900 truncate">{displayName}</p>
+                                <p className="text-xs text-gray-500 capitalize mb-1">{category}</p>
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 h-2 bg-gray-200 rounded-full"><div className="h-full bg-orange-400 rounded-full" style={{ width: `${bp.progress.percentage}%` }} /></div>
+                                  <span className="text-xs font-bold text-orange-600">{bp.progress.percentage}%</span>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+
+              {/* ── Badges to Work Towards ── */}
+              <section className="pb-10">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="h-1 w-12 bg-gradient-to-r from-purple-600 to-transparent rounded-full" />
+                  <h2 className="text-2xl font-bold">Badges to Work Towards</h2>
+                </div>
+                {filteredNotStarted.length === 0 ? (
+                  <Card><CardContent className="p-8 text-center"><Award className="w-12 h-12 text-gray-300 mx-auto mb-3" /><p className="text-gray-500">No more badges to start!</p></CardContent></Card>
+                ) : sortedNotStartedCategories.map(category => (
+                  <div key={category} className="mb-7">
+                    <h3 className="text-base font-bold capitalize mb-3 text-gray-600 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#7413dc] inline-block" />
+                      {category} Badges
+                    </h3>
+                    <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
+                      {notStartedByCategory[category].map((bp, idx) => {
+                        const displayName = bp.type === 'family' ? bp.family.name : bp.badge.name;
+                        return (
+                          <motion.div key={bp.type === 'family' ? bp.family.familyId : bp.badge.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.02 }}>
+                            <Card onClick={() => setSelectedBadge(bp)} className="cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] bg-white/80 hover:bg-white">
+                              <CardContent className="p-3 flex items-center gap-3">
+                                <img src={bp.badge.image_url} alt={displayName} className="w-12 h-12 rounded-lg object-contain flex-shrink-0 opacity-70" />
+                                <p className="font-medium text-gray-700 text-sm truncate">{displayName}</p>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </section>
             </div>
-          </>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Activity Awards Dialog */}
+      {/* ── Activity Awards Dialog ── */}
       <Dialog open={!!activityDialog} onOpenChange={open => !open && setActivityDialog(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           {activityDialog && child && (() => {
@@ -531,7 +625,9 @@ export default function IpadBadges({ onBack }) {
               <>
                 <DialogHeader>
                   <div className="flex items-center gap-4 mb-2">
-                    {highestInDialog ? <img src={highestInDialog.image_url} alt={highestInDialog.name} className="w-16 h-16 rounded-lg object-contain flex-shrink-0" /> : <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0"><Award className="w-8 h-8 text-gray-400" /></div>}
+                    {highestInDialog
+                      ? <img src={highestInDialog.image_url} alt={highestInDialog.name} className="w-16 h-16 rounded-lg object-contain flex-shrink-0" />
+                      : <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0"><Award className="w-8 h-8 text-gray-400" /></div>}
                     <div>
                       <DialogTitle className="text-2xl">{title}</DialogTitle>
                       {highestInDialog && <p className="text-sm text-green-600 font-medium flex items-center gap-1 mt-1"><CheckCircle className="w-4 h-4" /> Highest: {highestInDialog.name}</p>}
@@ -549,7 +645,9 @@ export default function IpadBadges({ onBack }) {
                   {isJoining && (
                     <Card className="bg-purple-50 border-purple-200"><CardContent className="p-6 text-center">
                       <p className="text-sm text-gray-600 mb-1">Time in Scouting</p>
-                      {child.scouting_start_date ? (<><p className="text-5xl font-bold text-purple-600">{joiningInYears.toFixed(1)}</p><p className="text-gray-600 mt-1">years</p></>) : <p className="text-gray-500">Start date not recorded</p>}
+                      {child.scouting_start_date
+                        ? (<><p className="text-5xl font-bold text-purple-600">{joiningInYears.toFixed(1)}</p><p className="text-gray-600 mt-1">years</p><p className="text-xs text-gray-500 mt-2">Since {new Date(child.scouting_start_date).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</p></>)
+                        : <p className="text-gray-500">Start date not recorded</p>}
                     </CardContent></Card>
                   )}
                   <div>
@@ -587,10 +685,17 @@ export default function IpadBadges({ onBack }) {
         </DialogContent>
       </Dialog>
 
-      {/* Uniform Guide Dialog */}
+      {/* ── Uniform Guide Dialog ── */}
       <Dialog open={uniformDialog} onOpenChange={open => { setUniformDialog(open); if (!open) setUniformPositionHighlight(null); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Shirt className="w-5 h-5" />Uniform Guide – {child?.full_name}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Shirt className="w-5 h-5" />Uniform Guide – {child?.full_name}</DialogTitle>
+          </DialogHeader>
+          {uniformPositionHighlight && (
+            <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm text-purple-800 flex items-center gap-2">
+              <MapPin className="w-4 h-4" /> Showing where this badge goes on the uniform
+            </div>
+          )}
           <UniformDiagram
             uniformConfig={uniformConfigs.find(u => u.section === childSectionName) || null}
             earnedBadges={completedBadges}
@@ -598,10 +703,11 @@ export default function IpadBadges({ onBack }) {
             highlightPosition={uniformPositionHighlight}
             onBadgeClick={(badge) => { setUniformDialog(false); setSelectedBadge({ type: 'single', badge, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } }); }}
           />
+          <p className="text-xs text-gray-500 text-center mt-2">Tap a circle to see which badges go in that area. Gold circles = earned badges.</p>
         </DialogContent>
       </Dialog>
 
-      {/* Badge Detail Dialog */}
+      {/* ── Badge Detail Dialog ── */}
       <Dialog open={!!selectedBadge} onOpenChange={open => !open && setSelectedBadge(null)}>
         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           {selectedBadge && child && (
@@ -616,7 +722,8 @@ export default function IpadBadges({ onBack }) {
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <Badge className="capitalize">{selectedBadge.badge.category}</Badge>
                           {selectedBadge.progress?.isCompleted && <Badge className="bg-green-600 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Earned</Badge>}
-                          <Button size="sm" variant="outline" className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 gap-1" onClick={() => { setUniformPositionHighlight(selectedBadge.badge.uniform_position || null); setSelectedBadge(null); setUniformDialog(true); }}>
+                          <Button size="sm" variant="outline" className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 gap-1"
+                            onClick={() => { setUniformPositionHighlight(selectedBadge.badge.uniform_position || null); setSelectedBadge(null); setUniformDialog(true); }}>
                             <MapPin className="w-3 h-3" /> Where does this go on my uniform?
                           </Button>
                         </div>

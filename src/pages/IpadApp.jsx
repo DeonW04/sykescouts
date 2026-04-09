@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { FileText, LogOut, ChevronLeft, CheckCircle, Pen, User, Award } from 'lucide-react';
-import IpadBadges from '../components/ipad/IpadBadges';
+import IpadBadges from '../components/ipad/IpadBadges.jsx';
 import { format } from 'date-fns';
 
 const IPAD_EMAIL = 'ipad1@sykescouts.org';
