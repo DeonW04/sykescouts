@@ -1,0 +1,47 @@
+{
+  "name": "ParentActivity",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "User ID of the parent"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the parent"
+    },
+    "page_name": {
+      "type": "string",
+      "description": "Normalised page name (e.g. Events, Badges)"
+    },
+    "raw_page": {
+      "type": "string",
+      "description": "Raw route page key"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "pwa",
+        "mobile_web",
+        "desktop_web"
+      ],
+      "description": "How the parent accessed the app"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this page was visited"
+    },
+    "session_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the session (YYYY-MM-DD) for daily aggregation"
+    }
+  },
+  "required": [
+    "user_id",
+    "page_name",
+    "platform",
+    "timestamp"
+  ]
+}
