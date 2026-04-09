@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, FileText, Trash2, Save, Eye, Plus, Calendar, Users, Award, ListTodo, Shield, Menu, X, DollarSign, TrendingUp, TrendingDown, Image, FolderOpen } from 'lucide-react';
+import { FileText, Trash2, Save, Eye, Plus, Calendar, Users, Award, ListTodo, Shield, Menu, X, DollarSign, TrendingUp, TrendingDown, Image, FolderOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';

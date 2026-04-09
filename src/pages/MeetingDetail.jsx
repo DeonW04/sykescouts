@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  ArrowLeft, Save, Calendar, Users, Award, Eye, EyeOff, Plus, Trash2,
+  Save, Calendar, Users, Award, Eye, EyeOff, Plus, Trash2,
   ListTodo, Shield, AlertCircle, Image, ArrowLeftRight, Zap, FileText,
   Menu, X, FolderOpen
 } from 'lucide-react';
