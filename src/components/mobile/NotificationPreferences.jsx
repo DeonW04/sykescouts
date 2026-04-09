@@ -20,7 +20,9 @@ const PARENT_TYPES = [
 
 export default function NotificationPreferences({ role, userId }) {
   const queryClient = useQueryClient();
-  const types = role === 'leader' ? LEADER_TYPES : PARENT_TYPES;
+  // Show only types relevant to the passed role; also treat 'admin' as leader
+  const effectiveRole = (role === 'leader' || role === 'admin') ? 'leader' : 'parent';
+  const types = effectiveRole === 'leader' ? LEADER_TYPES : PARENT_TYPES;
 
   const { data: sub } = useQuery({
     queryKey: ['push-sub-prefs', userId],
@@ -75,7 +77,7 @@ export default function NotificationPreferences({ role, userId }) {
             onClick={() => toggle(type.key)}
             className={`w-12 h-6 rounded-full transition-colors flex-shrink-0 relative ${prefs[type.key] !== false ? 'bg-[#7413dc]' : 'bg-gray-200'}`}
           >
-            <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${prefs[type.key] !== false ? 'translate-x-6' : 'translate-x-0.5'}`} />
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${prefs[type.key] !== false ? 'translate-x-[26px]' : 'translate-x-0'}`} />
           </button>
         </div>
       ))}
