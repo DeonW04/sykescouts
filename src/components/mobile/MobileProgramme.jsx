@@ -2,17 +2,22 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Calendar, ChevronRight, AlertTriangle, MapPin } from 'lucide-react';
-import { format, isToday, isTomorrow, isPast, isThisWeek, startOfWeek, endOfWeek } from 'date-fns';
+import { format, isToday, isTomorrow, isPast, startOfWeek, endOfWeek } from 'date-fns';
 
-function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMeeting }) {
+const BADGE_EMOJI = {
+  challenge: '🏆',
+  activity: '⭐',
+  staged: '📈',
+  chief_scout_award: '🥇',
+};
+
+function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMeeting, badges = [] }) {
   const [open, setOpen] = useState(isThisWeeksMeeting);
 
-  // Detect time change: compare programme's activity start time vs expected term meeting time
   const hasTimeChange = (() => {
     if (!termMeetingTime || !programme.activities?.length) return false;
     const firstActivity = programme.activities[0];
     if (!firstActivity?.time) return false;
-    // Normalise both to HH:MM for comparison
     const normalise = (t) => t?.replace(/^(\d):/, '0$1:').trim().slice(0, 5);
     return normalise(firstActivity.time) !== normalise(termMeetingTime);
   })();
@@ -84,7 +89,6 @@ function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMee
       </button>
       {open && (
         <div className="px-4 pb-4 pt-0 border-t border-gray-100">
-          {/* Unusual info shown prominently in red */}
           {(programme.optional_location || programme.optional_start_time) && (
             <div className="mt-3 bg-red-50 border border-red-200 rounded-xl p-3 space-y-1">
               <p className="text-xs font-bold text-red-700 uppercase tracking-wide">⚠️ Different from usual</p>
@@ -122,7 +126,16 @@ function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMee
               })}
             </div>
           )}
-          {!programme.description && !programme.activities?.length && (
+          {badges.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {badges.map((b, i) => (
+                <span key={i} className="inline-flex items-center gap-1 bg-purple-50 border border-purple-100 text-purple-700 text-[11px] font-medium px-2 py-0.5 rounded-full">
+                  {BADGE_EMOJI[b.category] || '🏅'} {b.name}
+                </span>
+              ))}
+            </div>
+          )}
+          {!programme.description && !programme.activities?.length && badges.length === 0 && (
             <p className="text-sm text-gray-400 mt-3">No details available yet.</p>
           )}
         </div>
@@ -146,6 +159,18 @@ export default function MobileProgramme({ children }) {
     enabled: childSectionIds.length > 0,
   });
 
+  const { data: badgeCriteria = [] } = useQuery({
+    queryKey: ['mobile-badge-criteria'],
+    queryFn: () => base44.entities.ProgrammeBadgeCriteria.filter({}),
+    enabled: childSectionIds.length > 0,
+  });
+
+  const { data: badgeDefinitions = [] } = useQuery({
+    queryKey: ['mobile-badge-definitions'],
+    queryFn: () => base44.entities.BadgeDefinition.filter({}),
+    enabled: childSectionIds.length > 0,
+  });
+
   const now = new Date();
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
@@ -156,6 +181,17 @@ export default function MobileProgramme({ children }) {
 
   const termMeetingTime = currentTerm?.meeting_start_time;
 
+  // Build map: programmeId -> badge definitions
+  const programmeBadgesMap = {};
+  badgeCriteria.forEach(c => {
+    if (!c.programme_id) return;
+    const badge = badgeDefinitions.find(b => b.id === c.badge_id);
+    if (badge) {
+      if (!programmeBadgesMap[c.programme_id]) programmeBadgesMap[c.programme_id] = [];
+      programmeBadgesMap[c.programme_id].push(badge);
+    }
+  });
+
   const termProgrammes = currentTerm
     ? programmes
         .filter(p => {
@@ -165,7 +201,6 @@ export default function MobileProgramme({ children }) {
         .sort((a, b) => new Date(a.date) - new Date(b.date))
     : [];
 
-  // Find this week's meeting
   const thisWeekMeeting = termProgrammes.find(p => {
     const d = new Date(p.date);
     return d >= weekStart && d <= weekEnd;
@@ -182,7 +217,6 @@ export default function MobileProgramme({ children }) {
 
   return (
     <div className="flex flex-col">
-      {/* Header */}
       <div className="bg-gradient-to-br from-green-600 to-[#004851] px-5 pb-6 text-white"
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 48px)' }}>
         <h1 className="text-2xl font-bold">Programme</h1>
@@ -207,7 +241,6 @@ export default function MobileProgramme({ children }) {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* This week's meeting at the top */}
             {thisWeekMeeting && (
               <div>
                 <h2 className="text-xs font-bold text-green-700 uppercase tracking-wider mb-3">This Week</h2>
@@ -216,6 +249,7 @@ export default function MobileProgramme({ children }) {
                   isPastMeeting={false}
                   termMeetingTime={termMeetingTime}
                   isThisWeeksMeeting={true}
+                  badges={programmeBadgesMap[thisWeekMeeting.id] || []}
                 />
               </div>
             )}
@@ -249,6 +283,7 @@ export default function MobileProgramme({ children }) {
                           isPastMeeting={false}
                           termMeetingTime={termMeetingTime}
                           isThisWeeksMeeting={false}
+                          badges={programmeBadgesMap[p.id] || []}
                         />
                       );
                       return items;
@@ -269,6 +304,7 @@ export default function MobileProgramme({ children }) {
                       isPastMeeting={true}
                       termMeetingTime={termMeetingTime}
                       isThisWeeksMeeting={false}
+                      badges={programmeBadgesMap[p.id] || []}
                     />
                   ))}
                 </div>
