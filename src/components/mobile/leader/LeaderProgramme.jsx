@@ -6,7 +6,7 @@ import { format, isPast, isToday, startOfWeek, endOfWeek } from 'date-fns';
 import { toast } from 'sonner';
 import MeetingDetailPanel from './MeetingDetailPanel';
 
-function MeetingCard({ programme, sections, isThisWeek }) {
+function MeetingCard({ programme, sections, isThisWeek, onDetail }) {
   const [open, setOpen] = useState(isThisWeek);
   const [editing, setEditing] = useState(false);
   const queryClient = useQueryClient();
@@ -105,7 +105,7 @@ function MeetingCard({ programme, sections, isThisWeek }) {
                 <button onClick={() => setEditing(true)} className="text-xs text-[#004851] font-semibold border border-[#004851]/30 px-3 py-1.5 rounded-xl active:bg-[#004851]/5">
                   Edit Details
                 </button>
-                <button onClick={() => setDetailProgramme(programme)} className="text-xs text-[#7413dc] font-semibold border border-[#7413dc]/30 px-3 py-1.5 rounded-xl active:bg-[#7413dc]/5 flex items-center gap-1">
+                <button onClick={() => onDetail(programme)} className="text-xs text-[#7413dc] font-semibold border border-[#7413dc]/30 px-3 py-1.5 rounded-xl active:bg-[#7413dc]/5 flex items-center gap-1">
                   <LayoutList className="w-3 h-3" /> Attendance & More
                 </button>
               </div>
@@ -186,7 +186,7 @@ export default function LeaderProgramme({ sections = [] }) {
               <div>
                 <h2 className="text-xs font-bold text-green-700 uppercase tracking-wider mb-3">This Week</h2>
                 <div className="space-y-3">
-                  {thisWeekProgs.map(p => <MeetingCard key={p.id} programme={p} sections={sections} isThisWeek={true} />)}
+                  {thisWeekProgs.map(p => <MeetingCard key={p.id} programme={p} sections={sections} isThisWeek={true} onDetail={setDetailProgramme} />)}
                 </div>
               </div>
             )}
@@ -194,7 +194,7 @@ export default function LeaderProgramme({ sections = [] }) {
               <div>
                 <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Upcoming</h2>
                 <div className="space-y-3">
-                  {upcomingProgs.map(p => <MeetingCard key={p.id} programme={p} sections={sections} isThisWeek={false} />)}
+                  {upcomingProgs.map(p => <MeetingCard key={p.id} programme={p} sections={sections} isThisWeek={false} onDetail={setDetailProgramme} />)}
                 </div>
               </div>
             )}
@@ -202,7 +202,7 @@ export default function LeaderProgramme({ sections = [] }) {
               <div>
                 <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Previous</h2>
                 <div className="space-y-3">
-                  {[...pastProgs].reverse().slice(0, 5).map(p => <MeetingCard key={p.id} programme={p} sections={sections} isThisWeek={false} />)}
+                  {[...pastProgs].reverse().slice(0, 5).map(p => <MeetingCard key={p.id} programme={p} sections={sections} isThisWeek={false} onDetail={setDetailProgramme} />)}
                 </div>
               </div>
             )}

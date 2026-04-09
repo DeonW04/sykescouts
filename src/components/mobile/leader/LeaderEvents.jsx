@@ -109,7 +109,6 @@ function EventDetailView({ event, onBack }) {
 }
 
 export default function LeaderEvents({ sections }) {
-  const [selectedEvent, setSelectedEvent] = useState(null);
   const sectionIds = sections.map(s => s.id);
 
   const { data: events = [], isLoading } = useQuery({
@@ -132,7 +131,6 @@ export default function LeaderEvents({ sections }) {
   const [panelEvent, setPanelEvent] = useState(null);
 
   if (panelEvent) return <EventDetailPanel event={panelEvent} onClose={() => setPanelEvent(null)} />;
-  if (selectedEvent) return <EventDetailView event={selectedEvent} onBack={() => setSelectedEvent(null)} />;
 
   return (
     <div className="flex flex-col">
@@ -154,7 +152,7 @@ export default function LeaderEvents({ sections }) {
                 <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Upcoming</h2>
                 <div className="space-y-3">
                   {upcoming.map(e => (
-                    <button key={e.id} onClick={() => setSelectedEvent(e)} className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-left active:bg-gray-50">
+                   <button key={e.id} onClick={() => setPanelEvent(e)} className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-left active:bg-gray-50">
                       <div className="flex items-start gap-4">
                         <div className="w-12 h-14 bg-[#7413dc]/10 rounded-xl flex flex-col items-center justify-center flex-shrink-0">
                           <span className="text-[#7413dc] font-bold text-lg leading-none">{format(new Date(e.start_date), 'd')}</span>
@@ -167,10 +165,7 @@ export default function LeaderEvents({ sections }) {
                         </div>
                         <div className="flex flex-col gap-1 flex-shrink-0">
                           <ChevronRight className="w-4 h-4 text-gray-300" />
-                          <button
-                            onClick={ev => { ev.stopPropagation(); setPanelEvent(e); }}
-                            className="text-[10px] text-[#7413dc] font-semibold bg-[#7413dc]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap"
-                          >Details</button>
+
                         </div>
                       </div>
                     </button>
@@ -183,7 +178,7 @@ export default function LeaderEvents({ sections }) {
                 <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Past Events</h2>
                 <div className="space-y-3 opacity-60">
                   {[...past].reverse().map(e => (
-                    <button key={e.id} onClick={() => setSelectedEvent(e)} className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-left">
+                   <button key={e.id} onClick={() => setPanelEvent(e)} className="w-full bg-white rounded-2xl shadow-sm border border-gray-100 p-4 text-left">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
                           <Tent className="w-5 h-5 text-gray-400" />
