@@ -14,12 +14,6 @@ const TABS = [
 export default function EventDetailPanel({ event, onClose }) {
   const [tab, setTab] = useState('attendance');
 
-  const { data: eventAttendances = [] } = useQuery({
-    queryKey: ['edp-attendance', event.id],
-    queryFn: () => base44.entities.EventAttendance.filter({ event_id: event.id }),
-    enabled: !!event.id,
-  });
-
   const { data: allMembers = [] } = useQuery({
     queryKey: ['edp-members'],
     queryFn: () => base44.entities.Member.filter({ active: true }),
@@ -69,20 +63,40 @@ export default function EventDetailPanel({ event, onClose }) {
     enabled: actions.length > 0,
   });
 
-  const attendingMembers = allMembers.filter(m =>
-    eventAttendances.some(a => a.member_id === m.id && a.rsvp_status === 'attending')
-  );
-  const allAttendanceMembers = allMembers.filter(m =>
-    eventAttendances.some(a => a.member_id === m.id)
-  );
+  const { data: actionAssignments = [] } = useQuery({
+    queryKey: ['edp-assignments', actions.map(a => a.id).join(',')],
+    queryFn: async () => {
+      const all = await base44.entities.ActionAssignment.filter({});
+      return all.filter(a => actions.some(ac => ac.id === a.action_required_id));
+    },
+    enabled: actions.length > 0,
+  });
 
-  const getStatus = (memberId) => eventAttendances.find(a => a.member_id === memberId);
+  // Find the attendance action if one exists
+  const attendanceAction = actions.find(a => a.action_purpose === 'attendance');
+  const attendanceAssignments = attendanceAction
+    ? actionAssignments.filter(a => a.action_required_id === attendanceAction.id)
+    : [];
+  const attendanceResponses = attendanceAction
+    ? actionResponses.filter(r => r.action_required_id === attendanceAction.id)
+    : [];
 
-  const rsvpColor = {
-    attending: 'bg-green-50 text-green-700',
-    not_attending: 'bg-red-50 text-red-600',
-    maybe: 'bg-amber-50 text-amber-600',
-    not_responded: 'bg-gray-50 text-gray-400',
+  // Members shown in attendance tab
+  const attendanceMembers = attendanceAction
+    ? allMembers.filter(m => attendanceAssignments.some(a => a.member_id === m.id))
+    : [];
+
+  // For consent tab — members who said yes to attendance action, or all assigned
+  const attendingMembers = attendanceAction
+    ? allMembers.filter(m => attendanceResponses.some(r => r.member_id === m.id && (r.response_value === 'yes' || r.response_value === 'attending')))
+    : [];
+
+  const responseColor = (val) => {
+    if (!val) return 'bg-gray-50 text-gray-400';
+    const v = val.toLowerCase();
+    if (v === 'yes' || v === 'attending') return 'bg-green-50 text-green-700';
+    if (v === 'no' || v === 'not_attending') return 'bg-red-50 text-red-600';
+    return 'bg-amber-50 text-amber-600';
   };
 
   return (
@@ -115,40 +129,56 @@ export default function EventDetailPanel({ event, onClose }) {
         {/* ATTENDANCE */}
         {tab === 'attendance' && (
           <div className="space-y-3">
-            <div className="flex gap-2 flex-wrap">
-              <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
-                {eventAttendances.filter(a => a.rsvp_status === 'attending').length} attending
-              </span>
-              <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">
-                {eventAttendances.filter(a => a.rsvp_status === 'not_attending').length} not attending
-              </span>
-              <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-bold">
-                {eventAttendances.filter(a => a.rsvp_status === 'not_responded').length} not responded
-              </span>
-            </div>
-            {allAttendanceMembers.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-8">No members added to this event</p>
-            ) : (
-              allAttendanceMembers.map(member => {
-                const att = getStatus(member.id);
-                return (
-                  <div key={member.id} className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                    <div className="flex-shrink-0">
-                      {att?.rsvp_status === 'attending' ? <CheckCircle2 className="w-5 h-5 text-green-500" /> :
-                       att?.rsvp_status === 'not_attending' ? <XCircle className="w-5 h-5 text-red-400" /> :
-                       att?.rsvp_status === 'maybe' ? <Clock className="w-5 h-5 text-amber-400" /> :
-                       <div className="w-5 h-5 rounded-full border-2 border-gray-200" />}
+            {attendanceAction ? (
+              <>
+                <div className="flex gap-2 flex-wrap">
+                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+                    {attendanceResponses.filter(r => r.response_value === 'yes' || r.response_value === 'attending').length} attending
+                  </span>
+                  <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold">
+                    {attendanceResponses.filter(r => r.response_value === 'no' || r.response_value === 'not_attending').length} not attending
+                  </span>
+                  <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-bold">
+                    {attendanceMembers.length - attendanceResponses.length} not responded
+                  </span>
+                </div>
+                {attendanceMembers.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-8">No members assigned to this event</p>
+                ) : attendanceMembers.map(member => {
+                  const resp = attendanceResponses.find(r => r.member_id === member.id);
+                  const val = resp?.response_value;
+                  return (
+                    <div key={member.id} className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                      <div className="flex-shrink-0">
+                        {val === 'yes' || val === 'attending' ? <CheckCircle2 className="w-5 h-5 text-green-500" /> :
+                         val === 'no' || val === 'not_attending' ? <XCircle className="w-5 h-5 text-red-400" /> :
+                         val ? <Clock className="w-5 h-5 text-amber-400" /> :
+                         <div className="w-5 h-5 rounded-full border-2 border-gray-200" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm">{member.full_name}</p>
+                      </div>
+                      <span className={`text-xs px-2 py-1 rounded-full font-semibold ${responseColor(val)}`}>
+                        {val ? val.replace('_', ' ') : 'not responded'}
+                      </span>
                     </div>
+                  );
+                })}
+              </>
+            ) : (
+              // No attendance action pushed — just show a plain member list from sections
+              (() => {
+                const sectionMembers = allMembers.filter(m => event.section_ids?.includes(m.section_id));
+                return sectionMembers.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-8">No members found for this event's sections</p>
+                ) : sectionMembers.map(member => (
+                  <div key={member.id} className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-gray-100 shadow-sm">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm">{member.full_name}</p>
-                      {att?.consent_given && <p className="text-xs text-green-600">✓ Consent given</p>}
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full font-semibold ${rsvpColor[att?.rsvp_status || 'not_responded']}`}>
-                      {(att?.rsvp_status || 'not_responded').replace('_', ' ')}
-                    </span>
                   </div>
-                );
-              })
+                ));
+              })()
             )}
           </div>
         )}
