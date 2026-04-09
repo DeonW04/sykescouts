@@ -12,19 +12,50 @@ function FormResponseViewer({ submission, form }) {
     const win = window.open('', '_blank');
     const blocks = form.blocks || [];
     const responses = submission.responses || {};
+    const LOGO = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png';
     const rows = blocks.map(b => {
-      if (b.type === 'heading') return `<h3 style="font-size:16px;font-weight:bold;margin:16px 0 4px">${b.label}</h3>`;
-      if (b.type === 'text') return `<p style="color:#555;margin:4px 0">${b.content || ''}</p>`;
+      if (b.type === 'heading') return `<h3 style="font-size:15px;font-weight:700;color:#004851;margin:20px 0 6px;border-bottom:1px solid #e5e7eb;padding-bottom:4px">${b.label}</h3>`;
+      if (b.type === 'text') return `<p style="color:#555;font-size:13px;margin:6px 0;line-height:1.5">${b.content || ''}</p>`;
       const val = responses[b.id];
-      return `<div style="margin:12px 0"><p style="font-size:12px;color:#666;margin-bottom:2px">${b.label}${b.required ? ' *' : ''}</p><p style="border:1px solid #ddd;padding:8px;border-radius:4px;background:#f9f9f9;min-height:32px">${val !== undefined && val !== null ? val : '<em style="color:#aaa">No response</em>'}</p></div>`;
+      const displayVal = val !== undefined && val !== null && val !== '' ? String(val) : '<em style="color:#aaa">No response</em>';
+      return `<div style="margin:10px 0"><p style="font-size:11px;font-weight:600;color:#374151;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em">${b.label}${b.required ? ' <span style="color:#ef4444">*</span>' : ''}</p><div style="border:1px solid #d1d5db;padding:10px 12px;border-radius:6px;background:#f9fafb;min-height:34px;font-size:13px;color:#111">${displayVal}</div></div>`;
     }).join('');
-    win.document.write(`<html><head><title>${form.title}</title><style>body{font-family:sans-serif;padding:32px;max-width:700px;margin:0 auto}@media print{body{padding:16px}}</style></head><body>
-      <h1 style="font-size:22px;font-weight:bold;margin-bottom:4px">${form.title}</h1>
-      <p style="color:#666;margin-bottom:8px">${form.description || ''}</p>
-      <p style="font-size:12px;color:#999;margin-bottom:24px;border-bottom:1px solid #eee;padding-bottom:12px">Submitted by: ${submission.parent_name || 'Unknown'} | Status: ${submission.status}</p>
+    const termsSection = form.terms_and_conditions
+      ? `<div style="margin-top:24px;padding:14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px">
+           <p style="font-size:12px;font-weight:600;color:#166534;margin-bottom:6px">Terms &amp; Conditions</p>
+           <p style="font-size:12px;color:#374151;white-space:pre-wrap;margin-bottom:8px">${form.terms_and_conditions}</p>
+           <p style="font-size:12px;font-weight:600;color:${submission.tc_accepted ? '#166534' : '#991b1b'}">${submission.tc_accepted ? '✓ Terms accepted' : '✗ Terms not accepted'}</p>
+         </div>` : '';
+    const sigSection = submission.signature_data_url
+      ? `<div style="margin-top:24px;padding:14px;border:1px solid #d1d5db;border-radius:6px;background:#fafafa">
+           <p style="font-size:11px;font-weight:600;color:#374151;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">Signature</p>
+           <img src="${submission.signature_data_url}" style="max-width:280px;border:1px solid #d1d5db;border-radius:4px;display:block"/>
+           <p style="font-size:11px;color:#6b7280;margin-top:6px">Signed by: ${submission.parent_name || 'Parent/Guardian'}</p>
+         </div>` : '';
+    win.document.write(`<!DOCTYPE html><html><head><title>${form.title}</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; max-width: 750px; margin: 0 auto; color: #111; }
+      @media print { body { padding: 20px; } }
+    </style>
+    </head><body>
+      <div style="display:flex;align-items:center;gap:16px;border-bottom:3px solid #7413dc;padding-bottom:16px;margin-bottom:24px">
+        <img src="${LOGO}" style="height:70px;width:auto;object-fit:contain" />
+        <div>
+          <p style="font-size:11px;color:#7413dc;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 4px">40th Rochdale (Syke) Scouts</p>
+          <h1 style="font-size:22px;font-weight:700;color:#111;margin:0 0 4px">${form.title}</h1>
+          ${form.description ? `<p style="font-size:13px;color:#6b7280;margin:0">${form.description}</p>` : ''}
+        </div>
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:12px 16px;margin-bottom:20px;display:flex;gap:32px">
+        <div><p style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;margin:0 0 2px">Submitted By</p><p style="font-size:13px;font-weight:600;margin:0">${submission.parent_name || 'Unknown'}</p></div>
+        <div><p style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;margin:0 0 2px">Date</p><p style="font-size:13px;font-weight:600;margin:0">${submission.submitted_at ? new Date(submission.submitted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}</p></div>
+        <div><p style="font-size:10px;color:#6b7280;text-transform:uppercase;font-weight:600;margin:0 0 2px">Status</p><p style="font-size:13px;font-weight:600;color:${(submission.status === 'signed' || submission.status === 'complete') ? '#166534' : '#92400e'};margin:0;text-transform:capitalize">${submission.status}</p></div>
+      </div>
       ${rows}
-      ${form.terms_and_conditions ? `<div style="margin-top:24px;padding:12px;background:#f5f5f5;border-radius:4px;font-size:12px"><strong>Terms accepted:</strong> ${submission.tc_accepted ? 'Yes' : 'No'}</div>` : ''}
-      ${submission.signature_data_url ? `<div style="margin-top:24px"><p style="font-size:12px;color:#666;margin-bottom:4px">Signature:</p><img src="${submission.signature_data_url}" style="border:1px solid #ddd;max-width:300px;border-radius:4px"/></div>` : ''}
+      ${termsSection}
+      ${sigSection}
+      <p style="margin-top:32px;font-size:10px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:10px">Generated ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} — 40th Rochdale (Syke) Scouts</p>
       <script>window.print();window.close();</script>
     </body></html>`);
     win.document.close();
