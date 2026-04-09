@@ -61,7 +61,7 @@ export default function DocumentStorageSection({ programmeId, entityType }) {
   const { data: members = [] } = useQuery({
     queryKey: ['doc-members'],
     queryFn: () => base44.entities.Member.filter({}),
-    enabled: signedSubmissions?.length > 0 || submissions.length > 0,
+    enabled: submissions.length > 0,
   });
 
   const saveDocsMutation = useMutation({
