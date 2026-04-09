@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Award, CheckCircle, Circle, Star, Trophy, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Award, CheckCircle, Circle, Trophy, ChevronDown, ChevronUp } from 'lucide-react';
 import BadgeCriteriaModal from './BadgeCriteriaModal';
 import GoldAwardPage from './GoldAwardPage';
 
