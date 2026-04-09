@@ -1,0 +1,59 @@
+{
+  "name": "ConsentFormSubmission",
+  "type": "object",
+  "properties": {
+    "form_id": {
+      "type": "string",
+      "description": "ConsentForm ID"
+    },
+    "member_id": {
+      "type": "string",
+      "description": "Member ID"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Event ID (if event-linked)"
+    },
+    "programme_id": {
+      "type": "string",
+      "description": "Programme ID (if meeting-linked)"
+    },
+    "responses": {
+      "type": "object",
+      "description": "Map of block_id to response value"
+    },
+    "tc_accepted": {
+      "type": "boolean",
+      "default": false
+    },
+    "sign_token": {
+      "type": "string",
+      "description": "Unique token for QR signature link"
+    },
+    "signature_data_url": {
+      "type": "string",
+      "description": "Base64 PNG of signature"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "awaiting_signature",
+        "signed",
+        "complete"
+      ],
+      "default": "pending"
+    },
+    "parent_name": {
+      "type": "string"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "form_id",
+    "member_id"
+  ]
+}

@@ -8,6 +8,10 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AIProgrammePlanner from './pages/AIProgrammePlanner';
+import ConsentForms from './pages/ConsentForms';
+import ConsentFormBuilder from './pages/ConsentFormBuilder';
+import IpadApp from './pages/IpadApp';
+import SignaturePage from './pages/SignaturePage';
 import QuizBuilder from './pages/QuizBuilder';
 import MobileApp from './pages/MobileApp';
 import CompleteRegistration from './pages/CompleteRegistration';
@@ -118,6 +122,10 @@ const AuthenticatedApp = () => {
         </LayoutWrapper>
       } />
       <Route path="/app" element={<MobileApp />} />
+      <Route path="/ipad" element={<IpadApp />} />
+      <Route path="/sign" element={<SignaturePage />} />
+      <Route path="/ConsentForms" element={<LayoutWrapper currentPageName="ConsentForms"><ConsentForms /></LayoutWrapper>} />
+      <Route path="/ConsentFormBuilder" element={<LayoutWrapper currentPageName="ConsentFormBuilder"><ConsentFormBuilder /></LayoutWrapper>} />
       <Route path="/CompleteRegistration" element={<CompleteRegistration />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>

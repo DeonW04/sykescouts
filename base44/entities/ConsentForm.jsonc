@@ -1,0 +1,69 @@
+{
+  "name": "ConsentForm",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Form title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of what this form is for"
+    },
+    "blocks": {
+      "type": "array",
+      "description": "Form building blocks",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "heading",
+              "text",
+              "single_line",
+              "multi_line",
+              "multiple_choice",
+              "number"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "terms_and_conditions": {
+      "type": "string",
+      "description": "T&C text shown at bottom of form"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "title"
+  ]
+}
