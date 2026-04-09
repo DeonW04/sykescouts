@@ -67,10 +67,19 @@ export default function LeaderGallery({ sections, user }) {
       setUploadStates(prev => prev.map((s, idx) => idx === i ? { status: 'uploading' } : s));
       try {
         const { file_url } = await base44.integrations.Core.UploadFile({ file: selectedFiles[i] });
+
+        // Derive section_id (required field)
+        let sectionId = sections[0]?.id || 'all';
+        if (selectedProgrammeId) {
+          const prog = programmes.find(p => p.id === selectedProgrammeId);
+          if (prog?.section_id) sectionId = prog.section_id;
+        }
+
         await base44.entities.EventPhoto.create({
           file_url,
           caption,
-          uploaded_by: user?.email,
+          section_id: sectionId,
+          uploaded_by: user?.id || user?.email,
           ...(selectedProgrammeId ? { programme_id: selectedProgrammeId } : {}),
           ...(selectedEventId ? { event_id: selectedEventId } : {}),
         });
