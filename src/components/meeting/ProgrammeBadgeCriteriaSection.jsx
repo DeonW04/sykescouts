@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Award, Plus, X, Search } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
@@ -18,6 +20,7 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
   const [selectedReqs, setSelectedReqs] = useState([]);
   const [selectedFamily, setSelectedFamily] = useState(null);
   const [countsAsHikeAway, setCountsAsHikeAway] = useState(false);
+  const [searchByCriteria, setSearchByCriteria] = useState(false);
 
   const { data: badges = [] } = useQuery({
     queryKey: ['badges'],
@@ -120,12 +123,10 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
   const filteredBadges = badges.filter(b => {
     if (!searchTerm) return true;
     const lower = searchTerm.toLowerCase();
-    if (b.name.toLowerCase().includes(lower)) return true;
-    // Also search within requirement text (min 3 chars to avoid noise)
-    if (searchTerm.length >= 3) {
+    if (searchByCriteria) {
       return allRequirements.some(r => r.badge_id === b.id && r.text?.toLowerCase().includes(lower));
     }
-    return false;
+    return b.name.toLowerCase().includes(lower);
   });
 
   const badgeFamilies = badges
@@ -232,11 +233,21 @@ export default function ProgrammeBadgeCriteriaSection({ programmeId, entityType 
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="Search badges..."
+                placeholder={searchByCriteria ? 'Search by criteria text...' : 'Search badge name...'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="search-mode"
+                checked={searchByCriteria}
+                onCheckedChange={(v) => { setSearchByCriteria(v); setSearchTerm(''); }}
+              />
+              <Label htmlFor="search-mode" className="text-sm text-gray-600 cursor-pointer whitespace-nowrap">
+                {searchByCriteria ? 'Criteria' : 'Badge name'}
+              </Label>
             </div>
 
             {!selectedBadge && !selectedFamily ? (

@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Award, Plus, Search, Users, TrendingUp, Package, AlertTriangle, LayoutList, Grid, Mail, Send } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +22,7 @@ export default function LeaderBadges() {
   const queryClient = useQueryClient();
   const { selectedSection, availableSections } = useSectionContext();
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchByCriteria, setSearchByCriteria] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [viewMode, setViewMode] = useState('badge'); // 'badge' | 'member'
   const [showEmailConfirm, setShowEmailConfirm] = useState(false);
@@ -112,8 +115,9 @@ export default function LeaderBadges() {
   const filteredBadges = badges.filter(badge => {
     const lower = searchTerm.toLowerCase();
     const matchesSearch = !searchTerm
-      || badge.name.toLowerCase().includes(lower)
-      || (searchTerm.length >= 3 && requirements.some(r => r.badge_id === badge.id && r.text?.toLowerCase().includes(lower)));
+      || (searchByCriteria
+        ? requirements.some(r => r.badge_id === badge.id && r.text?.toLowerCase().includes(lower))
+        : badge.name.toLowerCase().includes(lower));
     const isSectionAgnostic = badge.section === 'all' || badge.category === 'staged';
     const matchesSection = !selectedSectionName || isSectionAgnostic || badge.section === selectedSectionName;
     const matchesCategory = categoryFilter === 'all' || badge.category === categoryFilter;
@@ -309,24 +313,16 @@ export default function LeaderBadges() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
-                    placeholder="Search badges..."
+                    placeholder={searchByCriteria ? 'Search by criteria text...' : 'Search badge name...'}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
                   />
                 </div>
-                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="All categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    <SelectItem value="challenge">Challenge</SelectItem>
-                    <SelectItem value="activity">Activity</SelectItem>
-                    <SelectItem value="staged">Staged</SelectItem>
-                    <SelectItem value="core">Core</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2">
+                  <Switch id="search-mode-m" checked={searchByCriteria} onCheckedChange={(v) => { setSearchByCriteria(v); setSearchTerm(''); }} />
+                  <Label htmlFor="search-mode-m" className="text-sm text-gray-600 cursor-pointer">{searchByCriteria ? 'Searching by criteria' : 'Searching by badge name'}</Label>
+                </div>
               </div>
             </details>
           </CardContent>
@@ -335,28 +331,20 @@ export default function LeaderBadges() {
         {/* Desktop Filters */}
         <Card className="mb-6 hidden md:block">
           <CardContent className="p-4">
-            <div className="flex gap-4">
+            <div className="flex gap-4 items-center">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
-                  placeholder="Search badges..."
+                  placeholder={searchByCriteria ? 'Search by criteria text...' : 'Search badge name...'}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="All categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="challenge">Challenge</SelectItem>
-                  <SelectItem value="activity">Activity</SelectItem>
-                  <SelectItem value="staged">Staged</SelectItem>
-                  <SelectItem value="core">Core</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Switch id="search-mode-d" checked={searchByCriteria} onCheckedChange={(v) => { setSearchByCriteria(v); setSearchTerm(''); }} />
+                <Label htmlFor="search-mode-d" className="text-sm text-gray-600 cursor-pointer whitespace-nowrap">{searchByCriteria ? 'Criteria' : 'Badge name'}</Label>
+              </div>
             </div>
           </CardContent>
         </Card>
