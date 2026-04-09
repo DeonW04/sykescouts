@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Calendar, ChevronDown, ChevronUp, Save, AlertTriangle, MapPin } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Save, AlertTriangle, MapPin, LayoutList } from 'lucide-react';
 import { format, isPast, isToday, startOfWeek, endOfWeek } from 'date-fns';
 import { toast } from 'sonner';
+import MeetingDetailPanel from './MeetingDetailPanel';
 
 function MeetingCard({ programme, sections, isThisWeek }) {
   const [open, setOpen] = useState(isThisWeek);
@@ -100,9 +101,14 @@ function MeetingCard({ programme, sections, isThisWeek }) {
               {!programme.description && !programme.activities?.length && (
                 <p className="text-sm text-gray-400 mb-3">No details yet.</p>
               )}
-              <button onClick={() => setEditing(true)} className="text-xs text-[#004851] font-semibold border border-[#004851]/30 px-3 py-1.5 rounded-xl active:bg-[#004851]/5">
-                Edit Details
-              </button>
+              <div className="flex gap-2">
+                <button onClick={() => setEditing(true)} className="text-xs text-[#004851] font-semibold border border-[#004851]/30 px-3 py-1.5 rounded-xl active:bg-[#004851]/5">
+                  Edit Details
+                </button>
+                <button onClick={() => setDetailProgramme(programme)} className="text-xs text-[#7413dc] font-semibold border border-[#7413dc]/30 px-3 py-1.5 rounded-xl active:bg-[#7413dc]/5 flex items-center gap-1">
+                  <LayoutList className="w-3 h-3" /> Attendance & More
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -112,7 +118,7 @@ function MeetingCard({ programme, sections, isThisWeek }) {
 }
 
 export default function LeaderProgramme({ sections }) {
-  const sectionIds = sections.map(s => s.id);
+  const [detailProgramme, setDetailProgramme] = useState(null);
   const now = new Date();
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
@@ -155,6 +161,8 @@ export default function LeaderProgramme({ sections }) {
     return new Date(p.date) > now && !(d >= weekStart && d <= weekEnd);
   });
   const pastProgs = termProgs.filter(p => isPast(new Date(p.date)) && !isToday(new Date(p.date)));
+
+  if (detailProgramme) return <MeetingDetailPanel programme={detailProgramme} sections={sections} onClose={() => setDetailProgramme(null)} />;
 
   return (
     <div className="flex flex-col">

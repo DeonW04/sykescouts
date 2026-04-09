@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mail, MessageSquare, BookOpen, Users, Plus, TrendingUp, Eye, CheckCircle, AlertCircle } from 'lucide-react';
+import { Mail, MessageSquare, BookOpen, Users, Plus, TrendingUp, Eye, CheckCircle, AlertCircle, Bell } from 'lucide-react';
+import CustomPushNotification from '../components/admin/CustomPushNotification';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import LeaderNav from '../components/leader/LeaderNav';
@@ -253,6 +254,11 @@ export default function Communications() {
               <p className="text-sm text-gray-600 mt-2">Across all pages</p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Custom Push */}
+        <div className="mb-8">
+          <CustomPushNotification />
         </div>
 
         {/* Recent Pages */}

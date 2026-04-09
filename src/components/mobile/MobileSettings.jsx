@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import NotificationPreferences from './NotificationPreferences';
 import { Bell, BellOff, BellRing, LogOut, ChevronRight, User, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,6 +27,7 @@ const ROLE_LABELS = {
 };
 
 export default function MobileSettings({ user, role = 'parent' }) {
+  const [showNotifPrefs, setShowNotifPrefs] = useState(false);
   const [permission, setPermission] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'denied'
   );
@@ -163,6 +165,22 @@ export default function MobileSettings({ user, role = 'parent' }) {
                 </button>
               )}
             </div>
+            {permission === 'granted' && (
+              <div className="border-t border-gray-50">
+                <button
+                  onClick={() => setShowNotifPrefs(!showNotifPrefs)}
+                  className="w-full flex items-center justify-between px-4 py-3 text-sm text-gray-600 active:bg-gray-50"
+                >
+                  <span className="font-medium">Notification preferences</span>
+                  <span className="text-gray-400 text-xs">{showNotifPrefs ? '▲' : '▼'}</span>
+                </button>
+                {showNotifPrefs && user && (
+                  <div className="px-4 pb-4">
+                    <NotificationPreferences role={role} userId={user.id} />
+                  </div>
+                )}
+              </div>
+            )}
             {permission === 'denied' && (
               <div className="px-4 pb-4 pt-0">
                 <p className="text-xs text-gray-500 bg-gray-50 rounded-xl p-3 leading-relaxed">

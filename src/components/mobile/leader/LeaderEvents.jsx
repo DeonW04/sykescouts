@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Tent, MapPin, CalendarDays, Clock, ChevronRight, Save, X } from 'lucide-react';
+import { Tent, MapPin, CalendarDays, Clock, ChevronRight, Save, X, LayoutList } from 'lucide-react';
 import { format } from 'date-fns';
+import EventDetailPanel from './EventDetailPanel';
 import { toast } from 'sonner';
 
 function EventDetailView({ event, onBack }) {
@@ -128,6 +129,9 @@ export default function LeaderEvents({ sections }) {
 
   const typeColors = { Camp: 'bg-green-100 text-green-700', 'Day Event': 'bg-blue-100 text-blue-700', Other: 'bg-gray-100 text-gray-600' };
 
+  const [panelEvent, setPanelEvent] = useState(null);
+
+  if (panelEvent) return <EventDetailPanel event={panelEvent} onClose={() => setPanelEvent(null)} />;
   if (selectedEvent) return <EventDetailView event={selectedEvent} onBack={() => setSelectedEvent(null)} />;
 
   return (
@@ -161,7 +165,13 @@ export default function LeaderEvents({ sections }) {
                           <p className="font-semibold text-gray-900 text-sm leading-snug mt-1">{e.title}</p>
                           {e.location && <p className="text-xs text-gray-400 mt-1 flex items-center gap-1"><MapPin className="w-3 h-3" />{e.location}</p>}
                         </div>
-                        <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0 mt-1" />
+                        <div className="flex flex-col gap-1 flex-shrink-0">
+                          <ChevronRight className="w-4 h-4 text-gray-300" />
+                          <button
+                            onClick={ev => { ev.stopPropagation(); setPanelEvent(e); }}
+                            className="text-[10px] text-[#7413dc] font-semibold bg-[#7413dc]/10 px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                          >Details</button>
+                        </div>
                       </div>
                     </button>
                   ))}

@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import CustomPushNotification from './CustomPushNotification';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Trash2, Send, RefreshCw } from 'lucide-react';
+import { Bell, Trash2, Send, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
 export default function PushNotificationsTab() {
   const queryClient = useQueryClient();
-  const [testing, setTesting] = useState(null); // subscriptionId or 'all'
+  const [testing, setTesting] = useState(null);
+  const [expandedPrefs, setExpandedPrefs] = useState(null);
   const [deleting, setDeleting] = useState(null);
 
   const { data: subscriptions = [], isLoading, refetch } = useQuery({
@@ -120,6 +122,14 @@ export default function PushNotificationsTab() {
                   <div className="md:col-span-2 flex justify-end gap-2">
                     <Button
                       size="sm"
+                      variant="ghost"
+                      onClick={() => setExpandedPrefs(expandedPrefs === sub.id ? null : sub.id)}
+                      title="View notification preferences"
+                    >
+                      {expandedPrefs === sub.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </Button>
+                    <Button
+                      size="sm"
                       variant="outline"
                       onClick={() => handleTest(sub.id)}
                       disabled={testing === sub.id || !sub.subscription?.endpoint}
@@ -146,12 +156,31 @@ export default function PushNotificationsTab() {
                       )}
                     </Button>
                   </div>
+                  {expandedPrefs === sub.id && sub.preferences && (
+                    <div className="col-span-12 px-2 pb-2">
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs font-semibold text-gray-500 mb-2">Notification Preferences</p>
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(sub.preferences).map(([key, val]) => (
+                            <span key={key} className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              val ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+                            }`}>
+                              {val ? '✓' : '✗'} {key.replace(/_/g, ' ')}
+                            </span>
+                          ))}
+                          {Object.keys(sub.preferences).length === 0 && <p className="text-xs text-gray-400">No preferences set (defaults apply)</p>}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <CustomPushNotification />
 
       <Card className="border-amber-200 bg-amber-50">
         <CardContent className="p-4">
