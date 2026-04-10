@@ -69,7 +69,20 @@ Deno.serve(async (req) => {
       return Response.json({ error: `Failed to fetch sections: ${sectionsRes.status}` }, { status: 500 });
     }
 
-    const sectionsData = await sectionsRes.json();
+    const responseText = await sectionsRes.text();
+    console.log('OSM response text length:', responseText.length, 'First 200 chars:', responseText.substring(0, 200));
+    
+    if (!responseText || responseText.trim() === '') {
+      return Response.json({ error: 'Empty response from OSM' }, { status: 500 });
+    }
+
+    let sectionsData;
+    try {
+      sectionsData = JSON.parse(responseText);
+    } catch (e) {
+      console.error('Failed to parse OSM response as JSON:', e.message, 'Full response:', responseText);
+      return Response.json({ error: 'Invalid JSON from OSM: ' + e.message }, { status: 500 });
+    }
     console.log('OSM sections data received:', typeof sectionsData, Object.keys(sectionsData || {}).length);
 
     // Format sections with names and IDs for dropdown
