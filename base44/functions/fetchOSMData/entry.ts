@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     }
 
     // Extract data_holder from HTML
-    const match = text.match(/data_holder\s*=\s*({[^;]+});/);
+    const match = text.match(/data_holder\s*=\s*(\{[\s\S]*?\});/);
     if (!match || !match[1]) {
       console.error('Could not find data_holder in HTML response');
       console.error('First 500 chars:', text.substring(0, 500));
