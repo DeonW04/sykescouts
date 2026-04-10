@@ -70,7 +70,19 @@ function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
     setError('');
     setLoading(true);
     try {
-      // Generate CSRF token
+      // Generate PKCE code verifier and challenge
+      const codeVerifier = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map(b => String.fromCharCode(b))
+        .join('');
+      const base64UrlEncode = (str) => btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+      const codeChallenge = base64UrlEncode(
+        await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier)).then(buf => String.fromCharCode(...new Uint8Array(buf)))
+      );
+
+      // Store verifier in localStorage for retrieval after OAuth callback
+      localStorage.setItem('osm_code_verifier', codeVerifier);
+
+      // Generate state token
       const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
       // Get OSM_CLIENT_ID from backend
@@ -86,13 +98,15 @@ function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
       const host = window.location.host;
       const redirectUri = `${protocol}//${host}/functions/osmOAuthCallback`;
 
-      // Build OAuth authorization URL
+      // Build OAuth authorization URL with PKCE
       const authUrl = `https://www.onlinescoutmanager.co.uk/oauth/authorize?` +
         `response_type=code&` +
         `client_id=${encodeURIComponent(clientId.data.client_id)}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `scope=${encodeURIComponent('section:member:read section:badge:read section:badge:write')}&` +
-        `state=${encodeURIComponent(state)}`;
+        `state=${encodeURIComponent(state)}&` +
+        `code_challenge=${encodeURIComponent(codeChallenge)}&` +
+        `code_challenge_method=S256`;
 
       // Redirect to OSM OAuth endpoint
       window.location.href = authUrl;
