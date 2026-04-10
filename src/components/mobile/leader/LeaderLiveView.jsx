@@ -1,8 +1,78 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { ArrowLeft, User, CheckCircle, XCircle, Clock, ShieldAlert, FileText, AlertTriangle, ChevronRight, X, Phone, Heart, Pill } from 'lucide-react';
+import { ArrowLeft, User, ShieldAlert, FileText, AlertTriangle, ChevronRight, X, Phone, Heart, Pill, Send, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
+
+function SendUpdatePanel({ session }) {
+  const [message, setMessage] = useState('');
+  const [sent, setSent] = useState(false);
+
+  const sendMutation = useMutation({
+    mutationFn: () => base44.functions.invoke('sendLiveUpdate', {
+      message,
+      sectionId: session.type === 'meeting' ? session.data.section_id : null,
+      eventId: session.type === 'event' ? session.data.id : null,
+    }),
+    onSuccess: (res) => {
+      setSent(true);
+      setMessage('');
+      setTimeout(() => setSent(false), 4000);
+    },
+  });
+
+  const quickMessages = [
+    'We are running about 10 minutes late tonight.',
+    'We are running about 15 minutes late tonight.',
+    'Please come to the side entrance tonight.',
+    'Collection time has changed — please check with a leader.',
+  ];
+
+  return (
+    <div className="px-4 py-5 space-y-4">
+      <div className="bg-white rounded-2xl border border-gray-100 p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <MessageSquare className="w-4 h-4 text-[#004851]" />
+          <p className="font-semibold text-gray-900 text-sm">Send a message to parents</p>
+        </div>
+        <p className="text-xs text-gray-500 mb-3">This will send a push notification to all parents of attending members.</p>
+        <textarea
+          value={message}
+          onChange={e => setMessage(e.target.value)}
+          placeholder="e.g. We are running 10 minutes late tonight..."
+          rows={3}
+          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#004851]/30"
+        />
+        <button
+          onClick={() => sendMutation.mutate()}
+          disabled={!message.trim() || sendMutation.isPending}
+          className="mt-3 w-full flex items-center justify-center gap-2 bg-[#004851] text-white rounded-xl py-2.5 text-sm font-semibold disabled:opacity-40"
+        >
+          <Send className="w-4 h-4" />
+          {sendMutation.isPending ? 'Sending...' : 'Send to Parents'}
+        </button>
+        {sent && (
+          <p className="text-center text-green-600 text-xs font-medium mt-2">✓ Notification sent!</p>
+        )}
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-4">
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Quick Messages</p>
+        <div className="space-y-2">
+          {quickMessages.map((msg, i) => (
+            <button
+              key={i}
+              onClick={() => setMessage(msg)}
+              className="w-full text-left text-sm text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl px-3 py-2.5 transition-colors"
+            >
+              {msg}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function MemberMedicalModal({ member, onClose }) {
   return (
@@ -202,6 +272,7 @@ export default function LeaderLiveView({ session, onBack }) {
   const tabs = [
     { id: 'register', label: 'Register' },
     { id: 'planning', label: 'Planning' },
+    { id: 'update', label: 'Send Update' },
   ];
 
   const STATUSES = [
@@ -302,6 +373,11 @@ export default function LeaderLiveView({ session, onBack }) {
               </div>
             )}
           </div>
+        )}
+
+        {/* Send Update Tab */}
+        {activeTab === 'update' && (
+          <SendUpdatePanel session={session} />
         )}
 
         {/* Planning Tab */}

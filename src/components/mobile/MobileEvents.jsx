@@ -262,10 +262,18 @@ export default function MobileEvents({ children, user }) {
           {selectedEvent.location && (
             <div className="bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-gray-100">
               <MapPin className="w-5 h-5 text-[#7413dc] flex-shrink-0" />
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="text-xs text-gray-400">Location</p>
                 <p className="font-medium text-gray-900 text-sm">{selectedEvent.location}</p>
               </div>
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedEvent.location)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-shrink-0 bg-[#7413dc] text-white text-xs font-semibold px-3 py-1.5 rounded-lg"
+              >
+                Directions
+              </a>
             </div>
           )}
           {(selectedEvent.meeting_time || selectedEvent.pickup_time) && (

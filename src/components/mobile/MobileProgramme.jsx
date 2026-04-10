@@ -115,7 +115,18 @@ function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMee
                 </p>
               )}
               {programme.optional_location && (
-                <p className="text-sm text-red-700 font-semibold">Location: {programme.optional_location}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm text-red-700 font-semibold">Location: {programme.optional_location}</p>
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(programme.optional_location)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0 bg-red-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    Directions
+                  </a>
+                </div>
               )}
             </div>
           )}

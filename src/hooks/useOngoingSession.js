@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
-
 function parseTime(timeStr, dateStr) {
   if (!timeStr || !dateStr) return null;
   const [h, m] = timeStr.split(':').map(Number);
@@ -18,10 +17,10 @@ export function useOngoingSession({ sectionIds = [] }) {
       const todayStr = now.toISOString().split('T')[0];
       const oneHourMs = 60 * 60 * 1000;
 
-      // Check ongoing events
+      // Check events
       const events = await base44.entities.Event.filter({ published: true });
 
-      // Test mode: return immediately if any event has test mode on
+      // Test mode
       const testEvent = events.find(e =>
         e.live_view_test_mode === true &&
         !e.disable_live_view &&
@@ -39,9 +38,10 @@ export function useOngoingSession({ sectionIds = [] }) {
       });
       if (ongoingEvent) return { type: 'event', data: ongoingEvent };
 
-      // Check today's meetings
+      // Check meetings
       const programmes = await base44.entities.Programme.filter({});
-      // Test mode: return immediately if any meeting has test mode on
+
+      // Test mode
       const testMeeting = programmes.find(p =>
         p.live_view_test_mode === true &&
         !p.disable_live_view &&
@@ -68,7 +68,6 @@ export function useOngoingSession({ sectionIds = [] }) {
           end = parseTime(endStr, meeting.date);
           end.setTime(end.getTime() + oneHourMs);
         } else {
-          // Default: 5pm – 10pm window
           start = parseTime('17:00', meeting.date);
           end = parseTime('22:00', meeting.date);
         }
@@ -76,8 +75,6 @@ export function useOngoingSession({ sectionIds = [] }) {
         if (start && end && now >= start && now <= end) {
           return { type: 'meeting', data: meeting };
         }
-      }
-      return null;
       }
       return null;
     },
