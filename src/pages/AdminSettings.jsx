@@ -21,9 +21,11 @@ import BulkBadgeUpdate from '../components/badges/BulkBadgeUpdate';
 import UniformPositionEditor from '../components/uniform/UniformPositionEditor';
 import PushNotificationsTab from '../components/admin/PushNotificationsTab';
 import NotificationLogTab from '../components/admin/NotificationLogTab';
+import LeaderManagement from '../components/admin/LeaderManagement';
 
 const NAV_ITEMS = [
-  { key: 'users',     label: 'User Management',    icon: Users,    group: 'People' },
+  { key: 'users',      label: 'User Management',    icon: Users,    group: 'People' },
+  { key: 'leaders',    label: 'Leader Management',  icon: Shield,   group: 'People' },
   { key: 'images',    label: 'Website Images',      icon: Image,    group: 'Content' },
   { key: 'badges',    label: 'Badge System',         icon: Award,    group: 'Content' },
   { key: 'uniform',   label: 'Uniform Guide',        icon: Shield,   group: 'Content' },
@@ -272,6 +274,9 @@ export default function AdminSettings() {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              {/* ── Leaders ── */}
+              <TabsContent value="leaders"><LeaderManagement /></TabsContent>
 
               {/* ── Website Images ── */}
               <TabsContent value="images">

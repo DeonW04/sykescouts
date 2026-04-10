@@ -1,0 +1,125 @@
+{
+  "name": "Leader",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Link to User entity"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Display name for the leader"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone number"
+    },
+    "secondary_phone": {
+      "type": "string",
+      "description": "Secondary / home phone number"
+    },
+    "address": {
+      "type": "string",
+      "description": "Home address"
+    },
+    "postcode": {
+      "type": "string",
+      "description": "Postcode"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of birth"
+    },
+    "role_title": {
+      "type": "string",
+      "description": "Scouting role / appointment title (e.g. Cub Scout Leader)"
+    },
+    "dbs_check_date": {
+      "type": "string",
+      "format": "date",
+      "description": "DBS check date"
+    },
+    "dbs_expiry_date": {
+      "type": "string",
+      "format": "date",
+      "description": "DBS expiry date"
+    },
+    "dbs_certificate_number": {
+      "type": "string",
+      "description": "DBS certificate reference number"
+    },
+    "first_aid_certified": {
+      "type": "boolean",
+      "default": false,
+      "description": "First aid certification status"
+    },
+    "first_aid_expiry": {
+      "type": "string",
+      "format": "date",
+      "description": "First aid certification expiry date"
+    },
+    "safeguarding_trained": {
+      "type": "boolean",
+      "default": false,
+      "description": "Safeguarding training status"
+    },
+    "safeguarding_expiry": {
+      "type": "string",
+      "format": "date",
+      "description": "Safeguarding training expiry date"
+    },
+    "gdpr_trained": {
+      "type": "boolean",
+      "default": false,
+      "description": "GDPR / data protection training completed"
+    },
+    "membership_number": {
+      "type": "string",
+      "description": "Scout Association membership number"
+    },
+    "emergency_contact_name": {
+      "type": "string",
+      "description": "Emergency contact name"
+    },
+    "emergency_contact_phone": {
+      "type": "string",
+      "description": "Emergency contact phone"
+    },
+    "emergency_contact_relationship": {
+      "type": "string",
+      "description": "Relationship to leader"
+    },
+    "medical_info": {
+      "type": "string",
+      "description": "Medical conditions and relevant health information"
+    },
+    "allergies": {
+      "type": "string",
+      "description": "Known allergies"
+    },
+    "dietary_requirements": {
+      "type": "string",
+      "description": "Dietary requirements"
+    },
+    "medications": {
+      "type": "string",
+      "description": "Regular medications"
+    },
+    "section_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Assigned sections"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Admin notes (private)"
+    }
+  },
+  "required": [
+    "user_id",
+    "phone"
+  ]
+}
