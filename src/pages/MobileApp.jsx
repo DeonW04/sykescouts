@@ -174,7 +174,7 @@ function LeaderApp({ user, leader, activeTab, onTabChange }) {
     case 'badges': return <LeaderBadges {...commonProps} />;
     case 'gallery': return <LeaderGallery sections={activeSections} user={user} />;
     case 'expenses': return <LeaderExpenses user={user} />;
-    case 'settings': return <MobileSettings user={user} role="leader" />;
+    case 'settings': return <MobileSettings user={user} role="leader" leader={leader} />;
     default: return null;
   }
 }

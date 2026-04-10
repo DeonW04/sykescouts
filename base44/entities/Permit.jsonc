@@ -1,0 +1,45 @@
+{
+  "name": "Permit",
+  "type": "object",
+  "properties": {
+    "leader_id": {
+      "type": "string",
+      "description": "Leader ID"
+    },
+    "permit_type": {
+      "type": "string",
+      "description": "Category of permit (e.g. Nights Away, Water Activities, Hill Walking)"
+    },
+    "permit_name": {
+      "type": "string",
+      "description": "Name / description of the permit"
+    },
+    "issuing_body": {
+      "type": "string",
+      "description": "Organisation that issued the permit (e.g. The Scout Association)"
+    },
+    "issued_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date permit was issued"
+    },
+    "expiry_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Permit expiry date (leave blank if no expiry)"
+    },
+    "permit_number": {
+      "type": "string",
+      "description": "Reference or certificate number"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes or restrictions"
+    }
+  },
+  "required": [
+    "leader_id",
+    "permit_type",
+    "permit_name"
+  ]
+}

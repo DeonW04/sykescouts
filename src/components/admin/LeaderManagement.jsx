@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, User, Phone, MapPin, Shield, AlertTriangle, CreditCard, Clock, Edit, CheckCircle, XCircle, Receipt, Calendar } from 'lucide-react';
+import { ArrowLeft, User, Phone, MapPin, Shield, AlertTriangle, CreditCard, Clock, Edit, CheckCircle, XCircle, Receipt, Calendar, FileText, Plus, Trash2 } from 'lucide-react';
 import { format, subDays, isAfter, isBefore, addDays } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -184,6 +184,9 @@ function LeaderProfile({ leader, user, sections, receipts, pageViews, onEdit, on
           {leaderReceipts.length === 0 && <p className="text-xs text-gray-400">No receipts submitted</p>}
         </Section>
 
+        {/* Permits */}
+        <PermitsSection leaderId={leader.id} />
+
         {/* Notes */}
         {leader.notes && (
           <Section title="Admin Notes" icon={User} color="gray">
@@ -210,6 +213,67 @@ function BoolField({ label, name, form, onChange }) {
       <Checkbox id={`bool-${name}`} checked={!!form[name]} onCheckedChange={v => onChange(name, v)} />
       <Label htmlFor={`bool-${name}`} className="text-sm cursor-pointer">{label}</Label>
     </div>
+  );
+}
+
+const EMPTY_PERMIT_FORM = { permit_type: '', permit_name: '', issuing_body: '', issued_date: '', expiry_date: '', permit_number: '', notes: '' };
+
+function PermitsSection({ leaderId }) {
+  const queryClient = useQueryClient();
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState(EMPTY_PERMIT_FORM);
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const { data: permits = [] } = useQuery({ queryKey: ['permits', leaderId], queryFn: () => base44.entities.Permit.filter({ leader_id: leaderId }), enabled: !!leaderId });
+  const addMutation = useMutation({
+    mutationFn: (data) => base44.entities.Permit.create({ ...data, leader_id: leaderId }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['permits', leaderId] }); setShowAdd(false); setForm(EMPTY_PERMIT_FORM); toast.success('Permit added'); },
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Permit.delete(id),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['permits', leaderId] }); toast.success('Permit removed'); },
+  });
+  const now = new Date();
+  return (
+    <Section title="Permits" icon={FileText} color="blue">
+      {permits.length === 0 && !showAdd && <p className="text-xs text-gray-400 mb-3">No permits recorded</p>}
+      <div className="space-y-2 mb-3">
+        {permits.map(p => {
+          const expired = p.expiry_date && new Date(p.expiry_date) < now;
+          const soon = p.expiry_date && new Date(p.expiry_date) < new Date(now.getTime() + 90*24*60*60*1000);
+          return (
+            <div key={p.id} className="flex items-start justify-between bg-white rounded-lg p-3 border border-blue-100">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">{p.permit_name}</p>
+                <p className="text-xs text-gray-500">{p.permit_type}{p.issuing_body ? ` · ${p.issuing_body}` : ''}</p>
+                {p.permit_number && <p className="text-xs text-gray-400">Ref: {p.permit_number}</p>}
+                {p.expiry_date && <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${expired ? 'bg-red-100 text-red-700' : soon ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>Expires: {p.expiry_date}{expired ? ' (EXPIRED)' : soon ? ' (expiring soon)' : ''}</span>}
+                {p.notes && <p className="text-xs text-gray-400 mt-1">{p.notes}</p>}
+              </div>
+              <button onClick={() => deleteMutation.mutate(p.id)} className="text-gray-300 hover:text-red-500 transition-colors ml-2 mt-0.5"><Trash2 className="w-4 h-4" /></button>
+            </div>
+          );
+        })}
+      </div>
+      {showAdd ? (
+        <div className="bg-white rounded-lg border border-blue-200 p-4 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Permit Type" name="permit_type" form={form} onChange={set} />
+            <Field label="Permit Name" name="permit_name" form={form} onChange={set} />
+            <Field label="Issuing Body" name="issuing_body" form={form} onChange={set} />
+            <Field label="Certificate / Ref No." name="permit_number" form={form} onChange={set} />
+            <Field label="Issued Date" name="issued_date" type="date" form={form} onChange={set} />
+            <Field label="Expiry Date" name="expiry_date" type="date" form={form} onChange={set} />
+            <div className="col-span-2"><Field label="Notes / Restrictions" name="notes" form={form} onChange={set} /></div>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => addMutation.mutate(form)} className="bg-[#004851] hover:bg-[#003840]">Save Permit</Button>
+            <Button size="sm" variant="outline" onClick={() => { setShowAdd(false); setForm(EMPTY_PERMIT_FORM); }}>Cancel</Button>
+          </div>
+        </div>
+      ) : (
+        <Button size="sm" variant="outline" onClick={() => setShowAdd(true)} className="w-full"><Plus className="w-3.5 h-3.5 mr-1.5" />Add Permit</Button>
+      )}
+    </Section>
   );
 }
 
