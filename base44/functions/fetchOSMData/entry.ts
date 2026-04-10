@@ -16,7 +16,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    // Fetch OSM settings with tokens
     const settingsArr = await base44.asServiceRole.entities.OSMSyncSettings.filter({});
     const settings = settingsArr[0];
 
@@ -27,9 +26,8 @@ Deno.serve(async (req) => {
     const accessToken = settings.osm_access_token;
     console.log('Using OAuth token, length:', accessToken.length);
 
-    // Fetch OSM startup data
     console.log('Fetching OSM startup data...');
-    
+
     const sectionsRes = await fetch('https://www.onlinescoutmanager.co.uk/ext/generic/startup/?action=getData', {
       method: 'POST',
       headers: {
@@ -39,47 +37,51 @@ Deno.serve(async (req) => {
     });
 
     console.log('Response status:', sectionsRes.status);
-    console.log('Content-Length header:', sectionsRes.headers.get('content-length'));
-    
+
     const text = await sectionsRes.text();
     console.log('Actual response length:', text.length);
     console.log('First 300 chars:', text.substring(0, 300));
-    console.log('Last 300 chars:', text.substring(Math.max(0, text.length - 300)));
-    
+
     if (!text.trim()) {
       console.error('OSM returned empty response');
-      return Response.json({ 
-        error: 'OSM returned empty response. Token may be invalid or expired.' 
+      return Response.json({
+        error: 'OSM returned empty response. Token may be invalid or expired.'
       }, { status: 500 });
     }
 
     let responseData;
-    
-    // Try to parse as JSON directly first
+
+    // Try to parse as direct JSON first
     try {
       responseData = JSON.parse(text);
-      console.log('Successfully parsed response as JSON');
-    } catch (directJsonError) {
-      console.log('Not direct JSON, attempting HTML extraction...');
-      
-      // Fall back to HTML extraction
-      const match = text.match(/data_holder\s*=\s*(\{[\s\S]*?\});/);
-      if (!match || !match[1]) {
-        console.error('Could not find data_holder or parse JSON');
+      console.log('Successfully parsed response as direct JSON');
+    } catch (_directJsonError) {
+      console.log('Not direct JSON, attempting JS variable extraction...');
+
+      const prefix = 'var data_holder = ';
+      const idx = text.indexOf(prefix);
+
+      if (idx === -1) {
+        console.error('Could not find data_holder in response');
         console.error('First 500 chars:', text.substring(0, 500));
-        return Response.json({ 
+        return Response.json({
           error: 'Could not extract data from OSM response'
         }, { status: 500 });
       }
 
+      let jsonStr = text.slice(idx + prefix.length).trimEnd();
+      if (jsonStr.endsWith(';')) {
+        jsonStr = jsonStr.slice(0, -1);
+      }
+
       try {
-        responseData = JSON.parse(match[1]);
-        console.log('Successfully parsed HTML-embedded JSON');
+        responseData = JSON.parse(jsonStr);
+        console.log('Successfully parsed JS-embedded JSON');
       } catch (e) {
         console.error('JSON parse failed:', e.message);
-        console.error('Extracted JSON length:', match[1].length);
-        console.error('Extracted JSON last 200 chars:', match[1].substring(Math.max(0, match[1].length - 200)));
-        return Response.json({ 
+        console.error('Extracted JSON length:', jsonStr.length);
+        console.error('Extracted JSON last 200 chars:', jsonStr.substring(Math.max(0, jsonStr.length - 200)));
+        return Response.json({
           error: `Failed to parse data: ${e.message}`
         }, { status: 500 });
       }
@@ -90,7 +92,7 @@ Deno.serve(async (req) => {
     if (responseData && responseData.globals && Array.isArray(responseData.globals.roles)) {
       const roles = responseData.globals.roles;
       console.log('Found', roles.length, 'roles');
-      
+
       for (const role of roles) {
         if (role.sectionid && role.sectionname) {
           formattedSections.push({
@@ -102,7 +104,7 @@ Deno.serve(async (req) => {
       }
     } else {
       console.error('Response structure unexpected:', Object.keys(responseData || {}));
-      return Response.json({ 
+      return Response.json({
         error: 'Unexpected response structure from OSM'
       }, { status: 500 });
     }
