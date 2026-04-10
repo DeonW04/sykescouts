@@ -1,0 +1,110 @@
+{
+  "name": "BadgeDefinition",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Badge name"
+    },
+    "section": {
+      "type": "string",
+      "enum": [
+        "squirrels",
+        "beavers",
+        "cubs",
+        "scouts",
+        "explorers",
+        "all"
+      ],
+      "description": "Which section this badge is for"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "challenge",
+        "activity",
+        "staged",
+        "core",
+        "special"
+      ],
+      "description": "Badge category"
+    },
+    "osm_id": {
+      "type": "string",
+      "description": "OSM badge ID for syncing (e.g. '22412_0')"
+    },
+    "badge_family_id": {
+      "type": "string",
+      "description": "For staged badges - groups stages together"
+    },
+    "stage_number": {
+      "type": "number",
+      "description": "For staged badges - stage number (1, 2, 3, etc)"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Badge image URL (uploaded file)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Badge description"
+    },
+    "completion_rule": {
+      "type": "string",
+      "enum": [
+        "all_modules",
+        "one_module",
+        "custom",
+        "manual",
+        "automatic"
+      ],
+      "default": "all_modules",
+      "description": "How the badge is completed"
+    },
+    "special_type": {
+      "type": "string",
+      "enum": [
+        "membership",
+        "leadership",
+        "joining_in",
+        "chief_scout_award",
+        "other"
+      ],
+      "description": "Type of special badge"
+    },
+    "is_chief_scout_award": {
+      "type": "boolean",
+      "default": false,
+      "description": "Chief Scout's highest award for the section"
+    },
+    "display_priority": {
+      "type": "number",
+      "default": 0,
+      "description": "Display order priority (lower numbers first)"
+    },
+    "uniform_position": {
+      "type": "string",
+      "enum": [
+        "left_sleeve_upper",
+        "left_sleeve_lower",
+        "right_sleeve",
+        "left_chest_upper",
+        "left_chest_lower",
+        "right_chest_upper",
+        "right_chest_lower"
+      ],
+      "description": "Where this badge is worn on the uniform"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Is badge active"
+    }
+  },
+  "required": [
+    "name",
+    "section",
+    "category",
+    "image_url"
+  ]
+}

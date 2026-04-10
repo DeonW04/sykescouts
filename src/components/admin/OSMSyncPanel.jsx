@@ -46,6 +46,11 @@ export default function OSMSyncPanel() {
     queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
   });
 
+  const { data: osmBadges = [], refetch: refetchOsmBadges } = useQuery({
+    queryKey: ['osm-badges'],
+    queryFn: () => base44.entities.OSMBadge.list('-created_date', 200),
+  });
+
   const settings = settingsArr[0];
 
   // Check connection when opening
@@ -96,64 +101,21 @@ export default function OSMSyncPanel() {
     }
   };
 
-  const handleMatchBadges = async () => {
+  const handleSyncBadges = async () => {
     setMatchingBadges(true);
-    setBadgeMatches(null);
     try {
-      // First fetch all OSM and app badges
-      const fetchRes = await base44.functions.invoke('getOSMBadgesForMatching', {});
-      if (fetchRes.data.error) {
-        toast.error(fetchRes.data.error);
-        setMatchingBadges(false);
-        return;
+      const res = await base44.functions.invoke('syncOSMBadges', {});
+      if (res.data.error) {
+        toast.error(res.data.error);
+      } else {
+        toast.success(`Synced ${res.data.badges_synced} OSM badges`);
+        refetchOsmBadges();
       }
-
-      const osmBadges = fetchRes.data.osm_badges;
-      const appBadges = fetchRes.data.app_badges;
-      const certain = [];
-      const uncertain = [];
-
-      // Match each OSM badge one by one
-      for (const osmBadge of osmBadges) {
-        try {
-          const matchRes = await base44.functions.invoke('matchOSMBadges', {
-            osm_badge: osmBadge,
-            app_badges: appBadges
-          });
-
-          const match = matchRes.data;
-          if (match.confidence >= 0.8 && match.app_id) {
-            certain.push(match);
-          } else {
-            uncertain.push(match);
-          }
-
-          // Update UI live with current matches
-          setBadgeMatches({
-            total: osmBadges.length,
-            certain,
-            uncertain,
-            matched_so_far: certain.length + uncertain.length,
-            all_osm_badges: osmBadges
-          });
-        } catch (e) {
-          console.error(`Failed to match ${osmBadge.name}:`, e.message);
-        }
-      }
-
-      setSelectedBadgeMatches(certain.map(m => ({ osm_id: m.osm_id, app_id: m.app_id })));
-      toast.success(`Matched ${certain.length} certain, ${uncertain.length} need review`);
     } catch (e) {
-      toast.error('Matching failed: ' + e.message);
+      toast.error('Sync failed: ' + e.message);
     } finally {
       setMatchingBadges(false);
     }
-  };
-
-  const handleSaveMatches = async () => {
-    // TODO: save badge ID mappings
-    toast.success('Badge mappings saved');
-    setBadgeMatches(null);
   };
 
   const setField = (k, v) => setSettingsForm(f => ({ ...f, [k]: v }));
@@ -268,58 +230,62 @@ export default function OSMSyncPanel() {
       <TabsContent value="badge-sync" className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>OSM Badge Matching</CardTitle>
-            <CardDescription>Match OSM badge IDs with your app badges using AI</CardDescription>
+            <CardTitle>OSM Badges</CardTitle>
+            <CardDescription>View and manage available OSM badges for this section</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex gap-3">
-              <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-800">
-                <p className="font-semibold mb-1">How it works</p>
-                <p>Click "Match Badges" to use AI to automatically match OSM badges with your app badges. You'll review uncertain matches before saving.</p>
-              </div>
-            </div>
             <Button
-              onClick={handleMatchBadges}
+              onClick={handleSyncBadges}
               disabled={matchingBadges || !osmConnected}
               className="bg-[#7413dc] hover:bg-[#5c0fb0]"
             >
               {matchingBadges ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Matching badges...
+                  Syncing badges...
                 </>
               ) : (
                 <>
                   <Zap className="w-4 h-4 mr-2" />
-                  Match Badges with AI
+                  Fetch OSM Badges
                 </>
               )}
             </Button>
 
-            {syncResult && (
-              <div
-                className={`p-3 rounded-lg text-sm ${
-                  syncResult.ok
-                    ? 'bg-green-50 text-green-800 border border-green-200'
-                    : 'bg-red-50 text-red-800 border border-red-200'
-                }`}
-              >
-                {syncResult.message}
+            <div className="text-sm text-gray-600 mt-4">
+              Found {osmBadges.length} badges
+            </div>
+
+            {osmBadges.length > 0 && (
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                <div className="grid grid-cols-5 gap-4 p-3 bg-gray-50 rounded-lg font-semibold text-xs sticky top-0">
+                  <div>OSM ID</div>
+                  <div>Name</div>
+                  <div>Type</div>
+                  <div>Linked To</div>
+                  <div>Actions</div>
+                </div>
+                {osmBadges.map(badge => (
+                  <div key={badge.id} className="grid grid-cols-5 gap-4 p-3 border rounded-lg items-center">
+                    <div className="text-xs font-mono">{badge.osm_id}</div>
+                    <div className="text-sm">{badge.name}</div>
+                    <div><Badge variant="outline">{badge.badge_type}</Badge></div>
+                    <div className="text-xs text-gray-500">
+                      {badge.linked_to_app_badge
+                        ? badges.find(b => b.id === badge.linked_to_app_badge)?.name || 'Unknown'
+                        : 'Not linked'}
+                    </div>
+                    <div className="text-xs">
+                      {!badge.linked_to_app_badge && (
+                        <Button size="sm" variant="outline">Link</Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>
         </Card>
-
-        {badgeMatches && (
-          <BadgeMatchDialog
-            matches={badgeMatches}
-            selected={selectedBadgeMatches}
-            onSelectedChange={setSelectedBadgeMatches}
-            onSave={handleSaveMatches}
-            onClose={() => setBadgeMatches(null)}
-          />
-        )}
       </TabsContent>
 
       {/* Member Sync Tab */}
@@ -367,86 +333,5 @@ export default function OSMSyncPanel() {
         </Card>
       </TabsContent>
     </Tabs>
-  );
-}
-
-function BadgeMatchDialog({ matches, selected, onSelectedChange, onSave, onClose }) {
-  return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Review Badge Matches</DialogTitle>
-          <p className="text-sm text-gray-600 mt-2">
-            Progress: {matches.matched_so_far || 0} / {matches.total || 0}
-          </p>
-        </DialogHeader>
-
-        <div className="space-y-4 mt-4">
-          {matches.matched_so_far && matches.total && (
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="h-full bg-[#7413dc] rounded-full transition-all"
-                style={{ width: `${(matches.matched_so_far / matches.total) * 100}%` }}
-              />
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4 pb-4 border-b">
-            <div>
-              <h4 className="font-semibold text-green-700">✓ Certain Matches ({matches.certain?.length || 0})</h4>
-              <p className="text-xs text-gray-600">These will be saved automatically</p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-amber-700">? Review Needed ({matches.uncertain?.length || 0})</h4>
-              <p className="text-xs text-gray-600">Check and adjust before saving</p>
-            </div>
-          </div>
-
-          {matches.certain?.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Confident Matches</p>
-              {matches.certain.map(m => (
-                <div key={m.osm_id} className="p-2 bg-green-50 border border-green-200 rounded text-sm">
-                  <div className="flex justify-between">
-                    <span className="font-medium">{m.osm_name}</span>
-                    <span className="text-green-600">→ {m.app_name}</span>
-                  </div>
-                  <p className="text-xs text-gray-600 mt-1">{m.reason}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {matches.uncertain?.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Needs Review</p>
-              {matches.uncertain.map(m => (
-                <div key={m.osm_id} className="p-2 bg-amber-50 border border-amber-200 rounded text-sm">
-                  <div className="flex justify-between items-start">
-                    <span className="font-medium">{m.osm_name}</span>
-                    <span className="text-xs bg-amber-100 px-2 py-1 rounded">
-                      {(m.confidence * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                  {m.app_name && <p className="text-xs text-gray-600 mt-1">Possible: {m.app_name}</p>}
-                  <p className="text-xs text-gray-600 mt-1">{m.reason}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            {matches.matched_so_far === matches.total ? 'Done' : 'Cancel'}
-          </Button>
-          {matches.matched_so_far === matches.total && (
-            <Button onClick={onSave} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
-              Save Matches
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }

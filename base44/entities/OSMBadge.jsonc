@@ -1,0 +1,53 @@
+{
+  "name": "OSMBadge",
+  "type": "object",
+  "properties": {
+    "osm_id": {
+      "type": "string",
+      "description": "OSM badge ID (e.g. '22412_0')"
+    },
+    "name": {
+      "type": "string",
+      "description": "Badge name"
+    },
+    "badge_type": {
+      "type": "string",
+      "enum": [
+        "Challenge",
+        "Activity",
+        "Staged",
+        "Core"
+      ],
+      "description": "OSM badge type"
+    },
+    "shortname": {
+      "type": "string",
+      "description": "OSM shortname"
+    },
+    "description": {
+      "type": "string",
+      "description": "Badge description from OSM"
+    },
+    "picture_url": {
+      "type": "string",
+      "description": "OSM badge image URL"
+    },
+    "badge_id": {
+      "type": "string",
+      "description": "OSM badge_id"
+    },
+    "badge_version": {
+      "type": "string",
+      "description": "OSM badge_version"
+    },
+    "linked_to_app_badge": {
+      "type": "string",
+      "description": "BadgeDefinition ID if linked to an app badge"
+    }
+  },
+  "required": [
+    "osm_id",
+    "name",
+    "badge_type"
+  ]
+}
