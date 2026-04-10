@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     const accessToken = settings.osm_access_token;
     console.log('Using OAuth token, length:', accessToken.length);
 
-    // Fetch OSM startup data - includes all section info in globals.roles
+    // Fetch OSM startup data
     console.log('Fetching OSM startup data...');
     
     const sectionsRes = await fetch('https://www.onlinescoutmanager.co.uk/ext/generic/startup/?action=getData', {
@@ -39,14 +39,12 @@ Deno.serve(async (req) => {
     });
 
     console.log('Response status:', sectionsRes.status);
+    console.log('Content-Length header:', sectionsRes.headers.get('content-length'));
     
-    // Parse response as HTML and extract data_holder
     const text = await sectionsRes.text();
-    
-    // Log full response for debugging
-    console.log('=== FULL OSM HTML RESPONSE ===');
-    console.log(text);
-    console.log('=== END OSM RESPONSE ===');
+    console.log('Actual response length:', text.length);
+    console.log('First 300 chars:', text.substring(0, 300));
+    console.log('Last 300 chars:', text.substring(Math.max(0, text.length - 300)));
     
     if (!text.trim()) {
       console.error('OSM returned empty response');
@@ -55,24 +53,36 @@ Deno.serve(async (req) => {
       }, { status: 500 });
     }
 
-    // Extract data_holder from HTML
-    const match = text.match(/data_holder\s*=\s*(\{[\s\S]*?\});/);
-    if (!match || !match[1]) {
-      console.error('Could not find data_holder in HTML response');
-      console.error('First 500 chars:', text.substring(0, 500));
-      return Response.json({ 
-        error: 'Could not extract data from OSM response'
-      }, { status: 500 });
-    }
-
     let responseData;
+    
+    // Try to parse as JSON directly first
     try {
-      responseData = JSON.parse(match[1]);
-    } catch (e) {
-      console.error('JSON parse failed:', e.message);
-      return Response.json({ 
-        error: `Failed to parse extracted data: ${e.message}`
-      }, { status: 500 });
+      responseData = JSON.parse(text);
+      console.log('Successfully parsed response as JSON');
+    } catch (directJsonError) {
+      console.log('Not direct JSON, attempting HTML extraction...');
+      
+      // Fall back to HTML extraction
+      const match = text.match(/data_holder\s*=\s*(\{[\s\S]*?\});/);
+      if (!match || !match[1]) {
+        console.error('Could not find data_holder or parse JSON');
+        console.error('First 500 chars:', text.substring(0, 500));
+        return Response.json({ 
+          error: 'Could not extract data from OSM response'
+        }, { status: 500 });
+      }
+
+      try {
+        responseData = JSON.parse(match[1]);
+        console.log('Successfully parsed HTML-embedded JSON');
+      } catch (e) {
+        console.error('JSON parse failed:', e.message);
+        console.error('Extracted JSON length:', match[1].length);
+        console.error('Extracted JSON last 200 chars:', match[1].substring(Math.max(0, match[1].length - 200)));
+        return Response.json({ 
+          error: `Failed to parse data: ${e.message}`
+        }, { status: 500 });
+      }
     }
 
     // Extract sections from globals.roles
