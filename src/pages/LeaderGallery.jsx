@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Upload, Trash2, Loader2, ImageIcon, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+
 import SearchableEventSelect from '../components/gallery/SearchableEventSelect';
 import LazyImage from '../components/gallery/LazyImage';
 
@@ -35,8 +35,7 @@ export default function LeaderGallery() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState([]);
-  const [filteredEvents, setFilteredEvents] = useState(null);
-  const [filteredProgrammes, setFilteredProgrammes] = useState(null);
+
   const [selectedSection, setSelectedSection] = useState('all');
   const [editAlbumDialog, setEditAlbumDialog] = useState(false);
   const [editAlbumItem, setEditAlbumItem] = useState(null);
@@ -276,8 +275,7 @@ export default function LeaderGallery() {
       manual_type: 'Event',
       section_id: '',
     });
-    setFilteredEvents(null);
-    setFilteredProgrammes(null);
+
   };
 
   const handleEventChange = (eventId) => {

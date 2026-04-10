@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mail, MessageSquare, BookOpen, Users, Plus, TrendingUp, Eye, CheckCircle, AlertCircle, Bell } from 'lucide-react';
+import { Mail, MessageSquare, BookOpen, Users, Plus, TrendingUp, Eye, AlertCircle } from 'lucide-react';
 import CustomPushNotification from '../components/admin/CustomPushNotification';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';

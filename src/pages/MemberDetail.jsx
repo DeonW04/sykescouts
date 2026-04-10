@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, AlertCircle, Star, Loader2 } from 'lucide-react';
+import { Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, AlertCircle, Star, Loader2 } from 'lucide-react';
 import EditMemberDialog from '../components/EditMemberDialog';
 import BadgesTab from '../components/member/BadgesTab';
 import { toast } from 'sonner';
