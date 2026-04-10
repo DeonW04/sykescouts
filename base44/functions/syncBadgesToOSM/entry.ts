@@ -4,23 +4,14 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    const apiid = Deno.env.get('OSM_API_ID');
-    const token = Deno.env.get('OSM_TOKEN');
-    if (!apiid || !token) {
-      return Response.json({ error: 'OSM_API_ID and OSM_TOKEN secrets not configured.' }, { status: 500 });
-    }
-
     // Step A — Guard
     const settingsArr = await base44.asServiceRole.entities.OSMSyncSettings.filter({});
     const settings = settingsArr[0];
 
-    const userid = settings?.osm_userid;
-    const secret = settings?.osm_secret;
-    if (!userid || !secret) {
+    const accessToken = settings?.osm_access_token;
+    if (!accessToken) {
       return Response.json({ error: 'OSM account not connected. Please connect in Admin Settings → OSM Badge Sync.' }, { status: 500 });
     }
-
-    const authFields = `apiid=${encodeURIComponent(apiid)}&token=${encodeURIComponent(token)}&userid=${encodeURIComponent(userid)}&secret=${encodeURIComponent(secret)}`;
 
     if (!settings || !settings.is_active) {
       return Response.json({ message: 'Sync is disabled.' });
@@ -52,10 +43,22 @@ Deno.serve(async (req) => {
     // Step B — complete actions
     const completeRecords = pending.filter(r => r.action === 'complete');
     for (const record of completeRecords) {
-      const body = `${authFields}&action=overrideCompletion&badge_id=${record.badge_id}&badge_version=${record.badge_version || 0}&section_id=${record.section_id}&section=${encodeURIComponent(record.section)}&level=${record.level || 1}&scoutid=${record.scoutid}&skip_track_changes=false`;
-      const res = await fetch('https://www.onlinescoutmanager.co.uk/ext/badges/records/?action=overrideCompletion', {
+      const body = JSON.stringify({
+        action: 'overrideCompletion',
+        badge_id: record.badge_id,
+        badge_version: record.badge_version || 0,
+        section_id: record.section_id,
+        section: record.section,
+        level: record.level || 1,
+        scoutid: record.scoutid,
+        skip_track_changes: false,
+      });
+      const res = await fetch('https://www.onlinescoutmanager.co.uk/ext/generic/startup/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
         body,
       });
       if (res.ok) {
@@ -80,10 +83,19 @@ Deno.serve(async (req) => {
     for (const [sectionId, records] of Object.entries(bySection)) {
       const sectionType = records[0].section;
       const entries = records.map(r => ({ badge_id: r.badge_id, badge_version: r.badge_version || 0, level: 0, member_id: r.scoutid }));
-      const body = `${authFields}&action=awardBadge&section_id=${sectionId}&section=${encodeURIComponent(sectionType)}&entries=${encodeURIComponent(JSON.stringify(entries))}&skip_track_changes=true`;
-      const res = await fetch('https://www.onlinescoutmanager.co.uk/ext/badges/records/?action=awardBadge', {
+      const body = JSON.stringify({
+        action: 'awardBadge',
+        section_id: sectionId,
+        section: sectionType,
+        entries,
+        skip_track_changes: true,
+      });
+      const res = await fetch('https://www.onlinescoutmanager.co.uk/ext/generic/startup/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
         body,
       });
       if (res.ok) {
