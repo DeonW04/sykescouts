@@ -161,6 +161,16 @@
     "home_contact": {
       "type": "string",
       "description": "Home contact details (name and phone number) shown to parents during live event view"
+    },
+    "disable_live_view": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, the live view banner will not appear for this event"
+    },
+    "live_view_test_mode": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, forces the live view banner to appear for testing purposes"
     }
   },
   "required": [

@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Radio, RadioTower, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import ActionSummaryPanel from '@/components/actions/ActionSummaryPanel';
 
@@ -35,10 +35,15 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
     enabled: !!programmeId,
   });
 
-  const { data: programme } = useQuery({
+  const { data: programme, refetch: refetchProgramme } = useQuery({
     queryKey: ['programme', programmeId],
     queryFn: () => base44.entities.Programme.filter({ id: programmeId }).then(r => r[0]),
     enabled: !!programmeId,
+  });
+
+  const updateProgrammeMutation = useMutation({
+    mutationFn: (data) => base44.entities.Programme.update(programmeId, data),
+    onSuccess: () => refetchProgramme(),
   });
 
   const createActionMutation = useMutation({
@@ -114,6 +119,47 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
 
   return (
     <div className="space-y-6">
+
+      {/* Live View Settings */}
+      <Card className="border-indigo-200 bg-indigo-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-indigo-900">
+            <Radio className="w-5 h-5" />
+            Live View Settings
+          </CardTitle>
+          <p className="text-sm text-indigo-600">Controls the live session banner shown to parents and leaders during this meeting.</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => updateProgrammeMutation.mutate({ disable_live_view: !programme?.disable_live_view })}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                programme?.disable_live_view
+                  ? 'bg-gray-200 border-gray-300 text-gray-700'
+                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <EyeOff className="w-4 h-4" />
+              {programme?.disable_live_view ? 'Live view disabled' : 'Disable live view'}
+            </button>
+            <button
+              onClick={() => updateProgrammeMutation.mutate({ live_view_test_mode: !programme?.live_view_test_mode, disable_live_view: false })}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                programme?.live_view_test_mode
+                  ? 'bg-red-500 border-red-600 text-white animate-pulse'
+                  : 'bg-white border-indigo-300 text-indigo-700 hover:bg-indigo-100'
+              }`}
+            >
+              <RadioTower className="w-4 h-4" />
+              {programme?.live_view_test_mode ? '🔴 Test mode ON — tap to stop' : 'Test live view'}
+            </button>
+          </div>
+          {programme?.live_view_test_mode && (
+            <p className="text-xs text-red-600 font-medium">⚠️ Test mode is active — the live banner is showing to all parents and leaders right now. Remember to turn it off!</p>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader><CardTitle>Meeting Information for Parents</CardTitle></CardHeader>
         <CardContent className="space-y-4">

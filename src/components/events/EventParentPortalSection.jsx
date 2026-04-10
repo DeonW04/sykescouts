@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Upload, FileText, Trash2, Download, Plus, Lock, Unlock, HandHeart } from 'lucide-react';
+import { Upload, FileText, Trash2, Download, Plus, Lock, Unlock, HandHeart, Radio, RadioTower, EyeOff } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import ActionSummaryPanel from '@/components/actions/ActionSummaryPanel';
@@ -253,6 +253,47 @@ export default function EventParentPortalSection({ eventId, event }) {
 
   return (
     <div className="space-y-6">
+
+      {/* Live View Settings */}
+      <Card className="border-indigo-200 bg-indigo-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-indigo-900">
+            <Radio className="w-5 h-5" />
+            Live View Settings
+          </CardTitle>
+          <p className="text-sm text-indigo-600">Controls the live session banner shown to parents and leaders during this event.</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => updateEventMutation.mutate({ disable_live_view: !event?.disable_live_view })}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                event?.disable_live_view
+                  ? 'bg-gray-200 border-gray-300 text-gray-700'
+                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <EyeOff className="w-4 h-4" />
+              {event?.disable_live_view ? 'Live view disabled' : 'Disable live view'}
+            </button>
+            <button
+              onClick={() => updateEventMutation.mutate({ live_view_test_mode: !event?.live_view_test_mode, disable_live_view: false })}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                event?.live_view_test_mode
+                  ? 'bg-red-500 border-red-600 text-white animate-pulse'
+                  : 'bg-white border-indigo-300 text-indigo-700 hover:bg-indigo-100'
+              }`}
+            >
+              <RadioTower className="w-4 h-4" />
+              {event?.live_view_test_mode ? '🔴 Test mode ON — tap to stop' : 'Test live view'}
+            </button>
+          </div>
+          {event?.live_view_test_mode && (
+            <p className="text-xs text-red-600 font-medium">⚠️ Test mode is active — the live banner is showing to all parents and leaders right now. Remember to turn it off!</p>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Documents */}
       <Card>
         <CardHeader>
