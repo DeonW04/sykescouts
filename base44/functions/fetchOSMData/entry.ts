@@ -27,14 +27,11 @@ Deno.serve(async (req) => {
     const accessToken = settings.osm_access_token;
     console.log('Using OAuth token, length:', accessToken.length);
 
-    // Fetch OSM sections with raw response handling
+    // Fetch OSM sections - pass token as query parameter (OSM API doesn't support Bearer header)
     console.log('Fetching OSM sections...');
     
-    const sectionsRes = await fetch('https://www.onlinescoutmanager.co.uk/api.php?action=getSections', {
+    const sectionsRes = await fetch(`https://www.onlinescoutmanager.co.uk/api.php?action=getSections&oauth_token=${encodeURIComponent(accessToken)}`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
     });
 
     console.log('Response status:', sectionsRes.status);
@@ -47,7 +44,7 @@ Deno.serve(async (req) => {
     if (byteLength === 0) {
       console.error('OSM returned completely empty response body');
       return Response.json({ 
-        error: 'OSM returned empty response. Bearer token authentication may not be supported. Try re-connecting to OSM.' 
+        error: 'OSM returned empty response. Token may be invalid or expired.' 
       }, { status: 500 });
     }
 
