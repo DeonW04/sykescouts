@@ -103,7 +103,8 @@ Deno.serve(async (req) => {
     }
 
     // Redirect to dashboard with success message
-    return Response.redirect(`/LeaderDashboard?osm_connected=true`, 302);
+    const origin = new URL(req.url).origin;
+    return Response.redirect(`${origin}/LeaderDashboard?osm_connected=true`, 302);
   } catch (error) {
     console.error('OSM OAuth callback error:', error);
     return Response.json({ error: error.message }, { status: 500 });
