@@ -36,23 +36,25 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'OSM_CLIENT_ID and OSM_CLIENT_SECRET must be configured in secrets.' }, { status: 500 });
     }
 
-    // Determine redirect URI (must match OSM OAuth app config)
+    // Determine redirect URI - use the actual incoming request URL without query params
     const protocol = url.protocol;
     const host = url.host;
-    const redirectUri = `${protocol}//${host}/functions/osmOAuthCallback`;
+    const pathname = url.pathname;
+    const redirectUri = `${protocol}//${host}${pathname}`;
 
     // Exchange authorization code for tokens (with PKCE code verifier)
     console.log('Token exchange params:', { code: code.slice(0, 10) + '...', client_id: clientId, redirect_uri: redirectUri, code_verifier_length: codeVerifier.length, incoming_url: req.url });
     
-    const body = new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: redirectUri,
-      code_verifier: codeVerifier,
-    }).toString();
-    console.log('Token request body:', body);
+    // Build token request manually to avoid double-encoding the code_verifier
+    const params = new URLSearchParams();
+    params.append('grant_type', 'authorization_code');
+    params.append('code', code);
+    params.append('client_id', clientId);
+    params.append('client_secret', clientSecret);
+    params.append('redirect_uri', redirectUri);
+    params.append('code_verifier', codeVerifier);
+    const body = params.toString();
+    console.log('Token request - redirect_uri:', redirectUri, 'code_verifier length:', codeVerifier.length);
 
     const tokenResponse = await fetch('https://www.onlinescoutmanager.co.uk/oauth/token', {
       method: 'POST',
