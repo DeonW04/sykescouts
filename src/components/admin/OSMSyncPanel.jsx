@@ -104,7 +104,7 @@ function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
         `response_type=code&` +
         `client_id=${encodeURIComponent(clientId.data.client_id)}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `scope=${encodeURIComponent('section:member:read section:badge:write')}&` +
+        `scope=${encodeURIComponent('section:member:write section:badge:write')}&` +
         `state=${encodeURIComponent(state)}&` +
         `code_challenge=${encodeURIComponent(codeChallenge)}&` +
         `code_challenge_method=S256`;
