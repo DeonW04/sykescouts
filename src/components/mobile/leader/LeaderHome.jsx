@@ -12,26 +12,8 @@ export default function LeaderHome({ user, leader, sections, allSections, select
   const { ongoingSession } = useOngoingSession({ sectionIds });
   const [showLiveView, setShowLiveView] = useState(false);
 
-  if (showLiveView && ongoingSession) {
-    return <LeaderLiveView session={ongoingSession} onBack={() => setShowLiveView(false)} />;
-  }
-
   const { data: thisWeekMeetings = [] } = useQuery({
     queryKey: ['leader-this-week', sectionIds],
-    queryFn: async () => {
-      const programmes = await base44.entities.Programme.filter({});
-      const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-      const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
-      return programmes.filter(p =>
-        sectionIds.includes(p.section_id) &&
-        new Date(p.date) >= weekStart &&
-        new Date(p.date) <= weekEnd
-      );
-    },
-    enabled: sectionIds.length > 0,
-  });
-
-  const { data: upcomingEvents = [] } = useQuery({
     queryKey: ['leader-upcoming-events', sectionIds],
     queryFn: async () => {
       const events = await base44.entities.Event.filter({});
@@ -44,6 +26,10 @@ export default function LeaderHome({ user, leader, sections, allSections, select
   });
 
   const displayName = leader?.display_name || user?.display_name || user?.full_name?.split(' ')[0] || 'there';
+
+  if (showLiveView && ongoingSession) {
+    return <LeaderLiveView session={ongoingSession} onBack={() => setShowLiveView(false)} />;
+  }
 
   return (
     <div className="flex flex-col">
