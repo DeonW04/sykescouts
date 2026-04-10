@@ -39,6 +39,11 @@ Deno.serve(async (req) => {
     // Parse response as HTML and extract data_holder
     const text = await sectionsRes.text();
     
+    // Log full response for debugging
+    console.log('=== FULL OSM HTML RESPONSE ===');
+    console.log(text);
+    console.log('=== END OSM RESPONSE ===');
+    
     if (!text.trim()) {
       console.error('OSM returned empty response');
       return Response.json({ 
