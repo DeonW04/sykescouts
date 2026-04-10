@@ -91,7 +91,7 @@ function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
         `response_type=code&` +
         `client_id=${encodeURIComponent(clientId.data.client_id)}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `scope=basic&` +
+        `scope=${encodeURIComponent('section:member:read section:badge:read section:badge:write')}&` +
         `state=${encodeURIComponent(state)}`;
 
       // Redirect to OSM OAuth endpoint
