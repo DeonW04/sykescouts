@@ -16,10 +16,30 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
   const [showLiveView, setShowLiveView] = useState(false);
 
   const { data: thisWeekMeeting } = useQuery({
+    queryKey: ['mobile-this-week-meeting', childSectionIds],
+    queryFn: async () => {
+      const programmes = await base44.entities.Programme.filter({ shown_in_portal: true });
+      const now = new Date();
+      const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+      const thisWeek = programmes.filter(p =>
+        childSectionIds.includes(p.section_id) &&
+        new Date(p.date) >= weekStart &&
+        new Date(p.date) <= weekEnd
+      );
+      if (thisWeek.length > 0) return thisWeek[0];
+      const upcoming = programmes
+        .filter(p => childSectionIds.includes(p.section_id) && new Date(p.date) >= now)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+      return upcoming[0] || null;
+    },
+    enabled: childSectionIds.length > 0,
+  });
+
+  const { data: upcomingEvents = [] } = useQuery({
     queryKey: ['mobile-events', childIds.join(',')],
     queryFn: async () => {
       if (childIds.length === 0) return [];
-      // Get events the child has an attendance record for (i.e. was invited)
       const allAttendances = await base44.entities.EventAttendance.filter({});
       const invitedEventIds = [...new Set(
         allAttendances.filter(a => childIds.includes(a.member_id)).map(a => a.event_id)
@@ -39,10 +59,9 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
     queryFn: async () => {
       if (upcomingEvents.length === 0) return [];
       const allActions = await base44.entities.ActionRequired.filter({});
-      // Filter for attendance actions on upcoming events
-      return allActions.filter(a => 
-        a.event_id && 
-        upcomingEvents.some(e => e.id === a.event_id) && 
+      return allActions.filter(a =>
+        a.event_id &&
+        upcomingEvents.some(e => e.id === a.event_id) &&
         a.action_purpose === 'attendance'
       );
     },
@@ -106,6 +125,46 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
     return 'no_response';
   };
 
+  const { data: volunteerActionsData = [] } = useQuery({
+    queryKey: ['mobile-volunteer-actions', childIds.join(','), childSectionIds.join(',')],
+    queryFn: async () => {
+      if (children.length === 0) return [];
+      const allActionsAll = await base44.entities.ActionRequired.filter({});
+      const volunteerActions = allActionsAll.filter(a => a.action_purpose === 'volunteer' && a.is_open !== false);
+      if (volunteerActions.length === 0) return [];
+      const [allAttendances, allEvents, allProgrammes, allResponses] = await Promise.all([
+        base44.entities.EventAttendance.filter({}),
+        base44.entities.Event.filter({ published: true }),
+        base44.entities.Programme.filter({ shown_in_portal: true }),
+        base44.entities.ActionResponse.filter({}),
+      ]);
+      const myEventIds = [...new Set(allAttendances.filter(a => childIds.includes(a.member_id)).map(a => a.event_id))];
+      return volunteerActions.map(action => {
+        let entityInfo = null;
+        const relevantMemberId = children[0]?.id;
+        if (action.event_id) {
+          if (!myEventIds.includes(action.event_id)) return null;
+          const event = allEvents.find(e => e.id === action.event_id);
+          if (event) entityInfo = { type: 'event', name: event.title, date: event.start_date };
+        } else if (action.programme_id) {
+          const prog = allProgrammes.find(p => p.id === action.programme_id);
+          if (!prog) return null;
+          if (!childSectionIds.includes(prog.section_id)) return null;
+          entityInfo = { type: 'meeting', name: prog.title, date: prog.date };
+        }
+        const totalYes = allResponses.filter(r => r.action_required_id === action.id && r.response_value === 'Yes, I will volunteer').length;
+        const parentResponse = allResponses.find(r =>
+          r.action_required_id === action.id &&
+          childIds.includes(r.member_id) &&
+          r.parent_email === user?.email
+        );
+        return { ...action, _entityInfo: entityInfo, _memberId: relevantMemberId, _parentResponse: parentResponse?.response_value || null, _existingResponseId: parentResponse?.id || null, _totalYes: totalYes };
+      }).filter(Boolean);
+    },
+    enabled: children.length > 0,
+  });
+
+  const isThisWeekMeeting = thisWeekMeeting && isThisWeek(new Date(thisWeekMeeting.date), { weekStartsOn: 1 });
   const child = children[0];
   const displayName = user?.display_name || user?.full_name?.split(' ')[0] || 'there';
 
