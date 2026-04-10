@@ -42,19 +42,22 @@ Deno.serve(async (req) => {
     const redirectUri = `${protocol}//${host}/functions/osmOAuthCallback`;
 
     // Exchange authorization code for tokens (with PKCE code verifier)
-    console.log('Token exchange params:', { code: code.slice(0, 10) + '...', client_id: clientId, redirect_uri: redirectUri, code_verifier_length: codeVerifier.length });
+    console.log('Token exchange params:', { code: code.slice(0, 10) + '...', client_id: clientId, redirect_uri: redirectUri, code_verifier_length: codeVerifier.length, incoming_url: req.url });
     
+    const body = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: redirectUri,
+      code_verifier: codeVerifier,
+    }).toString();
+    console.log('Token request body:', body);
+
     const tokenResponse = await fetch('https://www.onlinescoutmanager.co.uk/oauth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        client_id: clientId,
-        client_secret: clientSecret,
-        redirect_uri: redirectUri,
-        code_verifier: codeVerifier,
-      }).toString(),
+      body,
     });
 
     if (!tokenResponse.ok) {
