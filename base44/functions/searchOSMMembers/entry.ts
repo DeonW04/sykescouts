@@ -25,10 +25,9 @@ Deno.serve(async (req) => {
     const tryFetch = async (termid) => {
       const url = `https://www.onlinescoutmanager.co.uk/ext/members/contact/?action=getListOfMembers&sectionid=${sectionId}&termid=${termid}`;
       const res = await fetch(url, {
-        method: 'POST',
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
       if (!res.ok) {
