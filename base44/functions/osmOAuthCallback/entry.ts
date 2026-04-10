@@ -7,17 +7,26 @@ Deno.serve(async (req) => {
     const code = url.searchParams.get('code');
     const state = url.searchParams.get('state');
 
-    if (!code || !state) {
-      return Response.json({ error: 'Missing authorization code or state from OSM' }, { status: 400 });
+    if (!code) {
+      return Response.json({ error: 'Missing authorization code from OSM' }, { status: 400 });
     }
+
+    console.log('OSM callback - state received:', state);
 
     // Extract code_verifier from state parameter
     let codeVerifier;
+    if (!state || !state.includes(':')) {
+      return Response.json({ error: `Invalid state format: '${state}'. Expected format: randomState:encodedVerifier` }, { status: 400 });
+    }
+    
     try {
       const [, encodedVerifier] = state.split(':');
+      if (!encodedVerifier) {
+        return Response.json({ error: 'State parameter missing verifier component' }, { status: 400 });
+      }
       codeVerifier = atob(encodedVerifier);
-    } catch {
-      return Response.json({ error: 'Invalid state parameter format' }, { status: 400 });
+    } catch (e) {
+      return Response.json({ error: `Failed to decode state: ${e.message}` }, { status: 400 });
     }
 
     // Get secrets
