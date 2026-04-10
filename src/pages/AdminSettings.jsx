@@ -22,6 +22,7 @@ import UniformPositionEditor from '../components/uniform/UniformPositionEditor';
 import PushNotificationsTab from '../components/admin/PushNotificationsTab';
 import NotificationLogTab from '../components/admin/NotificationLogTab';
 import LeaderManagement from '../components/admin/LeaderManagement';
+import OSMSyncPanel from '../components/admin/OSMSyncPanel';
 
 const NAV_ITEMS = [
   { key: 'users',      label: 'User Management',    icon: Users,    group: 'People' },
@@ -34,6 +35,7 @@ const NAV_ITEMS = [
   { key: 'export',    label: 'Data Import / Export', icon: Download, group: 'System' },
   { key: 'push',      label: 'Push Notifications',   icon: Bell,     group: 'System' },
   { key: 'notif-log', label: 'Notification Log',     icon: Mail,     group: 'System' },
+  { key: 'osm',       label: 'OSM Badge Sync',       icon: Award,    group: 'System' },
 ];
 const GROUPS = [...new Set(NAV_ITEMS.map(n => n.group))];
 
@@ -409,6 +411,9 @@ export default function AdminSettings() {
 
               {/* ── Notification Log ── */}
               <TabsContent value="notif-log"><NotificationLogTab /></TabsContent>
+
+              {/* ── OSM Badge Sync ── */}
+              <TabsContent value="osm"><OSMSyncPanel /></TabsContent>
 
               {/* ── Data Import / Export ── */}
               <TabsContent value="export">

@@ -1,0 +1,186 @@
+{
+  "name": "Member",
+  "type": "object",
+  "properties": {
+    "first_name": {
+      "type": "string",
+      "description": "Member's first name"
+    },
+    "surname": {
+      "type": "string",
+      "description": "Member's surname"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Member's full name (auto-generated from first name + surname)"
+    },
+    "preferred_name": {
+      "type": "string",
+      "description": "Preferred name"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of birth"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "Male",
+        "Female",
+        "Other",
+        "Prefer not to say"
+      ],
+      "description": "Gender"
+    },
+    "section_id": {
+      "type": "string",
+      "description": "Current section"
+    },
+    "patrol": {
+      "type": "string",
+      "description": "Patrol/six name"
+    },
+    "parent_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Parent/guardian IDs"
+    },
+    "parent_one_first_name": {
+      "type": "string",
+      "description": "Parent one first name"
+    },
+    "parent_one_surname": {
+      "type": "string",
+      "description": "Parent one surname"
+    },
+    "parent_one_name": {
+      "type": "string",
+      "description": "Parent one full name"
+    },
+    "parent_one_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Parent one email"
+    },
+    "parent_one_phone": {
+      "type": "string",
+      "description": "Parent one phone"
+    },
+    "parent_two_first_name": {
+      "type": "string",
+      "description": "Parent two first name"
+    },
+    "parent_two_surname": {
+      "type": "string",
+      "description": "Parent two surname"
+    },
+    "parent_two_name": {
+      "type": "string",
+      "description": "Parent two full name"
+    },
+    "parent_two_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Parent two email"
+    },
+    "parent_two_phone": {
+      "type": "string",
+      "description": "Parent two phone"
+    },
+    "address": {
+      "type": "string",
+      "description": "Home address"
+    },
+    "doctors_surgery": {
+      "type": "string",
+      "description": "Name of doctor's surgery"
+    },
+    "doctors_surgery_address": {
+      "type": "string",
+      "description": "Address of doctor's surgery"
+    },
+    "doctors_phone": {
+      "type": "string",
+      "description": "Doctor's surgery phone number"
+    },
+    "medical_info": {
+      "type": "string",
+      "description": "Medical conditions and information"
+    },
+    "allergies": {
+      "type": "string",
+      "description": "Known allergies"
+    },
+    "dietary_requirements": {
+      "type": "string",
+      "description": "Dietary requirements"
+    },
+    "medications": {
+      "type": "string",
+      "description": "Regular medications"
+    },
+    "emergency_contact_name": {
+      "type": "string",
+      "description": "Emergency contact name"
+    },
+    "emergency_contact_phone": {
+      "type": "string",
+      "description": "Emergency contact phone"
+    },
+    "emergency_contact_relationship": {
+      "type": "string",
+      "description": "Relationship to member"
+    },
+    "photo_consent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Photo consent given"
+    },
+    "invested": {
+      "type": "boolean",
+      "default": false,
+      "description": "Has been invested"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Is member currently active"
+    },
+    "join_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date joined"
+    },
+    "scouting_start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date first joined scouting movement (for Joining In awards)"
+    },
+    "total_nights_away": {
+      "type": "number",
+      "default": 0,
+      "description": "Total cumulative nights spent camping"
+    },
+    "total_hikes_away": {
+      "type": "number",
+      "default": 0,
+      "description": "Total hikes completed"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Leader notes (private)"
+    },
+    "osm_scoutid": {
+      "type": "number",
+      "description": "OSM Scout ID \u2014 used to sync badge awards to Online Scout Manager"
+    }
+  },
+  "required": [
+    "first_name",
+    "surname",
+    "date_of_birth"
+  ]
+}

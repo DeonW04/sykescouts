@@ -387,6 +387,9 @@ export default function AwardBadges() {
                             <p className="text-sm text-gray-500">
                               {sections.find(s => s.id === member?.section_id)?.display_name}
                             </p>
+                            {!member?.osm_scoutid && (
+                              <p className="text-xs text-amber-600 mt-0.5">⚠ Not linked to OSM</p>
+                            )}
                           </td>
                           <td className="p-3">
                             <div className="flex items-center gap-2">

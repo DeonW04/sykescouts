@@ -1,0 +1,39 @@
+{
+  "name": "OSMSyncSettings",
+  "type": "object",
+  "properties": {
+    "sync_frequency": {
+      "type": "string",
+      "enum": [
+        "weekly",
+        "fortnightly",
+        "monthly"
+      ],
+      "default": "monthly",
+      "description": "How often to sync"
+    },
+    "notification_emails": {
+      "type": "string",
+      "description": "Comma-separated email addresses"
+    },
+    "osm_section_id": {
+      "type": "number",
+      "description": "OSM section ID"
+    },
+    "osm_section": {
+      "type": "string",
+      "description": "OSM section type e.g. scouts"
+    },
+    "last_synced": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last successful sync datetime"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether scheduled sync is active"
+    }
+  },
+  "required": []
+}

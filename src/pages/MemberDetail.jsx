@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, AlertCircle, Star, Loader2 } from 'lucide-react';
 import EditMemberDialog from '../components/EditMemberDialog';
+import OSMLinkSection from '../components/member/OSMLinkSection';
 import BadgesTab from '../components/member/BadgesTab';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
@@ -450,6 +451,7 @@ export default function MemberDetail() {
                 </CardContent>
               </Card>
             </div>
+            <OSMLinkSection member={member} memberId={memberId} />
           </TabsContent>
 
           {/* Parents Tab */}

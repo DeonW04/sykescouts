@@ -1,0 +1,78 @@
+{
+  "name": "PendingBadgeSync",
+  "type": "object",
+  "properties": {
+    "scoutid": {
+      "type": "number",
+      "description": "OSM Scout ID (copied from member's osm_scoutid)"
+    },
+    "firstname": {
+      "type": "string",
+      "description": "Member first name"
+    },
+    "lastname": {
+      "type": "string",
+      "description": "Member last name"
+    },
+    "badge_id": {
+      "type": "number",
+      "description": "OSM badge ID"
+    },
+    "badge_version": {
+      "type": "number",
+      "default": 0,
+      "description": "Badge version (usually 0)"
+    },
+    "level": {
+      "type": "number",
+      "default": 1,
+      "description": "Badge level"
+    },
+    "section_id": {
+      "type": "number",
+      "description": "OSM section ID"
+    },
+    "section": {
+      "type": "string",
+      "description": "OSM section type e.g. scouts"
+    },
+    "action": {
+      "type": "string",
+      "description": "complete or award"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "synced",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "Sync status"
+    },
+    "added_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this record was created"
+    },
+    "synced_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When successfully synced"
+    },
+    "error_notes": {
+      "type": "string",
+      "description": "Error details if failed"
+    }
+  },
+  "required": [
+    "scoutid",
+    "firstname",
+    "lastname",
+    "badge_id",
+    "section_id",
+    "section",
+    "action",
+    "status"
+  ]
+}
