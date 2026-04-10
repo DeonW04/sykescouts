@@ -148,11 +148,9 @@ export default function BadgeDetail() {
        }
        const memberData = await base44.entities.Member.filter({ id: variables.memberId });
        const member = memberData[0];
-       const badgeData = await base44.entities.BadgeDefinition.filter({ id: badgeId });
-       const badgeDetail = badgeData[0];
        const settingsData = await base44.entities.OSMSyncSettings.filter({});
-       if (settingsData[0]?.osm_access_token && member?.osm_scoutid && badgeDetail) {
-         const existingSync = await base44.entities.PendingBadgeSync.filter({ member_id: variables.memberId, badge_id: badgeId, action: 'complete' });
+       if (settingsData[0]?.osm_access_token && member?.osm_scoutid) {
+         const existingSync = await base44.entities.PendingBadgeSync.filter({ scoutid: member.osm_scoutid, badge_id: Number(badgeId), action: 'complete' });
          if (existingSync.length === 0) {
            await base44.entities.PendingBadgeSync.create({
              scoutid: member.osm_scoutid,
@@ -168,10 +166,10 @@ export default function BadgeDetail() {
            });
          }
        }
-      } else {
+       } else {
        if (existingBadgeProgress && existingBadgeProgress.status === 'completed') await base44.entities.MemberBadgeProgress.update(existingBadgeProgress.id, { status: 'in_progress', completion_date: null });
        else if (!existingBadgeProgress && updatedProgress.length > 0) await base44.entities.MemberBadgeProgress.create({ member_id: variables.memberId, badge_id: badgeId, status: 'in_progress' });
-      }
+       }
       queryClient.invalidateQueries({ queryKey: ['badge-progress'] });
     },
   });
@@ -323,11 +321,9 @@ export default function BadgeDetail() {
        }
        const memberData = await base44.entities.Member.filter({ id: variables.memberId });
        const member = memberData[0];
-       const badgeData = await base44.entities.BadgeDefinition.filter({ id: badgeId });
-       const badgeDetail = badgeData[0];
        const settingsData = await base44.entities.OSMSyncSettings.filter({});
-       if (settingsData[0]?.osm_access_token && member?.osm_scoutid && badgeDetail) {
-         const existingSync = await base44.entities.PendingBadgeSync.filter({ member_id: variables.memberId, badge_id: badgeId, action: 'complete' });
+       if (settingsData[0]?.osm_access_token && member?.osm_scoutid) {
+         const existingSync = await base44.entities.PendingBadgeSync.filter({ scoutid: member.osm_scoutid, badge_id: Number(badgeId), action: 'complete' });
          if (existingSync.length === 0) {
            await base44.entities.PendingBadgeSync.create({
              scoutid: member.osm_scoutid,
@@ -343,7 +339,7 @@ export default function BadgeDetail() {
            });
          }
        }
-      } else {
+       } else {
        if (existingBadgeProgress && existingBadgeProgress.status === 'completed') {
          await base44.entities.MemberBadgeProgress.update(existingBadgeProgress.id, { status: 'in_progress', completion_date: null });
        } else if (!existingBadgeProgress && updatedProgress.length > 0) {
@@ -356,7 +352,7 @@ export default function BadgeDetail() {
          }
          toast.info('Badge award removed — member no longer meets requirements.');
        }
-      }
+       }
 
       // Clear pending, then sync with real server data
       setPending(variables.memberId, variables.reqId, false);
