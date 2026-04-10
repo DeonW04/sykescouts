@@ -92,6 +92,11 @@ export default function ParentLiveView({ session, onBack }) {
           <h2 className="font-bold text-gray-900 text-base mb-3">
             Leaders Present ({attendingLeaders.length})
           </h2>
+          {entity.home_contact && entity.hide_leader_phones && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-3 text-xs text-amber-700">
+              📞 Please contact the home contact above rather than calling leaders directly.
+            </div>
+          )}
           {attendingLeaders.length === 0 ? (
             <div className="bg-white rounded-2xl p-4 border border-gray-100 text-center">
               <p className="text-sm text-gray-400">No leaders have checked in yet</p>
@@ -105,15 +110,15 @@ export default function ParentLiveView({ session, onBack }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900 text-sm">{leader.display_name || leader.full_name}</p>
-                    {leader.phone ? (
+                    {!entity.hide_leader_phones && leader.phone ? (
                       <a href={`tel:${leader.phone}`} className="flex items-center gap-1 text-[#7413dc] text-xs font-medium mt-0.5">
                         <Phone className="w-3 h-3" /> {leader.phone}
                       </a>
-                    ) : (
+                    ) : entity.hide_leader_phones ? null : (
                       <p className="text-xs text-gray-400 mt-0.5">No number listed</p>
                     )}
                   </div>
-                  {leader.phone && (
+                  {!entity.hide_leader_phones && leader.phone && (
                     <a
                       href={`tel:${leader.phone}`}
                       className="w-9 h-9 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0"

@@ -509,13 +509,27 @@ export default function EventDetail() {
                   <CardTitle className="text-teal-800 text-xl">Home Contact (Optional)</CardTitle>
                   <p className="text-sm text-teal-600 mt-1">A contact parents can call during the event. Shown in the parent app live view.</p>
                 </CardHeader>
-                <CardContent className="pt-6">
+                <CardContent className="pt-6 space-y-4">
                   <Textarea
                     value={formData.home_contact}
                     onChange={(e) => setFormData({ ...formData, home_contact: e.target.value })}
                     placeholder="e.g. Jane Smith — 07700 900123"
                     className="min-h-[80px]"
                   />
+                  {formData.home_contact && (
+                    <label className="flex items-start gap-3 cursor-pointer p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <input
+                        type="checkbox"
+                        checked={!!formData.hide_leader_phones}
+                        onChange={(e) => setFormData({ ...formData, hide_leader_phones: e.target.checked })}
+                        className="mt-0.5 w-4 h-4 rounded border-gray-300 text-amber-600"
+                      />
+                      <div>
+                        <p className="text-sm font-semibold text-amber-800">Hide leader phone numbers from parents</p>
+                        <p className="text-xs text-amber-600 mt-0.5">When a home contact is set, parents should contact them instead. This hides leader mobile numbers on the live view.</p>
+                      </div>
+                    </label>
+                  )}
                 </CardContent>
               </Card>
               </div>

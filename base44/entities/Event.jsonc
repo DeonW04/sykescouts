@@ -162,6 +162,11 @@
       "type": "string",
       "description": "Home contact details (name and phone number) shown to parents during live event view"
     },
+    "hide_leader_phones": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, leader phone numbers are hidden on the parent live view (use when a home contact is set)"
+    },
     "disable_live_view": {
       "type": "boolean",
       "default": false,
