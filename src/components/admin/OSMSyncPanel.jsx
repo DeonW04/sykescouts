@@ -79,11 +79,12 @@ function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
         await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier)).then(buf => String.fromCharCode(...new Uint8Array(buf)))
       );
 
-      // Store verifier in localStorage for retrieval after OAuth callback
-      localStorage.setItem('osm_code_verifier', codeVerifier);
+      // Store verifier in sessionStorage for retrieval after OAuth callback
+      sessionStorage.setItem('osm_code_verifier', codeVerifier);
 
-      // Generate state token
-      const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      // Generate state token and encode verifier in it
+      const randomState = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      const state = `${randomState}:${btoa(codeVerifier)}`;
 
       // Get OSM_CLIENT_ID from backend
       const clientId = await base44.functions.invoke('getOSMClientId', {});
@@ -108,10 +109,8 @@ function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
         `code_challenge=${encodeURIComponent(codeChallenge)}&` +
         `code_challenge_method=S256`;
 
-      // Redirect to OSM OAuth endpoint with code_verifier as query param
-      const callbackUrl = new URL(authUrl);
-      callbackUrl.searchParams.append('code_verifier', codeVerifier);
-      window.location.href = callbackUrl.toString();
+      // Redirect to OSM OAuth endpoint
+      window.location.href = authUrl;
     } catch (e) {
       setError(e.message);
       setLoading(false);
