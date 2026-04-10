@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
 
     console.log('[matchOSMBadges] Input received:', {
       osm_badge_name: osm_badge?.name,
-      osm_badge_id: osm_badge?.id,
+      osm_badge_id: osm_badge?.badge_id ?? osm_badge?.id,
       app_badges_count: app_badges?.length
     });
 
@@ -25,7 +25,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing osm_badge or app_badges' }, { status: 400 });
     }
 
-    // Create formatted list of app badges for AI
     const appBadgesList = app_badges.map(b => `${b.name} (Category: ${b.category}, ID: ${b.id})`).join('\n');
 
     console.log('[matchOSMBadges] Formatted app badges for AI:', {
@@ -33,14 +32,13 @@ Deno.serve(async (req) => {
       sample: appBadgesList.split('\n').slice(0, 3).join('\n')
     });
 
-    // Use AI to match this single OSM badge
     console.log(`[matchOSMBadges] Calling InvokeLLM for badge: ${osm_badge.name}`);
     
     const aiResult = await base44.integrations.Core.InvokeLLM({
       prompt: `You are a badge matching expert. Match a single OSM badge with the best matching badge from our app.
 
 OSM BADGE:
-${osm_badge.name} (ID: ${osm_badge.id})
+${osm_badge.name} (ID: ${osm_badge.badge_id ?? osm_badge.id})
 
 APP BADGES (options to choose from):
 ${appBadgesList}
@@ -69,12 +67,11 @@ If no badge is a good match, set app_id and app_name to null.`,
     });
 
     console.log('[matchOSMBadges] AI response received:', {
-      has_data: !!aiResult.data,
-      status: aiResult.status,
-      type: typeof aiResult.data
+      has_data: !!aiResult,
+      type: typeof aiResult
     });
 
-    if (!aiResult.data) {
+    if (!aiResult) {
       console.error('[matchOSMBadges] AI response missing data:', {
         full_response: JSON.stringify(aiResult)
       });
@@ -82,19 +79,19 @@ If no badge is a good match, set app_id and app_name to null.`,
     }
 
     console.log('[matchOSMBadges] AI match result:', {
-      app_id: aiResult.data.app_id,
-      app_name: aiResult.data.app_name,
-      confidence: aiResult.data.confidence,
-      reason: aiResult.data.reason
+      app_id: aiResult.app_id,
+      app_name: aiResult.app_name,
+      confidence: aiResult.confidence,
+      reason: aiResult.reason
     });
 
     const response = {
-      osm_id: osm_badge.id,
+      osm_id: osm_badge.badge_id ?? osm_badge.id,
       osm_name: osm_badge.name,
-      app_id: aiResult.data.app_id,
-      app_name: aiResult.data.app_name,
-      confidence: aiResult.data.confidence,
-      reason: aiResult.data.reason
+      app_id: aiResult.app_id,
+      app_name: aiResult.app_name,
+      confidence: aiResult.confidence,
+      reason: aiResult.reason
     };
 
     console.log('[matchOSMBadges] Returning match result:', response);
