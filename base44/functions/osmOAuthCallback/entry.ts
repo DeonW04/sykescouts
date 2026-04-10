@@ -30,8 +30,8 @@ Deno.serve(async (req) => {
     }
 
     // Get secrets
-    const clientId = Deno.env.get('OSM_CLIENT_ID');
-    const clientSecret = Deno.env.get('OSM_CLIENT_SECRET');
+    const clientId = 'LkvafKTrBEaPfXZqJw59LpLSyu8kBDOs';
+    const clientSecret = 'ZpL4LvHPHPN5uOY2ldszogI1fd6Ks5NFJ54DQlnhhDQVMEczG7KfAMSLeo2S81Dm';
     if (!clientId || !clientSecret) {
       return Response.json({ error: 'OSM_CLIENT_ID and OSM_CLIENT_SECRET must be configured in secrets.' }, { status: 500 });
     }
