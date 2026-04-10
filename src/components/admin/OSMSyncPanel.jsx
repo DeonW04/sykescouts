@@ -97,7 +97,7 @@ function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
       // Determine redirect URI (pointing to backend function endpoint)
       const protocol = window.location.protocol;
       const host = window.location.host;
-      const redirectUri = `${protocol}//${host}/functions/osmOAuthCallback`;
+      const redirectUri = `https://sykescouts.org/functions/osmOAuthCallback`;
 
       // Build OAuth authorization URL with PKCE
       const authUrl = `https://www.onlinescoutmanager.co.uk/oauth/authorize?` +
