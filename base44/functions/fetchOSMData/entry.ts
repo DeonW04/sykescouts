@@ -30,13 +30,12 @@ Deno.serve(async (req) => {
     // Fetch OSM startup data - includes all section info in globals.roles
     console.log('Fetching OSM startup data...');
     
-    const sectionsRes = await fetch('https://www.onlinescoutmanager.co.uk/ext/generic/startup/', {
+    const sectionsRes = await fetch('https://www.onlinescoutmanager.co.uk/ext/generic/startup/?action=getData', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: 'action=getData',
     });
 
     console.log('Response status:', sectionsRes.status);
