@@ -82,10 +82,10 @@ function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
         return;
       }
 
-      // Determine redirect URI
+      // Determine redirect URI (pointing to backend function endpoint)
       const protocol = window.location.protocol;
       const host = window.location.host;
-      const redirectUri = `${protocol}//${host}/api/osm/callback`;
+      const redirectUri = `${protocol}//${host}/functions/osmOAuthCallback`;
 
       // Build OAuth authorization URL
       const authUrl = `https://www.onlinescoutmanager.co.uk/oauth/authorize?` +
@@ -299,7 +299,7 @@ export default function OSMSyncPanel() {
                 <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-400" />
                 <div>
                   <p className="font-semibold mb-1">OAuth 2.0 Setup</p>
-                  <p>Add <code className="bg-blue-100 px-1 rounded">OSM_CLIENT_ID</code> and <code className="bg-blue-100 px-1 rounded">OSM_CLIENT_SECRET</code> in <strong>Dashboard → Settings → Secrets</strong>. Register your app at Online Scout Manager with the redirect URI: <code className="bg-blue-100 px-1 rounded text-xs">{typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}/api/osm/callback` : 'https://yourapp.com/api/osm/callback'}</code></p>
+                  <p>Add <code className="bg-blue-100 px-1 rounded">OSM_CLIENT_ID</code> and <code className="bg-blue-100 px-1 rounded">OSM_CLIENT_SECRET</code> in <strong>Dashboard → Settings → Secrets</strong>. Register your app at Online Scout Manager with the redirect URI: <code className="bg-blue-100 px-1 rounded text-xs">{typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}/functions/osmOAuthCallback` : 'https://yourapp.com/functions/osmOAuthCallback'}</code></p>
                 </div>
               </div>
             </>
