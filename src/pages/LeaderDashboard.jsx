@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSectionContext } from '../components/leader/SectionContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt, Lightbulb, Package, TrendingUp } from 'lucide-react';
+import { Users, Calendar, Award, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt, Lightbulb, Package, TrendingUp, FileText } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -213,11 +213,14 @@ export default function LeaderDashboard() {
     },
     { 
       icon: ShieldAlert, 
-      label: 'Risk', 
-      page: 'RiskAssessments',
+      label: 'Safety', 
       gradient: 'from-orange-500 to-orange-600',
       iconBg: 'bg-orange-100',
-      iconColor: 'text-orange-600'
+      iconColor: 'text-orange-600',
+      dropdown: [
+        { label: 'Risk Assessments', page: 'RiskAssessments', icon: ShieldAlert },
+        { label: 'Consent Forms', page: 'ConsentForms', icon: FileText },
+      ]
     },
     { 
       icon: Award, 
