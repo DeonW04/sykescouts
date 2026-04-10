@@ -67,12 +67,16 @@ export default function ParentPortalAnalytics() {
     [allActivity, dateRange]
   );
 
-  // Identify parent users
+  // Identify parent users: combine Parent entity records + anyone who has activity
+  // but is not an admin and not explicitly a leader
   const parentUserIds = useMemo(() => new Set(parents.map(p => p.user_id)), [parents]);
-  const parentUsers = useMemo(() =>
-    users.filter(u => parentUserIds.has(u.id)),
-    [users, parentUserIds]
-  );
+  const activityUserIds = useMemo(() => new Set(allActivity.map(a => a.user_id)), [allActivity]);
+  const parentUsers = useMemo(() => {
+    const combined = new Set([...parentUserIds]);
+    // Add any user found in activity who isn't an admin
+    users.forEach(u => { if (activityUserIds.has(u.id) && u.role !== 'admin') combined.add(u.id); });
+    return users.filter(u => combined.has(u.id));
+  }, [users, parentUserIds, activityUserIds]);
 
   // Per-parent stats
   const perParent = useMemo(() => {

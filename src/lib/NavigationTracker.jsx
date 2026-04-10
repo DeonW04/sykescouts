@@ -65,10 +65,14 @@ export default function NavigationTracker() {
                 const user = userRef.current;
                 if (!user) return;
 
-                // Check if parent (cache result)
+                // Check if parent: not admin AND not a leader
                 if (parentCheckRef.current === null) {
-                    const parents = await base44.entities.Parent.filter({ user_id: user.id });
-                    parentCheckRef.current = parents.length > 0 ? user.id : false;
+                    if (user.role === 'admin') {
+                        parentCheckRef.current = false;
+                    } else {
+                        const leaders = await base44.entities.Leader.filter({ user_id: user.id });
+                        parentCheckRef.current = leaders.length === 0 ? user.id : false;
+                    }
                 }
                 if (!parentCheckRef.current) return; // not a parent
 

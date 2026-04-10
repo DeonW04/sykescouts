@@ -26,6 +26,19 @@ import LeaderBadges from '../components/mobile/leader/LeaderBadges.jsx';
 import LeaderGallery from '../components/mobile/leader/LeaderGallery.jsx';
 import LeaderExpenses from '../components/mobile/leader/LeaderExpenses.jsx';
 
+function detectPlatform() {
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+  if (isStandalone) return 'pwa';
+  const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  return isMobile ? 'mobile_web' : 'desktop_web';
+}
+
+const TAB_LABEL_MAP = {
+  home: 'Dashboard', child: 'My Child', programme: 'Programme',
+  events: 'Events', badges: 'Badges', settings: 'Settings',
+};
+
 // ─── Section context (shared across all leader pages) ───────────────────────
 export const LeaderSectionContext = createContext({ selectedSectionId: 'all', setSelectedSectionId: () => {} });
 export const useLeaderSection = () => useContext(LeaderSectionContext);
@@ -99,6 +112,23 @@ function BottomNav({ tabs, activeTab, onTabChange, accent }) {
 // ─────────────────────────────────────────────────────────────
 function ParentApp({ user, activeTab, onTabChange }) {
   const [consentFlow, setConsentFlow] = useState(null); // { action, child, submission }
+
+  // Track every tab visit in the PWA (URL never changes inside /app)
+  const { useEffect: _useEffect } = React;
+  React.useEffect(() => {
+    if (!user?.id) return;
+    const label = TAB_LABEL_MAP[activeTab] || activeTab;
+    const now = new Date();
+    base44.entities.ParentActivity.create({
+      user_id: user.id,
+      user_email: user.email,
+      page_name: label,
+      raw_page: activeTab,
+      platform: detectPlatform(),
+      timestamp: now.toISOString(),
+      session_date: now.toISOString().split('T')[0],
+    }).catch(() => {});
+  }, [activeTab, user?.id]);
 
   const { data: children = [] } = useQuery({
     queryKey: ['mobile-children', user?.email],
