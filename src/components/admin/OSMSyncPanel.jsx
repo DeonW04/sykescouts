@@ -72,7 +72,6 @@ function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
     try {
       // Generate CSRF token
       const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      sessionStorage.setItem('osm_oauth_state', state);
 
       // Get OSM_CLIENT_ID from backend
       const clientId = await base44.functions.invoke('getOSMClientId', {});
