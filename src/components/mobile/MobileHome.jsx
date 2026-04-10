@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Calendar, Tent, ChevronRight, CheckCircle, Clock, MapPin, AlertTriangle } from 'lucide-react';
+import { useOngoingSession } from '../../hooks/useOngoingSession';
+import OngoingSessionBanner from './OngoingSessionBanner';
+import ParentLiveView from './ParentLiveView';
 import { format, isThisWeek, startOfWeek, endOfWeek } from 'date-fns';
 import ActionRequiredCard from './ActionRequiredCard';
 import VolunteerRequestCard from './VolunteerRequestCard';
@@ -9,6 +12,12 @@ import VolunteerRequestCard from './VolunteerRequestCard';
 export default function MobileHome({ user, children, onTabChange, onOpenConsentForm }) {
   const childSectionIds = [...new Set(children.map(c => c.section_id).filter(Boolean))];
   const childIds = children.map(c => c.id);
+  const { ongoingSession } = useOngoingSession({ sectionIds: childSectionIds });
+  const [showLiveView, setShowLiveView] = useState(false);
+
+  if (showLiveView && ongoingSession) {
+    return <ParentLiveView session={ongoingSession} onBack={() => setShowLiveView(false)} />;
+  }
 
   const { data: thisWeekMeeting } = useQuery({
     queryKey: ['mobile-this-week-meeting', childSectionIds],
@@ -191,6 +200,10 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
 
   return (
     <div className="flex flex-col">
+      {/* Ongoing session banner — sits above header */}
+      {ongoingSession && (
+        <OngoingSessionBanner session={ongoingSession} onClick={() => setShowLiveView(true)} />
+      )}
       {/* Header */}
       <div className="bg-gradient-to-br from-[#7413dc] to-[#004851] px-5 pb-8 text-white"
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 48px)' }}>

@@ -157,6 +157,10 @@
       "type": "number",
       "default": 0,
       "description": "Number of nights away for this event"
+    },
+    "home_contact": {
+      "type": "string",
+      "description": "Home contact details (name and phone number) shown to parents during live event view"
     }
   },
   "required": [

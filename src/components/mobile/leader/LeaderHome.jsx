@@ -1,11 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Calendar, Tent, ChevronRight, AlertTriangle, ChevronDown } from 'lucide-react';
+import { useOngoingSession } from '../../../hooks/useOngoingSession';
+import OngoingSessionBanner from '../OngoingSessionBanner';
+import LeaderLiveView from './LeaderLiveView';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
 
 export default function LeaderHome({ user, leader, sections, allSections, selectedSectionId, setSelectedSectionId, onTabChange }) {
   const sectionIds = sections.map(s => s.id);
+  const { ongoingSession } = useOngoingSession({ sectionIds });
+  const [showLiveView, setShowLiveView] = useState(false);
+
+  if (showLiveView && ongoingSession) {
+    return <LeaderLiveView session={ongoingSession} onBack={() => setShowLiveView(false)} />;
+  }
 
   const { data: thisWeekMeetings = [] } = useQuery({
     queryKey: ['leader-this-week', sectionIds],
@@ -38,6 +47,9 @@ export default function LeaderHome({ user, leader, sections, allSections, select
 
   return (
     <div className="flex flex-col">
+      {ongoingSession && (
+        <OngoingSessionBanner session={ongoingSession} onClick={() => setShowLiveView(true)} />
+      )}
       <div className="bg-gradient-to-br from-[#004851] to-[#7413dc] px-5 pb-6 text-white"
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 48px)' }}>
         <p className="text-white/70 text-sm font-medium">Leader Portal 👋</p>

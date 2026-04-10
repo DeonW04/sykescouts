@@ -51,6 +51,7 @@ export default function MeetingDetail() {
     optional_location: '',
     optional_start_time: '',
     optional_end_time: '',
+    home_contact: '',
   });
 
   const handleSectionChange = (section) => {
@@ -152,6 +153,7 @@ export default function MeetingDetail() {
         optional_location: existingProgramme.optional_location || '',
         optional_start_time: existingProgramme.optional_start_time || '',
         optional_end_time: existingProgramme.optional_end_time || '',
+        home_contact: existingProgramme.home_contact || '',
       });
     }
   }, [existingProgramme]);
@@ -510,6 +512,21 @@ export default function MeetingDetail() {
                       onChange={(e) => setFormData({ ...formData, equipment_needed: e.target.value })}
                       placeholder="List any equipment needed for this meeting"
                       className="min-h-[100px]"
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-sm border-teal-200 bg-teal-50">
+                  <CardHeader className="border-b border-teal-100">
+                    <CardTitle className="text-teal-800 text-xl">Home Contact (Optional)</CardTitle>
+                    <p className="text-sm text-teal-600 mt-1">A contact parents can call during the session. Shown on the live view in the parent app.</p>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <Textarea
+                      value={formData.home_contact}
+                      onChange={(e) => setFormData({ ...formData, home_contact: e.target.value })}
+                      placeholder="e.g. Jane Smith — 07700 900123"
+                      className="min-h-[80px]"
                     />
                   </CardContent>
                 </Card>

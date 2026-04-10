@@ -49,6 +49,7 @@ export default function EventDetail() {
     nights_away_count: 0,
     expenses: [],
     income: [],
+    home_contact: '',
   });
 
   const { data: event } = useQuery({
@@ -85,6 +86,7 @@ export default function EventDetail() {
         nights_away_count: event.nights_away_count !== undefined ? event.nights_away_count : calculateNights(),
         expenses: event.expenses || [],
         income: event.income || [],
+        home_contact: event.home_contact || '',
       });
     }
   }, [event]);
@@ -461,6 +463,7 @@ export default function EventDetail() {
           {/* Main Content */}
           <main className="flex-1 min-w-0">
             {activeSection === 'overview' && (
+              <div className="space-y-4">
               <Card className="shadow-sm border-gray-200">
                 <CardHeader className="border-b border-gray-100">
                   <CardTitle className="text-xl">Event Information</CardTitle>
@@ -500,6 +503,22 @@ export default function EventDetail() {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card className="shadow-sm border-teal-200 bg-teal-50">
+                <CardHeader className="border-b border-teal-100">
+                  <CardTitle className="text-teal-800 text-xl">Home Contact (Optional)</CardTitle>
+                  <p className="text-sm text-teal-600 mt-1">A contact parents can call during the event. Shown in the parent app live view.</p>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <Textarea
+                    value={formData.home_contact}
+                    onChange={(e) => setFormData({ ...formData, home_contact: e.target.value })}
+                    placeholder="e.g. Jane Smith — 07700 900123"
+                    className="min-h-[80px]"
+                  />
+                </CardContent>
+              </Card>
+              </div>
             )}
 
             {activeSection === 'planning' && (
