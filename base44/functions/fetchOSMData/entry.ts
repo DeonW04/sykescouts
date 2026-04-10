@@ -24,82 +24,60 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'OSM not connected' }, { status: 400 });
     }
 
-    // Check if token is expired and refresh if needed
-    let accessToken = settings.osm_access_token;
-    if (settings.osm_token_expiry && new Date(settings.osm_token_expiry) < new Date()) {
-      const clientId = 'LkvafKTrBEaPfXZqJw59LpLSyu8kBDOs';
-      const clientSecret = 'ZpL4LvHPHPN5uOY2ldszogI1fd6Ks5NFJ54DQlnhhDQVMEczG7KfAMSLeo2S81Dm';
+    const accessToken = settings.osm_access_token;
+    console.log('Using OAuth token, length:', accessToken.length);
 
-      const params = new URLSearchParams();
-      params.append('grant_type', 'refresh_token');
-      params.append('refresh_token', settings.osm_refresh_token);
-      params.append('client_id', clientId);
-      params.append('client_secret', clientSecret);
-
-      const tokenRes = await fetch('https://www.onlinescoutmanager.co.uk/oauth/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString(),
-      });
-
-      if (tokenRes.ok) {
-        const tokenData = await tokenRes.json();
-        accessToken = tokenData.access_token;
-        const expiryTime = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString();
-        await base44.asServiceRole.entities.OSMSyncSettings.update(settings.id, {
-          osm_access_token: accessToken,
-          osm_refresh_token: tokenData.refresh_token,
-          osm_token_expiry: expiryTime,
-        });
-      }
-    }
-
-    // Fetch OSM sections - try OAuth Bearer format first
-    console.log('Fetching OSM sections with OAuth token...');
-    console.log('Token (first 20 chars):', accessToken.substring(0, 20) + '...');
+    // Fetch OSM sections with raw response handling
+    console.log('Fetching OSM sections...');
     
     const sectionsRes = await fetch('https://www.onlinescoutmanager.co.uk/api.php?action=getSections', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
       },
     });
 
     console.log('Response status:', sectionsRes.status);
-    console.log('Response headers:', {
-      contentType: sectionsRes.headers.get('content-type'),
-      contentLength: sectionsRes.headers.get('content-length'),
-    });
-
-    if (!sectionsRes.ok) {
-      const errText = await sectionsRes.text();
-      console.error('OSM sections fetch failed:', sectionsRes.status, errText);
-      return Response.json({ error: `Failed to fetch sections: ${sectionsRes.status} - ${errText}` }, { status: 500 });
-    }
-
-    const responseText = await sectionsRes.text();
-    console.log('OSM response text length:', responseText.length);
-    console.log('First 300 chars:', responseText.substring(0, 300));
     
-    if (!responseText || responseText.trim() === '') {
-      console.error('OSM returned empty response. Token might be invalid or API rejected Bearer auth.');
+    // Read response as array buffer first to see raw bytes
+    const arrayBuffer = await sectionsRes.arrayBuffer();
+    const byteLength = arrayBuffer.byteLength;
+    console.log('Response byte length:', byteLength);
+    
+    if (byteLength === 0) {
+      console.error('OSM returned completely empty response body');
       return Response.json({ 
-        error: 'Empty response from OSM. The OAuth token may be invalid or OSM API may not support Bearer token authentication.' 
+        error: 'OSM returned empty response. Bearer token authentication may not be supported. Try re-connecting to OSM.' 
       }, { status: 500 });
     }
 
+    // Convert to text
+    const decoder = new TextDecoder();
+    const responseText = decoder.decode(arrayBuffer);
+    
+    console.log('Response text length:', responseText.length);
+    console.log('First 500 chars:', responseText.substring(0, 500));
+
+    if (!responseText.trim()) {
+      return Response.json({ 
+        error: 'OSM returned whitespace-only response'
+      }, { status: 500 });
+    }
+
+    // Try to parse as JSON
     let sectionsData;
     try {
       sectionsData = JSON.parse(responseText);
+      console.log('Successfully parsed JSON. Keys:', Object.keys(sectionsData || {}).slice(0, 5));
     } catch (e) {
-      console.error('Failed to parse OSM response as JSON:', e.message);
-      console.error('Response was:', responseText);
-      return Response.json({ error: 'Invalid JSON from OSM: ' + e.message }, { status: 500 });
+      console.error('JSON parse failed:', e.message);
+      console.error('Full response:', responseText);
+      return Response.json({ 
+        error: `Invalid JSON from OSM: ${e.message}. Response: ${responseText.substring(0, 200)}`
+      }, { status: 500 });
     }
-    console.log('OSM sections data received:', typeof sectionsData, Object.keys(sectionsData || {}).length);
 
-    // Format sections with names and IDs for dropdown
+    // Format sections
     const formattedSections = [];
     if (sectionsData && typeof sectionsData === 'object') {
       for (const [sectionId, sectionInfo] of Object.entries(sectionsData)) {
@@ -113,13 +91,15 @@ Deno.serve(async (req) => {
       }
     }
 
+    console.log('Returning', formattedSections.length, 'sections');
     return Response.json({
       sections: formattedSections,
       connectedSectionId: settings.osm_section_id,
       connectedSectionType: settings.osm_section,
     });
   } catch (error) {
-    console.error('fetchOSMData error:', error);
+    console.error('fetchOSMData error:', error.message);
+    console.error('Stack:', error.stack);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
