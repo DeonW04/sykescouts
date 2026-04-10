@@ -7,6 +7,7 @@ import { useSectionContext } from '../components/leader/SectionContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Calendar, Award, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt, Lightbulb, Package, TrendingUp, FileText } from 'lucide-react';
+import ActionsDrilldownModal from '../components/leader/ActionsDrilldownModal';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -174,6 +175,7 @@ const UpcomingEvents = ({ sections, selectedSection }) => {
 const ActionsStatus = ({ sections, selectedSection }) => {
   const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
   const sectionIds = filteredSections.map(s => s.id);
+  const [drilldown, setDrilldown] = useState(null);
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['actions-status-dashboard', sectionIds],
@@ -190,7 +192,6 @@ const ActionsStatus = ({ sections, selectedSection }) => {
         base44.entities.Programme.filter({}),
       ]);
 
-      // Filter to actions for our sections that are not past
       const relevantActions = allActions.filter(a => {
         if (!a.is_open) return false;
         if (a.event_id) {
@@ -217,21 +218,17 @@ const ActionsStatus = ({ sections, selectedSection }) => {
         a => !respondedPairs.has(`${a.action_required_id}:${a.member_id}`)
       );
 
-      // Unique parents with outstanding items
       const unrespondedMemberIds = new Set(unrespondedAssignments.map(a => a.member_id));
-
-      // Actions closing within 7 days
       const closingSoon = relevantActions.filter(a => a.deadline && new Date(a.deadline) <= sevenDays && new Date(a.deadline) >= now);
-
-      // Response rate
       const responseRate = relevantAssignments.length > 0
         ? Math.round((relevantResponses.length / relevantAssignments.length) * 100)
         : 100;
 
-      // Count by action type
       const attendanceActions = relevantActions.filter(a => a.action_purpose === 'attendance').length;
       const consentActions = relevantActions.filter(a => a.action_purpose === 'consent' || a.action_purpose === 'consent_form').length;
       const volunteerActions = relevantActions.filter(a => a.action_purpose === 'volunteer').length;
+
+      const allMembers = await base44.entities.Member.filter({ active: true });
 
       return {
         totalActions: relevantActions.length,
@@ -244,6 +241,14 @@ const ActionsStatus = ({ sections, selectedSection }) => {
         attendanceActions,
         consentActions,
         volunteerActions,
+        _relevantActions: relevantActions,
+        _relevantAssignments: relevantAssignments,
+        _relevantResponses: relevantResponses,
+        _closingSoonActions: closingSoon,
+        _unrespondedAssignments: unrespondedAssignments,
+        _allMembers: allMembers,
+        _allEvents: allEvents,
+        _allProgrammes: allProgrammes,
       };
     },
     enabled: sectionIds.length > 0,
@@ -251,18 +256,30 @@ const ActionsStatus = ({ sections, selectedSection }) => {
 
   if (isLoading || !stats) return null;
 
+  const drilldownData = {
+    relevantActions: stats._relevantActions || [],
+    relevantAssignments: stats._relevantAssignments || [],
+    relevantResponses: stats._relevantResponses || [],
+    closingSoonActions: stats._closingSoonActions || [],
+    unrespondedAssignments: stats._unrespondedAssignments || [],
+    allMembers: stats._allMembers || [],
+    allEvents: stats._allEvents || [],
+    allProgrammes: stats._allProgrammes || [],
+  };
+
   const statCards = [
-    { label: 'Active Actions', value: stats.totalActions, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+    { label: 'Active Actions', value: stats.totalActions, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', drilldownType: 'totalActions' },
     { label: 'Response Rate', value: `${stats.responseRate}%`, color: stats.responseRate >= 75 ? 'text-green-600' : stats.responseRate >= 50 ? 'text-orange-500' : 'text-red-500', bg: stats.responseRate >= 75 ? 'bg-green-50' : stats.responseRate >= 50 ? 'bg-orange-50' : 'bg-red-50', border: stats.responseRate >= 75 ? 'border-green-200' : stats.responseRate >= 50 ? 'border-orange-200' : 'border-red-200' },
-    { label: 'Awaiting Response', value: stats.unresponded, color: stats.unresponded === 0 ? 'text-green-600' : 'text-orange-500', bg: stats.unresponded === 0 ? 'bg-green-50' : 'bg-orange-50', border: stats.unresponded === 0 ? 'border-green-200' : 'border-orange-200' },
-    { label: 'Members Outstanding', value: stats.unrespondedMembers, color: stats.unrespondedMembers === 0 ? 'text-green-600' : 'text-red-500', bg: stats.unrespondedMembers === 0 ? 'bg-green-50' : 'bg-red-50', border: stats.unrespondedMembers === 0 ? 'border-green-200' : 'border-red-200' },
-    { label: 'Closing Within 7 Days', value: stats.closingSoon, color: stats.closingSoon > 0 ? 'text-amber-600' : 'text-gray-500', bg: stats.closingSoon > 0 ? 'bg-amber-50' : 'bg-gray-50', border: stats.closingSoon > 0 ? 'border-amber-200' : 'border-gray-200' },
-    { label: 'Attendance Actions', value: stats.attendanceActions, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
-    { label: 'Consent Actions', value: stats.consentActions, color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-200' },
-    { label: 'Volunteer Requests', value: stats.volunteerActions, color: 'text-pink-600', bg: 'bg-pink-50', border: 'border-pink-200' },
+    { label: 'Awaiting Response', value: stats.unresponded, color: stats.unresponded === 0 ? 'text-green-600' : 'text-orange-500', bg: stats.unresponded === 0 ? 'bg-green-50' : 'bg-orange-50', border: stats.unresponded === 0 ? 'border-green-200' : 'border-orange-200', drilldownType: 'unresponded' },
+    { label: 'Members Outstanding', value: stats.unrespondedMembers, color: stats.unrespondedMembers === 0 ? 'text-green-600' : 'text-red-500', bg: stats.unrespondedMembers === 0 ? 'bg-green-50' : 'bg-red-50', border: stats.unrespondedMembers === 0 ? 'border-green-200' : 'border-red-200', drilldownType: 'unrespondedMembers' },
+    { label: 'Closing Within 7 Days', value: stats.closingSoon, color: stats.closingSoon > 0 ? 'text-amber-600' : 'text-gray-500', bg: stats.closingSoon > 0 ? 'bg-amber-50' : 'bg-gray-50', border: stats.closingSoon > 0 ? 'border-amber-200' : 'border-gray-200', drilldownType: 'closingSoon' },
+    { label: 'Attendance Actions', value: stats.attendanceActions, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200', drilldownType: 'attendanceActions' },
+    { label: 'Consent Actions', value: stats.consentActions, color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-200', drilldownType: 'consentActions' },
+    { label: 'Volunteer Requests', value: stats.volunteerActions, color: 'text-pink-600', bg: 'bg-pink-50', border: 'border-pink-200', drilldownType: 'volunteerActions' },
   ];
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
@@ -271,7 +288,7 @@ const ActionsStatus = ({ sections, selectedSection }) => {
           </div>
           <div>
             <CardTitle>Actions Required — Status</CardTitle>
-            <p className="text-xs text-gray-400 mt-0.5">Active actions for upcoming meetings & events only</p>
+            <p className="text-xs text-gray-400 mt-0.5">Active actions for upcoming meetings & events only · click a card for details</p>
           </div>
         </div>
       </CardHeader>
@@ -281,15 +298,26 @@ const ActionsStatus = ({ sections, selectedSection }) => {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {statCards.map(stat => (
-              <div key={stat.label} className={`${stat.bg} border ${stat.border} rounded-xl p-3 text-center`}>
+              <button
+                key={stat.label}
+                onClick={() => stat.drilldownType ? setDrilldown(stat.drilldownType) : null}
+                className={`${stat.bg} border ${stat.border} rounded-xl p-3 text-center ${stat.drilldownType ? 'hover:opacity-80 cursor-pointer transition-opacity' : 'cursor-default'}`}
+              >
                 <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                 <p className="text-xs text-gray-500 mt-1 leading-tight">{stat.label}</p>
-              </div>
+              </button>
             ))}
           </div>
         )}
       </CardContent>
     </Card>
+    <ActionsDrilldownModal
+      open={!!drilldown}
+      onClose={() => setDrilldown(null)}
+      type={drilldown}
+      data={drilldownData}
+    />
+    </>
   );
 };
 
