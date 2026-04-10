@@ -70,14 +70,21 @@ function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
     setError('');
     setLoading(true);
     try {
-      // Generate PKCE code verifier and challenge
-      const codeVerifier = Array.from(crypto.getRandomValues(new Uint8Array(32)))
-        .map(b => String.fromCharCode(b))
-        .join('');
-      const base64UrlEncode = (str) => btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-      const codeChallenge = base64UrlEncode(
-        await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier)).then(buf => String.fromCharCode(...new Uint8Array(buf)))
-      );
+      // Generate RFC-7636 compliant PKCE code verifier (unreserved chars only)
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+      let codeVerifier = '';
+      for (let i = 0; i < 128; i++) {
+        codeVerifier += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      
+      // Generate code challenge from verifier using SHA-256
+      const base64UrlEncode = (str) => {
+        return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+      };
+      const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashStr = String.fromCharCode(...hashArray);
+      const codeChallenge = base64UrlEncode(hashStr);
 
       // Store verifier in sessionStorage for retrieval after OAuth callback
       sessionStorage.setItem('osm_code_verifier', codeVerifier);
