@@ -36,11 +36,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'OSM_CLIENT_ID and OSM_CLIENT_SECRET must be configured in secrets.' }, { status: 500 });
     }
 
-    // Determine redirect URI - use the actual incoming request URL without query params
+    // Determine redirect URI - must match the registered endpoint exactly
     const protocol = url.protocol;
     const host = url.host;
-    const pathname = url.pathname;
-    const redirectUri = `${protocol}//${host}${pathname}`;
+    const redirectUri = `${protocol}//${host}/functions/osmOAuthCallback`;
 
     // Exchange authorization code for tokens (with PKCE code verifier)
     console.log('Token exchange params:', { code: code.slice(0, 10) + '...', client_id: clientId, redirect_uri: redirectUri, code_verifier_length: codeVerifier.length, incoming_url: req.url });
