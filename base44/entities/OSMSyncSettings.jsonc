@@ -26,11 +26,24 @@
     },
     "osm_userid": {
       "type": "string",
-      "description": "OSM User ID obtained from authorise endpoint"
+      "description": "OSM User ID (legacy, kept for backward compatibility)"
     },
     "osm_secret": {
       "type": "string",
-      "description": "OSM Secret obtained from authorise endpoint"
+      "description": "OSM Secret (legacy, kept for backward compatibility)"
+    },
+    "osm_access_token": {
+      "type": "string",
+      "description": "OAuth 2.0 Access Token"
+    },
+    "osm_refresh_token": {
+      "type": "string",
+      "description": "OAuth 2.0 Refresh Token"
+    },
+    "osm_token_expiry": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Access token expiry time"
     },
     "last_synced": {
       "type": "string",

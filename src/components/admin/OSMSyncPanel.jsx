@@ -63,8 +63,6 @@ function EditSyncRecordDialog({ record, open, onOpenChange, onSave }) {
 }
 
 function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -72,18 +70,35 @@ function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
     setError('');
     setLoading(true);
     try {
-      const res = await base44.functions.invoke('connectOSM', { email, password });
-      if (res.data.error) {
-        setError(res.data.error);
-      } else {
-        onSuccess(res.data.userid);
-        onOpenChange(false);
-        setEmail('');
-        setPassword('');
+      // Generate CSRF token
+      const state = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      sessionStorage.setItem('osm_oauth_state', state);
+
+      // Get OSM_CLIENT_ID from backend
+      const clientId = await base44.functions.invoke('getOSMClientId', {});
+      if (clientId.data.error) {
+        setError(clientId.data.error);
+        setLoading(false);
+        return;
       }
+
+      // Determine redirect URI
+      const protocol = window.location.protocol;
+      const host = window.location.host;
+      const redirectUri = `${protocol}//${host}/api/osm/callback`;
+
+      // Build OAuth authorization URL
+      const authUrl = `https://www.onlinescoutmanager.co.uk/oauth/authorize?` +
+        `response_type=code&` +
+        `client_id=${encodeURIComponent(clientId.data.client_id)}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `scope=basic&` +
+        `state=${encodeURIComponent(state)}`;
+
+      // Redirect to OSM OAuth endpoint
+      window.location.href = authUrl;
     } catch (e) {
       setError(e.message);
-    } finally {
       setLoading(false);
     }
   };
@@ -92,22 +107,12 @@ function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader><DialogTitle>Connect Online Scout Manager</DialogTitle></DialogHeader>
-        <p className="text-sm text-gray-600">Enter your OSM account credentials. These are sent securely to the server — your password is never stored.</p>
-        <div className="space-y-4 mt-2">
-          <div>
-            <Label>OSM Email</Label>
-            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
-          </div>
-          <div>
-            <Label>OSM Password</Label>
-            <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Your OSM password" />
-          </div>
-          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
-        </div>
+        <p className="text-sm text-gray-600">You will be redirected to Online Scout Manager to securely sign in. Your password is never shared with this application.</p>
+        {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4">{error}</p>}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleConnect} disabled={loading || !email || !password} className="bg-[#004851] hover:bg-[#003840]">
-            {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Connecting...</> : <><Link className="w-4 h-4 mr-2" />Connect OSM</>}
+          <Button onClick={handleConnect} disabled={loading} className="bg-[#004851] hover:bg-[#003840]">
+            {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Redirecting to OSM...</> : <><Link className="w-4 h-4 mr-2" />Login with OSM</>}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -133,7 +138,18 @@ export default function OSMSyncPanel() {
   });
 
   const settings = settingsArr[0];
-  const isConnected = !!(settings?.osm_userid && settings?.osm_secret);
+  const isConnected = !!(settings?.osm_access_token);
+  
+  // Check for successful OAuth callback
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('osm_connected') === 'true') {
+      toast.success('OSM account connected successfully!');
+      window.history.replaceState({}, document.title, window.location.pathname);
+      refetchSettings();
+    }
+  }, []);
+  
   React.useEffect(() => {
     if (settings && !settingsForm) setSettingsForm({ ...settings });
   }, [settings]);
@@ -215,12 +231,12 @@ export default function OSMSyncPanel() {
                 ? <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
                 : <XCircle className="w-6 h-6 text-amber-500 flex-shrink-0" />}
               <div>
-                <p className={`font-semibold ${isConnected ? 'text-green-800' : 'text-amber-800'}`}>
-                  {isConnected ? 'OSM Account Connected' : 'OSM Account Not Connected'}
-                </p>
-                {isConnected
-                  ? <p className="text-sm text-green-700">User ID: {settings.osm_userid}</p>
-                  : <p className="text-sm text-amber-700">Connect your OSM account to enable badge syncing.</p>}
+               <p className={`font-semibold ${isConnected ? 'text-green-800' : 'text-amber-800'}`}>
+                 {isConnected ? 'OSM Account Connected' : 'OSM Account Not Connected'}
+               </p>
+               {isConnected
+                 ? <p className="text-sm text-green-700">OAuth 2.0 connection active</p>
+                 : <p className="text-sm text-amber-700">Connect your OSM account to enable badge syncing.</p>}
               </div>
             </div>
             <Button
@@ -278,12 +294,12 @@ export default function OSMSyncPanel() {
                 {savingSettings ? 'Saving...' : 'Save Settings'}
               </Button>
 
-              {/* Secrets reminder */}
-              <div className="flex gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-600">
-                <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-gray-400" />
+              {/* OAuth Info */}
+              <div className="flex gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-600">
+                <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-400" />
                 <div>
-                  <p className="font-semibold mb-1">Required Secrets</p>
-                  <p>Add <code className="bg-gray-100 px-1 rounded">OSM_API_ID</code> and <code className="bg-gray-100 px-1 rounded">OSM_TOKEN</code> in <strong>Dashboard → Settings → Secrets</strong>. Then use the <strong>Connect OSM</strong> button above — your userid and secret will be stored securely in the database automatically.</p>
+                  <p className="font-semibold mb-1">OAuth 2.0 Setup</p>
+                  <p>Add <code className="bg-blue-100 px-1 rounded">OSM_CLIENT_ID</code> and <code className="bg-blue-100 px-1 rounded">OSM_CLIENT_SECRET</code> in <strong>Dashboard → Settings → Secrets</strong>. Register your app at Online Scout Manager with the redirect URI: <code className="bg-blue-100 px-1 rounded text-xs">{typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}/api/osm/callback` : 'https://yourapp.com/api/osm/callback'}</code></p>
                 </div>
               </div>
             </>
