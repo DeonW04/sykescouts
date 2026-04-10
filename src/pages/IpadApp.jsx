@@ -315,6 +315,17 @@ export default function IpadApp() {
             </div>
             <span className="text-white font-semibold text-sm">Badges</span>
           </button>
+          <a
+            href="https://iscout.sykescouts.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex flex-col items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur rounded-3xl p-8 transition-all hover:scale-105 group"
+          >
+            <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
+              <img src="https://media.base44.com/images/public/69540f3779bf32f5ccc6335b/f14e94992_iScoutLogo.png" alt="iScout" className="w-full h-full object-cover" />
+            </div>
+            <span className="text-white font-semibold text-sm">iScout Syke</span>
+          </a>
         </div>
 
         {/* Logout */}
