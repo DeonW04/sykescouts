@@ -77,7 +77,6 @@ export default function OSMSyncPanel() {
     queryKey: ['osm-settings'],
     queryFn: () => base44.entities.OSMSyncSettings.filter({}),
   });
-  });
 
   const settings = settingsArr[0];
   React.useEffect(() => {
