@@ -91,30 +91,201 @@ const BadgesDue = ({ sections, selectedSection }) => {
 
   const uniqueMembers = new Set(relevantAwards.map(a => a.member_id)).size;
 
+  if (relevantAwards.length === 0) return null;
+
+  return (
+    <div
+      className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl px-4 py-3 cursor-pointer hover:from-green-100 hover:to-emerald-100 transition-colors"
+      onClick={() => navigate(createPageUrl('AwardBadges'))}
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0">
+          <Award className="w-4 h-4 text-white" />
+        </div>
+        <div>
+          <p className="font-semibold text-gray-900 text-sm">Badges Ready to Award</p>
+          <p className="text-xs text-gray-500">{uniqueMembers} {uniqueMembers === 1 ? 'member' : 'members'} waiting</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-2xl font-bold text-green-600">{relevantAwards.length}</span>
+        <ArrowRight className="w-4 h-4 text-green-500" />
+      </div>
+    </div>
+  );
+};
+
+const UpcomingEvents = ({ sections, selectedSection }) => {
+  const navigate = useNavigate();
+  const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
+  const sectionIds = filteredSections.map(s => s.id);
+
+  const { data: events = [] } = useQuery({
+    queryKey: ['upcoming-events-dashboard', sectionIds],
+    queryFn: async () => {
+      if (sectionIds.length === 0) return [];
+      const allEvents = await base44.entities.Event.filter({});
+      return allEvents
+        .filter(e => e.section_ids?.some(sid => sectionIds.includes(sid)) && new Date(e.start_date) >= new Date())
+        .sort((a, b) => new Date(a.start_date) - new Date(b.start_date))
+        .slice(0, 4);
+    },
+    enabled: sectionIds.length > 0,
+  });
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Badges Due to Award</CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => navigate(createPageUrl('AwardBadges'))}>
-            Award <ArrowRight className="w-4 h-4 ml-1" />
+          <CardTitle>Upcoming Events</CardTitle>
+          <Button variant="ghost" size="sm" onClick={() => navigate(createPageUrl('LeaderEvents'))}>
+            View All <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        {relevantAwards.length === 0 ? (
-          <p className="text-gray-500 text-sm">No badges due to award</p>
+        {events.length === 0 ? (
+          <p className="text-gray-500 text-sm">No upcoming events</p>
         ) : (
-          <div className="flex items-center gap-8 py-2">
-            <div className="text-center">
-              <p className="text-4xl font-bold text-green-600">{relevantAwards.length}</p>
-              <p className="text-sm text-gray-500 mt-1">badges due</p>
-            </div>
-            <div className="w-px h-12 bg-gray-200" />
-            <div className="text-center">
-              <p className="text-4xl font-bold text-[#004851]">{uniqueMembers}</p>
-              <p className="text-sm text-gray-500 mt-1">{uniqueMembers === 1 ? 'member' : 'members'}</p>
-            </div>
+          <div className="space-y-2">
+            {events.map(e => (
+              <div
+                key={e.id}
+                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                onClick={() => navigate(createPageUrl('EventDetail') + `?id=${e.id}`)}
+              >
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Tent className="w-4 h-4 text-purple-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{e.title}</p>
+                  <p className="text-xs text-gray-500">{format(new Date(e.start_date), 'EEE, d MMM yyyy')} · {e.type}</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+const ActionsStatus = ({ sections, selectedSection }) => {
+  const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
+  const sectionIds = filteredSections.map(s => s.id);
+
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['actions-status-dashboard', sectionIds],
+    queryFn: async () => {
+      if (sectionIds.length === 0) return null;
+      const now = new Date();
+      const sevenDays = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      const [allActions, allAssignments, allResponses, allEvents, allProgrammes] = await Promise.all([
+        base44.entities.ActionRequired.filter({}),
+        base44.entities.ActionAssignment.filter({}),
+        base44.entities.ActionResponse.filter({}),
+        base44.entities.Event.filter({}),
+        base44.entities.Programme.filter({}),
+      ]);
+
+      // Filter to actions for our sections that are not past
+      const relevantActions = allActions.filter(a => {
+        if (!a.is_open) return false;
+        if (a.event_id) {
+          const ev = allEvents.find(e => e.id === a.event_id);
+          if (!ev) return false;
+          if (new Date(ev.start_date) < now) return false;
+          return ev.section_ids?.some(sid => sectionIds.includes(sid));
+        }
+        if (a.programme_id) {
+          const prog = allProgrammes.find(p => p.id === a.programme_id);
+          if (!prog) return false;
+          if (new Date(prog.date) < now) return false;
+          return sectionIds.includes(prog.section_id);
+        }
+        return false;
+      });
+
+      const actionIds = relevantActions.map(a => a.id);
+      const relevantAssignments = allAssignments.filter(a => actionIds.includes(a.action_required_id));
+      const relevantResponses = allResponses.filter(r => actionIds.includes(r.action_required_id) && r.response_value);
+
+      const respondedPairs = new Set(relevantResponses.map(r => `${r.action_required_id}:${r.member_id}`));
+      const unrespondedAssignments = relevantAssignments.filter(
+        a => !respondedPairs.has(`${a.action_required_id}:${a.member_id}`)
+      );
+
+      // Unique parents with outstanding items
+      const unrespondedMemberIds = new Set(unrespondedAssignments.map(a => a.member_id));
+
+      // Actions closing within 7 days
+      const closingSoon = relevantActions.filter(a => a.deadline && new Date(a.deadline) <= sevenDays && new Date(a.deadline) >= now);
+
+      // Response rate
+      const responseRate = relevantAssignments.length > 0
+        ? Math.round((relevantResponses.length / relevantAssignments.length) * 100)
+        : 100;
+
+      // Count by action type
+      const attendanceActions = relevantActions.filter(a => a.action_purpose === 'attendance').length;
+      const consentActions = relevantActions.filter(a => a.action_purpose === 'consent' || a.action_purpose === 'consent_form').length;
+      const volunteerActions = relevantActions.filter(a => a.action_purpose === 'volunteer').length;
+
+      return {
+        totalActions: relevantActions.length,
+        totalAssignments: relevantAssignments.length,
+        responded: relevantResponses.length,
+        unresponded: unrespondedAssignments.length,
+        unrespondedMembers: unrespondedMemberIds.size,
+        closingSoon: closingSoon.length,
+        responseRate,
+        attendanceActions,
+        consentActions,
+        volunteerActions,
+      };
+    },
+    enabled: sectionIds.length > 0,
+  });
+
+  if (isLoading || !stats) return null;
+
+  const statCards = [
+    { label: 'Active Actions', value: stats.totalActions, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
+    { label: 'Response Rate', value: `${stats.responseRate}%`, color: stats.responseRate >= 75 ? 'text-green-600' : stats.responseRate >= 50 ? 'text-orange-500' : 'text-red-500', bg: stats.responseRate >= 75 ? 'bg-green-50' : stats.responseRate >= 50 ? 'bg-orange-50' : 'bg-red-50', border: stats.responseRate >= 75 ? 'border-green-200' : stats.responseRate >= 50 ? 'border-orange-200' : 'border-red-200' },
+    { label: 'Awaiting Response', value: stats.unresponded, color: stats.unresponded === 0 ? 'text-green-600' : 'text-orange-500', bg: stats.unresponded === 0 ? 'bg-green-50' : 'bg-orange-50', border: stats.unresponded === 0 ? 'border-green-200' : 'border-orange-200' },
+    { label: 'Members Outstanding', value: stats.unrespondedMembers, color: stats.unrespondedMembers === 0 ? 'text-green-600' : 'text-red-500', bg: stats.unrespondedMembers === 0 ? 'bg-green-50' : 'bg-red-50', border: stats.unrespondedMembers === 0 ? 'border-green-200' : 'border-red-200' },
+    { label: 'Closing Within 7 Days', value: stats.closingSoon, color: stats.closingSoon > 0 ? 'text-amber-600' : 'text-gray-500', bg: stats.closingSoon > 0 ? 'bg-amber-50' : 'bg-gray-50', border: stats.closingSoon > 0 ? 'border-amber-200' : 'border-gray-200' },
+    { label: 'Attendance Actions', value: stats.attendanceActions, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
+    { label: 'Consent Actions', value: stats.consentActions, color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-200' },
+    { label: 'Volunteer Requests', value: stats.volunteerActions, color: 'text-pink-600', bg: 'bg-pink-50', border: 'border-pink-200' },
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+            <Mail className="w-4 h-4 text-blue-600" />
+          </div>
+          <div>
+            <CardTitle>Actions Required — Status</CardTitle>
+            <p className="text-xs text-gray-400 mt-0.5">Active actions for upcoming meetings & events only</p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {stats.totalActions === 0 ? (
+          <p className="text-gray-500 text-sm">No active actions for upcoming sessions</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {statCards.map(stat => (
+              <div key={stat.label} className={`${stat.bg} border ${stat.border} rounded-xl p-3 text-center`}>
+                <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                <p className="text-xs text-gray-500 mt-1 leading-tight">{stat.label}</p>
+              </div>
+            ))}
           </div>
         )}
       </CardContent>
@@ -365,14 +536,26 @@ export default function LeaderDashboard() {
         </div>
 
         {/* Dashboard Content */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
           className="grid lg:grid-cols-2 gap-6 mb-6"
         >
           <UpcomingMeetings sections={sections} selectedSection={selectedSection} />
-          <BadgesDue sections={sections} selectedSection={selectedSection} />
+          <div className="flex flex-col gap-4">
+            <BadgesDue sections={sections} selectedSection={selectedSection} />
+            <UpcomingEvents sections={sections} selectedSection={selectedSection} />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="mb-6"
+        >
+          <ActionsStatus sections={sections} selectedSection={selectedSection} />
         </motion.div>
 
         {/* Receipt Upload Bar */}
