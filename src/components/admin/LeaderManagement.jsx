@@ -195,6 +195,24 @@ function LeaderProfile({ leader, user, sections, receipts, pageViews, onEdit, on
   );
 }
 
+function Field({ label, name, type = 'text', form, onChange }) {
+  return (
+    <div>
+      <Label className="text-xs text-gray-600 mb-1 block">{label}</Label>
+      <Input type={type} value={form[name] || ''} onChange={e => onChange(name, e.target.value)} />
+    </div>
+  );
+}
+
+function BoolField({ label, name, form, onChange }) {
+  return (
+    <div className="flex items-center gap-2">
+      <Checkbox id={`bool-${name}`} checked={!!form[name]} onCheckedChange={v => onChange(name, v)} />
+      <Label htmlFor={`bool-${name}`} className="text-sm cursor-pointer">{label}</Label>
+    </div>
+  );
+}
+
 const EMPTY_FORM = {
   display_name: '', phone: '', secondary_phone: '', address: '', postcode: '',
   date_of_birth: '', role_title: '', membership_number: '',
