@@ -30,9 +30,9 @@ Deno.serve(async (req) => {
       return Response.redirect(`https://sykescouts.org/AdminSettings?tab=osm&osm_error=${encodeURIComponent(e.message)}`, 302);
     }
 
-    // Get secrets
-    const clientId = 'LkvafKTrBEaPfXZqJw59LpLSyu8kBDOs';
-    const clientSecret = 'ZpL4LvHPHPN5uOY2ldszogI1fd6Ks5NFJ54DQlnhhDQVMEczG7KfAMSLeo2S81Dm';
+    // Get secrets from environment
+    const clientId = Deno.env.get('OSM_CLIENT_ID');
+    const clientSecret = Deno.env.get('OSM_CLIENT_SECRET');
     if (!clientId || !clientSecret) {
       return Response.redirect(`https://sykescouts.org/AdminSettings?tab=osm&osm_error=Missing%20client%20credentials`, 302);
     }
