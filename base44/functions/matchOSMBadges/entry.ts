@@ -17,39 +17,47 @@ Deno.serve(async (req) => {
     }
 
     const accessToken = settings.osm_access_token;
+    const sectionId = settings.osm_section_id;
+    const sectionType = settings.osm_section;
+    const termId = settings.osm_term_id || '0';
 
-    // Fetch OSM badges
-    console.log('Fetching OSM badges...');
-    const osmRes = await fetch('https://www.onlinescoutmanager.co.uk/ext/badges/records/?action=getAvailableBadges', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
-
-    if (!osmRes.ok) {
-      console.error('OSM fetch failed:', osmRes.status);
-      return Response.json({ error: 'Failed to fetch OSM badges' }, { status: 500 });
+    if (!sectionId || !sectionType) {
+      return Response.json({ error: 'OSM section not configured' }, { status: 400 });
     }
 
-    const osmText = await osmRes.text();
-    let osmData;
+    // Fetch OSM badges from all four types using GET requests
+    console.log(`Fetching OSM badges for section ${sectionType} (ID: ${sectionId})...`);
     
-    // Handle both direct JSON and HTML-embedded data
-    try {
-      osmData = JSON.parse(osmText);
-    } catch (_e) {
-      const match = osmText.match(/var data_holder = ({[\s\S]*?});/);
-      if (match) {
-        osmData = JSON.parse(match[1]);
-      } else {
-        return Response.json({ error: 'Could not parse OSM response' }, { status: 500 });
-      }
-    }
+    const badgeTypes = [
+      { id: 1, name: 'Challenge' },
+      { id: 2, name: 'Activity' },
+      { id: 3, name: 'Staged' },
+      { id: 4, name: 'Core' }
+    ];
 
-    const osmBadges = osmData.badges || [];
-    console.log(`Found ${osmBadges.length} OSM badges`);
+    const fetchBadges = async (typeId) => {
+      const url = `https://www.onlinescoutmanager.co.uk/ext/badges/records/?action=getAvailableBadges&section=${encodeURIComponent(sectionType)}&section_id=${sectionId}&term_id=${termId}&type_id=${typeId}`;
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+      if (!res.ok) {
+        console.error(`Failed to fetch type ${typeId}:`, res.status);
+        return [];
+      }
+      const data = await res.json();
+      return data.data || [];
+    };
+
+    const results = await Promise.all(badgeTypes.map(t => fetchBadges(t.id)));
+    
+    const osmBadges = results.flat();
+    badgeTypes.forEach((t, i) => {
+      console.log(`Found ${results[i].length} ${t.name} badges`);
+    });
+    console.log(`Found ${osmBadges.length} total OSM badges`);
 
     // Fetch app badges
     const appBadges = await base44.asServiceRole.entities.BadgeDefinition.filter({ active: true });
