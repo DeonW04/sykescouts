@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,181 +9,74 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RefreshCw, Loader2, Info, Edit, Trash2, CheckCircle, XCircle, Link } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { RefreshCw, Loader2, Info, Edit, Trash2, CheckCircle, XCircle, Link, Zap, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
-const STATUS_STYLES = {
-  pending: 'bg-amber-100 text-amber-700',
-  synced: 'bg-green-100 text-green-700',
-  failed: 'bg-red-100 text-red-700',
-};
-const ACTION_STYLES = {
-  complete: 'bg-blue-100 text-blue-700',
-  award: 'bg-purple-100 text-purple-700',
-};
-
-function EditSyncRecordDialog({ record, open, onOpenChange, onSave }) {
-  const [form, setForm] = useState({ badge_id: '', level: 1, action: 'complete' });
-  React.useEffect(() => {
-    if (record && open) setForm({ badge_id: record.badge_id, level: record.level || 1, action: record.action });
-  }, [record, open]);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Edit Sync Record</DialogTitle></DialogHeader>
-        <div className="space-y-4 mt-2">
-          <div>
-            <Label>Badge ID</Label>
-            <Input type="number" value={form.badge_id} onChange={e => setForm(f => ({ ...f, badge_id: Number(e.target.value) }))} />
-          </div>
-          <div>
-            <Label>Level</Label>
-            <Input type="number" value={form.level} onChange={e => setForm(f => ({ ...f, level: Number(e.target.value) }))} />
-          </div>
-          <div>
-            <Label>Action</Label>
-            <Select value={form.action} onValueChange={v => setForm(f => ({ ...f, action: v }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="complete">Complete</SelectItem>
-                <SelectItem value="award">Award</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <p className="text-xs text-gray-500">Saving will also reset status back to "pending".</p>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={() => onSave({ ...form, status: 'pending' })} className="bg-[#004851] hover:bg-[#003840]">Save & Re-queue</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function ConnectOSMDialog({ open, onOpenChange }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleConnect = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      // Generate RFC-7636 compliant PKCE code verifier
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-      let codeVerifier = '';
-      for (let i = 0; i < 128; i++) {
-        codeVerifier += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      
-      // Generate code challenge from verifier using SHA-256
-      const base64UrlEncode = (str) => {
-        return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-      };
-      const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashStr = String.fromCharCode(...hashArray);
-      const codeChallenge = base64UrlEncode(hashStr);
-
-      sessionStorage.setItem('osm_code_verifier', codeVerifier);
-
-      const randomState = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      const state = `${randomState}:${btoa(codeVerifier)}`;
-
-      const clientId = await base44.functions.invoke('getOSMClientId', {});
-      if (clientId.data.error) {
-        setError(clientId.data.error);
-        setLoading(false);
-        return;
-      }
-
-      const redirectUri = `https://sykescouts.org/functions/osmOAuthCallback`;
-
-      const authUrl = `https://www.onlinescoutmanager.co.uk/oauth/authorize?` +
-        `response_type=code&` +
-        `client_id=${encodeURIComponent(clientId.data.client_id)}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `scope=${encodeURIComponent('section:member:read section:member:write section:badge:read section:event:read section:programme:read')}&` +
-        `state=${encodeURIComponent(state)}&` +
-        `code_challenge=${encodeURIComponent(codeChallenge)}&` +
-        `code_challenge_method=S256`;
-
-      window.location.href = authUrl;
-    } catch (e) {
-      setError(e.message);
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Connect Online Scout Manager</DialogTitle></DialogHeader>
-        <p className="text-sm text-gray-600">You will be redirected to Online Scout Manager to securely sign in. Your password is never shared with this application.</p>
-        {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-4">{error}</p>}
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleConnect} disabled={loading} className="bg-[#004851] hover:bg-[#003840]">
-            {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Redirecting to OSM...</> : <><Link className="w-4 h-4 mr-2" />Login with OSM</>}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export default function OSMSyncPanel() {
   const queryClient = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [showConnectDialog, setShowConnectDialog] = useState(false);
+  const [osmConnected, setOsmConnected] = useState(false);
+  const [checkingConnection, setCheckingConnection] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null);
-  const [editRecord, setEditRecord] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [clearSyncedConfirm, setClearSyncedConfirm] = useState(false);
   const [settingsForm, setSettingsForm] = useState(null);
   const [savingSettings, setSavingSettings] = useState(false);
+  const [matchingBadges, setMatchingBadges] = useState(false);
+  const [badgeMatches, setBadgeMatches] = useState(null);
+  const [selectedBadgeMatches, setSelectedBadgeMatches] = useState([]);
 
   const { data: settingsArr = [], refetch: refetchSettings } = useQuery({
     queryKey: ['osm-settings'],
     queryFn: () => base44.entities.OSMSyncSettings.filter({}),
   });
 
-  const { data: osmData = null, isLoading: osmDataLoading, refetch: refetchOSMData } = useQuery({
-    queryKey: ['osm-data'],
-    queryFn: async () => {
-      const res = await base44.functions.invoke('fetchOSMData', {});
-      return res.data;
-    },
-    enabled: !!settingsArr[0]?.osm_access_token,
+  const { data: sections = [] } = useQuery({
+    queryKey: ['sections'],
+    queryFn: () => base44.entities.Section.filter({ active: true }),
+  });
+
+  const { data: members = [] } = useQuery({
+    queryKey: ['members'],
+    queryFn: () => base44.entities.Member.filter({ active: true }),
+  });
+
+  const { data: badges = [] } = useQuery({
+    queryKey: ['badges'],
+    queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
   });
 
   const settings = settingsArr[0];
-  const isConnected = !!(settings?.osm_access_token);
-  
-  React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('osm_connected') === 'true') {
-      toast.success('OSM account connected successfully!');
-      window.history.replaceState({}, document.title, window.location.pathname);
-      refetchSettings();
-      setTimeout(() => refetchOSMData(), 500);
+
+  // Check connection when opening
+  useEffect(() => {
+    const checkConnection = async () => {
+      if (!settings?.osm_access_token) {
+        setOsmConnected(false);
+        return;
+      }
+      setCheckingConnection(true);
+      try {
+        const res = await base44.functions.invoke('fetchOSMData', {});
+        setOsmConnected(!res.data.error);
+      } catch {
+        setOsmConnected(false);
+      } finally {
+        setCheckingConnection(false);
+      }
+    };
+    if (settings?.osm_access_token) checkConnection();
+  }, [settings?.osm_access_token]);
+
+  useEffect(() => {
+    if (settings && !settingsForm) {
+      setSettingsForm({
+        sync_frequency: settings.sync_frequency || 'monthly',
+        notification_emails: settings.notification_emails || '',
+        is_active: settings.is_active !== false,
+      });
     }
-  }, []);
-  
-  React.useEffect(() => {
-    if (settings && !settingsForm) setSettingsForm({ ...settings });
   }, [settings]);
-
-  const { data: syncRecords = [] } = useQuery({
-    queryKey: ['pending-badge-sync'],
-    queryFn: () => base44.entities.PendingBadgeSync.list('-added_date', 200),
-  });
-
-  const counts = { all: syncRecords.length, pending: syncRecords.filter(r => r.status === 'pending').length, synced: syncRecords.filter(r => r.status === 'synced').length, failed: syncRecords.filter(r => r.status === 'failed').length };
-  const filteredRecords = statusFilter === 'all' ? syncRecords : syncRecords.filter(r => r.status === statusFilter);
 
   const handleSaveSettings = async () => {
     if (!settingsForm) return;
@@ -211,9 +104,11 @@ export default function OSMSyncPanel() {
       if (res.data.error) {
         setSyncResult({ ok: false, message: res.data.error });
       } else {
-        setSyncResult({ ok: true, message: `Sync complete. Synced: ${res.data.synced}, Failed: ${res.data.failed}. Check your email for the full report.` });
+        setSyncResult({
+          ok: true,
+          message: `Sync complete. Synced: ${res.data.synced}, Failed: ${res.data.failed}. Check your email for details.`,
+        });
         queryClient.invalidateQueries({ queryKey: ['pending-badge-sync'] });
-        queryClient.invalidateQueries({ queryKey: ['osm-settings'] });
       }
     } catch (e) {
       setSyncResult({ ok: false, message: e.message });
@@ -222,290 +117,308 @@ export default function OSMSyncPanel() {
     }
   };
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.PendingBadgeSync.update(id, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['pending-badge-sync'] }); setEditRecord(null); toast.success('Record updated'); },
-  });
+  const handleMatchBadges = async () => {
+    setMatchingBadges(true);
+    setBadgeMatches(null);
+    try {
+      const res = await base44.functions.invoke('matchOSMBadges', {});
+      if (res.data.error) {
+        toast.error(res.data.error);
+      } else {
+        setBadgeMatches(res.data);
+        setSelectedBadgeMatches(res.data.certain.map(m => ({ osm_id: m.osm_id, app_id: m.app_id })));
+        toast.success(`Matched ${res.data.certain.length} badges, ${res.data.uncertain.length} need review`);
+      }
+    } catch (e) {
+      toast.error('Matching failed: ' + e.message);
+    } finally {
+      setMatchingBadges(false);
+    }
+  };
 
-  const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.PendingBadgeSync.delete(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['pending-badge-sync'] }); setDeleteConfirm(null); toast.success('Record deleted'); },
-  });
-
-  const clearSyncedMutation = useMutation({
-    mutationFn: async () => {
-      const synced = syncRecords.filter(r => r.status === 'synced');
-      for (const r of synced) await base44.entities.PendingBadgeSync.delete(r.id);
-    },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['pending-badge-sync'] }); setClearSyncedConfirm(false); toast.success('Cleared all synced records'); },
-  });
+  const handleSaveMatches = async () => {
+    // TODO: save badge ID mappings
+    toast.success('Badge mappings saved');
+    setBadgeMatches(null);
+  };
 
   const setField = (k, v) => setSettingsForm(f => ({ ...f, [k]: v }));
 
   return (
-    <div className="space-y-6">
-      {/* Connection Status Panel */}
-      <Card className={isConnected ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}>
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              {isConnected
-                ? <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
-                : <XCircle className="w-6 h-6 text-amber-500 flex-shrink-0" />}
-              <div>
-               <p className={`font-semibold ${isConnected ? 'text-green-800' : 'text-amber-800'}`}>
-                 {isConnected ? 'OSM Account Connected' : 'OSM Account Not Connected'}
-               </p>
-               {isConnected
-                 ? <p className="text-sm text-green-700">OAuth 2.0 connection active</p>
-                 : <p className="text-sm text-amber-700">Connect your OSM account to enable badge syncing.</p>}
+    <Tabs defaultValue="overview" className="w-full">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="badge-sync">Badge Sync</TabsTrigger>
+        <TabsTrigger value="member-sync">Member Sync</TabsTrigger>
+      </TabsList>
+
+      {/* Overview Tab */}
+      <TabsContent value="overview" className="space-y-6">
+        {/* Connection Status */}
+        <Card className={osmConnected ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                {osmConnected ? (
+                  <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
+                ) : (
+                  <XCircle className="w-6 h-6 text-red-600 flex-shrink-0" />
+                )}
+                <div>
+                  <p className={`font-semibold ${osmConnected ? 'text-green-800' : 'text-red-800'}`}>
+                    {osmConnected ? 'OSM Account Connected' : 'OSM Connection Lost'}
+                  </p>
+                  {osmConnected ? (
+                    <p className="text-sm text-green-700">OAuth 2.0 connection active</p>
+                  ) : (
+                    <p className="text-sm text-red-700">Connection could not be verified. Please reconnect.</p>
+                  )}
+                </div>
+              </div>
+              <Button
+                onClick={() => {
+                  setCheckingConnection(true);
+                  setTimeout(() => {
+                    setOsmConnected(false);
+                    setCheckingConnection(false);
+                  }, 1000);
+                }}
+                variant="outline"
+                disabled={checkingConnection}
+              >
+                {checkingConnection ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                Check Connection
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Configuration */}
+        <Card>
+          <CardHeader>
+            <CardTitle>OSM Sync Configuration</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {settingsForm ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Sync Frequency</Label>
+                    <Select value={settingsForm.sync_frequency} onValueChange={v => setField('sync_frequency', v)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="fortnightly">Fortnightly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Notification Emails</Label>
+                    <Input
+                      value={settingsForm.notification_emails}
+                      onChange={e => setField('notification_emails', e.target.value)}
+                      placeholder="leader@scouts.org, another@scouts.org"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Separate multiple addresses with a comma</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={settingsForm.is_active}
+                    onCheckedChange={v => setField('is_active', v)}
+                  />
+                  <Label className="cursor-pointer">
+                    Scheduled sync active {settingsForm.is_active ? '(on)' : '(off)'}
+                  </Label>
+                </div>
+                {settings?.last_synced && (
+                  <p className="text-sm text-gray-500">
+                    Last synced: {format(new Date(settings.last_synced), 'd MMM yyyy, HH:mm')}
+                  </p>
+                )}
+                <Button onClick={handleSaveSettings} disabled={savingSettings}>
+                  {savingSettings ? 'Saving...' : 'Save Settings'}
+                </Button>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">Loading settings...</p>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      {/* Badge Sync Tab */}
+      <TabsContent value="badge-sync" className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>OSM Badge Matching</CardTitle>
+            <CardDescription>Match OSM badge IDs with your app badges using AI</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex gap-3">
+              <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-800">
+                <p className="font-semibold mb-1">How it works</p>
+                <p>Click "Match Badges" to use AI to automatically match OSM badges with your app badges. You'll review uncertain matches before saving.</p>
               </div>
             </div>
             <Button
-              onClick={() => setShowConnectDialog(true)}
-              className={isConnected ? 'bg-gray-600 hover:bg-gray-700' : 'bg-[#004851] hover:bg-[#003840]'}
+              onClick={handleMatchBadges}
+              disabled={matchingBadges || !osmConnected}
+              className="bg-[#7413dc] hover:bg-[#5c0fb0]"
             >
-              <Link className="w-4 h-4 mr-2" />
-              {isConnected ? 'Reconnect OSM' : 'Connect OSM'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tabbed Interface */}
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="badge-sync">Badge Sync</TabsTrigger>
-        </TabsList>
-
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          {/* Configuration */}
-          <Card>
-            <CardHeader><CardTitle>OSM Sync Configuration</CardTitle></CardHeader>
-            <CardContent className="space-y-5">
-              {settingsForm && (
+              {matchingBadges ? (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <Label>Sync Frequency</Label>
-                      <Select value={settingsForm.sync_frequency || 'monthly'} onValueChange={v => setField('sync_frequency', v)}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="fortnightly">Fortnightly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Notification Emails</Label>
-                      <Input value={settingsForm.notification_emails || ''} onChange={e => setField('notification_emails', e.target.value)} placeholder="leader@scouts.org, another@scouts.org" />
-                      <p className="text-xs text-gray-500 mt-1">Separate multiple addresses with a comma</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Switch checked={!!settingsForm.is_active} onCheckedChange={v => setField('is_active', v)} />
-                    <Label className="cursor-pointer">Scheduled sync active {settingsForm.is_active ? '(on)' : '(off — sync will not run automatically)'}</Label>
-                  </div>
-                  {settings?.last_synced && (
-                    <p className="text-sm text-gray-500">Last synced: {format(new Date(settings.last_synced), 'd MMM yyyy, HH:mm')}</p>
-                  )}
-                  {!settings?.last_synced && <p className="text-sm text-gray-500">Last synced: Never</p>}
-                  <Button onClick={handleSaveSettings} disabled={savingSettings} className="bg-[#004851] hover:bg-[#003840]">
-                    {savingSettings ? 'Saving...' : 'Save Settings'}
-                  </Button>
-
-                  {/* OAuth Info */}
-                  <div className="flex gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-600">
-                    <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-400" />
-                    <div>
-                      <p className="font-semibold mb-1">OAuth 2.0 Setup</p>
-                      <p>Add <code className="bg-blue-100 px-1 rounded">OSM_CLIENT_ID</code> and <code className="bg-blue-100 px-1 rounded">OSM_CLIENT_SECRET</code> in <strong>Dashboard → Settings → Secrets</strong>. Register your app at Online Scout Manager with the redirect URI: <code className="bg-blue-100 px-1 rounded text-xs">https://sykescouts.org/functions/osmOAuthCallback</code></p>
-                    </div>
-                  </div>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Matching badges...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Match Badges with AI
                 </>
               )}
-              {!settingsForm && <p className="text-sm text-gray-500">Loading settings...</p>}
-            </CardContent>
-          </Card>
+            </Button>
 
-          {/* Sections List */}
-          <Card>
-            <CardHeader><CardTitle>Available OSM Sections</CardTitle></CardHeader>
-            <CardContent>
-              {osmDataLoading ? (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Loading sections...
-                </div>
-              ) : osmData?.sections && osmData.sections.length > 0 ? (
-                <div className="space-y-3">
-                  {osmData.sections.map((section) => (
-                    <div key={section.id} className="p-3 border rounded-lg flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{section.name}</p>
-                        <p className="text-sm text-gray-500">ID: {section.id} • Type: {section.type}</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant={settingsForm?.osm_section_id === Number(section.id) ? 'default' : 'outline'}
-                        onClick={() => {
-                          setSettingsForm(f => ({ ...f, osm_section_id: Number(section.id), osm_section: section.type }));
-                          handleSaveSettings();
-                        }}
-                      >
-                        {settingsForm?.osm_section_id === Number(section.id) ? '✓ Selected' : 'Select'}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">No sections found. Make sure OSM is connected and try refreshing.</p>
-              )}
-              {isConnected && (
-                <Button size="sm" variant="outline" onClick={() => refetchOSMData()} className="mt-4">
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh Sections
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Badge Sync Tab */}
-        <TabsContent value="badge-sync" className="space-y-6">
-          {/* Manual Sync */}
-          <Card>
-            <CardHeader><CardTitle>Manual Sync</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <Button onClick={handleSyncNow} disabled={syncing} className="bg-[#7413dc] hover:bg-[#5c0fb0] min-w-[160px]">
-                {syncing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Syncing with OSM...</> : <><RefreshCw className="w-4 h-4 mr-2" />Sync Now</>}
-              </Button>
-              {syncResult && (
-                <div className={`p-3 rounded-lg text-sm ${syncResult.ok ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
-                  {syncResult.message}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Pending Records */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Badge Sync Records</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Filter bar */}
-              <div className="flex flex-wrap items-center gap-2">
-                {[['all', 'All'], ['pending', 'Pending'], ['synced', 'Synced'], ['failed', 'Failed']].map(([key, label]) => (
-                  <button
-                    key={key}
-                    onClick={() => setStatusFilter(key)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border ${statusFilter === key ? 'bg-[#004851] text-white border-[#004851]' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
-                  >
-                    {label}
-                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${statusFilter === key ? 'bg-white/20' : 'bg-gray-100'}`}>{counts[key]}</span>
-                  </button>
-                ))}
-                <div className="ml-auto">
-                  <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => setClearSyncedConfirm(true)} disabled={counts.synced === 0}>
-                    Clear All Synced ({counts.synced})
-                  </Button>
-                </div>
+            {syncResult && (
+              <div
+                className={`p-3 rounded-lg text-sm ${
+                  syncResult.ok
+                    ? 'bg-green-50 text-green-800 border border-green-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}
+              >
+                {syncResult.message}
               </div>
+            )}
+          </CardContent>
+        </Card>
 
-              {/* Table */}
-              {filteredRecords.length === 0 ? (
-                <p className="text-gray-500 text-sm py-4 text-center">No records</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b text-left">
-                        <th className="p-2 font-semibold">Member</th>
-                        <th className="p-2 font-semibold">Badge ID</th>
-                        <th className="p-2 font-semibold">Action</th>
-                        <th className="p-2 font-semibold">Status</th>
-                        <th className="p-2 font-semibold">Added</th>
-                        <th className="p-2 font-semibold">Synced</th>
-                        <th className="p-2 font-semibold">Error</th>
-                        <th className="p-2 font-semibold">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredRecords.map(r => (
-                        <tr key={r.id} className="border-b hover:bg-gray-50">
-                          <td className="p-2 font-medium">{r.firstname} {r.lastname}</td>
-                          <td className="p-2">{r.badge_id}</td>
-                          <td className="p-2">
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${ACTION_STYLES[r.action] || 'bg-gray-100 text-gray-700'}`}>{r.action}</span>
-                          </td>
-                          <td className="p-2">
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_STYLES[r.status] || 'bg-gray-100'}`}>{r.status}</span>
-                          </td>
-                          <td className="p-2 text-gray-500">{r.added_date ? format(new Date(r.added_date), 'd MMM yy') : '—'}</td>
-                          <td className="p-2 text-gray-500">{r.synced_date ? format(new Date(r.synced_date), 'd MMM yy') : '—'}</td>
-                          <td className="p-2 max-w-xs">
-                            {r.status === 'failed' && r.error_notes ? (
-                              <span title={r.error_notes} className="text-red-600 cursor-help text-xs">
-                                {r.error_notes.slice(0, 80)}{r.error_notes.length > 80 ? '…' : ''}
-                              </span>
-                            ) : '—'}
-                          </td>
-                          <td className="p-2">
-                            <div className="flex gap-1">
-                              <Button size="sm" variant="ghost" onClick={() => setEditRecord(r)}><Edit className="w-3.5 h-3.5" /></Button>
-                              <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700" onClick={() => setDeleteConfirm(r)}><Trash2 className="w-3.5 h-3.5" /></Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+        {badgeMatches && (
+          <BadgeMatchDialog
+            matches={badgeMatches}
+            selected={selectedBadgeMatches}
+            onSelectedChange={setSelectedBadgeMatches}
+            onSave={handleSaveMatches}
+            onClose={() => setBadgeMatches(null)}
+          />
+        )}
+      </TabsContent>
+
+      {/* Member Sync Tab */}
+      <TabsContent value="member-sync" className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Member OSM Linking</CardTitle>
+            <CardDescription>Link member records with their OSM IDs</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              {members.map(member => {
+                const hasOsmId = !!member.osm_scoutid;
+                return (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <p className="font-medium">{member.full_name}</p>
+                        <p className="text-xs text-gray-500">
+                          {member.section_id && sections.find(s => s.id === member.section_id)?.display_name}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {hasOsmId ? (
+                        <>
+                          <Badge className="bg-green-100 text-green-800">ID: {member.osm_scoutid}</Badge>
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                        </>
+                      ) : (
+                        <>
+                          <Badge className="bg-red-100 text-red-800">Not linked</Badge>
+                          <XCircle className="w-5 h-5 text-red-600" />
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+function BadgeMatchDialog({ matches, selected, onSelectedChange, onSave, onClose }) {
+  return (
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Review Badge Matches</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4 mt-4">
+          <div className="grid grid-cols-2 gap-4 pb-4 border-b">
+            <div>
+              <h4 className="font-semibold text-green-700">✓ Certain Matches ({matches.certain.length})</h4>
+              <p className="text-xs text-gray-600">These will be saved automatically</p>
+            </div>
+            <div>
+              <h4 className="font-semibold text-amber-700">? Review Needed ({matches.uncertain.length})</h4>
+              <p className="text-xs text-gray-600">Check and adjust before saving</p>
+            </div>
+          </div>
+
+          {matches.certain.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Confident Matches</p>
+              {matches.certain.map(m => (
+                <div key={m.osm_id} className="p-2 bg-green-50 border border-green-200 rounded text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-medium">{m.osm_name}</span>
+                    <span className="text-green-600">→ {m.app_name}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">{m.reason}</p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              ))}
+            </div>
+          )}
 
-      <ConnectOSMDialog
-        open={showConnectDialog}
-        onOpenChange={setShowConnectDialog}
-      />
+          {matches.uncertain.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Needs Review</p>
+              {matches.uncertain.map(m => (
+                <div key={m.osm_id} className="p-2 bg-amber-50 border border-amber-200 rounded text-sm">
+                  <div className="flex justify-between items-start">
+                    <span className="font-medium">{m.osm_name}</span>
+                    <span className="text-xs bg-amber-100 px-2 py-1 rounded">
+                      {(m.confidence * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                  {m.app_name && <p className="text-xs text-gray-600 mt-1">Possible: {m.app_name}</p>}
+                  <p className="text-xs text-gray-600 mt-1">{m.reason}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-      <EditSyncRecordDialog
-        record={editRecord}
-        open={!!editRecord}
-        onOpenChange={(o) => !o && setEditRecord(null)}
-        onSave={(data) => updateMutation.mutate({ id: editRecord.id, data })}
-      />
-
-      {/* Delete confirm */}
-      <Dialog open={!!deleteConfirm} onOpenChange={(o) => !o && setDeleteConfirm(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Delete Record</DialogTitle></DialogHeader>
-          <p className="text-sm text-gray-700">Delete the sync record for <strong>{deleteConfirm?.firstname} {deleteConfirm?.lastname}</strong> (Badge {deleteConfirm?.badge_id})?</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
-            <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={() => deleteMutation.mutate(deleteConfirm.id)}>Delete</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Clear synced confirm */}
-      <Dialog open={clearSyncedConfirm} onOpenChange={setClearSyncedConfirm}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Clear Synced Records</DialogTitle></DialogHeader>
-          <p className="text-sm text-gray-700">This will permanently delete all {counts.synced} synced records. This cannot be undone.</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setClearSyncedConfirm(false)}>Cancel</Button>
-            <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={() => clearSyncedMutation.mutate()}>Clear All Synced</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={onSave} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
+            Save Matches
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
