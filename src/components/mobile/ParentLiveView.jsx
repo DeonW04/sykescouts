@@ -34,11 +34,13 @@ export default function ParentLiveView({ session, onBack }) {
 
   const attendingLeaders = leaderAttendances
     .filter(a => a.status === 'attending')
-    .map(a => {
+    .reduce((acc, a) => {
+      if (acc.some(l => l._leaderId === a.leader_id)) return acc;
       const leader = allLeaders.find(l => l.id === a.leader_id);
       const user = leader ? allUsers.find(u => u.id === leader.user_id) : null;
-      return leader ? { ...leader, full_name: user?.full_name || leader.display_name } : null;
-    })
+      if (!leader) return acc;
+      return [...acc, { ...leader, _leaderId: a.leader_id, full_name: user?.full_name || leader.display_name }];
+    }, [])
     .filter(Boolean);
 
   const accent = isEvent ? 'bg-[#7413dc]' : 'bg-[#004851]';
