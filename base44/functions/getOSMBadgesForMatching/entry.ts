@@ -78,13 +78,24 @@ Deno.serve(async (req) => {
           type: typeof data,
           has_data: 'data' in data,
           has_items: 'items' in data,
-          data_keys: Object.keys(data),
-          count: Array.isArray(data?.data) ? data.data.length : Array.isArray(data) ? data.length : 'N/A'
+          has_identifier: 'identifier' in data,
+          has_label: 'label' in data,
+          data_keys: Object.keys(data)
         });
 
-        // Try multiple response formats
-        const badges = data.data || data.items || (Array.isArray(data) ? data : []);
-        console.log(`[getOSMBadgesForMatching] ${typeName} extracted ${badges.length} badges`);
+        // Handle OSM response format: items is an object with badge objects as values
+        let badges = [];
+        if (data.items && typeof data.items === 'object' && !Array.isArray(data.items)) {
+          // Convert object values to array
+          badges = Object.values(data.items);
+          console.log(`[getOSMBadgesForMatching] ${typeName} extracted from items object: ${badges.length} badges`);
+        } else if (Array.isArray(data?.data)) {
+          badges = data.data;
+          console.log(`[getOSMBadgesForMatching] ${typeName} extracted from data array: ${badges.length} badges`);
+        } else if (Array.isArray(data)) {
+          badges = data;
+          console.log(`[getOSMBadgesForMatching] ${typeName} extracted from direct array: ${badges.length} badges`);
+        }
         
         if (badges.length > 0) {
           console.log(`[getOSMBadgesForMatching] ${typeName} sample badge:`, JSON.stringify(badges[0]));
