@@ -108,8 +108,10 @@ function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
         `code_challenge=${encodeURIComponent(codeChallenge)}&` +
         `code_challenge_method=S256`;
 
-      // Redirect to OSM OAuth endpoint
-      window.location.href = authUrl;
+      // Redirect to OSM OAuth endpoint with code_verifier as query param
+      const callbackUrl = new URL(authUrl);
+      callbackUrl.searchParams.append('code_verifier', codeVerifier);
+      window.location.href = callbackUrl.toString();
     } catch (e) {
       setError(e.message);
       setLoading(false);
