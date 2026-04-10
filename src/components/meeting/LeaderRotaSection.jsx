@@ -360,7 +360,7 @@ export default function LeaderRotaSection({ programmeId, eventId, sectionId }) {
                               {parentName.charAt(0)}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-gray-800">{parentName}'s parent</p>
+                              <p className="text-sm font-medium text-gray-800">{member.full_name || `${member.first_name} ${member.surname}`}'s Parent ({parentName})</p>
                               <p className="text-xs text-gray-500 truncate">{parentEmail}</p>
                             </div>
                           </div>
