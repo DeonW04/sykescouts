@@ -27,13 +27,20 @@ Deno.serve(async (req) => {
     });
 
     const text = await res.text();
+    console.log('OSM raw response:', text);
+    console.log('OSM status:', res.status);
+
+    if (!text || text.trim() === '') {
+      return Response.json({ error: 'OSM returned an empty response. This usually means the email or password is incorrect, or your OSM_API_ID / OSM_TOKEN are invalid.' }, { status: 400 });
+    }
+
     let data;
     try { data = JSON.parse(text); } catch { 
-      return Response.json({ error: 'Unexpected response from OSM. Check your credentials.' }, { status: 400 });
+      return Response.json({ error: `OSM returned unexpected non-JSON response (status ${res.status}): ${text.slice(0, 500)}` }, { status: 400 });
     }
 
     if (!data.userid || !data.secret) {
-      return Response.json({ error: data.message || data.error || 'OSM authorisation failed. Check your email and password.' }, { status: 400 });
+      return Response.json({ error: data.message || data.error || `OSM authorisation failed. Response: ${JSON.stringify(data)}` }, { status: 400 });
     }
 
     // Store userid + secret in OSMSyncSettings
