@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { RefreshCw, Loader2, Info, Edit, Trash2 } from 'lucide-react';
+import { RefreshCw, Loader2, Info, Edit, Trash2, CheckCircle, XCircle, Link } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -62,9 +62,63 @@ function EditSyncRecordDialog({ record, open, onOpenChange, onSave }) {
   );
 }
 
+function ConnectOSMDialog({ open, onOpenChange, onSuccess }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleConnect = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const res = await base44.functions.invoke('connectOSM', { email, password });
+      if (res.data.error) {
+        setError(res.data.error);
+      } else {
+        onSuccess(res.data.userid);
+        onOpenChange(false);
+        setEmail('');
+        setPassword('');
+      }
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Connect Online Scout Manager</DialogTitle></DialogHeader>
+        <p className="text-sm text-gray-600">Enter your OSM account credentials. These are sent securely to the server — your password is never stored.</p>
+        <div className="space-y-4 mt-2">
+          <div>
+            <Label>OSM Email</Label>
+            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
+          </div>
+          <div>
+            <Label>OSM Password</Label>
+            <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Your OSM password" />
+          </div>
+          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={handleConnect} disabled={loading || !email || !password} className="bg-[#004851] hover:bg-[#003840]">
+            {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Connecting...</> : <><Link className="w-4 h-4 mr-2" />Connect OSM</>}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function OSMSyncPanel() {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState('all');
+  const [showConnectDialog, setShowConnectDialog] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null);
   const [editRecord, setEditRecord] = useState(null);
@@ -73,12 +127,13 @@ export default function OSMSyncPanel() {
   const [settingsForm, setSettingsForm] = useState(null);
   const [savingSettings, setSavingSettings] = useState(false);
 
-  const { data: settingsArr = [] } = useQuery({
+  const { data: settingsArr = [], refetch: refetchSettings } = useQuery({
     queryKey: ['osm-settings'],
     queryFn: () => base44.entities.OSMSyncSettings.filter({}),
   });
 
   const settings = settingsArr[0];
+  const isConnected = !!(settings?.osm_userid && settings?.osm_secret);
   React.useEffect(() => {
     if (settings && !settingsForm) setSettingsForm({ ...settings });
   }, [settings]);
@@ -151,6 +206,34 @@ export default function OSMSyncPanel() {
 
   return (
     <div className="space-y-6">
+      {/* Connection Status Panel */}
+      <Card className={isConnected ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}>
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              {isConnected
+                ? <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
+                : <XCircle className="w-6 h-6 text-amber-500 flex-shrink-0" />}
+              <div>
+                <p className={`font-semibold ${isConnected ? 'text-green-800' : 'text-amber-800'}`}>
+                  {isConnected ? 'OSM Account Connected' : 'OSM Account Not Connected'}
+                </p>
+                {isConnected
+                  ? <p className="text-sm text-green-700">User ID: {settings.osm_userid}</p>
+                  : <p className="text-sm text-amber-700">Connect your OSM account to enable badge syncing.</p>}
+              </div>
+            </div>
+            <Button
+              onClick={() => setShowConnectDialog(true)}
+              className={isConnected ? 'bg-gray-600 hover:bg-gray-700' : 'bg-[#004851] hover:bg-[#003840]'}
+            >
+              <Link className="w-4 h-4 mr-2" />
+              {isConnected ? 'Reconnect OSM' : 'Connect OSM'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Panel 1 — Configuration */}
       <Card>
         <CardHeader><CardTitle>OSM Sync Configuration</CardTitle></CardHeader>
@@ -200,7 +283,7 @@ export default function OSMSyncPanel() {
                 <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-gray-400" />
                 <div>
                   <p className="font-semibold mb-1">Required Secrets</p>
-                  <p>Before this sync will work, you must add the following four secrets in <strong>Dashboard → Settings → Secrets</strong>: <code className="bg-gray-100 px-1 rounded">OSM_API_ID</code>, <code className="bg-gray-100 px-1 rounded">OSM_TOKEN</code>, <code className="bg-gray-100 px-1 rounded">OSM_USERID</code>, <code className="bg-gray-100 px-1 rounded">OSM_SECRET</code>. Your <code className="bg-gray-100 px-1 rounded">OSM_API_ID</code> and <code className="bg-gray-100 px-1 rounded">OSM_TOKEN</code> come from your OSM OAuth client credentials. To get <code className="bg-gray-100 px-1 rounded">OSM_USERID</code> and <code className="bg-gray-100 px-1 rounded">OSM_SECRET</code>, make a one-time POST to <code className="bg-gray-100 px-1 rounded text-xs">https://www.onlinescoutmanager.co.uk/users.php?action=authorise</code> with your apiid, token, email and password — the response contains the userid and secret values to store.</p>
+                  <p>Add <code className="bg-gray-100 px-1 rounded">OSM_API_ID</code> and <code className="bg-gray-100 px-1 rounded">OSM_TOKEN</code> in <strong>Dashboard → Settings → Secrets</strong>. Then use the <strong>Connect OSM</strong> button above — your userid and secret will be stored securely in the database automatically.</p>
                 </div>
               </div>
             </>
@@ -301,6 +384,12 @@ export default function OSMSyncPanel() {
           )}
         </CardContent>
       </Card>
+
+      <ConnectOSMDialog
+        open={showConnectDialog}
+        onOpenChange={setShowConnectDialog}
+        onSuccess={() => { refetchSettings(); queryClient.invalidateQueries({ queryKey: ['osm-settings'] }); toast.success('OSM account connected successfully!'); }}
+      />
 
       <EditSyncRecordDialog
         record={editRecord}

@@ -6,18 +6,22 @@ Deno.serve(async (req) => {
 
     const apiid = Deno.env.get('OSM_API_ID');
     const token = Deno.env.get('OSM_TOKEN');
-    const userid = Deno.env.get('OSM_USERID');
-    const secret = Deno.env.get('OSM_SECRET');
-
-    if (!apiid || !token || !userid || !secret) {
-      return Response.json({ error: 'OSM secrets not configured.' }, { status: 500 });
+    if (!apiid || !token) {
+      return Response.json({ error: 'OSM_API_ID and OSM_TOKEN secrets not configured.' }, { status: 500 });
     }
-
-    const authFields = `apiid=${encodeURIComponent(apiid)}&token=${encodeURIComponent(token)}&userid=${encodeURIComponent(userid)}&secret=${encodeURIComponent(secret)}`;
 
     // Step A — Guard
     const settingsArr = await base44.asServiceRole.entities.OSMSyncSettings.filter({});
     const settings = settingsArr[0];
+
+    const userid = settings?.osm_userid;
+    const secret = settings?.osm_secret;
+    if (!userid || !secret) {
+      return Response.json({ error: 'OSM account not connected. Please connect in Admin Settings → OSM Badge Sync.' }, { status: 500 });
+    }
+
+    const authFields = `apiid=${encodeURIComponent(apiid)}&token=${encodeURIComponent(token)}&userid=${encodeURIComponent(userid)}&secret=${encodeURIComponent(secret)}`;
+
     if (!settings || !settings.is_active) {
       return Response.json({ message: 'Sync is disabled.' });
     }

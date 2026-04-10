@@ -24,6 +24,14 @@
       "type": "string",
       "description": "OSM section type e.g. scouts"
     },
+    "osm_userid": {
+      "type": "string",
+      "description": "OSM User ID obtained from authorise endpoint"
+    },
+    "osm_secret": {
+      "type": "string",
+      "description": "OSM Secret obtained from authorise endpoint"
+    },
     "last_synced": {
       "type": "string",
       "format": "date-time",

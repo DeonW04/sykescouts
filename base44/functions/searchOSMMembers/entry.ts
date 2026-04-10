@@ -8,22 +8,22 @@ Deno.serve(async (req) => {
 
     const apiid = Deno.env.get('OSM_API_ID');
     const token = Deno.env.get('OSM_TOKEN');
-    const userid = Deno.env.get('OSM_USERID');
-    const secret = Deno.env.get('OSM_SECRET');
-
-    if (!apiid || !token || !userid || !secret) {
-      return Response.json({ error: 'OSM secrets not configured. Please add OSM_API_ID, OSM_TOKEN, OSM_USERID, OSM_SECRET in Dashboard → Settings → Secrets.' }, { status: 500 });
+    if (!apiid || !token) {
+      return Response.json({ error: 'OSM_API_ID and OSM_TOKEN secrets not configured.' }, { status: 500 });
     }
 
-    // Fetch OSM settings
-    const settings = await base44.asServiceRole.entities.OSMSyncSettings.filter({});
-    const config = settings[0];
+    // Fetch OSM settings (credentials stored in DB)
+    const settingsArr = await base44.asServiceRole.entities.OSMSyncSettings.filter({});
+    const config = settingsArr[0];
     if (!config || !config.osm_section_id) {
       return Response.json({ error: 'OSM section not configured. Please set OSM Section ID in Admin Settings → OSM Badge Sync.' }, { status: 500 });
     }
+    if (!config.osm_userid || !config.osm_secret) {
+      return Response.json({ error: 'OSM account not connected. Please connect in Admin Settings → OSM Badge Sync.' }, { status: 500 });
+    }
 
     const sectionId = config.osm_section_id;
-    const authBody = `apiid=${encodeURIComponent(apiid)}&token=${encodeURIComponent(token)}&userid=${encodeURIComponent(userid)}&secret=${encodeURIComponent(secret)}`;
+    const authBody = `apiid=${encodeURIComponent(apiid)}&token=${encodeURIComponent(token)}&userid=${encodeURIComponent(config.osm_userid)}&secret=${encodeURIComponent(config.osm_secret)}`;
 
     // Try with termid=0 first
     const tryFetch = async (termid) => {
