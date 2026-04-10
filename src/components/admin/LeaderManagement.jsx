@@ -211,18 +211,6 @@ function EditLeaderDialog({ open, onOpenChange, leader, sections, onSave }) {
   const [form, setForm] = useState(EMPTY_FORM);
   React.useEffect(() => { if (leader && open) setForm({ ...EMPTY_FORM, ...leader }); }, [leader, open]);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const Field = ({ label, name, type = 'text' }) => (
-    <div className="space-y-1">
-      <Label className="text-xs">{label}</Label>
-      <Input type={type} value={form[name] || ''} onChange={e => set(name, e.target.value)} className="h-8 text-sm" />
-    </div>
-  );
-  const BoolField = ({ label, name }) => (
-    <div className="flex items-center gap-2">
-      <Checkbox id={name} checked={!!form[name]} onCheckedChange={v => set(name, v)} />
-      <Label htmlFor={name} className="text-sm cursor-pointer">{label}</Label>
-    </div>
-  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -232,52 +220,52 @@ function EditLeaderDialog({ open, onOpenChange, leader, sections, onSave }) {
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Basic Details</p>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Display Name" name="display_name" />
-              <Field label="Role / Appointment Title" name="role_title" />
-              <Field label="Membership Number" name="membership_number" />
-              <Field label="Date of Birth" name="date_of_birth" type="date" />
+              <Field label="Display Name" name="display_name" form={form} onChange={set} />
+              <Field label="Role / Appointment Title" name="role_title" form={form} onChange={set} />
+              <Field label="Membership Number" name="membership_number" form={form} onChange={set} />
+              <Field label="Date of Birth" name="date_of_birth" type="date" form={form} onChange={set} />
             </div>
           </div>
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Contact</p>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Phone" name="phone" />
-              <Field label="Secondary Phone" name="secondary_phone" />
-              <div className="col-span-2"><Field label="Address" name="address" /></div>
-              <Field label="Postcode" name="postcode" />
+              <Field label="Phone" name="phone" form={form} onChange={set} />
+              <Field label="Secondary Phone" name="secondary_phone" form={form} onChange={set} />
+              <div className="col-span-2"><Field label="Address" name="address" form={form} onChange={set} /></div>
+              <Field label="Postcode" name="postcode" form={form} onChange={set} />
             </div>
           </div>
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Disclosure & Compliance</p>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="DBS Certificate Number" name="dbs_certificate_number" />
+              <Field label="DBS Certificate Number" name="dbs_certificate_number" form={form} onChange={set} />
               <div />
-              <Field label="DBS Check Date" name="dbs_check_date" type="date" />
-              <Field label="DBS Expiry Date" name="dbs_expiry_date" type="date" />
+              <Field label="DBS Check Date" name="dbs_check_date" type="date" form={form} onChange={set} />
+              <Field label="DBS Expiry Date" name="dbs_expiry_date" type="date" form={form} onChange={set} />
             </div>
             <div className="mt-3 space-y-2">
-              <BoolField label="First Aid Certified" name="first_aid_certified" />
-              {form.first_aid_certified && <Field label="First Aid Expiry" name="first_aid_expiry" type="date" />}
-              <BoolField label="Safeguarding Trained" name="safeguarding_trained" />
-              {form.safeguarding_trained && <Field label="Safeguarding Expiry" name="safeguarding_expiry" type="date" />}
-              <BoolField label="GDPR Trained" name="gdpr_trained" />
+              <BoolField label="First Aid Certified" name="first_aid_certified" form={form} onChange={set} />
+              {form.first_aid_certified && <Field label="First Aid Expiry" name="first_aid_expiry" type="date" form={form} onChange={set} />}
+              <BoolField label="Safeguarding Trained" name="safeguarding_trained" form={form} onChange={set} />
+              {form.safeguarding_trained && <Field label="Safeguarding Expiry" name="safeguarding_expiry" type="date" form={form} onChange={set} />}
+              <BoolField label="GDPR Trained" name="gdpr_trained" form={form} onChange={set} />
             </div>
           </div>
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Emergency Contact</p>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Name" name="emergency_contact_name" />
-              <Field label="Phone" name="emergency_contact_phone" />
-              <Field label="Relationship" name="emergency_contact_relationship" />
+              <Field label="Name" name="emergency_contact_name" form={form} onChange={set} />
+              <Field label="Phone" name="emergency_contact_phone" form={form} onChange={set} />
+              <Field label="Relationship" name="emergency_contact_relationship" form={form} onChange={set} />
             </div>
           </div>
           <div>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Medical Information</p>
             <div className="grid grid-cols-1 gap-3">
-              <Field label="Medical Conditions" name="medical_info" />
-              <Field label="Allergies" name="allergies" />
-              <Field label="Dietary Requirements" name="dietary_requirements" />
-              <Field label="Medications" name="medications" />
+              <Field label="Medical Conditions" name="medical_info" form={form} onChange={set} />
+              <Field label="Allergies" name="allergies" form={form} onChange={set} />
+              <Field label="Dietary Requirements" name="dietary_requirements" form={form} onChange={set} />
+              <Field label="Medications" name="medications" form={form} onChange={set} />
             </div>
           </div>
           <div>
