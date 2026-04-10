@@ -84,15 +84,12 @@ const BadgesDue = ({ sections, selectedSection }) => {
     queryFn: () => base44.entities.MemberBadgeAward.filter({ award_status: 'pending' }),
   });
 
-  const { data: badges = [] } = useQuery({
-    queryKey: ['badges'],
-    queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
-  });
-
   const relevantAwards = awards.filter(a => {
     const member = members.find(m => m.id === a.member_id);
     return member && sectionIds.includes(member.section_id);
-  }).slice(0, 5);
+  });
+
+  const uniqueMembers = new Set(relevantAwards.map(a => a.member_id)).size;
 
   return (
     <Card>
@@ -108,23 +105,16 @@ const BadgesDue = ({ sections, selectedSection }) => {
         {relevantAwards.length === 0 ? (
           <p className="text-gray-500 text-sm">No badges due to award</p>
         ) : (
-          <div className="space-y-2">
-            {relevantAwards.map(award => {
-              const member = members.find(m => m.id === award.member_id);
-              const badge = badges.find(b => b.id === award.badge_id);
-              return (
-                <div
-                  key={award.id}
-                  className="flex items-center justify-between p-3 bg-green-50 rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium">{member?.full_name}</p>
-                    <p className="text-sm text-gray-600">{badge?.name}</p>
-                  </div>
-                  <Award className="w-5 h-5 text-green-600" />
-                </div>
-              );
-            })}
+          <div className="flex items-center gap-8 py-2">
+            <div className="text-center">
+              <p className="text-4xl font-bold text-green-600">{relevantAwards.length}</p>
+              <p className="text-sm text-gray-500 mt-1">badges due</p>
+            </div>
+            <div className="w-px h-12 bg-gray-200" />
+            <div className="text-center">
+              <p className="text-4xl font-bold text-[#004851]">{uniqueMembers}</p>
+              <p className="text-sm text-gray-500 mt-1">{uniqueMembers === 1 ? 'member' : 'members'}</p>
+            </div>
           </div>
         )}
       </CardContent>
