@@ -27,65 +27,56 @@ Deno.serve(async (req) => {
     const accessToken = settings.osm_access_token;
     console.log('Using OAuth token, length:', accessToken.length);
 
-    // Fetch OSM sections - pass token as query parameter (OSM API doesn't support Bearer header)
-    console.log('Fetching OSM sections...');
+    // Fetch OSM startup data - includes all section info in globals.roles
+    console.log('Fetching OSM startup data...');
     
-    const sectionsRes = await fetch(`https://www.onlinescoutmanager.co.uk/api.php?action=getSections&oauth_token=${encodeURIComponent(accessToken)}`, {
+    const sectionsRes = await fetch(`https://www.onlinescoutmanager.co.uk/ext/generic/startup/?action=getData&oauth_token=${encodeURIComponent(accessToken)}`, {
       method: 'POST',
     });
 
     console.log('Response status:', sectionsRes.status);
     
-    // Read response as array buffer first to see raw bytes
-    const arrayBuffer = await sectionsRes.arrayBuffer();
-    const byteLength = arrayBuffer.byteLength;
-    console.log('Response byte length:', byteLength);
+    // Parse response
+    const text = await sectionsRes.text();
     
-    if (byteLength === 0) {
-      console.error('OSM returned completely empty response body');
+    if (!text.trim()) {
+      console.error('OSM returned empty response');
       return Response.json({ 
         error: 'OSM returned empty response. Token may be invalid or expired.' 
       }, { status: 500 });
     }
 
-    // Convert to text
-    const decoder = new TextDecoder();
-    const responseText = decoder.decode(arrayBuffer);
-    
-    console.log('Response text length:', responseText.length);
-    console.log('First 500 chars:', responseText.substring(0, 500));
-
-    if (!responseText.trim()) {
-      return Response.json({ 
-        error: 'OSM returned whitespace-only response'
-      }, { status: 500 });
-    }
-
-    // Try to parse as JSON
-    let sectionsData;
+    let responseData;
     try {
-      sectionsData = JSON.parse(responseText);
-      console.log('Successfully parsed JSON. Keys:', Object.keys(sectionsData || {}).slice(0, 5));
+      responseData = JSON.parse(text);
     } catch (e) {
       console.error('JSON parse failed:', e.message);
-      console.error('Full response:', responseText);
+      console.error('Response:', text.substring(0, 300));
       return Response.json({ 
-        error: `Invalid JSON from OSM: ${e.message}. Response: ${responseText.substring(0, 200)}`
+        error: `Failed to parse OSM response: ${e.message}`
       }, { status: 500 });
     }
 
-    // Format sections
+    // Extract sections from globals.roles
     const formattedSections = [];
-    if (sectionsData && typeof sectionsData === 'object') {
-      for (const [sectionId, sectionInfo] of Object.entries(sectionsData)) {
-        if (sectionInfo && typeof sectionInfo === 'object' && sectionInfo.name) {
+    if (responseData && responseData.data_holder && responseData.data_holder.globals && Array.isArray(responseData.data_holder.globals.roles)) {
+      const roles = responseData.data_holder.globals.roles;
+      console.log('Found', roles.length, 'roles');
+      
+      for (const role of roles) {
+        if (role.sectionid && role.sectionname) {
           formattedSections.push({
-            id: sectionId,
-            name: sectionInfo.name,
-            type: sectionInfo.type || 'unknown',
+            id: role.sectionid.toString(),
+            name: role.sectionname,
+            type: role.section || role.sectionType || 'unknown',
           });
         }
       }
+    } else {
+      console.error('Response structure unexpected:', Object.keys(responseData || {}));
+      return Response.json({ 
+        error: 'Unexpected response structure from OSM'
+      }, { status: 500 });
     }
 
     console.log('Returning', formattedSections.length, 'sections');
