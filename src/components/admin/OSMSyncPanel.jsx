@@ -96,39 +96,53 @@ export default function OSMSyncPanel() {
     }
   };
 
-  const handleSyncNow = async () => {
-    setSyncing(true);
-    setSyncResult(null);
-    try {
-      const res = await base44.functions.invoke('syncBadgesToOSM', {});
-      if (res.data.error) {
-        setSyncResult({ ok: false, message: res.data.error });
-      } else {
-        setSyncResult({
-          ok: true,
-          message: `Sync complete. Synced: ${res.data.synced}, Failed: ${res.data.failed}. Check your email for details.`,
-        });
-        queryClient.invalidateQueries({ queryKey: ['pending-badge-sync'] });
-      }
-    } catch (e) {
-      setSyncResult({ ok: false, message: e.message });
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   const handleMatchBadges = async () => {
     setMatchingBadges(true);
     setBadgeMatches(null);
     try {
-      const res = await base44.functions.invoke('matchOSMBadges', {});
-      if (res.data.error) {
-        toast.error(res.data.error);
-      } else {
-        setBadgeMatches(res.data);
-        setSelectedBadgeMatches(res.data.certain.map(m => ({ osm_id: m.osm_id, app_id: m.app_id })));
-        toast.success(`Matched ${res.data.certain.length} badges, ${res.data.uncertain.length} need review`);
+      // First fetch all OSM and app badges
+      const fetchRes = await base44.functions.invoke('getOSMBadgesForMatching', {});
+      if (fetchRes.data.error) {
+        toast.error(fetchRes.data.error);
+        setMatchingBadges(false);
+        return;
       }
+
+      const osmBadges = fetchRes.data.osm_badges;
+      const appBadges = fetchRes.data.app_badges;
+      const certain = [];
+      const uncertain = [];
+
+      // Match each OSM badge one by one
+      for (const osmBadge of osmBadges) {
+        try {
+          const matchRes = await base44.functions.invoke('matchOSMBadges', {
+            osm_badge: osmBadge,
+            app_badges: appBadges
+          });
+
+          const match = matchRes.data;
+          if (match.confidence >= 0.8 && match.app_id) {
+            certain.push(match);
+          } else {
+            uncertain.push(match);
+          }
+
+          // Update UI live with current matches
+          setBadgeMatches({
+            total: osmBadges.length,
+            certain,
+            uncertain,
+            matched_so_far: certain.length + uncertain.length,
+            all_osm_badges: osmBadges
+          });
+        } catch (e) {
+          console.error(`Failed to match ${osmBadge.name}:`, e.message);
+        }
+      }
+
+      setSelectedBadgeMatches(certain.map(m => ({ osm_id: m.osm_id, app_id: m.app_id })));
+      toast.success(`Matched ${certain.length} certain, ${uncertain.length} need review`);
     } catch (e) {
       toast.error('Matching failed: ' + e.message);
     } finally {
@@ -362,21 +376,33 @@ function BadgeMatchDialog({ matches, selected, onSelectedChange, onSave, onClose
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Review Badge Matches</DialogTitle>
+          <p className="text-sm text-gray-600 mt-2">
+            Progress: {matches.matched_so_far || 0} / {matches.total || 0}
+          </p>
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
+          {matches.matched_so_far && matches.total && (
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="h-full bg-[#7413dc] rounded-full transition-all"
+                style={{ width: `${(matches.matched_so_far / matches.total) * 100}%` }}
+              />
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4 pb-4 border-b">
             <div>
-              <h4 className="font-semibold text-green-700">✓ Certain Matches ({matches.certain.length})</h4>
+              <h4 className="font-semibold text-green-700">✓ Certain Matches ({matches.certain?.length || 0})</h4>
               <p className="text-xs text-gray-600">These will be saved automatically</p>
             </div>
             <div>
-              <h4 className="font-semibold text-amber-700">? Review Needed ({matches.uncertain.length})</h4>
+              <h4 className="font-semibold text-amber-700">? Review Needed ({matches.uncertain?.length || 0})</h4>
               <p className="text-xs text-gray-600">Check and adjust before saving</p>
             </div>
           </div>
 
-          {matches.certain.length > 0 && (
+          {matches.certain?.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium">Confident Matches</p>
               {matches.certain.map(m => (
@@ -391,7 +417,7 @@ function BadgeMatchDialog({ matches, selected, onSelectedChange, onSave, onClose
             </div>
           )}
 
-          {matches.uncertain.length > 0 && (
+          {matches.uncertain?.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium">Needs Review</p>
               {matches.uncertain.map(m => (
@@ -412,11 +438,13 @@ function BadgeMatchDialog({ matches, selected, onSelectedChange, onSave, onClose
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            {matches.matched_so_far === matches.total ? 'Done' : 'Cancel'}
           </Button>
-          <Button onClick={onSave} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
-            Save Matches
-          </Button>
+          {matches.matched_so_far === matches.total && (
+            <Button onClick={onSave} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
+              Save Matches
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
