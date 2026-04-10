@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
 
     console.log('Response status:', sectionsRes.status);
     
-    // Parse response
+    // Parse response as HTML and extract data_holder
     const text = await sectionsRes.text();
     
     if (!text.trim()) {
@@ -46,21 +46,30 @@ Deno.serve(async (req) => {
       }, { status: 500 });
     }
 
+    // Extract data_holder from HTML
+    const match = text.match(/data_holder\s*=\s*({[^;]+});/);
+    if (!match || !match[1]) {
+      console.error('Could not find data_holder in HTML response');
+      console.error('First 500 chars:', text.substring(0, 500));
+      return Response.json({ 
+        error: 'Could not extract data from OSM response'
+      }, { status: 500 });
+    }
+
     let responseData;
     try {
-      responseData = JSON.parse(text);
+      responseData = JSON.parse(match[1]);
     } catch (e) {
       console.error('JSON parse failed:', e.message);
-      console.error('Response:', text.substring(0, 300));
       return Response.json({ 
-        error: `Failed to parse OSM response: ${e.message}`
+        error: `Failed to parse extracted data: ${e.message}`
       }, { status: 500 });
     }
 
     // Extract sections from globals.roles
     const formattedSections = [];
-    if (responseData && responseData.data_holder && responseData.data_holder.globals && Array.isArray(responseData.data_holder.globals.roles)) {
-      const roles = responseData.data_holder.globals.roles;
+    if (responseData && responseData.globals && Array.isArray(responseData.globals.roles)) {
+      const roles = responseData.globals.roles;
       console.log('Found', roles.length, 'roles');
       
       for (const role of roles) {
