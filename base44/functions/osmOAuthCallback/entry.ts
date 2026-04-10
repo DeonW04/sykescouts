@@ -74,10 +74,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'OSM did not return an access token' }, { status: 500 });
     }
 
-    // Get authenticated user
-    const user = await base44.auth.me();
-    if (!user) {
-      return Response.json({ error: 'User not authenticated' }, { status: 401 });
+    // Check if user is authenticated (optional, use service role to store tokens)
+    let user;
+    try {
+      user = await base44.auth.me();
+    } catch (e) {
+      // User may not be authenticated during OAuth callback - this is okay
+      user = null;
     }
 
     // Calculate token expiry
