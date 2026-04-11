@@ -109,8 +109,8 @@ export default function OSMSyncPanel() {
         return;
       }
       const clientId = res.data.client_id;
-      const redirectUri = encodeURIComponent(`${window.location.origin}/api/functions/osmOAuthCallback`);
-      const state = btoa(JSON.stringify({ returnTo: window.location.href }));
+      const redirectUri = encodeURIComponent(`https://sykescouts.org/functions/osmOAuthCallback`);
+      const state = encodeURIComponent(btoa(JSON.stringify({ returnTo: window.location.href })));
       const authUrl = `https://www.onlinescoutmanager.co.uk/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=section:member:read+section:badge:read+section:programme:read&state=${state}`;
       window.location.href = authUrl;
     } catch (e) {

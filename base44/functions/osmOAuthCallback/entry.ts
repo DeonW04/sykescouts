@@ -13,23 +13,6 @@ Deno.serve(async (req) => {
 
     console.log('OSM callback - state received:', state);
 
-    // Extract code_verifier from state parameter
-    let codeVerifier;
-    if (!state || !state.includes(':')) {
-      console.error('Invalid state format:', state);
-      return Response.redirect(`https://sykescouts.org/AdminSettings?tab=osm&osm_error=Invalid%20state%20format`, 302);
-    }
-
-    try {
-      const [, encodedVerifier] = state.split(':');
-      if (!encodedVerifier) {
-        return Response.redirect(`https://sykescouts.org/AdminSettings?tab=osm&osm_error=Missing%20verifier`, 302);
-      }
-      codeVerifier = atob(encodedVerifier);
-    } catch (e) {
-      return Response.redirect(`https://sykescouts.org/AdminSettings?tab=osm&osm_error=${encodeURIComponent(e.message)}`, 302);
-    }
-
     // Get secrets from environment
     const clientId = Deno.env.get('OSM_CLIENT_ID');
     const clientSecret = Deno.env.get('OSM_CLIENT_SECRET');
@@ -40,17 +23,14 @@ Deno.serve(async (req) => {
     // Determine redirect URI - must match the registered endpoint exactly
     const redirectUri = `https://sykescouts.org/functions/osmOAuthCallback`;
 
-    // Exchange authorization code for tokens (with PKCE code verifier)
-    console.log('Token exchange params:', { code: code.slice(0, 10) + '...', client_id: clientId, redirect_uri: redirectUri, code_verifier_length: codeVerifier.length });
-    
-    // Build token request manually to avoid double-encoding the code_verifier
+    // Build token request
+
     const params = new URLSearchParams();
     params.append('grant_type', 'authorization_code');
     params.append('code', code);
     params.append('client_id', clientId);
     params.append('client_secret', clientSecret);
     params.append('redirect_uri', redirectUri);
-    params.append('code_verifier', codeVerifier);
     const body = params.toString();
 
     const tokenResponse = await fetch('https://www.onlinescoutmanager.co.uk/oauth/token', {
