@@ -6,9 +6,19 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const code = url.searchParams.get('code');
     const state = url.searchParams.get('state');
+    const osmError = url.searchParams.get('error');
+    const osmErrorDesc = url.searchParams.get('error_description');
+
+    console.log('OSM callback URL params:', { code: !!code, state: !!state, error: osmError, error_description: osmErrorDesc });
+
+    if (osmError) {
+      const msg = osmErrorDesc || osmError;
+      return Response.redirect(`https://sykescouts.org/AdminSettings?osm_error=${encodeURIComponent('OSM error: ' + msg)}`, 302);
+    }
 
     if (!code) {
-      return Response.redirect(`https://sykescouts.org/AdminSettings?tab=osm&osm_error=Missing%20authorization%20code`, 302);
+      console.error('No code received. Full URL:', req.url);
+      return Response.redirect(`https://sykescouts.org/AdminSettings?osm_error=Missing%20authorization%20code`, 302);
     }
 
     console.log('OSM callback - state received:', state);
@@ -85,9 +95,9 @@ Deno.serve(async (req) => {
 
     // Redirect to OSM settings panel with success message
     console.log('OSM OAuth callback complete - tokens saved successfully');
-    return Response.redirect(`https://sykescouts.org/AdminSettings?tab=osm&osm_connected=true`, 302);
+    return Response.redirect(`https://sykescouts.org/AdminSettings?osm_connected=true`, 302);
   } catch (error) {
     console.error('OSM OAuth callback error:', error);
-    return Response.redirect(`https://sykescouts.org/AdminSettings?tab=osm&osm_error=${encodeURIComponent(error.message)}`, 302);
+    return Response.redirect(`https://sykescouts.org/AdminSettings?osm_error=${encodeURIComponent(error.message)}`, 302);
   }
 });

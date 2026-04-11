@@ -62,9 +62,21 @@ export default function OSMOverview() {
       const codeVerifier = btoa(String.fromCharCode(...array)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
       const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
       const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-      const state = btoa(JSON.stringify({ returnTo: window.location.href, cv: codeVerifier }));
-      const redirectUri = encodeURIComponent(`https://sykescouts.org/functions/osmOAuthCallback`);
-      window.location.href = `https://www.onlinescoutmanager.co.uk/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=section:member:write+section:badge:write+section:programme:write+section.administration.admin&state=${encodeURIComponent(state)}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+      // Store codeVerifier in sessionStorage so we can retrieve it in the callback
+      const stateToken = crypto.randomUUID();
+      sessionStorage.setItem(`osm_cv_${stateToken}`, codeVerifier);
+      const state = btoa(JSON.stringify({ returnTo: window.location.href, cv: codeVerifier, st: stateToken }));
+      const redirectUri = 'https://sykescouts.org/functions/osmOAuthCallback';
+      const params = new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        response_type: 'code',
+        scope: 'section:member:write section:badge:write section:programme:write section.administration.admin',
+        state: state,
+        code_challenge: codeChallenge,
+        code_challenge_method: 'S256',
+      });
+      window.location.href = `https://www.onlinescoutmanager.co.uk/oauth/authorize?${params.toString()}`;
     } catch (e) { toast.error('Reconnect failed: ' + e.message); }
   };
 
