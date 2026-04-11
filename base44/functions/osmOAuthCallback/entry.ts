@@ -13,14 +13,20 @@ Deno.serve(async (req) => {
 
     console.log('OSM callback - state received:', state);
 
-    // Get secrets from environment
-    const clientId = Deno.env.get('OSM_CLIENT_ID');
-    const clientSecret = Deno.env.get('OSM_CLIENT_SECRET');
-    if (!clientId || !clientSecret) {
-      return Response.redirect(`https://sykescouts.org/AdminSettings?tab=osm&osm_error=Missing%20client%20credentials`, 302);
+    // Extract code_verifier from state
+    let codeVerifier;
+    try {
+      const decoded = JSON.parse(atob(decodeURIComponent(state)));
+      codeVerifier = decoded.cv;
+    } catch (e) {
+      return Response.redirect(`https://sykescouts.org/AdminSettings?tab=osm&osm_error=${encodeURIComponent('Invalid state: ' + e.message)}`, 302);
+    }
+    if (!codeVerifier) {
+      return Response.redirect(`https://sykescouts.org/AdminSettings?tab=osm&osm_error=Missing%20code%20verifier%20in%20state`, 302);
     }
 
-    // Determine redirect URI - must match the registered endpoint exactly
+    // Get secrets from environment
+
     const redirectUri = `https://sykescouts.org/functions/osmOAuthCallback`;
 
     // Build token request
@@ -31,6 +37,7 @@ Deno.serve(async (req) => {
     params.append('client_id', clientId);
     params.append('client_secret', clientSecret);
     params.append('redirect_uri', redirectUri);
+    params.append('code_verifier', codeVerifier);
     const body = params.toString();
 
     const tokenResponse = await fetch('https://www.onlinescoutmanager.co.uk/oauth/token', {

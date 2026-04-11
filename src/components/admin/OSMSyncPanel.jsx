@@ -109,9 +109,24 @@ export default function OSMSyncPanel() {
         return;
       }
       const clientId = res.data.client_id;
+
+      // Generate PKCE code_verifier and code_challenge
+      const array = new Uint8Array(32);
+      crypto.getRandomValues(array);
+      const codeVerifier = btoa(String.fromCharCode(...array))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+      const encoder = new TextEncoder();
+      const data = encoder.encode(codeVerifier);
+      const digest = await crypto.subtle.digest('SHA-256', data);
+      const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
+      // Encode verifier in state so callback can use it
+      const state = btoa(JSON.stringify({ returnTo: window.location.href, cv: codeVerifier }));
       const redirectUri = encodeURIComponent(`https://sykescouts.org/functions/osmOAuthCallback`);
-      const state = encodeURIComponent(btoa(JSON.stringify({ returnTo: window.location.href })));
-      const authUrl = `https://www.onlinescoutmanager.co.uk/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=section:member:read+section:badge:read+section:programme:read&state=${state}`;
+
+      const authUrl = `https://www.onlinescoutmanager.co.uk/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=section:member:read+section:badge:read+section:programme:read&state=${encodeURIComponent(state)}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
       window.location.href = authUrl;
     } catch (e) {
       toast.error('Reconnect failed: ' + e.message);
