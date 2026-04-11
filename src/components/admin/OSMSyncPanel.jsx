@@ -229,6 +229,33 @@ Return JSON with the best match. If no good match exists, return null for badge_
     }
   };
 
+  const [autoLinking, setAutoLinking] = useState(false);
+
+  const handleAutoLink = async () => {
+    setAutoLinking(true);
+    let linked = 0;
+    try {
+      const updates = [];
+      for (const osmBadge of osmBadges) {
+        if (osmBadge.linked_to_app_badge) continue;
+        const match = badges.find(
+          b => b.name.trim().toLowerCase() === osmBadge.name.trim().toLowerCase()
+        );
+        if (match) {
+          updates.push(base44.entities.OSMBadge.update(osmBadge.id, { linked_to_app_badge: match.id }));
+          linked++;
+        }
+      }
+      await Promise.all(updates);
+      refetchOsmBadges();
+      toast.success(`Auto-linked ${linked} badge${linked !== 1 ? 's' : ''} by name`);
+    } catch (e) {
+      toast.error('Auto-link failed: ' + e.message);
+    } finally {
+      setAutoLinking(false);
+    }
+  };
+
   const setField = (k, v) => setSettingsForm(f => ({ ...f, [k]: v }));
   const osmUnlinkedCount = osmBadges.filter(b => !b.linked_to_app_badge).length;
   const appUnlinkedCount = badges.filter(b => !osmBadges.some(ob => ob.linked_to_app_badge === b.id)).length;
@@ -356,6 +383,16 @@ Return JSON with the best match. If no good match exists, return null for badge_
                   ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Syncing...</>
                   : <><Zap className="w-4 h-4 mr-2" />Fetch OSM Badges</>}
               </Button>
+              <Button
+                onClick={handleAutoLink}
+                disabled={autoLinking || osmBadges.length === 0}
+                variant="outline"
+              >
+                {autoLinking
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Linking...</>
+                  : <><CheckCircle className="w-4 h-4 mr-2" />Auto-Link by Name</>}
+              </Button>
+
               <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
                 <button
                   onClick={() => setBadgeView('osm')}
