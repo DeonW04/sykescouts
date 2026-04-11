@@ -150,20 +150,25 @@ export default function BadgeDetail() {
        const member = memberData[0];
        const settingsData = await base44.entities.OSMSyncSettings.filter({});
        if (settingsData[0]?.osm_access_token && member?.osm_scoutid) {
-         const existingSync = await base44.entities.PendingBadgeSync.filter({ scoutid: member.osm_scoutid, badge_id: Number(badgeId), action: 'complete' });
-         if (existingSync.length === 0) {
-           await base44.entities.PendingBadgeSync.create({
-             scoutid: member.osm_scoutid,
-             firstname: member.first_name,
-             lastname: member.surname,
-             badge_id: Number(badgeId),
-             badge_version: 0,
-             level: 1,
-             section_id: settingsData[0].osm_section_id,
-             section: settingsData[0].osm_section,
-             action: 'complete',
-             status: 'pending',
-           });
+         const osmBadges = await base44.entities.OSMBadge.filter({ linked_to_app_badge: badgeId });
+         const osmBadge = osmBadges[0];
+         if (osmBadge?.badge_id) {
+           const osmBadgeIdNum = Number(osmBadge.badge_id);
+           const existingSync = await base44.entities.PendingBadgeSync.filter({ scoutid: member.osm_scoutid, badge_id: osmBadgeIdNum, action: 'complete' });
+           if (existingSync.length === 0) {
+             await base44.entities.PendingBadgeSync.create({
+               scoutid: member.osm_scoutid,
+               firstname: member.first_name,
+               lastname: member.surname,
+               badge_id: osmBadgeIdNum,
+               badge_version: Number(osmBadge.badge_version) || 0,
+               level: 1,
+               section_id: settingsData[0].osm_section_id,
+               section: settingsData[0].osm_section,
+               action: 'complete',
+               status: 'pending',
+             });
+           }
          }
        }
        } else {
@@ -323,20 +328,25 @@ export default function BadgeDetail() {
        const member = memberData[0];
        const settingsData = await base44.entities.OSMSyncSettings.filter({});
        if (settingsData[0]?.osm_access_token && member?.osm_scoutid) {
-         const existingSync = await base44.entities.PendingBadgeSync.filter({ scoutid: member.osm_scoutid, badge_id: Number(badgeId), action: 'complete' });
-         if (existingSync.length === 0) {
-           await base44.entities.PendingBadgeSync.create({
-             scoutid: member.osm_scoutid,
-             firstname: member.first_name,
-             lastname: member.surname,
-             badge_id: Number(badgeId),
-             badge_version: 0,
-             level: 1,
-             section_id: settingsData[0].osm_section_id,
-             section: settingsData[0].osm_section,
-             action: 'complete',
-             status: 'pending',
-           });
+         const osmBadges = await base44.entities.OSMBadge.filter({ linked_to_app_badge: badgeId });
+         const osmBadge = osmBadges[0];
+         if (osmBadge?.badge_id) {
+           const osmBadgeIdNum = Number(osmBadge.badge_id);
+           const existingSync = await base44.entities.PendingBadgeSync.filter({ scoutid: member.osm_scoutid, badge_id: osmBadgeIdNum, action: 'complete' });
+           if (existingSync.length === 0) {
+             await base44.entities.PendingBadgeSync.create({
+               scoutid: member.osm_scoutid,
+               firstname: member.first_name,
+               lastname: member.surname,
+               badge_id: osmBadgeIdNum,
+               badge_version: Number(osmBadge.badge_version) || 0,
+               level: 1,
+               section_id: settingsData[0].osm_section_id,
+               section: settingsData[0].osm_section,
+               action: 'complete',
+               status: 'pending',
+             });
+           }
          }
        }
        } else {
@@ -354,13 +364,13 @@ export default function BadgeDetail() {
        }
        }
 
-      // Clear pending, then sync with real server data
-      setPending(variables.memberId, variables.reqId, false);
-      queryClient.invalidateQueries({ queryKey: ['req-progress', badgeId] });
-      queryClient.invalidateQueries({ queryKey: ['badge-progress'] });
-      queryClient.invalidateQueries({ queryKey: ['awards'] });
-    },
-  });
+       // Clear pending, then sync with real server data
+       setPending(variables.memberId, variables.reqId, false);
+       queryClient.invalidateQueries({ queryKey: ['req-progress', badgeId] });
+       queryClient.invalidateQueries({ queryKey: ['badge-progress'] });
+       queryClient.invalidateQueries({ queryKey: ['awards'] });
+       },
+       });
 
   // ─── Bulk Award Logic ────────────────────────────────────────────────────────
 
