@@ -71,7 +71,7 @@ export default function OSMOverview() {
         client_id: clientId,
         redirect_uri: redirectUri,
         response_type: 'code',
-        scope: 'section:member:write section:badge:write section:programme:write section:administration:admin',
+        scope: 'section:member:write section:badge:write section:programme:read',
         state: state,
         code_challenge: codeChallenge,
         code_challenge_method: 'S256',
