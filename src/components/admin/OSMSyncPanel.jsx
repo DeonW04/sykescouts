@@ -112,7 +112,7 @@ export default function OSMSyncPanel() {
       const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
       const state = btoa(JSON.stringify({ returnTo: window.location.href, cv: codeVerifier }));
       const redirectUri = encodeURIComponent(`https://sykescouts.org/functions/osmOAuthCallback`);
-      window.location.href = `https://www.onlinescoutmanager.co.uk/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=section:member:read+section:badge:read+section:programme:read&state=${encodeURIComponent(state)}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+      window.location.href = `https://www.onlinescoutmanager.co.uk/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=section:member:write+section:badge:write+section:programme:write+section.administration.admin&state=${encodeURIComponent(state)}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
     } catch (e) { toast.error('Reconnect failed: ' + e.message); }
   };
 
