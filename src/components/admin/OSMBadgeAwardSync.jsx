@@ -77,7 +77,7 @@ export default function OSMBadgeAwardSync() {
       if (res.data?.error) {
         toast.error(res.data.error);
       } else {
-        toast.success(`Sync complete — ${res.data?.success_count || 0} succeeded, ${res.data?.fail_count || 0} failed`);
+        toast.success(`Sync complete — ${res.data?.synced ?? 0} succeeded, ${res.data?.failed ?? 0} failed`);
         refetchPending();
         queryClient.invalidateQueries({ queryKey: ['pending-badge-sync'] });
       }

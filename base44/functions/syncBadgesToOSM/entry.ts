@@ -43,31 +43,30 @@ Deno.serve(async (req) => {
     // Step B — complete actions
     const completeRecords = pending.filter(r => r.action === 'complete');
     for (const record of completeRecords) {
-      const body = JSON.stringify({
-        action: 'overrideCompletion',
-        badge_id: record.badge_id,
-        badge_version: record.badge_version || 0,
-        section_id: record.section_id,
-        section: record.section,
-        level: record.level || 1,
-        scoutid: record.scoutid,
-        skip_track_changes: false,
-      });
-      const res = await fetch('https://www.onlinescoutmanager.co.uk/ext/generic/startup/', {
+      const params = new URLSearchParams();
+      params.append('action', 'overrideCompletion');
+      params.append('badge_id', String(record.badge_id));
+      params.append('badge_version', String(record.badge_version ?? 0));
+      params.append('section_id', String(record.section_id));
+      params.append('section', record.section);
+      params.append('level', String(record.level ?? 1));
+      params.append('scouts', JSON.stringify([record.scoutid]));
+      const res = await fetch('https://www.onlinescoutmanager.co.uk/ext/badges/records/?action=overrideCompletion', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
           'Authorization': `Bearer ${accessToken}`,
         },
-        body,
+        body: params.toString(),
       });
+      const resText = await res.text();
+      console.log(`overrideCompletion response [${res.status}]:`, resText.slice(0, 500));
       if (res.ok) {
         await base44.asServiceRole.entities.PendingBadgeSync.update(record.id, { status: 'synced', synced_date: now });
         synced.push(record);
       } else {
-        const errText = await res.text();
-        await base44.asServiceRole.entities.PendingBadgeSync.update(record.id, { status: 'failed', error_notes: `HTTP ${res.status}: ${errText.slice(0, 500)}` });
-        failed.push({ ...record, error: `HTTP ${res.status}: ${errText.slice(0, 200)}` });
+        await base44.asServiceRole.entities.PendingBadgeSync.update(record.id, { status: 'failed', error_notes: `HTTP ${res.status}: ${resText.slice(0, 500)}` });
+        failed.push({ ...record, error: `HTTP ${res.status}: ${resText.slice(0, 200)}` });
       }
     }
 
@@ -82,32 +81,31 @@ Deno.serve(async (req) => {
 
     for (const [sectionId, records] of Object.entries(bySection)) {
       const sectionType = records[0].section;
-      const entries = records.map(r => ({ badge_id: r.badge_id, badge_version: r.badge_version || 0, level: 0, member_id: r.scoutid }));
-      const body = JSON.stringify({
-        action: 'awardBadge',
-        section_id: sectionId,
-        section: sectionType,
-        entries,
-        skip_track_changes: true,
-      });
-      const res = await fetch('https://www.onlinescoutmanager.co.uk/ext/generic/startup/', {
+      const entries = records.map(r => ({ badge_id: r.badge_id, badge_version: r.badge_version ?? 0, level: 0, member_id: r.scoutid }));
+      const params = new URLSearchParams();
+      params.append('action', 'awardBadge');
+      params.append('section_id', String(sectionId));
+      params.append('section', sectionType);
+      params.append('entries', JSON.stringify(entries));
+      const res = await fetch('https://www.onlinescoutmanager.co.uk/ext/badges/records/?action=awardBadge', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
           'Authorization': `Bearer ${accessToken}`,
         },
-        body,
+        body: params.toString(),
       });
+      const resText = await res.text();
+      console.log(`awardBadge response [${res.status}]:`, resText.slice(0, 500));
       if (res.ok) {
         for (const r of records) {
           await base44.asServiceRole.entities.PendingBadgeSync.update(r.id, { status: 'synced', synced_date: now });
           synced.push(r);
         }
       } else {
-        const errText = await res.text();
         for (const r of records) {
-          await base44.asServiceRole.entities.PendingBadgeSync.update(r.id, { status: 'failed', error_notes: `HTTP ${res.status}: ${errText.slice(0, 500)}` });
-          failed.push({ ...r, error: `HTTP ${res.status}: ${errText.slice(0, 200)}` });
+          await base44.asServiceRole.entities.PendingBadgeSync.update(r.id, { status: 'failed', error_notes: `HTTP ${res.status}: ${resText.slice(0, 500)}` });
+          failed.push({ ...r, error: `HTTP ${res.status}: ${resText.slice(0, 200)}` });
         }
       }
     }
