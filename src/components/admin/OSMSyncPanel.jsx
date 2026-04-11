@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Loader2, Info, Edit, Trash2, CheckCircle, XCircle, Link, Zap, AlertTriangle } from 'lucide-react';
+import { RefreshCw, Loader2, CheckCircle, XCircle, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -101,23 +101,6 @@ export default function OSMSyncPanel() {
     }
   };
 
-  const handleReconnect = async () => {
-    try {
-      const res = await base44.functions.invoke('getOSMClientId', {});
-      if (res.data.error) {
-        toast.error('Could not get OSM client ID: ' + res.data.error);
-        return;
-      }
-      const clientId = res.data.client_id;
-      const redirectUri = encodeURIComponent(`${window.location.origin}/api/functions/osmOAuthCallback`);
-      const state = btoa(JSON.stringify({ returnTo: window.location.href }));
-      const authUrl = `https://www.onlinescoutmanager.co.uk/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=section:member:read+section:badge:read+section:programme:read&state=${state}`;
-      window.location.href = authUrl;
-    } catch (e) {
-      toast.error('Reconnect failed: ' + e.message);
-    }
-  };
-
   const handleSyncBadges = async () => {
     setMatchingBadges(true);
     try {
@@ -162,20 +145,13 @@ export default function OSMSyncPanel() {
                     {osmConnected ? 'OSM Account Connected' : 'OSM Connection Lost'}
                   </p>
                   {osmConnected ? (
-                    <p className="text-sm text-green-700">OAuth 2.0 connection active</p>
+                    <p className="text-sm text-green-700">Connected via OSM SSO</p>
                   ) : (
-                    <p className="text-sm text-red-700">Connection could not be verified. Please reconnect.</p>
+                    <p className="text-sm text-red-700">Your OSM session may have expired. Sign out and sign back in via OSM to reconnect.</p>
                   )}
                 </div>
               </div>
-              <div className="flex gap-2">
-                {!osmConnected && (
-                  <Button onClick={handleReconnect} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
-                    <Link className="w-4 h-4 mr-2" />
-                    Reconnect OSM
-                  </Button>
-                )}
-                <Button
+              <Button
                   onClick={async () => {
                     setCheckingConnection(true);
                     try {
@@ -193,8 +169,6 @@ export default function OSMSyncPanel() {
                   {checkingConnection ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                   Check Connection
                 </Button>
-              </div>
-            </div>
           </CardContent>
         </Card>
 

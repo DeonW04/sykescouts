@@ -16,15 +16,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
+    // Use SSO access token (OSM is the SSO provider)
+    const accessToken = await base44.asServiceRole.sso.getAccessToken(user.id);
+    if (!accessToken) {
+      return Response.json({ error: 'No OSM SSO token available. Please sign in via OSM.' }, { status: 401 });
+    }
+    console.log('Using SSO token, length:', accessToken.length);
+
     const settingsArr = await base44.asServiceRole.entities.OSMSyncSettings.filter({});
     const settings = settingsArr[0];
-
-    if (!settings || !settings.osm_access_token) {
-      return Response.json({ error: 'OSM not connected' }, { status: 400 });
-    }
-
-    const accessToken = settings.osm_access_token;
-    console.log('Using OAuth token, length:', accessToken.length);
 
     console.log('Fetching OSM startup data...');
 
@@ -112,8 +112,8 @@ Deno.serve(async (req) => {
     console.log('Returning', formattedSections.length, 'sections');
     return Response.json({
       sections: formattedSections,
-      connectedSectionId: settings.osm_section_id,
-      connectedSectionType: settings.osm_section,
+      connectedSectionId: settings?.osm_section_id,
+      connectedSectionType: settings?.osm_section,
     });
   } catch (error) {
     console.error('fetchOSMData error:', error.message);

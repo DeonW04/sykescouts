@@ -11,19 +11,19 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    // Get OSM settings
-    const settingsArr = await base44.asServiceRole.entities.OSMSyncSettings.filter({});
-    const settings = settingsArr[0];
-    
-    if (!settings?.osm_access_token) {
-      console.error('[syncOSMBadges] No OSM access token');
-      return Response.json({ error: 'OSM not connected' }, { status: 400 });
+    // Use SSO access token (OSM is the SSO provider)
+    const accessToken = await base44.asServiceRole.sso.getAccessToken(user.id);
+    if (!accessToken) {
+      return Response.json({ error: 'No OSM SSO token available. Please sign in via OSM.' }, { status: 401 });
     }
 
-    const accessToken = settings.osm_access_token;
-    const sectionId = settings.osm_section_id;
-    const sectionType = settings.osm_section;
-    const termId = settings.osm_term_id || '0';
+    // Get OSM settings for section config
+    const settingsArr = await base44.asServiceRole.entities.OSMSyncSettings.filter({});
+    const settings = settingsArr[0];
+
+    const sectionId = settings?.osm_section_id;
+    const sectionType = settings?.osm_section;
+    const termId = settings?.osm_term_id || '0';
 
     if (!sectionId || !sectionType) {
       console.error('[syncOSMBadges] Missing section config');
