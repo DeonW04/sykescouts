@@ -42,7 +42,8 @@ const GROUPS = [...new Set(NAV_ITEMS.map(n => n.group))];
 export default function AdminSettings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('users');
+  const urlParams = new URLSearchParams(window.location.search);
+  const [activeTab, setActiveTab] = useState(urlParams.get('tab') || 'users');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editForm, setEditForm] = useState({ display_name: '', email: '', user_type: 'parent', section_ids: [], default_section_id: '' });

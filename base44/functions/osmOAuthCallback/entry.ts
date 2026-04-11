@@ -26,6 +26,11 @@ Deno.serve(async (req) => {
     }
 
     // Get secrets from environment
+    const clientId = Deno.env.get('OSM_CLIENT_ID');
+    const clientSecret = Deno.env.get('OSM_CLIENT_SECRET');
+    if (!clientId || !clientSecret) {
+      return Response.redirect(`https://sykescouts.org/AdminSettings?tab=osm&osm_error=Missing%20client%20credentials`, 302);
+    }
 
     const redirectUri = `https://sykescouts.org/functions/osmOAuthCallback`;
 
