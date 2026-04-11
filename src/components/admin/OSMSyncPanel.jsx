@@ -14,7 +14,7 @@ import { RefreshCw, Loader2, Edit, Trash2, CheckCircle, XCircle, Link, Zap, Spar
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
-export default function OSMSyncPanel() {
+export default function OSMSyncPanel({ defaultTab }) {
   const queryClient = useQueryClient();
   const [osmConnected, setOsmConnected] = useState(false);
   const [checkingConnection, setCheckingConnection] = useState(false);
@@ -192,7 +192,7 @@ export default function OSMSyncPanel() {
   });
 
   return (
-    <Tabs defaultValue="overview" className="w-full">
+    <Tabs defaultValue={defaultTab || 'overview'} className="w-full">
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="badge-sync">Badge Sync</TabsTrigger>

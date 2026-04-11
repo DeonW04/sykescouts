@@ -23,19 +23,24 @@ import PushNotificationsTab from '../components/admin/PushNotificationsTab';
 import NotificationLogTab from '../components/admin/NotificationLogTab';
 import LeaderManagement from '../components/admin/LeaderManagement';
 import OSMSyncPanel from '../components/admin/OSMSyncPanel';
+import OSMOverview from '../components/admin/OSMOverview';
+import OSMBadgeAwardSync from '../components/admin/OSMBadgeAwardSync';
 
 const NAV_ITEMS = [
-  { key: 'users',      label: 'User Management',    icon: Users,    group: 'People' },
-  { key: 'leaders',    label: 'Leader Management',  icon: Shield,   group: 'People' },
-  { key: 'images',    label: 'Website Images',      icon: Image,    group: 'Content' },
-  { key: 'badges',    label: 'Badge System',         icon: Award,    group: 'Content' },
-  { key: 'uniform',   label: 'Uniform Guide',        icon: Shield,   group: 'Content' },
-  { key: 'gallery',   label: 'Gallery Stats',        icon: Camera,   group: 'Content' },
-  { key: 'receipts',  label: 'Receipts',             icon: PieChart, group: 'Finance' },
-  { key: 'export',    label: 'Data Import / Export', icon: Download, group: 'System' },
-  { key: 'push',      label: 'Push Notifications',   icon: Bell,     group: 'System' },
-  { key: 'notif-log', label: 'Notification Log',     icon: Mail,     group: 'System' },
-  { key: 'osm',       label: 'OSM Badge Sync',       icon: Award,    group: 'System' },
+  { key: 'users',          label: 'User Management',    icon: Users,    group: 'People' },
+  { key: 'leaders',        label: 'Leader Management',  icon: Shield,   group: 'People' },
+  { key: 'images',         label: 'Website Images',     icon: Image,    group: 'Content' },
+  { key: 'badges',         label: 'Badge System',       icon: Award,    group: 'Content' },
+  { key: 'uniform',        label: 'Uniform Guide',      icon: Shield,   group: 'Content' },
+  { key: 'gallery',        label: 'Gallery Stats',      icon: Camera,   group: 'Content' },
+  { key: 'receipts',       label: 'Receipts',           icon: PieChart, group: 'Finance' },
+  { key: 'export',         label: 'Data Import / Export', icon: Download, group: 'System' },
+  { key: 'push',           label: 'Push Notifications', icon: Bell,     group: 'System' },
+  { key: 'notif-log',      label: 'Notification Log',   icon: Mail,     group: 'System' },
+  { key: 'osm-overview',   label: 'Overview',           icon: Award,    group: 'OSM Sync' },
+  { key: 'osm-badge-ids',  label: 'Badge ID Sync',      icon: Award,    group: 'OSM Sync' },
+  { key: 'osm-members',    label: 'Member Sync',        icon: Users,    group: 'OSM Sync' },
+  { key: 'osm-awards',     label: 'Badge Award Sync',   icon: Award,    group: 'OSM Sync' },
 ];
 const GROUPS = [...new Set(NAV_ITEMS.map(n => n.group))];
 
@@ -413,8 +418,19 @@ export default function AdminSettings() {
               {/* ── Notification Log ── */}
               <TabsContent value="notif-log"><NotificationLogTab /></TabsContent>
 
-              {/* ── OSM Badge Sync ── */}
-              <TabsContent value="osm"><OSMSyncPanel /></TabsContent>
+              {/* ── OSM Overview ── */}
+              <TabsContent value="osm-overview"><OSMOverview /></TabsContent>
+
+              {/* ── OSM Badge ID Sync ── */}
+              <TabsContent value="osm-badge-ids">
+                <OSMSyncPanel defaultTab="badge-sync" />
+              </TabsContent>
+
+              {/* ── OSM Member Sync ── */}
+              <TabsContent value="osm-members"><OSMSyncPanel defaultTab="member-sync" /></TabsContent>
+
+              {/* ── OSM Badge Award Sync ── */}
+              <TabsContent value="osm-awards"><OSMBadgeAwardSync /></TabsContent>
 
               {/* ── Data Import / Export ── */}
               <TabsContent value="export">
