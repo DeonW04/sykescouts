@@ -101,6 +101,23 @@ export default function OSMSyncPanel() {
     }
   };
 
+  const handleReconnect = async () => {
+    try {
+      const res = await base44.functions.invoke('getOSMClientId', {});
+      if (res.data.error) {
+        toast.error('Could not get OSM client ID: ' + res.data.error);
+        return;
+      }
+      const clientId = res.data.client_id;
+      const redirectUri = encodeURIComponent(`${window.location.origin}/api/functions/osmOAuthCallback`);
+      const state = btoa(JSON.stringify({ returnTo: window.location.href }));
+      const authUrl = `https://www.onlinescoutmanager.co.uk/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=section:member:read+section:badge:read+section:programme:read&state=${state}`;
+      window.location.href = authUrl;
+    } catch (e) {
+      toast.error('Reconnect failed: ' + e.message);
+    }
+  };
+
   const handleSyncBadges = async () => {
     setMatchingBadges(true);
     try {
@@ -151,20 +168,32 @@ export default function OSMSyncPanel() {
                   )}
                 </div>
               </div>
-              <Button
-                onClick={() => {
-                  setCheckingConnection(true);
-                  setTimeout(() => {
-                    setOsmConnected(false);
-                    setCheckingConnection(false);
-                  }, 1000);
-                }}
-                variant="outline"
-                disabled={checkingConnection}
-              >
-                {checkingConnection ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-                Check Connection
-              </Button>
+              <div className="flex gap-2">
+                {!osmConnected && (
+                  <Button onClick={handleReconnect} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
+                    <Link className="w-4 h-4 mr-2" />
+                    Reconnect OSM
+                  </Button>
+                )}
+                <Button
+                  onClick={async () => {
+                    setCheckingConnection(true);
+                    try {
+                      const res = await base44.functions.invoke('fetchOSMData', {});
+                      setOsmConnected(!res.data.error);
+                    } catch {
+                      setOsmConnected(false);
+                    } finally {
+                      setCheckingConnection(false);
+                    }
+                  }}
+                  variant="outline"
+                  disabled={checkingConnection}
+                >
+                  {checkingConnection ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+                  Check Connection
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
