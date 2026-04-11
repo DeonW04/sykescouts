@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
       return Response.json({ message: 'Sync is disabled.' });
     }
 
-    const pending = await base44.asServiceRole.entities.PendingBadgeSync.filter({ status: 'pending' });
+    const pending = await base44.asServiceRole.entities.PendingBadgeSync.filter({status__in: ['pending', 'failed']});
     const now = new Date().toISOString();
     const todayStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
