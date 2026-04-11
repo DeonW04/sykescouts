@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Loader2, Edit, Trash2, CheckCircle, XCircle, Link, Zap } from 'lucide-react';
+import { RefreshCw, Loader2, Edit, Trash2, CheckCircle, XCircle, Link, Zap, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -22,29 +22,35 @@ export default function OSMSyncPanel() {
   const [savingSettings, setSavingSettings] = useState(false);
   const [matchingBadges, setMatchingBadges] = useState(false);
   const [badgeView, setBadgeView] = useState('osm');
+
+  // OSM → App link dialog
   const [linkDialogBadge, setLinkDialogBadge] = useState(null);
   const [linkingTo, setLinkingTo] = useState('');
+  const [aiSuggesting, setAiSuggesting] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState(null); // { badge_id, badge_name, reasoning }
+
+  // App → OSM link dialog
+  const [appLinkDialog, setAppLinkDialog] = useState(null); // app badge
+  const [appLinkingTo, setAppLinkingTo] = useState(''); // osm badge id
+  const [appAiSuggesting, setAppAiSuggesting] = useState(false);
+  const [appAiSuggestion, setAppAiSuggestion] = useState(null);
 
   const { data: settingsArr = [] } = useQuery({
     queryKey: ['osm-settings'],
     queryFn: () => base44.entities.OSMSyncSettings.filter({}),
   });
-
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
     queryFn: () => base44.entities.Section.filter({ active: true }),
   });
-
   const { data: members = [] } = useQuery({
     queryKey: ['members'],
     queryFn: () => base44.entities.Member.filter({ active: true }),
   });
-
   const { data: badges = [] } = useQuery({
     queryKey: ['badges'],
     queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
   });
-
   const { data: osmBadges = [], refetch: refetchOsmBadges } = useQuery({
     queryKey: ['osm-badges'],
     queryFn: () => base44.entities.OSMBadge.list('-created_date', 200),
@@ -70,6 +76,56 @@ export default function OSMSyncPanel() {
       });
     }
   }, [settings]);
+
+  // When OSM link dialog opens, get AI suggestion
+  useEffect(() => {
+    if (!linkDialogBadge || badges.length === 0) return;
+    setAiSuggestion(null);
+    setAiSuggesting(true);
+    const badgeList = badges.map(b => `${b.id}: ${b.name} (${b.section}, ${b.category})`).join('\n');
+    base44.integrations.Core.InvokeLLM({
+      prompt: `I have an OSM badge called "${linkDialogBadge.name}" (type: ${linkDialogBadge.badge_type}).
+I need to find the best matching badge from this list:
+${badgeList}
+
+Return JSON with the best match. If no good match exists, return null for badge_id.`,
+      response_json_schema: {
+        type: 'object',
+        properties: {
+          badge_id: { type: 'string' },
+          badge_name: { type: 'string' },
+          reasoning: { type: 'string' },
+        },
+      },
+    }).then(result => {
+      if (result?.badge_id) setAiSuggestion(result);
+    }).catch(() => {}).finally(() => setAiSuggesting(false));
+  }, [linkDialogBadge]);
+
+  // When App link dialog opens, get AI suggestion
+  useEffect(() => {
+    if (!appLinkDialog || osmBadges.length === 0) return;
+    setAppAiSuggestion(null);
+    setAppAiSuggesting(true);
+    const osmList = osmBadges.map(b => `${b.id}: ${b.name} (${b.badge_type})`).join('\n');
+    base44.integrations.Core.InvokeLLM({
+      prompt: `I have an app badge called "${appLinkDialog.name}" (section: ${appLinkDialog.section}, category: ${appLinkDialog.category}).
+I need to find the best matching OSM badge from this list:
+${osmList}
+
+Return JSON with the best match. If no good match exists, return null for badge_id.`,
+      response_json_schema: {
+        type: 'object',
+        properties: {
+          badge_id: { type: 'string' },
+          badge_name: { type: 'string' },
+          reasoning: { type: 'string' },
+        },
+      },
+    }).then(result => {
+      if (result?.badge_id) setAppAiSuggestion(result);
+    }).catch(() => {}).finally(() => setAppAiSuggesting(false));
+  }, [appLinkDialog]);
 
   const handleSaveSettings = async () => {
     if (!settingsForm) return;
@@ -134,6 +190,7 @@ export default function OSMSyncPanel() {
     }
   };
 
+  // Save OSM → App link
   const handleSaveLink = async () => {
     if (!linkDialogBadge) return;
     try {
@@ -144,13 +201,35 @@ export default function OSMSyncPanel() {
       toast.success(linkingTo ? 'Badge linked' : 'Link removed');
       setLinkDialogBadge(null);
       setLinkingTo('');
+      setAiSuggestion(null);
+    } catch (e) {
+      toast.error('Failed to save link: ' + e.message);
+    }
+  };
+
+  // Save App → OSM link (updates the OSM badge's linked_to_app_badge field)
+  const handleSaveAppLink = async () => {
+    if (!appLinkDialog) return;
+    try {
+      // If switching from another osm badge, clear that one first
+      const prev = osmBadges.find(ob => ob.linked_to_app_badge === appLinkDialog.id);
+      if (prev && prev.id !== appLinkingTo) {
+        await base44.entities.OSMBadge.update(prev.id, { linked_to_app_badge: null });
+      }
+      if (appLinkingTo) {
+        await base44.entities.OSMBadge.update(appLinkingTo, { linked_to_app_badge: appLinkDialog.id });
+      }
+      refetchOsmBadges();
+      toast.success(appLinkingTo ? 'Badge linked' : 'Link removed');
+      setAppLinkDialog(null);
+      setAppLinkingTo('');
+      setAppAiSuggestion(null);
     } catch (e) {
       toast.error('Failed to save link: ' + e.message);
     }
   };
 
   const setField = (k, v) => setSettingsForm(f => ({ ...f, [k]: v }));
-
   const osmUnlinkedCount = osmBadges.filter(b => !b.linked_to_app_badge).length;
   const appUnlinkedCount = badges.filter(b => !osmBadges.some(ob => ob.linked_to_app_badge === b.id)).length;
 
@@ -277,8 +356,6 @@ export default function OSMSyncPanel() {
                   ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Syncing...</>
                   : <><Zap className="w-4 h-4 mr-2" />Fetch OSM Badges</>}
               </Button>
-
-              {/* View toggle */}
               <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
                 <button
                   onClick={() => setBadgeView('osm')}
@@ -320,7 +397,7 @@ export default function OSMSyncPanel() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => { setLinkDialogBadge(badge); setLinkingTo(badge.linked_to_app_badge || ''); }}
+                              onClick={() => { setLinkDialogBadge(badge); setLinkingTo(badge.linked_to_app_badge || ''); setAiSuggestion(null); }}
                             >
                               {badge.linked_to_app_badge
                                 ? <><Edit className="w-3 h-3 mr-1" />Edit</>
@@ -345,13 +422,13 @@ export default function OSMSyncPanel() {
             {/* My Badges View */}
             {badgeView === 'app' && (
               <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                <div className="grid grid-cols-4 gap-3 p-3 bg-gray-50 rounded-lg font-semibold text-xs sticky top-0">
-                  <div>Name</div><div>Section</div><div>Category</div><div>OSM Link</div>
+                <div className="grid grid-cols-5 gap-3 p-3 bg-gray-50 rounded-lg font-semibold text-xs sticky top-0">
+                  <div>Name</div><div>Section</div><div>Category</div><div>OSM Link</div><div>Actions</div>
                 </div>
                 {badges.map(badge => {
                   const linked = osmBadges.find(ob => ob.linked_to_app_badge === badge.id);
                   return (
-                    <div key={badge.id} className={`grid grid-cols-4 gap-3 p-3 border rounded-lg items-center ${!linked ? 'border-amber-200 bg-amber-50' : ''}`}>
+                    <div key={badge.id} className={`grid grid-cols-5 gap-3 p-3 border rounded-lg items-center ${!linked ? 'border-amber-200 bg-amber-50' : ''}`}>
                       <div className="text-sm font-medium">{badge.name}</div>
                       <div className="text-xs capitalize text-gray-600">{badge.section}</div>
                       <div><Badge variant="outline" className="text-xs">{badge.category}</Badge></div>
@@ -359,6 +436,17 @@ export default function OSMSyncPanel() {
                         {linked
                           ? <span className="text-green-700 font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" />{linked.name}</span>
                           : <span className="text-amber-600 font-medium flex items-center gap-1"><XCircle className="w-3 h-3" />No OSM link</span>}
+                      </div>
+                      <div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => { setAppLinkDialog(badge); setAppLinkingTo(linked?.id || ''); setAppAiSuggestion(null); }}
+                        >
+                          {linked
+                            ? <><Edit className="w-3 h-3 mr-1" />Edit</>
+                            : <><Link className="w-3 h-3 mr-1" />Link</>}
+                        </Button>
                       </div>
                     </div>
                   );
@@ -368,13 +456,37 @@ export default function OSMSyncPanel() {
           </CardContent>
         </Card>
 
-        {/* Link Dialog */}
-        <Dialog open={!!linkDialogBadge} onOpenChange={(open) => { if (!open) { setLinkDialogBadge(null); setLinkingTo(''); } }}>
+        {/* OSM → App Link Dialog */}
+        <Dialog open={!!linkDialogBadge} onOpenChange={(open) => { if (!open) { setLinkDialogBadge(null); setLinkingTo(''); setAiSuggestion(null); } }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Link OSM Badge: {linkDialogBadge?.name}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-2">
+              {/* AI Suggestion */}
+              {aiSuggesting && (
+                <div className="flex items-center gap-2 p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm text-purple-700">
+                  <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                  Getting AI suggestion...
+                </div>
+              )}
+              {!aiSuggesting && aiSuggestion && (
+                <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-purple-800">
+                    <Sparkles className="w-4 h-4" />
+                    AI Suggestion
+                  </div>
+                  <p className="text-sm text-purple-700">{aiSuggestion.reasoning}</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                    onClick={() => setLinkingTo(aiSuggestion.badge_id)}
+                  >
+                    Use: {aiSuggestion.badge_name}
+                  </Button>
+                </div>
+              )}
               <div>
                 <Label>Link to app badge</Label>
                 <Select value={linkingTo || '__none__'} onValueChange={v => setLinkingTo(v === '__none__' ? '' : v)}>
@@ -389,8 +501,59 @@ export default function OSMSyncPanel() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => { setLinkDialogBadge(null); setLinkingTo(''); }}>Cancel</Button>
+              <Button variant="outline" onClick={() => { setLinkDialogBadge(null); setLinkingTo(''); setAiSuggestion(null); }}>Cancel</Button>
               <Button onClick={handleSaveLink} className="bg-[#7413dc] hover:bg-[#5c0fb0]">Save Link</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* App → OSM Link Dialog */}
+        <Dialog open={!!appLinkDialog} onOpenChange={(open) => { if (!open) { setAppLinkDialog(null); setAppLinkingTo(''); setAppAiSuggestion(null); } }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Link App Badge: {appLinkDialog?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              {/* AI Suggestion */}
+              {appAiSuggesting && (
+                <div className="flex items-center gap-2 p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm text-purple-700">
+                  <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+                  Getting AI suggestion...
+                </div>
+              )}
+              {!appAiSuggesting && appAiSuggestion && (
+                <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-purple-800">
+                    <Sparkles className="w-4 h-4" />
+                    AI Suggestion
+                  </div>
+                  <p className="text-sm text-purple-700">{appAiSuggestion.reasoning}</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                    onClick={() => setAppLinkingTo(appAiSuggestion.badge_id)}
+                  >
+                    Use: {appAiSuggestion.badge_name}
+                  </Button>
+                </div>
+              )}
+              <div>
+                <Label>Link to OSM badge</Label>
+                <Select value={appLinkingTo || '__none__'} onValueChange={v => setAppLinkingTo(v === '__none__' ? '' : v)}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Select an OSM badge..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">— No link —</SelectItem>
+                    {osmBadges.map(b => (
+                      <SelectItem key={b.id} value={b.id}>{b.name} ({b.badge_type})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setAppLinkDialog(null); setAppLinkingTo(''); setAppAiSuggestion(null); }}>Cancel</Button>
+              <Button onClick={handleSaveAppLink} className="bg-[#7413dc] hover:bg-[#5c0fb0]">Save Link</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
