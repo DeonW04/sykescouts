@@ -116,7 +116,7 @@ export default function OSMSyncPanel({ defaultTab }) {
         client_id: clientId,
         redirect_uri: redirectUri,
         response_type: 'code',
-        scope: 'section:member:write section:badge:write section:programme:write section.administration.admin',
+        scope: 'section:member:write section:badge:write section:programme:write section:administration:admin',
         state: state,
         code_challenge: codeChallenge,
         code_challenge_method: 'S256',
