@@ -158,46 +158,6 @@ export default function EventDetail() {
     await updateEventMutation.mutateAsync({ published: !event.published });
   };
 
-  const handleAddFinancial = () => {
-    if (!financialForm.description || !financialForm.amount) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    const newEntry = {
-      id: Date.now().toString(),
-      description: financialForm.description,
-      amount: parseFloat(financialForm.amount),
-      date: financialForm.date || new Date().toISOString().split('T')[0],
-    };
-
-    if (financialType === 'expense') {
-      setFormData({ ...formData, expenses: [...formData.expenses, newEntry] });
-    } else {
-      setFormData({ ...formData, income: [...formData.income, newEntry] });
-    }
-
-    setFinancialForm({ description: '', amount: '', date: '' });
-    setShowFinancialDialog(false);
-    toast.success(`${financialType === 'expense' ? 'Expense' : 'Income'} added`);
-  };
-
-  const handleDeleteFinancial = (type, id) => {
-    if (type === 'expense') {
-      setFormData({ ...formData, expenses: formData.expenses.filter(e => e.id !== id) });
-    } else {
-      setFormData({ ...formData, income: formData.income.filter(i => i.id !== id) });
-    }
-    toast.success('Entry deleted');
-  };
-
-  const calculateTotals = () => {
-    const totalExpenses = formData.expenses.reduce((sum, e) => sum + e.amount, 0);
-    const totalIncome = formData.income.reduce((sum, i) => sum + i.amount, 0);
-    const profitLoss = totalIncome - totalExpenses;
-    return { totalExpenses, totalIncome, profitLoss };
-  };
-
   if (!event) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
