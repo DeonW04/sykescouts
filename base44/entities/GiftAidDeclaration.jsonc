@@ -1,0 +1,48 @@
+{
+  "name": "GiftAidDeclaration",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string",
+      "description": "Member ID this declaration is for"
+    },
+    "declarant_name": {
+      "type": "string",
+      "description": "Full name of the taxpayer making the declaration"
+    },
+    "declarant_address": {
+      "type": "string",
+      "description": "Address of the declarant"
+    },
+    "declarant_postcode": {
+      "type": "string",
+      "description": "Postcode of the declarant"
+    },
+    "is_uk_taxpayer": {
+      "type": "boolean",
+      "description": "Confirms UK taxpayer status"
+    },
+    "declaration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date signed"
+    },
+    "signature_url": {
+      "type": "string",
+      "description": "URL of the signature image"
+    },
+    "pdf_url": {
+      "type": "string",
+      "description": "URL of the generated PDF"
+    },
+    "captured_by": {
+      "type": "string",
+      "description": "Leader email if captured in person"
+    }
+  },
+  "required": [
+    "member_id",
+    "declarant_name",
+    "is_uk_taxpayer"
+  ]
+}

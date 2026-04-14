@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, AlertCircle, Star, Loader2 } from 'lucide-react';
+import { Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, AlertCircle, Star, Loader2, CreditCard } from 'lucide-react';
 import EditMemberDialog from '../components/EditMemberDialog';
 import OSMLinkSection from '../components/member/OSMLinkSection';
 import BadgesTab from '../components/member/BadgesTab';
+import MemberPaymentsTab from '../components/member/MemberPaymentsTab';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
 import { createPageUrl } from '../utils';
@@ -344,7 +345,7 @@ export default function MemberDetail() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-white border grid grid-cols-6 md:inline-flex">
+          <TabsList className="bg-white border grid grid-cols-7 md:inline-flex">
             <TabsTrigger value="overview" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
               <User className="w-4 h-4 flex-shrink-0" />
               <span className="hidden md:inline text-sm">Overview</span>
@@ -368,6 +369,10 @@ export default function MemberDetail() {
             <TabsTrigger value="notes" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
               <FileText className="w-4 h-4 flex-shrink-0" />
               <span className="hidden md:inline text-sm">Notes</span>
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
+              <CreditCard className="w-4 h-4 flex-shrink-0" />
+              <span className="hidden md:inline text-sm">Payments</span>
             </TabsTrigger>
           </TabsList>
 
@@ -637,6 +642,11 @@ export default function MemberDetail() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Payments Tab */}
+          <TabsContent value="payments">
+            <MemberPaymentsTab memberId={memberId} />
           </TabsContent>
 
           {/* Notes Tab */}

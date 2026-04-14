@@ -176,6 +176,16 @@
     "osm_scoutid": {
       "type": "number",
       "description": "OSM Scout ID \u2014 used to sync badge awards to Online Scout Manager"
+    },
+    "gift_aid_eligible": {
+      "type": "boolean",
+      "default": false,
+      "description": "Member has a valid Gift Aid declaration"
+    },
+    "gift_aid_declaration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of Gift Aid declaration"
     }
   },
   "required": [

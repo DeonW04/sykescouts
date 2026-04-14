@@ -8,6 +8,16 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AIProgrammePlanner from './pages/AIProgrammePlanner';
+import TreasurerDashboard from './pages/TreasurerDashboard';
+import TreasurerLedger from './pages/TreasurerLedger';
+import TreasurerMemberPayments from './pages/TreasurerMemberPayments';
+import TreasurerEventFinances from './pages/TreasurerEventFinances';
+import TreasurerReceiptAllocation from './pages/TreasurerReceiptAllocation';
+import TreasurerReimbursements from './pages/TreasurerReimbursements';
+import TreasurerBudgets from './pages/TreasurerBudgets';
+import TreasurerRecurringPayments from './pages/TreasurerRecurringPayments';
+import TreasurerFunds from './pages/TreasurerFunds';
+import TreasurerReports from './pages/TreasurerReports';
 import ParentPortalAnalytics from './pages/ParentPortalAnalytics';
 import ConsentForms from './pages/ConsentForms';
 import ConsentFormBuilder from './pages/ConsentFormBuilder';
@@ -129,6 +139,16 @@ const AuthenticatedApp = () => {
       <Route path="/ParentPortalAnalytics" element={<LayoutWrapper currentPageName="ParentPortalAnalytics"><ParentPortalAnalytics /></LayoutWrapper>} />
       <Route path="/ConsentFormBuilder" element={<LayoutWrapper currentPageName="ConsentFormBuilder"><ConsentFormBuilder /></LayoutWrapper>} />
       <Route path="/CompleteRegistration" element={<CompleteRegistration />} />
+      <Route path="/TreasurerDashboard" element={<TreasurerDashboard />} />
+      <Route path="/TreasurerLedger" element={<TreasurerLedger />} />
+      <Route path="/TreasurerMemberPayments" element={<TreasurerMemberPayments />} />
+      <Route path="/TreasurerEventFinances" element={<TreasurerEventFinances />} />
+      <Route path="/TreasurerReceiptAllocation" element={<TreasurerReceiptAllocation />} />
+      <Route path="/TreasurerReimbursements" element={<TreasurerReimbursements />} />
+      <Route path="/TreasurerBudgets" element={<TreasurerBudgets />} />
+      <Route path="/TreasurerRecurringPayments" element={<TreasurerRecurringPayments />} />
+      <Route path="/TreasurerFunds" element={<TreasurerFunds />} />
+      <Route path="/TreasurerReports" element={<TreasurerReports />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </PWAGate>

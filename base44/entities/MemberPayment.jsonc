@@ -1,0 +1,55 @@
+{
+  "name": "MemberPayment",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string",
+      "description": "Member ID"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Payment amount in GBP"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Payment date"
+    },
+    "payment_type": {
+      "type": "string",
+      "enum": [
+        "subs",
+        "event",
+        "donation",
+        "other"
+      ],
+      "description": "Type of payment"
+    },
+    "related_event_id": {
+      "type": "string",
+      "description": "Linked event ID if applicable"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    },
+    "entered_by": {
+      "type": "string",
+      "description": "User email who entered this"
+    },
+    "receipt_reference": {
+      "type": "string",
+      "description": "Linked receipt ID"
+    },
+    "ledger_entry_id": {
+      "type": "string",
+      "description": "Linked ledger entry ID"
+    }
+  },
+  "required": [
+    "member_id",
+    "amount",
+    "date",
+    "payment_type"
+  ]
+}

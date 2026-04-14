@@ -1,0 +1,53 @@
+{
+  "name": "Section",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "enum": [
+        "squirrels",
+        "beavers",
+        "cubs",
+        "scouts",
+        "explorers"
+      ],
+      "description": "Section name"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Display name for section"
+    },
+    "age_range": {
+      "type": "string",
+      "description": "Age range (e.g., 6-8 years)"
+    },
+    "meeting_day": {
+      "type": "string",
+      "description": "Meeting day of week"
+    },
+    "meeting_time": {
+      "type": "string",
+      "description": "Meeting time"
+    },
+    "leader_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Assigned leader IDs"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Is section active"
+    },
+    "team_leader_id": {
+      "type": "string",
+      "description": "Leader ID of the Team Leader for this section"
+    }
+  },
+  "required": [
+    "name",
+    "display_name"
+  ]
+}

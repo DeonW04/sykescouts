@@ -1,0 +1,83 @@
+{
+  "name": "LedgerEntry",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Transaction date"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "income",
+        "expense"
+      ],
+      "description": "Entry type"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Amount in GBP"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "subs",
+        "event_payments",
+        "donations",
+        "fundraising",
+        "equipment",
+        "food",
+        "transport",
+        "hall_hire",
+        "badges",
+        "reimbursement",
+        "other"
+      ],
+      "description": "Transaction category"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the transaction"
+    },
+    "reference": {
+      "type": "string",
+      "description": "Reference number or code"
+    },
+    "linked_member_id": {
+      "type": "string",
+      "description": "Optional linked member ID"
+    },
+    "linked_event_id": {
+      "type": "string",
+      "description": "Optional linked event ID"
+    },
+    "linked_meeting_id": {
+      "type": "string",
+      "description": "Optional linked meeting/programme ID"
+    },
+    "linked_fund_id": {
+      "type": "string",
+      "description": "Optional linked fund ID"
+    },
+    "receipt_reference": {
+      "type": "string",
+      "description": "Linked receipt ID"
+    },
+    "entered_by": {
+      "type": "string",
+      "description": "User email who entered this"
+    },
+    "section_id": {
+      "type": "string",
+      "description": "Optional linked section"
+    }
+  },
+  "required": [
+    "date",
+    "type",
+    "amount",
+    "category",
+    "description"
+  ]
+}

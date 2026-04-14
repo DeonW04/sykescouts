@@ -1,0 +1,36 @@
+{
+  "name": "Fund",
+  "type": "object",
+  "properties": {
+    "fund_name": {
+      "type": "string",
+      "description": "Name of the fund"
+    },
+    "description": {
+      "type": "string",
+      "description": "Fund description"
+    },
+    "starting_balance": {
+      "type": "number",
+      "default": 0,
+      "description": "Opening balance in GBP"
+    },
+    "fund_type": {
+      "type": "string",
+      "enum": [
+        "restricted",
+        "unrestricted"
+      ],
+      "description": "Type of fund"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Is fund active"
+    }
+  },
+  "required": [
+    "fund_name",
+    "fund_type"
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "name": "ReceiptAllocation",
+  "type": "object",
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "description": "Linked receipt/upload ID or URL"
+    },
+    "receipt_url": {
+      "type": "string",
+      "description": "Receipt image URL"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Amount on receipt in GBP"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "equipment",
+        "food",
+        "transport",
+        "hall_hire",
+        "badges",
+        "other"
+      ],
+      "description": "Expense category"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "scout_bank_card",
+        "leader_paid_personally"
+      ],
+      "description": "How it was paid"
+    },
+    "linked_event_id": {
+      "type": "string",
+      "description": "Linked event ID"
+    },
+    "linked_meeting_id": {
+      "type": "string",
+      "description": "Linked meeting/programme ID"
+    },
+    "leader_id": {
+      "type": "string",
+      "description": "Leader ID if paid personally"
+    },
+    "allocated_by": {
+      "type": "string",
+      "description": "Treasurer email who allocated this"
+    },
+    "allocation_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date allocated"
+    },
+    "ledger_entry_id": {
+      "type": "string",
+      "description": "Linked ledger entry"
+    },
+    "reimbursement_id": {
+      "type": "string",
+      "description": "Linked reimbursement if created"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "unallocated",
+        "allocated"
+      ],
+      "default": "unallocated",
+      "description": "Allocation status"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "amount",
+    "category",
+    "payment_method"
+  ]
+}

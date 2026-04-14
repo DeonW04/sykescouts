@@ -1,0 +1,62 @@
+{
+  "name": "RecurringPayment",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Payment name/description"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Amount in GBP"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "weekly",
+        "monthly",
+        "yearly"
+      ],
+      "description": "Payment frequency"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "hall_hire",
+        "insurance",
+        "equipment",
+        "subscriptions",
+        "other"
+      ],
+      "description": "Payment category"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "standing_order",
+        "manual_payment"
+      ],
+      "description": "How payment is made"
+    },
+    "next_due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Next payment due date"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Is this recurring payment active"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "name",
+    "amount",
+    "frequency",
+    "payment_method"
+  ]
+}

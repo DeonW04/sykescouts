@@ -1,0 +1,88 @@
+{
+  "name": "Reimbursement",
+  "type": "object",
+  "properties": {
+    "leader_id": {
+      "type": "string",
+      "description": "Leader ID"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Amount to reimburse in GBP"
+    },
+    "linked_receipt_id": {
+      "type": "string",
+      "description": "Linked receipt/upload ID"
+    },
+    "linked_event_id": {
+      "type": "string",
+      "description": "Linked event ID"
+    },
+    "linked_meeting_id": {
+      "type": "string",
+      "description": "Linked meeting/programme ID"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the expense"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "equipment",
+        "food",
+        "transport",
+        "hall_hire",
+        "badges",
+        "other"
+      ],
+      "description": "Expense category"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending_approval",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending_approval",
+      "description": "GLV approval status"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "unpaid",
+        "paid"
+      ],
+      "default": "unpaid",
+      "description": "Payment status"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "User email who approved"
+    },
+    "approved_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date approved"
+    },
+    "paid_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date paid"
+    },
+    "ledger_entry_id": {
+      "type": "string",
+      "description": "Linked ledger entry"
+    },
+    "rejection_reason": {
+      "type": "string",
+      "description": "Reason for rejection if rejected"
+    }
+  },
+  "required": [
+    "leader_id",
+    "amount",
+    "description"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "SectionBudget",
+  "type": "object",
+  "properties": {
+    "section_id": {
+      "type": "string",
+      "description": "Section ID"
+    },
+    "term_id": {
+      "type": "string",
+      "description": "Term ID"
+    },
+    "term_label": {
+      "type": "string",
+      "description": "Display label for the term period"
+    },
+    "budget_amount": {
+      "type": "number",
+      "description": "Allocated budget amount in GBP"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Budget notes"
+    }
+  },
+  "required": [
+    "section_id",
+    "budget_amount"
+  ]
+}

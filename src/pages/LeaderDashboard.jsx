@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSectionContext } from '../components/leader/SectionContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt, Lightbulb, Package, TrendingUp, FileText } from 'lucide-react';
+import { Users, Calendar, Award, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt, Lightbulb, Package, TrendingUp, FileText, Landmark } from 'lucide-react';
 import ActionsDrilldownModal from '../components/leader/ActionsDrilldownModal';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
@@ -440,6 +440,14 @@ export default function LeaderDashboard() {
       iconBg: 'bg-pink-100',
       iconColor: 'text-pink-600'
     },
+    ...(user?.role === 'admin' || user?.role === 'treasurer' || user?.role === 'glv' || user?.role === 'team_leader' ? [{
+      icon: Landmark,
+      label: 'Treasurer',
+      page: 'TreasurerDashboard',
+      gradient: 'from-[#1a472a] to-[#2d6a4f]',
+      iconBg: 'bg-yellow-100',
+      iconColor: 'text-[#1a472a]'
+    }] : []),
   ];
 
   return (
