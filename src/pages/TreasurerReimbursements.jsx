@@ -174,9 +174,8 @@ export default function TreasurerReimbursements() {
           { key: 'rejected', title: 'Rejected', color: 'text-red-500' },
         ].map(({ key, title, color }) => {
           const Icon = groupIcons[key];
-          return (
-          groups[key].length > 0 && (
-            <Card key={key}>
+          return groups[key].length > 0 ? (
+              <Card key={key}>
               <CardHeader>
                 <CardTitle className={`text-base flex items-center gap-2 ${color}`}>
                   <Icon className="w-4 h-4" />{title} ({groups[key].length})
@@ -186,7 +185,7 @@ export default function TreasurerReimbursements() {
                 {groups[key].map(r => <RCard key={r.id} r={r} />)}
               </CardContent>
             </Card>
-          );
+          ) : null;
         })}
         {reimbursements.length === 0 && (
           <Card className="flex items-center justify-center h-48">
