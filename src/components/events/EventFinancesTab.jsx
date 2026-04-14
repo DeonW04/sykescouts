@@ -23,7 +23,7 @@ export default function EventFinancesTab({ eventId, event }) {
   });
 
   const { data: eventAttendance = [] } = useQuery({
-    queryKey: ['event-attendance', eventId],
+    queryKey: ['event-attendances', eventId],
     queryFn: () => base44.entities.EventAttendance.filter({ event_id: eventId }),
   });
 
@@ -37,14 +37,42 @@ export default function EventFinancesTab({ eventId, event }) {
     queryFn: () => base44.entities.MemberPayment.filter({ related_event_id: eventId }),
   });
 
+  const { data: actionsRequired = [] } = useQuery({
+    queryKey: ['action-required', eventId],
+    queryFn: () => base44.entities.ActionRequired.filter({ event_id: eventId }),
+  });
+
+  const { data: actionResponses = [] } = useQuery({
+    queryKey: ['action-responses-finances', eventId],
+    queryFn: async () => {
+      const allResponses = await base44.entities.ActionResponse.filter({});
+      const actionIds = actionsRequired.map(a => a.id);
+      return allResponses.filter(r => actionIds.includes(r.action_required_id));
+    },
+    enabled: actionsRequired.length > 0,
+  });
+
   const cost = event?.cost || 0;
-  const attending = eventAttendance.filter(a => a.rsvp_status === 'attending');
-  const paidCount = attending.filter(a => a.payment_status === 'paid').length;
+
+  // Determine attending members via the Attendance action response
+  const attendanceAction = actionsRequired.find(a => a.action_purpose === 'attendance');
+  const attendingMemberIds = attendanceAction
+    ? actionResponses
+        .filter(r => r.action_required_id === attendanceAction.id &&
+          (r.response_value === 'Yes, attending' || r.response_value === 'yes'))
+        .map(r => r.member_id)
+    : eventAttendance.map(a => a.member_id); // fallback: all invited members
+
+  const attending = attendingMemberIds;
   const totalExpected = attending.length * cost;
   const totalCollected = memberPayments.reduce((s, p) => s + (p.amount || 0), 0);
+  const paidCount = memberPayments.reduce((memberSet, p) => {
+    // count members who have paid in full
+    const memberTotal = memberPayments.filter(mp => mp.member_id === p.member_id).reduce((s, mp) => s + (mp.amount || 0), 0);
+    if (memberTotal >= cost && cost > 0) memberSet.add(p.member_id);
+    return memberSet;
+  }, new Set()).size;
   const totalExpenses = allocations.reduce((s, a) => s + (a.amount || 0), 0);
-  const ledgerIncome = ledgerEntries.filter(e => e.type === 'income').reduce((s, e) => s + (e.amount || 0), 0);
-  const ledgerExpenses = ledgerEntries.filter(e => e.type === 'expense').reduce((s, e) => s + (e.amount || 0), 0);
   const net = totalCollected - totalExpenses;
 
   const qrUrl = `${window.location.origin}/receipt-submit?event_id=${eventId}&label=${encodeURIComponent(event?.title || 'Event')}`;
@@ -58,7 +86,7 @@ export default function EventFinancesTab({ eventId, event }) {
             <TrendingUp className="w-5 h-5 text-green-600 mx-auto mb-1" />
             <p className="text-xs text-gray-500">Payments Collected</p>
             <p className="text-xl font-bold text-green-700">{fmt(totalCollected)}</p>
-            <p className="text-xs text-gray-400">{paidCount}/{attending.length} paid</p>
+            <p className="text-xs text-gray-400">{paidCount}/{attending.length} attending paid</p>
           </CardContent>
         </Card>
         <Card className="border-red-200 bg-red-50">
@@ -170,13 +198,16 @@ export default function EventFinancesTab({ eventId, event }) {
       </Card>
 
       {/* Participant Payments */}
-      {attending.length > 0 && (
+      {attending.length > 0 && cost > 0 && (
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              <CardTitle className="text-base">Participant Payments ({attending.length})</CardTitle>
+              <CardTitle className="text-base">Attending Members — Payments ({attending.length})</CardTitle>
             </div>
+            {attendanceAction && (
+              <p className="text-xs text-gray-400 mt-0.5">Based on "{attendanceAction.column_title}" responses</p>
+            )}
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -190,12 +221,12 @@ export default function EventFinancesTab({ eventId, event }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {attending.map(att => {
-                    const member = members.find(m => m.id === att.member_id);
-                    const paid = memberPayments.filter(p => p.member_id === att.member_id).reduce((s, p) => s + (p.amount || 0), 0);
+                  {attending.map(memberId => {
+                    const member = members.find(m => m.id === memberId);
+                    const paid = memberPayments.filter(p => p.member_id === memberId).reduce((s, p) => s + (p.amount || 0), 0);
                     const status = paid >= cost ? 'paid' : paid > 0 ? 'partial' : 'unpaid';
                     return (
-                      <tr key={att.id} className="border-b hover:bg-gray-50">
+                      <tr key={memberId} className="border-b hover:bg-gray-50">
                         <td className="py-2 px-2">{member?.full_name || 'Unknown'}</td>
                         <td className="py-2 px-2 text-right">{fmt(cost)}</td>
                         <td className="py-2 px-2 text-right text-green-700 font-medium">{fmt(paid)}</td>
