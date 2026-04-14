@@ -20,6 +20,7 @@ import EventAttendeesSection from '../components/events/EventAttendeesSection';
 import SafetySection from '../components/meeting/SafetySection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
 import DocumentStorageSection from '../components/meeting/DocumentStorageSection';
+import EventFinancesTab from '../components/events/EventFinancesTab';
 import LeaderNav from '../components/leader/LeaderNav';
 
 export default function EventDetail() {
@@ -31,9 +32,7 @@ export default function EventDetail() {
   const [activeSection, setActiveSection] = useState('overview');
   const [activePlanningTab, setActivePlanningTab] = useState('schedule');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showFinancialDialog, setShowFinancialDialog] = useState(false);
-  const [financialType, setFinancialType] = useState('expense');
-  const [financialForm, setFinancialForm] = useState({ description: '', amount: '', date: '' });
+
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showAwardNightsDialog, setShowAwardNightsDialog] = useState(false);
   
@@ -221,6 +220,7 @@ export default function EventDetail() {
   const navigationItems = [
     { id: 'overview', label: 'Overview', icon: FileText },
     { id: 'planning', label: 'Planning', icon: Calendar },
+    { id: 'finances', label: 'Finances', icon: DollarSign },
     { id: 'attendance', label: 'Attendance', icon: Users },
     { id: 'parent', label: 'Parent Portal', icon: Eye },
     { id: 'badges', label: 'Badges', icon: Award },
@@ -232,7 +232,6 @@ export default function EventDetail() {
     { id: 'todo', label: 'To-Do', icon: ListTodo },
     { id: 'safety', label: 'Safety', icon: Shield },
     { id: 'equipment', label: 'Equipment', icon: FileText },
-    { id: 'financial', label: 'Financial', icon: DollarSign },
   ];
 
   const getSectionTitle = () => {
@@ -692,160 +691,12 @@ export default function EventDetail() {
                   </div>
                 )}
 
-                {activePlanningTab === 'financial' && (
-                  <div className="space-y-6">
-                    {/* Summary Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <Card className="shadow-sm border-gray-200">
-                        <CardContent className="pt-6">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-gray-600">Total Expenses</p>
-                              <p className="text-2xl font-bold text-red-600 mt-1">
-                                £{calculateTotals().totalExpenses.toFixed(2)}
-                              </p>
-                            </div>
-                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                              <TrendingDown className="w-6 h-6 text-red-600" />
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
 
-                      <Card className="shadow-sm border-gray-200">
-                        <CardContent className="pt-6">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-gray-600">Total Income</p>
-                              <p className="text-2xl font-bold text-green-600 mt-1">
-                                £{calculateTotals().totalIncome.toFixed(2)}
-                              </p>
-                            </div>
-                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                              <TrendingUp className="w-6 h-6 text-green-600" />
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card className={`shadow-sm border-2 ${calculateTotals().profitLoss >= 0 ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-                        <CardContent className="pt-6">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-gray-700">Profit / Loss</p>
-                              <p className={`text-2xl font-bold mt-1 ${calculateTotals().profitLoss >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                                £{calculateTotals().profitLoss.toFixed(2)}
-                              </p>
-                            </div>
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${calculateTotals().profitLoss >= 0 ? 'bg-green-200' : 'bg-red-200'}`}>
-                              <DollarSign className={`w-6 h-6 ${calculateTotals().profitLoss >= 0 ? 'text-green-700' : 'text-red-700'}`} />
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    {/* Expenses and Income */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* Expenses */}
-                      <Card className="shadow-sm border-gray-200">
-                        <CardHeader className="border-b border-gray-100">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="text-xl">Expenses</CardTitle>
-                            <Button
-                              onClick={() => {
-                                setFinancialType('expense');
-                                setFinancialForm({ description: '', amount: '', date: new Date().toISOString().split('T')[0] });
-                                setShowFinancialDialog(true);
-                              }}
-                              size="sm"
-                              className="bg-red-600 hover:bg-red-700 min-h-[44px]"
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Add Expense
-                            </Button>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-6">
-                          {formData.expenses.length === 0 ? (
-                            <p className="text-center text-gray-500 py-8">No expenses recorded</p>
-                          ) : (
-                            <div className="space-y-3">
-                              {formData.expenses.map((expense) => (
-                                <div key={expense.id} className="flex items-center justify-between p-4 bg-red-50 border border-red-100 rounded-lg hover:shadow-sm transition-shadow">
-                                  <div className="flex-1">
-                                    <p className="font-medium text-gray-900">{expense.description}</p>
-                                    <p className="text-sm text-gray-600 mt-1">{format(new Date(expense.date), 'MMM d, yyyy')}</p>
-                                  </div>
-                                  <div className="flex items-center gap-4">
-                                    <p className="text-lg font-bold text-red-600">£{expense.amount.toFixed(2)}</p>
-                                    <Button
-                                      onClick={() => handleDeleteFinancial('expense', expense.id)}
-                                      size="sm"
-                                      variant="ghost"
-                                      className="text-red-600 hover:text-red-700 hover:bg-red-100 min-h-[44px] min-w-[44px]"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-
-                      {/* Income */}
-                      <Card className="shadow-sm border-gray-200">
-                        <CardHeader className="border-b border-gray-100">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="text-xl">Income</CardTitle>
-                            <Button
-                              onClick={() => {
-                                setFinancialType('income');
-                                setFinancialForm({ description: '', amount: '', date: new Date().toISOString().split('T')[0] });
-                                setShowFinancialDialog(true);
-                              }}
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700 min-h-[44px]"
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Add Income
-                            </Button>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-6">
-                          {formData.income.length === 0 ? (
-                            <p className="text-center text-gray-500 py-8">No income recorded</p>
-                          ) : (
-                            <div className="space-y-3">
-                              {formData.income.map((incomeItem) => (
-                                <div key={incomeItem.id} className="flex items-center justify-between p-4 bg-green-50 border border-green-100 rounded-lg hover:shadow-sm transition-shadow">
-                                  <div className="flex-1">
-                                    <p className="font-medium text-gray-900">{incomeItem.description}</p>
-                                    <p className="text-sm text-gray-600 mt-1">{format(new Date(incomeItem.date), 'MMM d, yyyy')}</p>
-                                  </div>
-                                  <div className="flex items-center gap-4">
-                                    <p className="text-lg font-bold text-green-600">£{incomeItem.amount.toFixed(2)}</p>
-                                    <Button
-                                      onClick={() => handleDeleteFinancial('income', incomeItem.id)}
-                                      size="sm"
-                                      variant="ghost"
-                                      className="text-red-600 hover:text-red-700 hover:bg-red-100 min-h-[44px] min-w-[44px]"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                )}
               </>
+            )}
+
+            {activeSection === 'finances' && (
+              <EventFinancesTab eventId={eventId} event={event} />
             )}
 
             {activeSection === 'attendance' && (
@@ -915,62 +766,6 @@ export default function EventDetail() {
           </main>
         </div>
       </div>
-
-      {/* Financial Dialog */}
-      <Dialog open={showFinancialDialog} onOpenChange={setShowFinancialDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add {financialType === 'expense' ? 'Expense' : 'Income'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label className="text-sm font-medium">Description</Label>
-              <Input
-                value={financialForm.description}
-                onChange={(e) => setFinancialForm({ ...financialForm, description: e.target.value })}
-                placeholder={financialType === 'expense' ? 'e.g., Transport costs' : 'e.g., Grant from council'}
-                className="mt-2 min-h-[44px]"
-              />
-            </div>
-            <div>
-              <Label className="text-sm font-medium">Amount (£)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={financialForm.amount}
-                onChange={(e) => setFinancialForm({ ...financialForm, amount: e.target.value })}
-                placeholder="0.00"
-                className="mt-2 min-h-[44px]"
-              />
-            </div>
-            <div>
-              <Label className="text-sm font-medium">Date</Label>
-              <Input
-                type="date"
-                value={financialForm.date}
-                onChange={(e) => setFinancialForm({ ...financialForm, date: e.target.value })}
-                className="mt-2 min-h-[44px]"
-              />
-            </div>
-          </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setShowFinancialDialog(false)}
-              className="min-h-[44px]"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleAddFinancial}
-              className={`${financialType === 'expense' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} min-h-[44px]`}
-            >
-              Add {financialType === 'expense' ? 'Expense' : 'Income'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <AwardNightsAwayDialog
         open={showAwardNightsDialog}

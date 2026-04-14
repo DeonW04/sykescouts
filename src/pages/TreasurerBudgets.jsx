@@ -24,11 +24,31 @@ export default function TreasurerBudgets() {
   const { data: budgets = [] } = useQuery({ queryKey: ['section-budgets'], queryFn: () => base44.entities.SectionBudget.filter({}) });
   const { data: ledger = [] } = useQuery({ queryKey: ['ledger'], queryFn: () => base44.entities.LedgerEntry.list('-date', 500) });
   const { data: events = [] } = useQuery({ queryKey: ['events'], queryFn: () => base44.entities.Event.list('-start_date', 100) });
+  const { data: allocations = [] } = useQuery({ queryKey: ['receipt-allocations-budgets'], queryFn: () => base44.entities.ReceiptAllocation.filter({}) });
+  const { data: programmes = [] } = useQuery({ queryKey: ['programmes-budgets'], queryFn: () => base44.entities.Programme.filter({}) });
 
   const getSpend = (sectionId) => {
-    return ledger
+    // From ledger entries
+    const ledgerSpend = ledger
       .filter(e => e.type === 'expense' && e.section_id === sectionId)
       .reduce((s, e) => s + (e.amount || 0), 0);
+    // From receipt allocations linked to section meetings
+    const sectionMeetingIds = new Set(programmes.filter(p => p.section_id === sectionId).map(p => p.id));
+    const receiptSpend = allocations
+      .filter(a => a.status === 'unallocated' && (
+        (a.linked_meeting_id && sectionMeetingIds.has(a.linked_meeting_id)) ||
+        (a.linked_event_id && events.some(e => e.id === a.linked_event_id && e.section_ids?.includes(sectionId)))
+      ))
+      .reduce((s, a) => s + (a.amount || 0), 0);
+    return ledgerSpend + receiptSpend;
+  };
+
+  const getUnallocatedReceipts = (sectionId) => {
+    const sectionMeetingIds = new Set(programmes.filter(p => p.section_id === sectionId).map(p => p.id));
+    return allocations.filter(a => a.status === 'unallocated' && (
+      (a.linked_meeting_id && sectionMeetingIds.has(a.linked_meeting_id)) ||
+      (a.linked_event_id && events.some(e => e.id === a.linked_event_id && e.section_ids?.includes(sectionId)))
+    )).length;
   };
 
   const getProjectedSpend = (sectionId) => {
@@ -127,6 +147,11 @@ export default function TreasurerBudgets() {
                         {fmt(allocated - spend)}
                       </span>
                     </div>
+                    {getUnallocatedReceipts(section.id) > 0 && (
+                      <div className="flex items-center gap-1.5 mt-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">
+                        <span className="font-semibold">{getUnallocatedReceipts(section.id)}</span> unallocated receipt{getUnallocatedReceipts(section.id) !== 1 ? 's' : ''} pending Treasurer review
+                      </div>
+                    )}
                   </>
                 ) : (
                   <p className="text-sm text-gray-400 text-center py-4">No budget set for this section</p>

@@ -20,6 +20,7 @@ import TreasurerFunds from './pages/TreasurerFunds';
 import TreasurerReports from './pages/TreasurerReports';
 import TreasurerProgrammeFinances from './pages/TreasurerProgrammeFinances';
 import SectionAccounting from './pages/SectionAccounting';
+import QRReceiptSubmit from './pages/QRReceiptSubmit';
 import ParentPortalAnalytics from './pages/ParentPortalAnalytics';
 import ConsentForms from './pages/ConsentForms';
 import ConsentFormBuilder from './pages/ConsentFormBuilder';
@@ -153,6 +154,7 @@ const AuthenticatedApp = () => {
       <Route path="/TreasurerReports" element={<TreasurerReports />} />
       <Route path="/TreasurerProgrammeFinances" element={<TreasurerProgrammeFinances />} />
       <Route path="/SectionAccounting" element={<LayoutWrapper currentPageName="SectionAccounting"><SectionAccounting /></LayoutWrapper>} />
+      <Route path="/receipt-submit" element={<QRReceiptSubmit />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </PWAGate>

@@ -25,6 +25,7 @@ import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeC
 import LeaderRotaSection from '../components/meeting/LeaderRotaSection';
 import LeaderNav from '../components/leader/LeaderNav';
 import IScoutSection from '../components/meeting/IScoutSection';
+import MeetingFinancesTab from '../components/meeting/MeetingFinancesTab';
 
 export default function MeetingDetail() {
   const navigate = useNavigate();
@@ -276,6 +277,7 @@ export default function MeetingDetail() {
     { id: 'parent', label: 'Parent Portal', icon: Eye },
     { id: 'safety', label: 'Safety', icon: Shield },
     { id: 'badges', label: 'Badges', icon: Award },
+    { id: 'finances', label: 'Finances', icon: FileText },
     { id: 'documents', label: 'Documents', icon: FolderOpen },
     { id: 'iscout', label: 'iScout', icon: Zap },
   ];
@@ -715,6 +717,16 @@ export default function MeetingDetail() {
             {/* ── Badges ── */}
             {activeSection === 'badges' && (
               <ProgrammeBadgeCriteriaSection programmeId={existingProgramme?.id} />
+            )}
+
+            {/* ── Finances ── */}
+            {activeSection === 'finances' && (
+              <MeetingFinancesTab
+                programmeId={existingProgramme?.id}
+                sectionId={sectionId}
+                date={date}
+                sectionName={section?.display_name}
+              />
             )}
 
             {/* ── Documents ── */}
