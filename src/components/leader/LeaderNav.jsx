@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { Users, Calendar, Award, Mail, Settings, ArrowLeft, Image, ShieldAlert, ChevronDown, UserCheck, CalendarDays, Lightbulb, Package, TrendingUp, FileText } from 'lucide-react';
+import { Users, Calendar, Award, Mail, Settings, ArrowLeft, Image, ShieldAlert, ChevronDown, UserCheck, CalendarDays, Lightbulb, Package, TrendingUp, FileText, Landmark, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -12,8 +12,10 @@ export default function LeaderNav() {
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const [userRole, setUserRole] = useState('');
+
   useEffect(() => {
-    base44.auth.me().then(u => setIsAdmin(u?.role === 'admin')).catch(() => {});
+    base44.auth.me().then(u => { setIsAdmin(u?.role === 'admin'); setUserRole(u?.role || ''); }).catch(() => {});
   }, []);
 
   const navItems = [
@@ -57,7 +59,16 @@ export default function LeaderNav() {
         ...(isAdmin ? [{ label: 'Manage Badges', page: 'ManageBadges', icon: Settings, separator: true }] : []),
       ]
     },
-    { icon: Mail, label: 'Communications', page: 'Communications', color: 'bg-teal-500' },
+    { 
+      icon: BookOpen, 
+      label: 'Section Admin', 
+      color: 'bg-teal-500',
+      dropdown: [
+        { label: 'Communications', page: 'Communications', icon: Mail },
+        { label: 'Section Accounting', page: 'TreasurerMemberPayments', icon: Landmark },
+        ...(['admin','treasurer','glv','team_leader'].includes(userRole) ? [{ label: 'Treasurer Portal', page: 'TreasurerDashboard', icon: Landmark, separator: true }] : []),
+      ]
+    },
     { icon: Image, label: 'Gallery', page: 'LeaderGallery', color: 'bg-pink-500' },
   ];
 

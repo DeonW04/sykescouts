@@ -25,10 +25,12 @@ import LeaderManagement from '../components/admin/LeaderManagement';
 import OSMSyncPanel from '../components/admin/OSMSyncPanel';
 import OSMOverview from '../components/admin/OSMOverview';
 import OSMBadgeAwardSync from '../components/admin/OSMBadgeAwardSync';
+import SectionSettingsTab from '../components/admin/SectionSettingsTab';
 
 const NAV_ITEMS = [
   { key: 'users',          label: 'User Management',    icon: Users,    group: 'People' },
   { key: 'leaders',        label: 'Leader Management',  icon: Shield,   group: 'People' },
+  { key: 'sections',       label: 'Section Settings',   icon: Users,    group: 'People' },
   { key: 'images',         label: 'Website Images',     icon: Image,    group: 'Content' },
   { key: 'badges',         label: 'Badge System',       icon: Award,    group: 'Content' },
   { key: 'uniform',        label: 'Uniform Guide',      icon: Shield,   group: 'Content' },
@@ -96,7 +98,8 @@ export default function AdminSettings() {
   const handleEditUser = (user) => {
     setSelectedUser(user);
     const userType = getUserType(user);
-    let typeValue = user.account_type === 'ipad' ? 'ipad' : user.role === 'admin' ? 'admin' : userType.type === 'Parent' ? 'parent' : userType.type === 'Leader' ? 'leader' : 'user';
+    const specialRoles2 = ['admin','treasurer','glv','team_leader'];
+    let typeValue = user.account_type === 'ipad' ? 'ipad' : specialRoles2.includes(user.role) ? user.role : userType.type === 'Parent' ? 'parent' : userType.type === 'Leader' ? 'leader' : 'user';
     const leaderRecord = leaders.find(l => l.user_id === user.id);
     setEditForm({ display_name: user.display_name || user.full_name, email: user.email, user_type: typeValue, section_ids: leaderRecord?.section_ids || [], default_section_id: user.default_section_id || '' });
     setShowEditDialog(true);
@@ -104,7 +107,8 @@ export default function AdminSettings() {
 
   const handleSaveUser = async () => {
     try {
-      const role = editForm.user_type === 'admin' ? 'admin' : 'user';
+      const specialRoles = ['admin','treasurer','glv','team_leader'];
+      const role = specialRoles.includes(editForm.user_type) ? editForm.user_type : 'user';
       const account_type = editForm.user_type === 'ipad' ? 'ipad' : null;
       const response = await base44.functions.invoke('updateUser', { userId: selectedUser.id, display_name: editForm.display_name, role, default_section_id: editForm.default_section_id || null });
       await base44.entities.User.update(selectedUser.id, { account_type });
@@ -285,6 +289,11 @@ export default function AdminSettings() {
 
               {/* ── Leaders ── */}
               <TabsContent value="leaders"><LeaderManagement /></TabsContent>
+
+              {/* ── Sections ── */}
+              <TabsContent value="sections">
+                <SectionSettingsTab sections={sections} leaders={leaders} queryClient={queryClient} />
+              </TabsContent>
 
               {/* ── Website Images ── */}
               <TabsContent value="images">
@@ -514,6 +523,9 @@ export default function AdminSettings() {
                   <SelectItem value="parent">Parent</SelectItem>
                   <SelectItem value="leader">Leader</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="treasurer">Treasurer</SelectItem>
+                  <SelectItem value="glv">GLV</SelectItem>
+                  <SelectItem value="team_leader">Team Leader</SelectItem>
                   <SelectItem value="ipad">iPad (Kiosk)</SelectItem>
                 </SelectContent>
               </Select>
@@ -531,7 +543,7 @@ export default function AdminSettings() {
                 </div>
               </div>
             )}
-            {(editForm.user_type === 'leader' || editForm.user_type === 'admin') && (
+            {(['leader', 'admin', 'treasurer', 'glv', 'team_leader'].includes(editForm.user_type)) && (
               <div className="space-y-2">
                 <Label>Default Section</Label>
                 <Select value={editForm.default_section_id || '__none__'} onValueChange={(v) => setEditForm({ ...editForm, default_section_id: v === '__none__' ? '' : v })}>

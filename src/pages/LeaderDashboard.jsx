@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSectionContext } from '../components/leader/SectionContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt, Lightbulb, Package, TrendingUp, FileText, Landmark } from 'lucide-react';
+import { Users, Calendar, Award, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt, Lightbulb, Package, TrendingUp, FileText, Landmark, BookOpen } from 'lucide-react';
 import ActionsDrilldownModal from '../components/leader/ActionsDrilldownModal';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
@@ -425,12 +425,16 @@ export default function LeaderDashboard() {
       ]
     },
     { 
-      icon: Mail, 
-      label: 'Communications', 
-      page: 'Communications',
+      icon: BookOpen, 
+      label: 'Section Admin', 
       gradient: 'from-teal-500 to-teal-600',
       iconBg: 'bg-teal-100',
-      iconColor: 'text-teal-600'
+      iconColor: 'text-teal-600',
+      dropdown: [
+        { label: 'Communications', page: 'Communications', icon: Mail },
+        { label: 'Section Accounting', page: 'TreasurerMemberPayments', icon: Landmark },
+        ...(['admin','treasurer','glv','team_leader'].includes(user?.role) ? [{ label: 'Treasurer Portal', page: 'TreasurerDashboard', icon: Landmark, separator: true }] : []),
+      ]
     },
     { 
       icon: Image, 
@@ -440,14 +444,6 @@ export default function LeaderDashboard() {
       iconBg: 'bg-pink-100',
       iconColor: 'text-pink-600'
     },
-    ...(user?.role === 'admin' || user?.role === 'treasurer' || user?.role === 'glv' || user?.role === 'team_leader' ? [{
-      icon: Landmark,
-      label: 'Treasurer',
-      page: 'TreasurerDashboard',
-      gradient: 'from-[#1a472a] to-[#2d6a4f]',
-      iconBg: 'bg-yellow-100',
-      iconColor: 'text-[#1a472a]'
-    }] : []),
   ];
 
   return (
