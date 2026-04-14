@@ -230,6 +230,45 @@ export default function AIProgrammePlanner() {
   const [showRefillModal, setShowRefillModal] = useState(false);
   const [refilling, setRefilling] = useState(false);
 
+  const term = planData?.term;
+  const section = planData?.section;
+  const preFilled = planData?.preFilled || [];
+  const engagementScore = planData?.engagement_score;
+  const engagementSummary = planData?.engagement_summary;
+
+  // Build full term timeline including half term and blank slots
+  // Must be before any early returns to satisfy Rules of Hooks
+  const termTimeline = useMemo(() => {
+    const t = term;
+    if (!t?.start_date || !t?.end_date || !t?.meeting_day) {
+      return meetings.map(m => ({ type: 'meeting', date: m.date })).sort((a, b) => new Date(a.date) - new Date(b.date));
+    }
+    const dayMap = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+    const targetDay = dayMap[t.meeting_day];
+    const start = new Date(t.start_date);
+    const end = new Date(t.end_date);
+    const halfStart = t.half_term_start ? new Date(t.half_term_start) : null;
+    const halfEnd = t.half_term_end ? new Date(t.half_term_end) : null;
+
+    const entries = [];
+    let halfTermInserted = false;
+    let current = new Date(start);
+    while (current.getDay() !== targetDay) current.setDate(current.getDate() + 1);
+
+    while (current <= end) {
+      const dateStr = current.toISOString().split('T')[0];
+      const inHalfTerm = halfStart && halfEnd && current >= halfStart && current <= halfEnd;
+      if (inHalfTerm) {
+        if (!halfTermInserted) { entries.push({ type: 'half_term', date: dateStr }); halfTermInserted = true; }
+      } else {
+        entries.push({ type: 'meeting', date: dateStr });
+      }
+      current = new Date(current);
+      current.setDate(current.getDate() + 7);
+    }
+    return entries;
+  }, [term, meetings]);
+
   // If no plan data, show empty state with back button
   if (!planData) {
     return (
@@ -246,12 +285,6 @@ export default function AIProgrammePlanner() {
       </div>
     );
   }
-
-  const term = planData.term;
-  const section = planData.section;
-  const preFilled = planData.preFilled || [];
-  const engagementScore = planData.engagement_score;
-  const engagementSummary = planData.engagement_summary;
 
   const handleReject = (meeting) => {
     setRejectedTitles(prev => [...prev, meeting.title]);
@@ -394,43 +427,6 @@ export default function AIProgrammePlanner() {
     });
     toast.success('Dates swapped!');
   };
-
-  // Build full term timeline including half term and blank slots
-  const termTimeline = useMemo(() => {
-    const t = term;
-    if (!t?.start_date || !t?.end_date || !t?.meeting_day) {
-      // Fallback: just use meeting dates
-      return meetings.map(m => ({ type: 'meeting', date: m.date })).sort((a, b) => new Date(a.date) - new Date(b.date));
-    }
-    const dayMap = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
-    const targetDay = dayMap[t.meeting_day];
-    const start = new Date(t.start_date);
-    const end = new Date(t.end_date);
-    const halfStart = t.half_term_start ? new Date(t.half_term_start) : null;
-    const halfEnd = t.half_term_end ? new Date(t.half_term_end) : null;
-
-    const entries = [];
-    let halfTermInserted = false;
-    let current = new Date(start);
-    while (current.getDay() !== targetDay) current.setDate(current.getDate() + 1);
-
-    while (current <= end) {
-      const dateStr = current.toISOString().split('T')[0];
-      const inHalfTerm = halfStart && halfEnd && current >= halfStart && current <= halfEnd;
-
-      if (inHalfTerm) {
-        if (!halfTermInserted) {
-          entries.push({ type: 'half_term', date: dateStr });
-          halfTermInserted = true;
-        }
-      } else {
-        entries.push({ type: 'meeting', date: dateStr });
-      }
-      current = new Date(current);
-      current.setDate(current.getDate() + 7);
-    }
-    return entries;
-  }, [term, meetings]);
 
   // All real meeting dates for date-swap picker
   const allMeetingDates = termTimeline.filter(e => e.type === 'meeting').map(e => e.date);
