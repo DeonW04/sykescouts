@@ -18,6 +18,8 @@ import TreasurerBudgets from './pages/TreasurerBudgets';
 import TreasurerRecurringPayments from './pages/TreasurerRecurringPayments';
 import TreasurerFunds from './pages/TreasurerFunds';
 import TreasurerReports from './pages/TreasurerReports';
+import TreasurerProgrammeFinances from './pages/TreasurerProgrammeFinances';
+import SectionAccounting from './pages/SectionAccounting';
 import ParentPortalAnalytics from './pages/ParentPortalAnalytics';
 import ConsentForms from './pages/ConsentForms';
 import ConsentFormBuilder from './pages/ConsentFormBuilder';
@@ -149,6 +151,8 @@ const AuthenticatedApp = () => {
       <Route path="/TreasurerRecurringPayments" element={<TreasurerRecurringPayments />} />
       <Route path="/TreasurerFunds" element={<TreasurerFunds />} />
       <Route path="/TreasurerReports" element={<TreasurerReports />} />
+      <Route path="/TreasurerProgrammeFinances" element={<TreasurerProgrammeFinances />} />
+      <Route path="/SectionAccounting" element={<LayoutWrapper currentPageName="SectionAccounting"><SectionAccounting /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </PWAGate>

@@ -5,10 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Upload, Search, Edit, X, Image, Eye } from 'lucide-react';
+import { Upload, Search, Edit, Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -17,14 +16,24 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import LeaderNav from '../components/leader/LeaderNav';
 
+const CATEGORIES = [
+  { value: 'equipment', label: 'Equipment' },
+  { value: 'food', label: 'Food' },
+  { value: 'transport', label: 'Transport' },
+  { value: 'hall_hire', label: 'Hall Hire' },
+  { value: 'badges', label: 'Badges' },
+  { value: 'other', label: 'Other' },
+];
+
 export default function ReceiptUploader() {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploadFile, setUploadFile] = useState(null);
   const [value, setValue] = useState('');
-  const [isGeneric, setIsGeneric] = useState(false);
+  const [category, setCategory] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('leader_paid_personally');
   const [notes, setNotes] = useState('');
   const [selectedMeeting, setSelectedMeeting] = useState(null);
-  const [selectedSection, setSelectedSection] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [editReceipt, setEditReceipt] = useState(null);
   const [meetingOpen, setMeetingOpen] = useState(false);
@@ -67,6 +76,11 @@ export default function ReceiptUploader() {
     queryFn: () => base44.entities.Section.filter({}),
   });
 
+  const { data: events = [] } = useQuery({
+    queryKey: ['events'],
+    queryFn: () => base44.entities.Event.list('-start_date', 50),
+  });
+
   const leaderSections = user?.role === 'admin' ? sections.map(s => s.id) : (leader?.section_ids || []);
   const accessibleProgrammes = programmes.filter(p => leaderSections.includes(p.section_id));
 
@@ -86,22 +100,39 @@ export default function ReceiptUploader() {
       
       const { file_url } = await base44.integrations.Core.UploadFile({ file: uploadFile });
       const receiptId = generateReceiptId();
-      
-      return base44.entities.Receipt.create({
+
+      // Create legacy Receipt record
+      await base44.entities.Receipt.create({
         receipt_id: receiptId,
         receipt_image_url: file_url,
         value: parseFloat(data.value),
         meeting_id: data.meeting_id,
         section_id: data.section_id,
-        is_generic_expense: data.is_generic,
+        is_generic_expense: !data.meeting_id && !data.event_id,
         notes: data.notes,
         leader_id: leader.id,
         leader_name: leader.display_name || 'Admin',
         status: 'pending',
       });
+
+      // Also create ReceiptAllocation so it appears in Treasurer portal
+      return base44.entities.ReceiptAllocation.create({
+        receipt_url: file_url,
+        amount: parseFloat(data.value),
+        category: data.category,
+        payment_method: data.payment_method,
+        linked_meeting_id: data.meeting_id || null,
+        linked_event_id: data.event_id || null,
+        leader_id: leader.id,
+        allocated_by: user?.email,
+        allocation_date: new Date().toISOString().split('T')[0],
+        status: 'unallocated',
+        notes: data.notes,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['myReceipts']);
+      queryClient.invalidateQueries(['receipt-allocations']);
       toast.success('Receipt uploaded successfully');
       setShowUploadDialog(false);
       resetForm();
@@ -132,32 +163,28 @@ export default function ReceiptUploader() {
   const resetForm = () => {
     setUploadFile(null);
     setValue('');
-    setIsGeneric(false);
+    setCategory('');
+    setPaymentMethod('leader_paid_personally');
     setNotes('');
     setSelectedMeeting(null);
-    setSelectedSection('');
+    setSelectedEvent('');
   };
 
   const handleUpload = () => {
-    if (!uploadFile || !value) {
-      toast.error('Please select a file and enter a value');
+    if (!uploadFile) { toast.error('Please select a receipt image'); return; }
+    if (!value) { toast.error('Please enter the receipt amount'); return; }
+    if (!category) { toast.error('Please select a category'); return; }
+    if (!selectedMeeting && !selectedEvent) {
+      toast.error('Please link this receipt to a meeting or event');
       return;
     }
-    if (!isGeneric && !selectedMeeting) {
-      toast.error('Please select a meeting or mark as generic expense');
-      return;
-    }
-    
-    let sectionId = selectedSection;
-    if (!isGeneric && selectedMeeting) {
-      sectionId = selectedMeeting.section_id;
-    }
-    
     uploadMutation.mutate({
       value,
-      meeting_id: isGeneric ? null : selectedMeeting?.id,
-      section_id: sectionId || null,
-      is_generic: isGeneric,
+      category,
+      payment_method: paymentMethod,
+      meeting_id: selectedMeeting?.id || null,
+      event_id: selectedEvent || null,
+      section_id: selectedMeeting?.section_id || null,
       notes,
     });
   };
@@ -270,96 +297,73 @@ export default function ReceiptUploader() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label className="text-sm font-medium">Receipt Image</Label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setUploadFile(e.target.files[0])}
-                className="mt-1.5"
-              />
+              <Label className="text-sm font-medium">Receipt Image <span className="text-red-500">*</span></Label>
+              <Input type="file" accept="image/*" onChange={(e) => setUploadFile(e.target.files[0])} className="mt-1.5" />
+              {uploadFile && <p className="text-xs text-green-600 mt-1">✓ {uploadFile.name}</p>}
             </div>
             <div>
-              <Label className="text-sm font-medium">Value (£)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder="0.00"
-                className="mt-1.5"
-              />
+              <Label className="text-sm font-medium">Amount (£) <span className="text-red-500">*</span></Label>
+              <Input type="number" step="0.01" value={value} onChange={(e) => setValue(e.target.value)} placeholder="0.00" className="mt-1.5" />
             </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="generic"
-                checked={isGeneric}
-                onCheckedChange={setIsGeneric}
-              />
-              <Label htmlFor="generic">Generic Expense</Label>
+            <div>
+              <Label className="text-sm font-medium">Category <span className="text-red-500">*</span></Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select category..." /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
-            {!isGeneric && (
-              <div>
-                <Label className="text-sm font-medium">Meeting</Label>
-                <Popover open={meetingOpen} onOpenChange={setMeetingOpen}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start mt-1.5 h-10">
-                      <span className="truncate">
-                        {selectedMeeting
-                          ? `${getSectionName(selectedMeeting)} - ${format(new Date(selectedMeeting.date), 'dd/MM/yyyy')}`
-                          : 'Select meeting...'}
-                      </span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[calc(100vw-2rem)] sm:w-full p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Search meetings..." />
-                      <CommandList>
-                        <CommandEmpty>No meetings found</CommandEmpty>
-                        <CommandGroup>
-                          {accessibleProgrammes.map((prog) => (
-                            <CommandItem
-                              key={prog.id}
-                              onSelect={() => {
-                                setSelectedMeeting(prog);
-                                setMeetingOpen(false);
-                              }}
-                              className="text-sm"
-                            >
-                              {getSectionName(prog)} - {format(new Date(prog.date), 'dd/MM/yyyy')} - {prog.title}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            )}
-            {isGeneric && (
-              <div>
-                <Label className="text-sm font-medium">Section (Optional)</Label>
-                <Select value={selectedSection} onValueChange={setSelectedSection}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue placeholder="Select section..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sections.filter(s => user?.role === 'admin' || leader?.section_ids?.includes(s.id)).map(section => (
-                      <SelectItem key={section.id} value={section.id}>
-                        {section.display_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <div>
+              <Label className="text-sm font-medium">Payment Method <span className="text-red-500">*</span></Label>
+              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="leader_paid_personally">I paid personally (need reimbursement)</SelectItem>
+                  <SelectItem value="scout_bank_card">Paid with Scout bank card</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Link to Meeting <span className="text-red-500">*</span> (or Event below)</Label>
+              <Popover open={meetingOpen} onOpenChange={setMeetingOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start mt-1.5 h-10">
+                    <span className="truncate">
+                      {selectedMeeting ? `${getSectionName(selectedMeeting)} - ${format(new Date(selectedMeeting.date), 'dd/MM/yyyy')} - ${selectedMeeting.title}` : 'Select meeting...'}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[calc(100vw-2rem)] sm:w-full p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search meetings..." />
+                    <CommandList>
+                      <CommandEmpty>No meetings found</CommandEmpty>
+                      <CommandGroup>
+                        {accessibleProgrammes.map((prog) => (
+                          <CommandItem key={prog.id} onSelect={() => { setSelectedMeeting(prog); setSelectedEvent(''); setMeetingOpen(false); }} className="text-sm">
+                            {getSectionName(prog)} - {format(new Date(prog.date), 'dd/MM/yyyy')} - {prog.title}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">OR Link to Event</Label>
+              <Select value={selectedEvent} onValueChange={v => { setSelectedEvent(v); setSelectedMeeting(null); }}>
+                <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select event..." /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>None</SelectItem>
+                  {events.slice(0, 30).map(e => <SelectItem key={e.id} value={e.id}>{e.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             <div>
               <Label className="text-sm font-medium">Notes</Label>
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Additional information..."
-                className="mt-1.5 min-h-20"
-              />
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="What was this expense for?" className="mt-1.5 min-h-20" />
             </div>
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">

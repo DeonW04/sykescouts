@@ -65,7 +65,7 @@ export default function LeaderNav() {
       color: 'bg-teal-500',
       dropdown: [
         { label: 'Communications', page: 'Communications', icon: Mail },
-        { label: 'Section Accounting', page: 'TreasurerMemberPayments', icon: Landmark },
+        { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark },
         ...(['admin','treasurer','glv','team_leader'].includes(userRole) ? [{ label: 'Treasurer Portal', page: 'TreasurerDashboard', icon: Landmark, separator: true }] : []),
       ]
     },

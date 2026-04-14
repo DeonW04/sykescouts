@@ -16,7 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import LeaderNav from '../components/leader/LeaderNav';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import ReceiptManagement from '../components/admin/ReceiptManagement';
+
 import BulkBadgeUpdate from '../components/badges/BulkBadgeUpdate';
 import UniformPositionEditor from '../components/uniform/UniformPositionEditor';
 import PushNotificationsTab from '../components/admin/PushNotificationsTab';
@@ -35,7 +35,7 @@ const NAV_ITEMS = [
   { key: 'badges',         label: 'Badge System',       icon: Award,    group: 'Content' },
   { key: 'uniform',        label: 'Uniform Guide',      icon: Shield,   group: 'Content' },
   { key: 'gallery',        label: 'Gallery Stats',      icon: Camera,   group: 'Content' },
-  { key: 'receipts',       label: 'Receipts',           icon: PieChart, group: 'Finance' },
+
   { key: 'export',         label: 'Data Import / Export', icon: Download, group: 'System' },
   { key: 'push',           label: 'Push Notifications', icon: Bell,     group: 'System' },
   { key: 'notif-log',      label: 'Notification Log',   icon: Mail,     group: 'System' },
@@ -107,7 +107,7 @@ export default function AdminSettings() {
 
   const handleSaveUser = async () => {
     try {
-      const specialRoles = ['admin','treasurer','glv','team_leader'];
+      const specialRoles = ['admin','treasurer','glv','team_leader']; // team_leader set via Section Settings only
       const role = specialRoles.includes(editForm.user_type) ? editForm.user_type : 'user';
       const account_type = editForm.user_type === 'ipad' ? 'ipad' : null;
       const response = await base44.functions.invoke('updateUser', { userId: selectedUser.id, display_name: editForm.display_name, role, default_section_id: editForm.default_section_id || null });
@@ -418,8 +418,7 @@ export default function AdminSettings() {
                 })()}
               </TabsContent>
 
-              {/* ── Receipts ── */}
-              <TabsContent value="receipts"><ReceiptManagement /></TabsContent>
+
 
               {/* ── Push Notifications ── */}
               <TabsContent value="push"><PushNotificationsTab /></TabsContent>
@@ -525,7 +524,6 @@ export default function AdminSettings() {
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="treasurer">Treasurer</SelectItem>
                   <SelectItem value="glv">GLV</SelectItem>
-                  <SelectItem value="team_leader">Team Leader</SelectItem>
                   <SelectItem value="ipad">iPad (Kiosk)</SelectItem>
                 </SelectContent>
               </Select>
