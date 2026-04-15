@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ChevronDown, ChevronRight, Calendar, CheckCircle, AlertTriangle, XCircle, MinusCircle, Slash, Lock } from 'lucide-react';
+import { ChevronDown, ChevronRight, Calendar, CheckCircle, AlertTriangle, XCircle, MinusCircle, Slash, Lock, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 const fmt = (n) => `£${(n || 0).toFixed(2)}`;
@@ -216,7 +216,7 @@ export default function TreasurerProgrammeFinances() {
     }
   };
 
-  const StatusPill = ({ cost, paid, override, attendingStatus }) => {
+  const StatusPill = ({ cost, paid, override, attendingStatus, deadline }) => {
     if (override?.override_type === 'not_attending' || attendingStatus === 'not_attending') return (
       <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">
         <MinusCircle className="w-3 h-3" /> Not Attending
@@ -227,19 +227,24 @@ export default function TreasurerProgrammeFinances() {
         <Slash className="w-3 h-3" /> Waived
       </span>
     );
-    if (paid === 0) return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
-        <XCircle className="w-3 h-3" /> Unpaid
-      </span>
-    );
-    if (paid === cost) return (
+    if (paid >= cost && cost > 0) return (
       <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
         <CheckCircle className="w-3 h-3" /> Paid
       </span>
     );
-    return (
+    if (paid > 0) return (
       <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-        <AlertTriangle className="w-3 h-3" /> Incorrect Amount
+        <AlertTriangle className="w-3 h-3" /> Incorrect
+      </span>
+    );
+    if (deadline && today > deadline) return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-100 border border-red-300 px-2 py-0.5 rounded-full">
+        <Clock className="w-3 h-3" /> Overdue
+      </span>
+    );
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+        <XCircle className="w-3 h-3" /> Unpaid
       </span>
     );
   };
@@ -406,7 +411,7 @@ export default function TreasurerProgrammeFinances() {
                                     <td className="py-1.5 text-right">{isNA ? '—' : fmt(cost)}</td>
                                     <td className="py-1.5 text-right text-green-600">{fmt(paid)}</td>
                                     <td className="py-1.5 text-center">
-                                      <StatusPill cost={cost} paid={paid} override={override} attendingStatus={attendingStatus} />
+                                      <StatusPill cost={cost} paid={paid} override={override} attendingStatus={attendingStatus} deadline={mtg.payment_deadline} />
                                     </td>
                                     {!termFinanceClosed && (
                                       <td className="py-1.5 text-center">

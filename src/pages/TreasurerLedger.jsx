@@ -216,12 +216,17 @@ export default function TreasurerLedger() {
 
         // If event_payments: send push notification to team leader
         if (form.category === 'event_payments' && selectedItem) {
+          const member = members.find(m => m.id === form.linked_member_id);
           base44.functions.invoke('notifyLeaders', {
             type: 'payment_received',
             event_id: selectedItem.type === 'event' ? selectedItem.id : null,
             meeting_id: selectedItem.type === 'meeting' ? selectedItem.id : null,
             member_id: form.linked_member_id,
+            member_name: member?.full_name,
             amount: parseFloat(form.amount),
+            expected_amount: selectedItem.cost,
+            event_title: selectedItem.type === 'event' ? selectedItem.label : null,
+            meeting_title: selectedItem.type === 'meeting' ? selectedItem.label : null,
           }).catch(e => console.error('Notify failed', e));
         }
 

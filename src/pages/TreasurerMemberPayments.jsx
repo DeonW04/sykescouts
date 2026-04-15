@@ -9,9 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Search, Trash2, CreditCard, CheckCircle, AlertTriangle, XCircle, Calendar } from 'lucide-react';
+import { Plus, Search, Trash2, CreditCard, CheckCircle, AlertTriangle, XCircle, Calendar, Clock } from 'lucide-react';
 import { toast } from 'sonner';
-import { format, isAfter, isBefore, addDays } from 'date-fns';
 
 const fmt = (n) => `£${(n || 0).toFixed(2)}`;
 const today = new Date().toISOString().split('T')[0];
@@ -34,6 +33,7 @@ export default function TreasurerMemberPayments() {
   const { data: actionResponses = [] } = useQuery({ queryKey: ['action-responses-all'], queryFn: () => base44.entities.ActionResponse.filter({}) });
   const { data: terms = [] } = useQuery({ queryKey: ['terms'], queryFn: () => base44.entities.Term.list() });
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
+  const { data: allOverrides = [] } = useQuery({ queryKey: ['payment-overrides-all'], queryFn: () => base44.entities.MeetingPaymentOverride.filter({}) });
 
   const filteredMembers = members.filter(m =>
     !search || m.full_name?.toLowerCase().includes(search.toLowerCase())
@@ -140,16 +140,30 @@ export default function TreasurerMemberPayments() {
   const subsPayments = memberPayments.filter(p => p.payment_type === 'subs').sort((a, b) => b.date.localeCompare(a.date));
   const lastSubsPayment = subsPayments[0];
 
-  const StatusBadge = ({ cost, paid }) => {
-    const status = getPaymentStatus(cost, paid);
-    if (status === 'paid') return (
+  const StatusBadge = ({ cost, paid, deadline, override }) => {
+    if (override?.override_type === 'waived') return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+        Waived
+      </span>
+    );
+    if (override?.override_type === 'not_attending') return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">
+        Not Attending
+      </span>
+    );
+    if (paid >= cost && cost > 0) return (
       <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
         <CheckCircle className="w-3 h-3" /> Paid
       </span>
     );
-    if (status === 'incorrect') return (
+    if (paid > 0) return (
       <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-        <AlertTriangle className="w-3 h-3" /> Incorrect Amount
+        <AlertTriangle className="w-3 h-3" /> Incorrect
+      </span>
+    );
+    if (deadline && today > deadline) return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-100 border border-red-300 px-2 py-0.5 rounded-full">
+        <Clock className="w-3 h-3" /> Overdue
       </span>
     );
     return (
@@ -299,16 +313,17 @@ export default function TreasurerMemberPayments() {
                       const evPayments = memberPayments.filter(p => p.related_event_id === ev.id);
                       const paid = evPayments.reduce((s, p) => s + (p.amount || 0), 0);
                       const isPast = ev.start_date?.split('T')[0] < today;
+                      const override = allOverrides.find(o => o.event_id === ev.id && o.member_id === selectedMember?.id);
                       return (
                         <div key={ev.id} className="p-3 border rounded-lg">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">{ev.title}</p>
-                              <p className="text-xs text-gray-400">{ev.start_date?.split('T')[0]} · {fmt(ev.cost)}/person{isPast ? ' · Past' : ''}</p>
+                              <p className="text-xs text-gray-400">{ev.start_date?.split('T')[0]} · {fmt(ev.cost)}/person{isPast ? ' · Past' : ''}{ev.payment_deadline ? ` · Due ${ev.payment_deadline}` : ''}</p>
                             </div>
-                            <StatusBadge cost={ev.cost} paid={paid} />
+                            <StatusBadge cost={ev.cost} paid={paid} deadline={ev.payment_deadline} override={override} />
                           </div>
-                          {paid > 0 && paid !== ev.cost && (
+                          {paid > 0 && paid !== ev.cost && !override && (
                             <p className="text-xs text-amber-600 mt-1">Paid: {fmt(paid)} (expected {fmt(ev.cost)})</p>
                           )}
                         </div>
@@ -320,16 +335,17 @@ export default function TreasurerMemberPayments() {
                       const mtgPayments = memberPayments.filter(p => p.related_event_id === mtg.id);
                       const paid = mtgPayments.reduce((s, p) => s + (p.amount || 0), 0);
                       const isPast = mtg.date < today;
+                      const override = allOverrides.find(o => o.programme_id === mtg.id && o.member_id === selectedMember?.id);
                       return (
                         <div key={mtg.id} className="p-3 border rounded-lg">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium truncate">{mtg.title}</p>
-                              <p className="text-xs text-gray-400">{mtg.date} · {fmt(mtg.cost)}{isPast ? ' · Past' : ''}</p>
+                              <p className="text-xs text-gray-400">{mtg.date} · {fmt(mtg.cost)}{isPast ? ' · Past' : ''}{mtg.payment_deadline ? ` · Due ${mtg.payment_deadline}` : ''}</p>
                             </div>
-                            <StatusBadge cost={mtg.cost} paid={paid} />
+                            <StatusBadge cost={mtg.cost} paid={paid} deadline={mtg.payment_deadline} override={override} />
                           </div>
-                          {paid > 0 && paid !== mtg.cost && (
+                          {paid > 0 && paid !== mtg.cost && !override && (
                             <p className="text-xs text-amber-600 mt-1">Paid: {fmt(paid)} (expected {fmt(mtg.cost)})</p>
                           )}
                         </div>

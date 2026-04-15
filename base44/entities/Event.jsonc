@@ -165,7 +165,7 @@
     "hide_leader_phones": {
       "type": "boolean",
       "default": false,
-      "description": "If true, leader phone numbers are hidden on the parent live view (use when a home contact is set)"
+      "description": "If true, leader phone numbers are hidden on the parent live view"
     },
     "disable_live_view": {
       "type": "boolean",
@@ -188,12 +188,27 @@
     },
     "term_id": {
       "type": "string",
-      "description": "Linked term ID \u2014 auto-assigned if event falls within a term, else manually selected"
+      "description": "Linked term ID"
     },
     "apply_profit_to_budget": {
       "type": "boolean",
       "default": false,
       "description": "If true, when finances are closed the event profit/loss is applied to the linked section's term budget"
+    },
+    "estimated_expenses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Planned/estimated expense items for budget planning"
     }
   },
   "required": [

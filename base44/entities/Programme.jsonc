@@ -67,6 +67,21 @@
       "format": "date",
       "description": "Payment deadline for meeting cost"
     },
+    "estimated_expenses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Planned/estimated expense items for budget planning"
+    },
     "risk_assessment_ids": {
       "type": "array",
       "items": {

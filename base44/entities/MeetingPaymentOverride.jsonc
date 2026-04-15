@@ -4,7 +4,11 @@
   "properties": {
     "programme_id": {
       "type": "string",
-      "description": "Meeting/programme ID"
+      "description": "Meeting/programme ID (set this OR event_id, not both)"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Event ID (set this OR programme_id, not both)"
     },
     "member_id": {
       "type": "string",
@@ -28,7 +32,6 @@
     }
   },
   "required": [
-    "programme_id",
     "member_id",
     "override_type"
   ]

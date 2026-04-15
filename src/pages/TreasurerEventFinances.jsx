@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Calendar, Lock, TrendingUp, TrendingDown, Receipt, Users, ChevronDown, ChevronRight, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { Calendar, Lock, TrendingUp, TrendingDown, Receipt, Users, ChevronDown, ChevronRight, CheckCircle, AlertTriangle, XCircle, Clock, MinusCircle, Slash } from 'lucide-react';
 import { toast } from 'sonner';
 
 const fmt = (n) => `£${(n || 0).toFixed(2)}`;
@@ -28,6 +28,7 @@ export default function TreasurerEventFinances() {
   const { data: actionsRequired = [] } = useQuery({ queryKey: ['actions-required-all'], queryFn: () => base44.entities.ActionRequired.filter({}) });
   const { data: actionResponses = [] } = useQuery({ queryKey: ['action-responses-all'], queryFn: () => base44.entities.ActionResponse.filter({}) });
   const { data: eventAttendances = [] } = useQuery({ queryKey: ['event-attendances-all'], queryFn: () => base44.entities.EventAttendance.filter({}) });
+  const { data: eventOverrides = [] } = useQuery({ queryKey: ['payment-overrides-events'], queryFn: () => base44.entities.MeetingPaymentOverride.filter({}) });
 
   const getAttendingMemberIds = (event) => {
     const evActions = actionsRequired.filter(a => a.event_id === event.id && a.action_purpose === 'attendance');
@@ -46,9 +47,11 @@ export default function TreasurerEventFinances() {
     const eventPayments = payments.filter(p => p.related_event_id === event.id);
     const eventAllocations = allocations.filter(a => a.linked_event_id === event.id && a.status === 'allocated');
     const eventLedger = ledgerEntries.filter(e => e.linked_event_id === event.id);
+    const evOverrides = eventOverrides.filter(o => o.event_id === event.id);
 
-    // Expected income from attending members
-    const expectedIncome = attendingMemberIds.length * cost;
+    // Expected income excludes overridden members (not_attending or waived)
+    const billableIds = attendingMemberIds.filter(id => !evOverrides.find(o => o.member_id === id));
+    const expectedIncome = billableIds.length * cost;
     // Estimated expenses (receipt allocations)
     const estimatedExpenses = eventAllocations.reduce((s, a) => s + (a.amount || 0), 0);
 
@@ -59,11 +62,12 @@ export default function TreasurerEventFinances() {
     const attendeeMemberData = attendingMemberIds.map(memberId => {
       const member = members.find(m => m.id === memberId);
       const paid = eventPayments.filter(p => p.member_id === memberId).reduce((s, p) => s + (p.amount || 0), 0);
-      return { memberId, member, paid, cost };
+      const override = evOverrides.find(o => o.member_id === memberId);
+      return { memberId, member, paid, cost, override };
     });
 
     return {
-      attendingMemberIds, attendeeMemberData,
+      attendingMemberIds, attendeeMemberData, evOverrides,
       expectedIncome, estimatedExpenses,
       netEstimate: expectedIncome - estimatedExpenses,
       ledgerIncome, ledgerExpenses,
@@ -105,20 +109,35 @@ export default function TreasurerEventFinances() {
     finally { setSaving(false); }
   };
 
-  const StatusPill = ({ cost, paid }) => {
-    if (paid === 0) return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
-        <XCircle className="w-3 h-3" /> Unpaid
+  const StatusPill = ({ cost, paid, override, event: ev }) => {
+    if (override?.override_type === 'not_attending') return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">
+        <MinusCircle className="w-3 h-3" /> Not Attending
       </span>
     );
-    if (paid === cost) return (
+    if (override?.override_type === 'waived') return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+        <Slash className="w-3 h-3" /> Waived
+      </span>
+    );
+    if (paid >= cost && cost > 0) return (
       <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
         <CheckCircle className="w-3 h-3" /> Paid
       </span>
     );
-    return (
+    if (paid > 0) return (
       <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-        <AlertTriangle className="w-3 h-3" /> Incorrect Amount
+        <AlertTriangle className="w-3 h-3" /> Incorrect
+      </span>
+    );
+    if (ev?.payment_deadline && today > ev.payment_deadline) return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-100 border border-red-300 px-2 py-0.5 rounded-full">
+        <Clock className="w-3 h-3" /> Overdue
+      </span>
+    );
+    return (
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+        <XCircle className="w-3 h-3" /> Unpaid
       </span>
     );
   };
@@ -267,12 +286,12 @@ export default function TreasurerEventFinances() {
                               </tr>
                             </thead>
                             <tbody>
-                              {attendeeMemberData.map(({ memberId, member, paid, cost }) => (
-                                <tr key={memberId} className="border-b hover:bg-gray-50">
+                              {attendeeMemberData.map(({ memberId, member, paid, cost, override }) => (
+                                <tr key={memberId} className={`border-b hover:bg-gray-50 ${override?.override_type === 'not_attending' ? 'opacity-50' : ''}`}>
                                   <td className="py-2 px-2 font-medium">{member?.full_name || 'Unknown'}</td>
-                                  <td className="py-2 px-2 text-right">{fmt(cost)}</td>
+                                  <td className="py-2 px-2 text-right">{override?.override_type === 'not_attending' ? '—' : fmt(cost)}</td>
                                   <td className="py-2 px-2 text-right text-green-600">{fmt(paid)}</td>
-                                  <td className="py-2 px-2 text-center"><StatusPill cost={cost} paid={paid} /></td>
+                                  <td className="py-2 px-2 text-center"><StatusPill cost={cost} paid={paid} override={override} event={selectedEvent} /></td>
                                 </tr>
                               ))}
                               <tr className="border-t-2 font-semibold bg-gray-50">
@@ -360,7 +379,7 @@ export default function TreasurerEventFinances() {
           </DialogHeader>
           {closeDialog && (() => {
             const { attendeeMemberData, expectedIncome, estimatedExpenses, netEstimate, ledgerIncome, ledgerExpenses, ledgerNet, eventAllocations } = getEventData(closeDialog);
-            const unpaidCount = attendeeMemberData.filter(a => a.paid < a.cost).length;
+            const unpaidCount = attendeeMemberData.filter(a => a.paid < a.cost && !a.override).length;
             return (
               <div className="space-y-4 py-2">
                 <p className="text-sm text-gray-600">Review the final figures below before locking this event's finances. This cannot be undone.</p>
@@ -391,7 +410,7 @@ export default function TreasurerEventFinances() {
                   <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                     <p className="text-sm font-semibold text-amber-800 flex items-center gap-2"><AlertTriangle className="w-4 h-4" />{unpaidCount} member{unpaidCount !== 1 ? 's' : ''} have not paid in full</p>
                     <div className="mt-2 space-y-1">
-                      {attendeeMemberData.filter(a => a.paid < a.cost).map(({ memberId, member, paid, cost }) => (
+                      {attendeeMemberData.filter(a => a.paid < a.cost && !a.override).map(({ memberId, member, paid, cost }) => (
                         <div key={memberId} className="flex justify-between text-xs text-amber-700">
                           <span>{member?.full_name || 'Unknown'}</span>
                           <span>{fmt(paid)} / {fmt(cost)}</span>
