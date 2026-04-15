@@ -1,0 +1,83 @@
+{
+  "name": "Term",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Term title (e.g., Autumn Term 2024)"
+    },
+    "section_id": {
+      "type": "string",
+      "description": "Section ID"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Term start date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Term end date"
+    },
+    "half_term_start": {
+      "type": "string",
+      "format": "date",
+      "description": "Half term start date"
+    },
+    "half_term_end": {
+      "type": "string",
+      "format": "date",
+      "description": "Half term end date"
+    },
+    "meeting_day": {
+      "type": "string",
+      "enum": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+      ],
+      "description": "Day of the week meetings occur"
+    },
+    "meeting_start_time": {
+      "type": "string",
+      "description": "Meeting start time (HH:MM)"
+    },
+    "meeting_end_time": {
+      "type": "string",
+      "description": "Meeting end time (HH:MM)"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Is term active"
+    },
+    "finance_closed": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, all financial records for this term are locked"
+    },
+    "finance_closed_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date term finances were closed"
+    },
+    "finance_closed_by": {
+      "type": "string",
+      "description": "Email of user who closed the term finances"
+    }
+  },
+  "required": [
+    "title",
+    "section_id",
+    "start_date",
+    "end_date",
+    "meeting_day",
+    "meeting_start_time",
+    "meeting_end_time"
+  ]
+}

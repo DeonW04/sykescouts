@@ -1,0 +1,35 @@
+{
+  "name": "MeetingPaymentOverride",
+  "type": "object",
+  "properties": {
+    "programme_id": {
+      "type": "string",
+      "description": "Meeting/programme ID"
+    },
+    "member_id": {
+      "type": "string",
+      "description": "Member ID"
+    },
+    "override_type": {
+      "type": "string",
+      "enum": [
+        "not_attending",
+        "waived"
+      ],
+      "description": "Override type: not_attending removes expected income, waived keeps attending but marks as intentionally waived"
+    },
+    "set_by": {
+      "type": "string",
+      "description": "Email of the user who set this override"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes for the override"
+    }
+  },
+  "required": [
+    "programme_id",
+    "member_id",
+    "override_type"
+  ]
+}

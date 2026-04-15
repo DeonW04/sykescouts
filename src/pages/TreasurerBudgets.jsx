@@ -49,11 +49,25 @@ export default function TreasurerBudgets() {
     const receiptSpend = allocations
       .filter(a => a.linked_meeting_id && progIds.has(a.linked_meeting_id))
       .reduce((s, a) => s + (a.amount || 0), 0);
-    // Ledger expense entries linked to section in this term
-    const ledgerSpend = ledger
-      .filter(e => e.type === 'expense' && e.section_id === sectionId && e.date >= activeTerm.start_date && e.date <= activeTerm.end_date)
+    // Ledger expense entries linked to meetings in this term
+    const meetingLedgerSpend = ledger
+      .filter(e => e.type === 'expense' && e.linked_meeting_id && progIds.has(e.linked_meeting_id))
       .reduce((s, e) => s + (e.amount || 0), 0);
-    return receiptSpend + ledgerSpend;
+    // Budget-allocated general ledger expenses for this section/term (no meeting/event link)
+    const budgetAllocSpend = ledger.filter(e =>
+      e.type === 'expense' &&
+      e.budget_allocated &&
+      !e.linked_meeting_id &&
+      !e.linked_event_id &&
+      (e.section_id === sectionId || e.split_section_id === sectionId) &&
+      e.date >= activeTerm.start_date &&
+      e.date <= activeTerm.end_date
+    ).reduce((s, e) => {
+      if (e.split_section_id === sectionId && e.section_id !== sectionId) return s + (e.split_amount || 0);
+      if (e.split_section_id && e.section_id === sectionId) return s + ((e.amount || 0) - (e.split_amount || 0));
+      return s + (e.amount || 0);
+    }, 0);
+    return receiptSpend + meetingLedgerSpend + budgetAllocSpend;
   };
 
   const getCalcIncome = (sectionId) => {

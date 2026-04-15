@@ -77,8 +77,28 @@ export default function TreasurerEventFinances() {
     setSaving(true);
     try {
       await base44.entities.Event.update(closeDialog.id, { finance_status: 'closed' });
+
+      // Apply profit/loss to term budget if flag is set
+      if (closeDialog.apply_profit_to_budget && closeDialog.term_id && closeDialog.section_ids?.length > 0) {
+        const { ledgerIncome, ledgerExpenses } = getEventData(closeDialog);
+        const profitLoss = ledgerIncome - ledgerExpenses;
+        // Find the section budget for this term + first section
+        const sectionId = closeDialog.section_ids[0];
+        const existingBudgets = await base44.entities.SectionBudget.filter({ section_id: sectionId, term_id: closeDialog.term_id });
+        if (existingBudgets.length > 0) {
+          const budget = existingBudgets[0];
+          const newAmount = (budget.budget_amount || 0) + profitLoss;
+          await base44.entities.SectionBudget.update(budget.id, { budget_amount: Math.max(0, newAmount) });
+          toast.success(`Finances closed. ${profitLoss >= 0 ? 'Profit' : 'Loss'} of ${fmt(Math.abs(profitLoss))} applied to term budget.`);
+        } else {
+          toast.success('Finances closed. No budget found to apply profit/loss to.');
+        }
+      } else {
+        toast.success('Event finances closed');
+      }
+
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      toast.success('Event finances closed');
+      queryClient.invalidateQueries({ queryKey: ['section-budgets'] });
       setCloseDialog(null);
       setSelectedEvent(prev => ({ ...prev, finance_status: 'closed' }));
     } catch (e) { toast.error('Failed: ' + e.message); }

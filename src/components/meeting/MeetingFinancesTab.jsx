@@ -1,14 +1,17 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingDown, TrendingUp, Receipt, QrCode, ExternalLink, Users, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { TrendingDown, TrendingUp, Receipt, QrCode, ExternalLink, Users, CheckCircle, AlertTriangle, XCircle, MinusCircle, Slash } from 'lucide-react';
+import { toast } from 'sonner';
 
 const fmt = (n) => `£${(n || 0).toFixed(2)}`;
 
 export default function MeetingFinancesTab({ programmeId, sectionId, date, sectionName }) {
+  const queryClient = useQueryClient();
+
   const { data: programme } = useQuery({
     queryKey: ['programme-detail', programmeId],
     queryFn: () => base44.entities.Programme.filter({ id: programmeId }).then(r => r[0]),
@@ -56,22 +59,60 @@ export default function MeetingFinancesTab({ programmeId, sectionId, date, secti
     enabled: !!programmeId,
   });
 
+  const { data: overrides = [] } = useQuery({
+    queryKey: ['payment-overrides', programmeId],
+    queryFn: () => base44.entities.MeetingPaymentOverride.filter({ programme_id: programmeId }),
+    enabled: !!programmeId,
+  });
+
+  const { data: currentUser } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
+
   const cost = programme?.cost || 0;
 
-  // Find attending members via attendance action response
   const attendanceAction = actionsRequired.find(a => a.action_purpose === 'attendance');
   const attendingMemberIds = attendanceAction
     ? actionResponses
         .filter(r => r.action_required_id === attendanceAction.id &&
           (r.response_value === 'Yes, attending' || r.response_value === 'yes'))
         .map(r => r.member_id)
-    : members.map(m => m.id); // fallback: all section members
+    : members.map(m => m.id);
+
+  const getOverride = (memberId) => overrides.find(o => o.member_id === memberId);
+
+  const handleSetOverride = async (memberId, overrideType) => {
+    const existing = overrides.find(o => o.member_id === memberId && o.programme_id === programmeId);
+    if (existing) {
+      if (existing.override_type === overrideType) {
+        // Clear override
+        await base44.entities.MeetingPaymentOverride.delete(existing.id);
+        toast.success('Override cleared');
+      } else {
+        await base44.entities.MeetingPaymentOverride.update(existing.id, { override_type: overrideType, set_by: currentUser?.email });
+        toast.success('Override updated');
+      }
+    } else {
+      await base44.entities.MeetingPaymentOverride.create({
+        programme_id: programmeId,
+        member_id: memberId,
+        override_type: overrideType,
+        set_by: currentUser?.email,
+      });
+      toast.success(overrideType === 'not_attending' ? 'Marked as Not Attending' : 'Payment Waived');
+    }
+    queryClient.invalidateQueries({ queryKey: ['payment-overrides', programmeId] });
+  };
 
   const totalExpenses = allocations.reduce((s, a) => s + (a.amount || 0), 0);
   const ledgerExpenses = ledgerEntries.filter(e => e.type === 'expense').reduce((s, e) => s + (e.amount || 0), 0);
   const totalAllExpenses = totalExpenses + ledgerExpenses;
   const ledgerIncome = ledgerEntries.filter(e => e.type === 'income').reduce((s, e) => s + (e.amount || 0), 0);
-  const expectedIncome = attendingMemberIds.length * cost;
+
+  // Adjust expected income for overrides
+  const billableMemberIds = attendingMemberIds.filter(id => {
+    const ov = getOverride(id);
+    return !ov || ov.override_type === 'waived'; // waived: still attending but not counted in outstanding
+  });
+  const expectedIncome = billableMemberIds.filter(id => !getOverride(id)).length * cost;
   const net = ledgerIncome - totalAllExpenses;
 
   const contextLabel = `${sectionName || 'Meeting'} - ${date || ''}`;
@@ -105,7 +146,7 @@ export default function MeetingFinancesTab({ programmeId, sectionId, date, secti
             <TrendingUp className="w-5 h-5 text-green-600 mx-auto mb-1" />
             <p className="text-xs text-gray-500">{cost > 0 ? 'Expected Income' : 'Ledger Income'}</p>
             <p className="text-xl font-bold text-green-700">{fmt(cost > 0 ? expectedIncome : ledgerIncome)}</p>
-            {cost > 0 && <p className="text-xs text-gray-400">{attendingMemberIds.length} attending × {fmt(cost)}</p>}
+            {cost > 0 && <p className="text-xs text-gray-400">{billableMemberIds.filter(id => !getOverride(id)).length} × {fmt(cost)}</p>}
           </CardContent>
         </Card>
         <Card className={`border-2 ${net >= 0 ? 'border-blue-200 bg-blue-50' : 'border-orange-200 bg-orange-50'}`}>
@@ -159,9 +200,7 @@ export default function MeetingFinancesTab({ programmeId, sectionId, date, secti
                   ))}
                   {ledgerEntries.filter(e => e.type === 'expense').map(e => (
                     <tr key={e.id} className="border-b hover:bg-gray-50">
-                      <td className="py-2 px-2">
-                        <Badge variant="outline" className="text-xs border-gray-300 text-gray-600">Ledger</Badge>
-                      </td>
+                      <td className="py-2 px-2"><Badge variant="outline" className="text-xs border-gray-300 text-gray-600">Ledger</Badge></td>
                       <td className="py-2 px-2 capitalize">{e.category?.replace(/_/g, ' ')}</td>
                       <td className="py-2 px-2 text-gray-500 text-xs">{e.description}</td>
                       <td className="py-2 px-2 text-right font-semibold text-red-700">{fmt(e.amount)}</td>
@@ -178,7 +217,7 @@ export default function MeetingFinancesTab({ programmeId, sectionId, date, secti
         </Card>
       )}
 
-      {/* Attendee payments — only show if meeting has a cost */}
+      {/* Attendee payments with overrides */}
       {cost > 0 && (
         <Card>
           <CardHeader>
@@ -188,12 +227,8 @@ export default function MeetingFinancesTab({ programmeId, sectionId, date, secti
                 {attendanceAction ? `Attendees — Payment Status (${attendingMemberIds.length})` : `All Members — Payment Status (${members.length})`}
               </CardTitle>
             </div>
-            {attendanceAction && (
-              <p className="text-xs text-gray-400 mt-0.5">Based on "{attendanceAction.column_title}" responses (attending only)</p>
-            )}
-            {!attendanceAction && (
-              <p className="text-xs text-amber-600 mt-0.5">No attendance action found — showing all section members</p>
-            )}
+            {!attendanceAction && <p className="text-xs text-amber-600 mt-0.5">No attendance action found — showing all section members</p>}
+            <p className="text-xs text-gray-400 mt-0.5">Use overrides to mark members as Not Attending or Waived — click action buttons on each row.</p>
           </CardHeader>
           <CardContent>
             {attendingMemberIds.length === 0 ? (
@@ -207,23 +242,34 @@ export default function MeetingFinancesTab({ programmeId, sectionId, date, secti
                       <th className="text-right py-2 px-2 text-gray-500 font-medium">Expected</th>
                       <th className="text-right py-2 px-2 text-gray-500 font-medium">Paid</th>
                       <th className="text-center py-2 px-2 text-gray-500 font-medium">Status</th>
+                      <th className="text-center py-2 px-2 text-gray-500 font-medium">Override</th>
                     </tr>
                   </thead>
                   <tbody>
                     {attendingMemberIds.map(memberId => {
                       const member = members.find(m => m.id === memberId);
                       const paid = memberPayments.filter(p => p.member_id === memberId).reduce((s, p) => s + (p.amount || 0), 0);
-                      const isExact = paid === cost;
-                      const isOver = paid > cost;
-                      const isUnder = paid > 0 && paid < cost;
+                      const ov = getOverride(memberId);
+                      const isNotAttending = ov?.override_type === 'not_attending';
+                      const isWaived = ov?.override_type === 'waived';
                       const isPaid = paid >= cost;
+                      const isExact = paid === cost;
+
                       return (
-                        <tr key={memberId} className="border-b hover:bg-gray-50">
+                        <tr key={memberId} className={`border-b hover:bg-gray-50 ${isNotAttending ? 'opacity-50' : ''}`}>
                           <td className="py-2 px-2 font-medium">{member?.full_name || 'Unknown'}</td>
-                          <td className="py-2 px-2 text-right">{fmt(cost)}</td>
+                          <td className="py-2 px-2 text-right text-gray-500">{isNotAttending ? '—' : fmt(cost)}</td>
                           <td className="py-2 px-2 text-right font-medium text-green-700">{fmt(paid)}</td>
                           <td className="py-2 px-2 text-center">
-                            {paid === 0 ? (
+                            {isNotAttending ? (
+                              <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-100 border border-gray-200 px-2 py-0.5 rounded-full">
+                                <MinusCircle className="w-3 h-3" /> Not Attending
+                              </span>
+                            ) : isWaived ? (
+                              <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                                <Slash className="w-3 h-3" /> Waived
+                              </span>
+                            ) : paid === 0 ? (
                               <span className="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
                                 <XCircle className="w-3 h-3" /> Unpaid
                               </span>
@@ -233,8 +279,33 @@ export default function MeetingFinancesTab({ programmeId, sectionId, date, secti
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                                <AlertTriangle className="w-3 h-3" /> {isOver ? 'Overpaid' : 'Incorrect Amount'}
+                                <AlertTriangle className="w-3 h-3" /> {paid > cost ? 'Overpaid' : 'Incorrect'}
                               </span>
+                            )}
+                          </td>
+                          <td className="py-2 px-2 text-center">
+                            {!isPaid && !isWaived && (
+                              <div className="flex items-center justify-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant={isNotAttending ? 'default' : 'outline'}
+                                  className={`text-xs h-6 px-2 ${isNotAttending ? 'bg-gray-500 text-white' : 'border-gray-300 text-gray-600'}`}
+                                  onClick={() => handleSetOverride(memberId, 'not_attending')}
+                                >
+                                  {isNotAttending ? 'Clear' : 'Not Attending'}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant={isWaived ? 'default' : 'outline'}
+                                  className={`text-xs h-6 px-2 ${isWaived ? 'bg-blue-500 text-white' : 'border-blue-300 text-blue-600'}`}
+                                  onClick={() => handleSetOverride(memberId, 'waived')}
+                                >
+                                  Waive
+                                </Button>
+                              </div>
+                            )}
+                            {(isPaid || isWaived) && ov && (
+                              <Button size="sm" variant="ghost" className="text-xs h-6 text-gray-400" onClick={() => handleSetOverride(memberId, ov.override_type)}>Clear</Button>
                             )}
                           </td>
                         </tr>

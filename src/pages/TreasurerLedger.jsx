@@ -34,6 +34,9 @@ const emptyForm = {
   linked_fund_id: '',
   receipt_reference: '',
   section_id: '',
+  budget_allocated: false,
+  split_section_id: '',
+  split_amount: '',
 };
 
 export default function TreasurerLedger() {
@@ -47,6 +50,9 @@ export default function TreasurerLedger() {
   const [saving, setSaving] = useState(false);
   const [subsDuration, setSubsDuration] = useState(3);
   const [selectedEventOrMeeting, setSelectedEventOrMeeting] = useState(''); // "event:id" or "meeting:id"
+  const [showSplit, setShowSplit] = useState(false);
+
+  const { data: sections = [] } = useQuery({ queryKey: ['sections'], queryFn: () => base44.entities.Section.filter({ active: true }) });
 
   const { data: ledger = [] } = useQuery({
     queryKey: ['ledger'],
@@ -140,17 +146,19 @@ export default function TreasurerLedger() {
     setEditEntry(null);
     setSubsDuration(3);
     setSelectedEventOrMeeting('');
+    setShowSplit(false);
     setShowDialog(true);
   };
 
   const openEdit = (entry) => {
-    setForm({ ...entry, amount: String(entry.amount) });
+    setForm({ ...entry, amount: String(entry.amount), split_amount: entry.split_amount ? String(entry.split_amount) : '' });
     setEditEntry(entry);
     setSubsDuration(3);
     setSelectedEventOrMeeting(
       entry.linked_event_id ? `event:${entry.linked_event_id}` :
       entry.linked_meeting_id ? `meeting:${entry.linked_meeting_id}` : ''
     );
+    setShowSplit(!!(entry.split_section_id));
     setShowDialog(true);
   };
 
@@ -161,7 +169,23 @@ export default function TreasurerLedger() {
     }
     setSaving(true);
     try {
-      const payload = { ...form, amount: parseFloat(form.amount), entered_by: user?.email };
+      const payload = {
+        ...form,
+        amount: parseFloat(form.amount),
+        entered_by: user?.email,
+        split_amount: showSplit && form.split_amount ? parseFloat(form.split_amount) : null,
+        split_section_id: showSplit && form.split_section_id ? form.split_section_id : '',
+      };
+
+      // Validate split amounts
+      if (showSplit && form.budget_allocated && form.split_section_id) {
+        const primaryAmt = parseFloat(form.amount) - (parseFloat(form.split_amount) || 0);
+        if (primaryAmt < 0) {
+          toast.error('Split amount cannot exceed total expense amount');
+          setSaving(false);
+          return;
+        }
+      }
 
       // Resolve event/meeting link
       if (selectedEventOrMeeting) {
@@ -435,6 +459,86 @@ export default function TreasurerLedger() {
                       {amountMismatch && ` — Amount incorrect (entered ${fmt(parseFloat(form.amount || 0))})`}
                     </span>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* BUDGET ALLOCATION — for expenses not linked to a meeting or event */}
+            {form.type === 'expense' && form.category !== 'event_payments' && form.category !== 'subs' && !form.linked_meeting_id && !selectedEventOrMeeting && (
+              <div className="space-y-3 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="budget_allocated"
+                    checked={!!form.budget_allocated}
+                    onChange={e => setField('budget_allocated', e.target.checked)}
+                    className="w-4 h-4 rounded"
+                  />
+                  <label htmlFor="budget_allocated" className="text-sm font-semibold text-indigo-800 cursor-pointer">
+                    Allocate expense to section budget
+                  </label>
+                </div>
+                {form.budget_allocated && (
+                  <>
+                    <div>
+                      <Label>Section</Label>
+                      <Select value={form.section_id} onValueChange={v => setField('section_id', v)}>
+                        <SelectTrigger><SelectValue placeholder="Select section..." /></SelectTrigger>
+                        <SelectContent>
+                          {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {!showSplit ? (
+                      <Button type="button" size="sm" variant="outline" className="border-indigo-300 text-indigo-700" onClick={() => setShowSplit(true)}>
+                        Split Budget between 2 sections
+                      </Button>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-indigo-700">Split Expense</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-xs">Section 1 (above)</Label>
+                            <p className="text-sm font-medium text-indigo-700 mt-1">
+                              {form.amount && form.split_amount
+                                ? fmt(parseFloat(form.amount) - parseFloat(form.split_amount || 0))
+                                : form.amount ? fmt(parseFloat(form.amount)) : '—'}
+                            </p>
+                          </div>
+                          <div>
+                            <Label className="text-xs">Section 2 Amount (£)</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max={form.amount}
+                              value={form.split_amount}
+                              onChange={e => setField('split_amount', e.target.value)}
+                              placeholder="0.00"
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Section 2</Label>
+                          <Select value={form.split_section_id} onValueChange={v => setField('split_section_id', v)}>
+                            <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select section 2..." /></SelectTrigger>
+                            <SelectContent>
+                              {sections.filter(s => s.id !== form.section_id).map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {form.amount && form.split_amount && (
+                          <p className={`text-xs font-medium ${Math.abs(parseFloat(form.amount) - parseFloat(form.split_amount || 0) - (parseFloat(form.split_amount) || 0)) < 0.01 || parseFloat(form.split_amount) < parseFloat(form.amount) ? 'text-green-600' : 'text-red-600'}`}>
+                            Section 1: {fmt(parseFloat(form.amount) - parseFloat(form.split_amount || 0))} + Section 2: {fmt(parseFloat(form.split_amount || 0))} = {fmt(parseFloat(form.amount))}
+                          </p>
+                        )}
+                        <Button type="button" size="sm" variant="ghost" className="text-xs text-gray-500" onClick={() => { setShowSplit(false); setField('split_section_id', ''); setField('split_amount', ''); }}>
+                          Remove split
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}

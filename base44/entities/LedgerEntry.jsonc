@@ -70,7 +70,20 @@
     },
     "section_id": {
       "type": "string",
-      "description": "Optional linked section"
+      "description": "Primary section this expense is allocated to"
+    },
+    "split_section_id": {
+      "type": "string",
+      "description": "Second section ID when splitting an expense between two sections"
+    },
+    "split_amount": {
+      "type": "number",
+      "description": "Amount allocated to split_section_id when splitting"
+    },
+    "budget_allocated": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this expense is explicitly allocated to a section budget (for general expenses with no meeting/event link)"
     }
   },
   "required": [

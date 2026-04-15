@@ -176,6 +176,24 @@
       "type": "boolean",
       "default": false,
       "description": "If true, forces the live view banner to appear for testing purposes"
+    },
+    "finance_status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "closed"
+      ],
+      "default": "open",
+      "description": "Finance status \u2014 closed locks the event finances"
+    },
+    "term_id": {
+      "type": "string",
+      "description": "Linked term ID \u2014 auto-assigned if event falls within a term, else manually selected"
+    },
+    "apply_profit_to_budget": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, when finances are closed the event profit/loss is applied to the linked section's term budget"
     }
   },
   "required": [
