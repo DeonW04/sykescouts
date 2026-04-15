@@ -63,16 +63,6 @@ export default function AllTermsDialog({ open, onOpenChange, terms, sections, on
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-2xl">All Terms</DialogTitle>
-            <Button 
-              onClick={() => {
-                onCreateNew();
-                onOpenChange(false);
-              }}
-              className="bg-gradient-to-r from-[#7413dc] to-[#5c0fb0]"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              New Term
-            </Button>
           </div>
         </DialogHeader>
 
