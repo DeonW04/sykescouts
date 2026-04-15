@@ -129,17 +129,17 @@ export default function MeetingDetail() {
     enabled: !!existingProgramme?.id,
   });
 
+  const actionIds = actionsRequired.map(a => a.id);
+
   const { data: actionResponses = [] } = useQuery({
-    queryKey: ['action-responses-for-programme', existingProgramme?.id],
+    queryKey: ['action-responses-for-programme', existingProgramme?.id, actionIds.join(',')],
     queryFn: async () => {
-      if (actionsRequired.length === 0) return [];
-      // Fetch responses for each action in parallel
       const allResponses = await Promise.all(
-        actionsRequired.map(a => base44.entities.ActionResponse.filter({ action_required_id: a.id }))
+        actionIds.map(id => base44.entities.ActionResponse.filter({ action_required_id: id }))
       );
       return allResponses.flat();
     },
-    enabled: actionsRequired.length > 0,
+    enabled: actionIds.length > 0,
   });
 
   useEffect(() => {

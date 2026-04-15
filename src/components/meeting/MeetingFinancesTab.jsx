@@ -26,9 +26,8 @@ export default function MeetingFinancesTab({ programmeId, sectionId, date, secti
 
   const { data: allocations = [] } = useQuery({
     queryKey: ['receipt-allocations-meeting', programmeId],
-    queryFn: () => base44.entities.ReceiptAllocation.filter({}),
+    queryFn: () => base44.entities.ReceiptAllocation.filter({ linked_meeting_id: programmeId }),
     enabled: !!programmeId,
-    select: (data) => data.filter(a => a.linked_meeting_id === programmeId),
   });
 
   const { data: ledgerEntries = [] } = useQuery({
@@ -52,9 +51,10 @@ export default function MeetingFinancesTab({ programmeId, sectionId, date, secti
   const { data: actionResponses = [] } = useQuery({
     queryKey: ['action-responses-finances', programmeId],
     queryFn: async () => {
-      const allResponses = await base44.entities.ActionResponse.filter({});
-      const actionIds = actionsRequired.map(a => a.id);
-      return allResponses.filter(r => actionIds.includes(r.action_required_id));
+      const all = await Promise.all(
+        actionsRequired.map(a => base44.entities.ActionResponse.filter({ action_required_id: a.id }))
+      );
+      return all.flat();
     },
     enabled: actionsRequired.length > 0,
   });
