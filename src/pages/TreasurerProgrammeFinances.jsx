@@ -60,20 +60,20 @@ export default function TreasurerProgrammeFinances() {
   const budget = budgets.find(b => b.section_id === activeSection?.id && b.term_id === activeTerm?.id);
   const budgetAmount = budget?.budget_amount || 0;
 
-  // Budget-allocated general expenses (section_id match + budget_allocated flag)
+  // Budget-allocated general expenses (section_id match + budget_allocated flag, or linked_term_id)
   const budgetAllocatedExpenses = useMemo(() => {
     if (!activeSection || !activeTerm) return 0;
     return ledgerEntries.filter(e =>
       e.type === 'expense' &&
       e.budget_allocated &&
-      !e.linked_meeting_id &&
-      !e.linked_event_id &&
       (
         e.section_id === activeSection.id ||
         e.split_section_id === activeSection.id
       ) &&
-      e.date >= activeTerm.start_date &&
-      e.date <= activeTerm.end_date
+      (
+        e.linked_term_id === activeTerm.id ||
+        (!e.linked_term_id && e.date >= activeTerm.start_date && e.date <= activeTerm.end_date)
+      )
     ).reduce((s, e) => {
       // If split: use the relevant portion
       if (e.split_section_id === activeSection.id && e.section_id !== activeSection.id) {

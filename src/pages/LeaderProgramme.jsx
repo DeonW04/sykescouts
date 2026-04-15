@@ -84,9 +84,9 @@ export default function LeaderProgramme() {
   });
 
   const { data: programmes = [] } = useQuery({
-    queryKey: ['programmes', currentTerm?.section_id],
-    queryFn: () => base44.entities.Programme.filter({ section_id: currentTerm.section_id }),
-    enabled: !!currentTerm,
+    queryKey: ['programmes', selectedSection],
+    queryFn: () => base44.entities.Programme.filter({ section_id: selectedSection }),
+    enabled: !!selectedSection,
   });
 
   const { data: savedDraft } = useQuery({
@@ -111,7 +111,7 @@ export default function LeaderProgramme() {
           });
         } else {
           await base44.entities.Programme.create({
-            section_id: currentTerm.section_id,
+            section_id: selectedSection,
             date,
             title: 'No Meeting',
             no_meeting: true,
@@ -133,7 +133,7 @@ export default function LeaderProgramme() {
   const handleMeetingClick = (meeting) => {
     if (meeting.isHalfTerm) return;
     const dateStr = meeting.date.toISOString().split('T')[0];
-    navigate(createPageUrl('MeetingDetail') + `?section_id=${currentTerm.section_id}&date=${dateStr}&term_id=${currentTerm.id}`);
+    navigate(createPageUrl('MeetingDetail') + `?section_id=${selectedSection}&date=${dateStr}&term_id=${currentTerm.id}`);
   };
 
   const preFilled = currentTerm ? programmes
@@ -149,7 +149,7 @@ export default function LeaderProgramme() {
       ...result,
       term: currentTerm,
       section: currentSection,
-      section_id: currentTerm?.section_id,
+      section_id: selectedSection,
       term_id: currentTerm?.id,
     }));
     setShowAIModal(false);
@@ -203,7 +203,7 @@ export default function LeaderProgramme() {
                     engagement_summary: savedDraft.engagement_summary,
                     term: currentTerm,
                     section: currentSection,
-                    section_id: currentTerm.section_id,
+                    section_id: selectedSection,
                     term_id: currentTerm.id,
                     meetingDates: [],
                     preFilled: [],
