@@ -60,6 +60,10 @@
       "type": "string",
       "description": "Optional linked fund ID"
     },
+    "linked_term_id": {
+      "type": "string",
+      "description": "Optional linked term ID for budget allocation"
+    },
     "receipt_reference": {
       "type": "string",
       "description": "Linked receipt ID"
@@ -83,7 +87,7 @@
     "budget_allocated": {
       "type": "boolean",
       "default": false,
-      "description": "Whether this expense is explicitly allocated to a section budget (for general expenses with no meeting/event link)"
+      "description": "Whether this expense is explicitly allocated to a section budget"
     }
   },
   "required": [

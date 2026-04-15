@@ -32,6 +32,7 @@ const emptyForm = {
   linked_event_id: '',
   linked_meeting_id: '',
   linked_fund_id: '',
+  linked_term_id: '',
   receipt_reference: '',
   section_id: '',
   budget_allocated: false,
@@ -187,8 +188,8 @@ export default function TreasurerLedger() {
         }
       }
 
-      // Resolve event/meeting link
-      if (selectedEventOrMeeting) {
+      // Resolve event/meeting link for all categories
+      if (selectedEventOrMeeting && selectedEventOrMeeting !== '_none') {
         const [type, id] = selectedEventOrMeeting.split(':');
         payload.linked_event_id = type === 'event' ? id : '';
         payload.linked_meeting_id = type === 'meeting' ? id : '';
@@ -468,8 +469,45 @@ export default function TreasurerLedger() {
               </div>
             )}
 
-            {/* BUDGET ALLOCATION — for expenses not linked to a meeting or event */}
-            {form.type === 'expense' && form.category !== 'event_payments' && form.category !== 'subs' && !form.linked_meeting_id && !selectedEventOrMeeting && (
+            {/* GENERAL MEETING/EVENT LINK — for non-event_payment, non-subs expenses */}
+            {form.type === 'expense' && form.category !== 'event_payments' && form.category !== 'subs' && (
+              <div className="space-y-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <Label className="text-xs font-semibold text-gray-700">Link to Meeting / Event (optional)</Label>
+                <Select value={selectedEventOrMeeting} onValueChange={v => {
+                  setSelectedEventOrMeeting(v === '_none' ? '' : v);
+                  // auto-resolve linked_term from meeting
+                  if (v && v !== '_none') {
+                    const [type, id] = v.split(':');
+                    if (type === 'meeting') {
+                      const mtg = programmes.find(p => p.id === id);
+                      if (mtg) {
+                        const matchingTerm = terms.find(t => mtg.date >= t.start_date && mtg.date <= t.end_date);
+                        if (matchingTerm) setField('linked_term_id', matchingTerm.id);
+                      }
+                    } else if (type === 'event') {
+                      const ev = events.find(e => e.id === id);
+                      if (ev && ev.term_id) setField('linked_term_id', ev.term_id);
+                    }
+                  }
+                }}>
+                  <SelectTrigger className="text-sm"><SelectValue placeholder="None (general expense)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_none">None (general expense)</SelectItem>
+                    <SelectItem value="_meetings_header" disabled className="font-semibold text-xs text-gray-400">— Meetings —</SelectItem>
+                    {programmes.filter(p => {
+                      const term = activeTerm;
+                      if (!term) return false;
+                      return p.date >= term.start_date && p.date <= term.end_date;
+                    }).map(p => <SelectItem key={`meeting:${p.id}`} value={`meeting:${p.id}`}>Meeting: {p.title} ({p.date})</SelectItem>)}
+                    <SelectItem value="_events_header" disabled className="font-semibold text-xs text-gray-400">— Events —</SelectItem>
+                    {events.slice(0, 30).map(ev => <SelectItem key={`event:${ev.id}`} value={`event:${ev.id}`}>Event: {ev.title}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* BUDGET ALLOCATION — for expenses */}
+            {form.type === 'expense' && form.category !== 'event_payments' && form.category !== 'subs' && (
               <div className="space-y-3 p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
                 <div className="flex items-center gap-2">
                   <input
@@ -485,15 +523,31 @@ export default function TreasurerLedger() {
                 </div>
                 {form.budget_allocated && (
                   <>
-                    <div>
-                      <Label>Section</Label>
-                      <Select value={form.section_id} onValueChange={v => setField('section_id', v)}>
-                        <SelectTrigger><SelectValue placeholder="Select section..." /></SelectTrigger>
-                        <SelectContent>
-                          {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs">Term</Label>
+                        <Select value={form.linked_term_id} onValueChange={v => setField('linked_term_id', v)}>
+                          <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select term..." /></SelectTrigger>
+                          <SelectContent>
+                            {terms.map(t => <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">Section</Label>
+                        <Select value={form.section_id} onValueChange={v => setField('section_id', v)}>
+                          <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select section..." /></SelectTrigger>
+                          <SelectContent>
+                            {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
+                    {selectedEventOrMeeting && selectedEventOrMeeting.startsWith('event:') && (
+                      <div className="flex items-start gap-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+                        <span>⚠️ This event will be checked for budget allocation. If <em>Apply profit to budget</em> is enabled on the event, ledger items are automatically included in the section budget.</span>
+                      </div>
+                    )}
                     {!showSplit ? (
                       <Button type="button" size="sm" variant="outline" className="border-indigo-300 text-indigo-700" onClick={() => setShowSplit(true)}>
                         Split Budget between 2 sections
@@ -513,14 +567,10 @@ export default function TreasurerLedger() {
                           <div>
                             <Label className="text-xs">Section 2 Amount (£)</Label>
                             <Input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              max={form.amount}
+                              type="number" step="0.01" min="0" max={form.amount}
                               value={form.split_amount}
                               onChange={e => setField('split_amount', e.target.value)}
-                              placeholder="0.00"
-                              className="h-8 text-sm"
+                              placeholder="0.00" className="h-8 text-sm"
                             />
                           </div>
                         </div>
@@ -534,7 +584,7 @@ export default function TreasurerLedger() {
                           </Select>
                         </div>
                         {form.amount && form.split_amount && (
-                          <p className={`text-xs font-medium ${Math.abs(parseFloat(form.amount) - parseFloat(form.split_amount || 0) - (parseFloat(form.split_amount) || 0)) < 0.01 || parseFloat(form.split_amount) < parseFloat(form.amount) ? 'text-green-600' : 'text-red-600'}`}>
+                          <p className="text-xs font-medium text-green-600">
                             Section 1: {fmt(parseFloat(form.amount) - parseFloat(form.split_amount || 0))} + Section 2: {fmt(parseFloat(form.split_amount || 0))} = {fmt(parseFloat(form.amount))}
                           </p>
                         )}

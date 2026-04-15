@@ -35,16 +35,11 @@ export default function LeaderProgramme() {
   });
 
   const { data: terms = [], isLoading } = useQuery({
-    queryKey: ['terms', selectedSection],
+    queryKey: ['terms'],
     queryFn: async () => {
-      if (!selectedSection) return [];
-      const allTerms = await base44.entities.Term.filter({ 
-        active: true, 
-        section_id: selectedSection 
-      });
+      const allTerms = await base44.entities.Term.filter({ active: true });
       return allTerms.sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
     },
-    enabled: !!selectedSection,
   });
 
   const currentTerm = selectedTerm || terms.find(t => {
@@ -52,7 +47,7 @@ export default function LeaderProgramme() {
     return today >= new Date(t.start_date) && today <= new Date(t.end_date);
   }) || terms.find(t => new Date(t.start_date) > new Date()) || terms[0];
 
-  const currentSection = sections.find(s => s.id === currentTerm?.section_id);
+  const currentSection = sections.find(s => s.id === selectedSection);
 
   const { data: meetings = [] } = useQuery({
     queryKey: ['term-meetings', currentTerm?.id],
@@ -68,7 +63,9 @@ export default function LeaderProgramme() {
         'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
         'Thursday': 4, 'Friday': 5, 'Saturday': 6
       };
-      const targetDay = dayOfWeekMap[currentTerm.meeting_day];
+      // Use section's meeting_day (terms are now group-wide)
+      const meetingDay = currentSection?.meeting_day || currentTerm.meeting_day;
+      const targetDay = dayOfWeekMap[meetingDay];
 
       let current = new Date(start);
       while (current.getDay() !== targetDay) {
@@ -337,12 +334,16 @@ export default function LeaderProgramme() {
                   <div>
                     <div className="flex items-center gap-3 mb-3">
                       <Badge className="bg-[#004851] text-white">{currentSection?.display_name}</Badge>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Clock className="w-4 h-4" />
-                        <span>{currentTerm.meeting_day}s</span>
-                        <span className="text-gray-400">•</span>
-                        <span>{currentTerm.meeting_start_time} - {currentTerm.meeting_end_time}</span>
-                      </div>
+                      {currentSection?.meeting_day && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Clock className="w-4 h-4" />
+                          <span>{currentSection.meeting_day}s</span>
+                          {currentSection.meeting_start_time && <>
+                            <span className="text-gray-400">•</span>
+                            <span>{currentSection.meeting_start_time}{currentSection.meeting_end_time ? ` - ${currentSection.meeting_end_time}` : ''}</span>
+                          </>}
+                        </div>
+                      )}
                     </div>
                     <CardTitle className="text-3xl mb-3">{currentTerm.title}</CardTitle>
                     <div className="flex items-center gap-2 text-gray-600">
@@ -542,7 +543,6 @@ export default function LeaderProgramme() {
           setShowNewTermDialog(open);
           if (!open) setEditingTerm(null);
         }}
-        sections={sections.filter(s => s.id === selectedSection)}
         editTerm={editingTerm}
       />
 
@@ -550,7 +550,6 @@ export default function LeaderProgramme() {
         open={showAllTermsDialog}
         onOpenChange={setShowAllTermsDialog}
         terms={terms}
-        sections={sections.filter(s => s.id === selectedSection)}
         onSelectTerm={setSelectedTerm}
         onCreateNew={() => {
           setEditingTerm(null);

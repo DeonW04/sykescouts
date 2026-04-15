@@ -6,10 +6,6 @@
       "type": "string",
       "description": "Term title (e.g., Autumn Term 2024)"
     },
-    "section_id": {
-      "type": "string",
-      "description": "Section ID"
-    },
     "start_date": {
       "type": "string",
       "format": "date",
@@ -29,27 +25,6 @@
       "type": "string",
       "format": "date",
       "description": "Half term end date"
-    },
-    "meeting_day": {
-      "type": "string",
-      "enum": [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday"
-      ],
-      "description": "Day of the week meetings occur"
-    },
-    "meeting_start_time": {
-      "type": "string",
-      "description": "Meeting start time (HH:MM)"
-    },
-    "meeting_end_time": {
-      "type": "string",
-      "description": "Meeting end time (HH:MM)"
     },
     "active": {
       "type": "boolean",
@@ -73,11 +48,7 @@
   },
   "required": [
     "title",
-    "section_id",
     "start_date",
-    "end_date",
-    "meeting_day",
-    "meeting_start_time",
-    "meeting_end_time"
+    "end_date"
   ]
 }

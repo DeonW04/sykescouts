@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Users, Shield, Mail, Edit, Image, Upload, X, Award, Download, Camera, PieChart, Bell, BarChart2 } from 'lucide-react';
+import { Settings, Users, Shield, Mail, Edit, Image, Upload, X, Award, Download, Camera, PieChart, Bell, BarChart2, Calendar } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -26,11 +26,13 @@ import OSMSyncPanel from '../components/admin/OSMSyncPanel';
 import OSMOverview from '../components/admin/OSMOverview';
 import OSMBadgeAwardSync from '../components/admin/OSMBadgeAwardSync';
 import SectionSettingsTab from '../components/admin/SectionSettingsTab';
+import AdminTermsTab from '../components/admin/AdminTermsTab';
 
 const NAV_ITEMS = [
   { key: 'users',          label: 'User Management',    icon: Users,    group: 'People' },
   { key: 'leaders',        label: 'Leader Management',  icon: Shield,   group: 'People' },
   { key: 'sections',       label: 'Section Settings',   icon: Users,    group: 'People' },
+  { key: 'terms',          label: 'Terms',              icon: Calendar, group: 'People' },
   { key: 'images',         label: 'Website Images',     icon: Image,    group: 'Content' },
   { key: 'badges',         label: 'Badge System',       icon: Award,    group: 'Content' },
   { key: 'uniform',        label: 'Uniform Guide',      icon: Shield,   group: 'Content' },
@@ -293,6 +295,11 @@ export default function AdminSettings() {
               {/* ── Sections ── */}
               <TabsContent value="sections">
                 <SectionSettingsTab sections={sections} leaders={leaders} queryClient={queryClient} />
+              </TabsContent>
+
+              {/* ── Terms ── */}
+              <TabsContent value="terms">
+                <AdminTermsTab />
               </TabsContent>
 
               {/* ── Website Images ── */}

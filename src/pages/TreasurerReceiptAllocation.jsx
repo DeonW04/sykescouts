@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Receipt, CheckCircle, Upload, Plus, AlertTriangle } from 'lucide-react';
+import { Receipt, CheckCircle, Upload, Plus, AlertTriangle, ExternalLink, Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { addDays, format } from 'date-fns';
 
@@ -25,6 +26,9 @@ const emptyForm = {
   leader_id: '',
   notes: '',
   receipt_url: '',
+  budget_allocated: false,
+  section_id: '',
+  linked_term_id: '',
 };
 
 export default function TreasurerReceiptAllocation() {
@@ -45,6 +49,7 @@ export default function TreasurerReceiptAllocation() {
   const { data: leaders = [] } = useQuery({ queryKey: ['leaders'], queryFn: () => base44.entities.Leader.filter({}) });
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
   const { data: terms = [] } = useQuery({ queryKey: ['terms'], queryFn: () => base44.entities.Term.list() });
+  const { data: sections = [] } = useQuery({ queryKey: ['sections'], queryFn: () => base44.entities.Section.filter({ active: true }) });
 
   const unallocated = allocations.filter(r => r.status === 'unallocated');
   const allocated = allocations.filter(r => r.status === 'allocated');
@@ -107,12 +112,24 @@ export default function TreasurerReceiptAllocation() {
     setSaving(true);
     try {
       const links = resolveLinks(form, selectedEventOrMeeting);
-      await base44.entities.ReceiptAllocation.create({
+      const receiptData = {
         ...form,
         ...links,
         amount: parseFloat(form.amount),
         status: 'unallocated',
+      };
+      // Remove non-entity fields from form spread
+      delete receiptData.budget_allocated;
+      delete receiptData.section_id;
+      delete receiptData.linked_term_id;
+
+      const receipt = await base44.entities.ReceiptAllocation.create({
+        ...receiptData,
+        budget_allocated: form.budget_allocated,
+        section_id: form.budget_allocated ? form.section_id : '',
+        linked_term_id: form.budget_allocated ? form.linked_term_id : '',
       });
+
       queryClient.invalidateQueries({ queryKey: ['receipt-allocations'] });
       toast.success('Receipt added');
       setNewDialog(false);
@@ -151,6 +168,9 @@ export default function TreasurerReceiptAllocation() {
         linked_meeting_id: updates.linked_meeting_id || null,
         receipt_reference: allocateDialog.id,
         entered_by: user?.email,
+        budget_allocated: allocateDialog.budget_allocated || false,
+        section_id: allocateDialog.section_id || '',
+        linked_term_id: allocateDialog.linked_term_id || '',
       });
 
       if (updates.payment_method === 'leader_paid_personally' && updates.leader_id) {
@@ -234,18 +254,35 @@ export default function TreasurerReceiptAllocation() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {unallocated.map(r => (
-                <div key={r.id} className="flex items-center justify-between p-3 border border-amber-200 rounded-lg bg-amber-50">
-                  <div>
-                    <p className="font-semibold">{fmt(r.amount)}</p>
-                    {r.notes && <p className="text-xs text-gray-500">{r.notes}</p>}
-                    {r.receipt_url && (
-                      <a href={r.receipt_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">View receipt</a>
-                    )}
+              {unallocated.map(r => {
+                const isAwaitingReimbursement = r.payment_method === 'leader_paid_personally';
+                const leader = leaders.find(l => l.id === r.leader_id);
+                return (
+                  <div key={r.id} className={`p-3 border rounded-lg ${isAwaitingReimbursement ? 'border-red-300 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold">{fmt(r.amount)}</p>
+                          {isAwaitingReimbursement && (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 bg-red-100 border border-red-300 px-2 py-0.5 rounded-full">
+                              <Clock className="w-3 h-3" /> Awaiting Reimbursement
+                            </span>
+                          )}
+                          {r.category && <span className="text-xs text-gray-500 capitalize">{r.category.replace(/_/g, ' ')}</span>}
+                        </div>
+                        {r.notes && <p className="text-xs text-gray-500 mt-0.5">{r.notes}</p>}
+                        {leader && <p className="text-xs text-red-600 mt-0.5">Leader: {leader.display_name}</p>}
+                        {r.receipt_url && (
+                          <a href={r.receipt_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">View receipt</a>
+                        )}
+                      </div>
+                      <Button size="sm" onClick={() => openAllocate(r)} className={isAwaitingReimbursement ? 'bg-red-600 hover:bg-red-700' : 'bg-[#1a472a] hover:bg-[#13381f]'}>
+                        {isAwaitingReimbursement ? 'Reimburse & Allocate' : 'Allocate'}
+                      </Button>
+                    </div>
                   </div>
-                  <Button size="sm" onClick={() => openAllocate(r)} className="bg-[#1a472a] hover:bg-[#13381f]">Allocate</Button>
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         )}
@@ -342,6 +379,32 @@ export default function TreasurerReceiptAllocation() {
             <div>
               <Label>Notes (optional)</Label>
               <Input value={form.notes} onChange={e => sf('notes', e.target.value)} placeholder="Brief description..." />
+            </div>
+
+            {/* Budget allocation */}
+            <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg space-y-3">
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="ra_budget" checked={!!form.budget_allocated} onChange={e => sf('budget_allocated', e.target.checked)} className="w-4 h-4 rounded" />
+                <label htmlFor="ra_budget" className="text-sm font-semibold text-indigo-800 cursor-pointer">Allocate to section budget</label>
+              </div>
+              {form.budget_allocated && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Term</Label>
+                    <Select value={form.linked_term_id} onValueChange={v => sf('linked_term_id', v)}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select term..." /></SelectTrigger>
+                      <SelectContent>{terms.map(t => <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Section</Label>
+                    <Select value={form.section_id} onValueChange={v => sf('section_id', v)}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select section..." /></SelectTrigger>
+                      <SelectContent>{sections.map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>

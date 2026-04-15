@@ -19,8 +19,6 @@ export default function AllTermsDialog({ open, onOpenChange, terms, sections, on
   const pastTerms = terms.filter(t => new Date(t.end_date) < today);
 
   const TermGridCard = ({ term, isPast }) => {
-    const section = sections.find(s => s.id === term.section_id);
-    
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -40,26 +38,19 @@ export default function AllTermsDialog({ open, onOpenChange, terms, sections, on
           }}
         >
           <CardContent className="p-5">
-            <div className="flex items-start justify-between mb-3">
-              <Badge className={isPast ? 'bg-gray-500' : 'bg-[#7413dc]'}>
-                {section?.display_name}
-              </Badge>
-            </div>
             <h3 className={`font-bold text-lg mb-2 ${isPast ? 'text-gray-600' : 'text-gray-900'}`}>
               {term.title}
             </h3>
-            <div className="space-y-1 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>
-                  {new Date(term.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} - {' '}
-                  {new Date(term.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </span>
-              </div>
-              <p className="text-xs">
-                {term.meeting_day}s • {term.meeting_start_time} - {term.meeting_end_time}
-              </p>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>
+                {new Date(term.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} –{' '}
+                {new Date(term.end_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </span>
             </div>
+            {term.half_term_start && (
+              <p className="text-xs text-gray-400 mt-1">Half term: {new Date(term.half_term_start).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}–{new Date(term.half_term_end).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</p>
+            )}
           </CardContent>
         </Card>
       </motion.div>
