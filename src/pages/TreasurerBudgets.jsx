@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Edit, Plus } from 'lucide-react';
@@ -17,55 +18,63 @@ export default function TreasurerBudgets() {
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
   const [editBudget, setEditBudget] = useState(null);
-  const [form, setForm] = useState({ section_id: '', term_label: '', budget_amount: '', notes: '' });
+  const [form, setForm] = useState({ section_id: '', term_id: '', term_label: '', budget_amount: '', notes: '' });
   const [saving, setSaving] = useState(false);
+  const [selectedTermId, setSelectedTermId] = useState('');
 
   const { data: sections = [] } = useQuery({ queryKey: ['sections'], queryFn: () => base44.entities.Section.filter({ active: true }) });
+  const { data: terms = [] } = useQuery({ queryKey: ['terms'], queryFn: () => base44.entities.Term.list('-start_date', 50) });
   const { data: budgets = [] } = useQuery({ queryKey: ['section-budgets'], queryFn: () => base44.entities.SectionBudget.filter({}) });
   const { data: ledger = [] } = useQuery({ queryKey: ['ledger'], queryFn: () => base44.entities.LedgerEntry.list('-date', 500) });
   const { data: events = [] } = useQuery({ queryKey: ['events'], queryFn: () => base44.entities.Event.list('-start_date', 100) });
   const { data: allocations = [] } = useQuery({ queryKey: ['receipt-allocations-budgets'], queryFn: () => base44.entities.ReceiptAllocation.filter({}) });
   const { data: programmes = [] } = useQuery({ queryKey: ['programmes-budgets'], queryFn: () => base44.entities.Programme.filter({}) });
+  const { data: memberPayments = [] } = useQuery({ queryKey: ['member-payments'], queryFn: () => base44.entities.MemberPayment.list('-date', 500) });
 
-  const getSpend = (sectionId) => {
-    // From ledger entries
-    const ledgerSpend = ledger
-      .filter(e => e.type === 'expense' && e.section_id === sectionId)
-      .reduce((s, e) => s + (e.amount || 0), 0);
-    // From receipt allocations linked to section meetings
-    const sectionMeetingIds = new Set(programmes.filter(p => p.section_id === sectionId).map(p => p.id));
+  // Auto-select current term on load
+  const today = new Date().toISOString().split('T')[0];
+  const currentTerm = terms.find(t => today >= t.start_date && today <= t.end_date);
+  const activeTerm = selectedTermId ? terms.find(t => t.id === selectedTermId) : (currentTerm || terms[0]);
+
+  const getTermProgrammes = (sectionId) => {
+    if (!activeTerm) return [];
+    return programmes.filter(p => p.section_id === sectionId && p.date >= activeTerm.start_date && p.date <= activeTerm.end_date);
+  };
+
+  const getCalcExpenses = (sectionId) => {
+    if (!activeTerm) return 0;
+    const termProgs = getTermProgrammes(sectionId);
+    const progIds = new Set(termProgs.map(p => p.id));
+    // Receipt allocations linked to meetings in this term/section
     const receiptSpend = allocations
-      .filter(a => a.status === 'unallocated' && (
-        (a.linked_meeting_id && sectionMeetingIds.has(a.linked_meeting_id)) ||
-        (a.linked_event_id && events.some(e => e.id === a.linked_event_id && e.section_ids?.includes(sectionId)))
-      ))
+      .filter(a => a.linked_meeting_id && progIds.has(a.linked_meeting_id))
       .reduce((s, a) => s + (a.amount || 0), 0);
-    return ledgerSpend + receiptSpend;
+    // Ledger expense entries linked to section in this term
+    const ledgerSpend = ledger
+      .filter(e => e.type === 'expense' && e.section_id === sectionId && e.date >= activeTerm.start_date && e.date <= activeTerm.end_date)
+      .reduce((s, e) => s + (e.amount || 0), 0);
+    return receiptSpend + ledgerSpend;
   };
 
-  const getUnallocatedReceipts = (sectionId) => {
-    const sectionMeetingIds = new Set(programmes.filter(p => p.section_id === sectionId).map(p => p.id));
-    return allocations.filter(a => a.status === 'unallocated' && (
-      (a.linked_meeting_id && sectionMeetingIds.has(a.linked_meeting_id)) ||
-      (a.linked_event_id && events.some(e => e.id === a.linked_event_id && e.section_ids?.includes(sectionId)))
-    )).length;
-  };
-
-  const getProjectedSpend = (sectionId) => {
-    return events
-      .filter(e => e.section_ids?.includes(sectionId) && e.estimated_cost)
-      .reduce((s, e) => s + (e.estimated_cost || 0), 0);
+  const getCalcIncome = (sectionId) => {
+    if (!activeTerm) return 0;
+    const termProgs = getTermProgrammes(sectionId);
+    const progIds = new Set(termProgs.map(p => p.id));
+    // Member payments linked to meetings with a cost in this term
+    return memberPayments
+      .filter(p => p.related_event_id && progIds.has(p.related_event_id))
+      .reduce((s, p) => s + (p.amount || 0), 0);
   };
 
   const openEdit = (budget) => {
     setEditBudget(budget);
-    setForm({ section_id: budget.section_id, term_label: budget.term_label || '', budget_amount: String(budget.budget_amount), notes: budget.notes || '' });
+    setForm({ section_id: budget.section_id, term_id: budget.term_id || '', term_label: budget.term_label || '', budget_amount: String(budget.budget_amount), notes: budget.notes || '' });
     setShowDialog(true);
   };
 
-  const openNew = () => {
+  const openNew = (sectionId = '') => {
     setEditBudget(null);
-    setForm({ section_id: '', term_label: '', budget_amount: '', notes: '' });
+    setForm({ section_id: sectionId, term_id: activeTerm?.id || '', term_label: activeTerm?.title || activeTerm?.name || '', budget_amount: '', notes: '' });
     setShowDialog(true);
   };
 
@@ -96,65 +105,83 @@ export default function TreasurerBudgets() {
 
   return (
     <TreasurerLayout title="Section Budgets">
-      <div className="flex justify-end mb-4">
-        <Button onClick={openNew} className="bg-[#1a472a] hover:bg-[#13381f]">
+      {/* Term selector */}
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
+        <Label className="text-sm font-semibold text-gray-700">Term:</Label>
+        <Select value={selectedTermId || activeTerm?.id || ''} onValueChange={setSelectedTermId}>
+          <SelectTrigger className="w-64">
+            <SelectValue placeholder="Select a term..." />
+          </SelectTrigger>
+          <SelectContent>
+            {terms.map(t => (
+              <SelectItem key={t.id} value={t.id}>
+                {t.title || t.name} ({t.start_date} – {t.end_date})
+                {currentTerm?.id === t.id ? ' ✓ Current' : ''}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button onClick={() => openNew()} className="bg-[#1a472a] hover:bg-[#13381f] ml-auto">
           <Plus className="w-4 h-4 mr-2" />Set Budget
         </Button>
       </div>
 
+      {activeTerm && (
+        <p className="text-sm text-gray-500 mb-4">
+          Showing budgets for <strong>{activeTerm.title || activeTerm.name}</strong> ({activeTerm.start_date} – {activeTerm.end_date})
+        </p>
+      )}
+
       <div className="grid md:grid-cols-2 gap-4">
         {sections.map(section => {
-          const budget = budgets.find(b => b.section_id === section.id);
-          const spend = getSpend(section.id);
-          const projected = getProjectedSpend(section.id);
-          const allocated = budget?.budget_amount || 0;
-          const pct = allocated > 0 ? Math.min(100, (spend / allocated) * 100) : 0;
-          const projectedPct = allocated > 0 ? Math.min(100, (projected / allocated) * 100) : 0;
+          const budget = budgets.find(b => b.section_id === section.id && (b.term_id === activeTerm?.id || (!b.term_id && !activeTerm)));
+          const calcExpenses = getCalcExpenses(section.id);
+          const calcIncome = getCalcIncome(section.id);
+          const budgetAmount = budget?.budget_amount || 0;
+          const remaining = budgetAmount + calcIncome - calcExpenses;
+          const spendPct = budgetAmount > 0 ? Math.min(100, (calcExpenses / budgetAmount) * 100) : 0;
 
           return (
             <Card key={section.id}>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base capitalize">{section.display_name}</CardTitle>
-                <Button size="sm" variant="outline" onClick={() => budget ? openEdit(budget) : openNew()}>
+                <CardTitle className="text-base">{section.display_name}</CardTitle>
+                <Button size="sm" variant="outline" onClick={() => budget ? openEdit(budget) : openNew(section.id)}>
                   <Edit className="w-3 h-3 mr-1" />{budget ? 'Edit' : 'Set Budget'}
                 </Button>
               </CardHeader>
               <CardContent className="space-y-3">
                 {budget ? (
                   <>
-                    {budget.term_label && <p className="text-xs text-gray-500">{budget.term_label}</p>}
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Budget</span>
-                      <span className="font-bold">{fmt(allocated)}</span>
+                    {/* 4 boxes */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-center">
+                        <p className="text-xs text-gray-500">Budget</p>
+                        <p className="font-bold text-blue-700 text-lg">{fmt(budgetAmount)}</p>
+                      </div>
+                      <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-center">
+                        <p className="text-xs text-gray-500">Calc Expenses</p>
+                        <p className="font-bold text-red-700 text-lg">{fmt(calcExpenses)}</p>
+                      </div>
+                      <div className="p-3 bg-green-50 border border-green-100 rounded-lg text-center">
+                        <p className="text-xs text-gray-500">Calc Income</p>
+                        <p className="font-bold text-green-700 text-lg">{fmt(calcIncome)}</p>
+                      </div>
+                      <div className={`p-3 rounded-lg border text-center ${remaining >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-orange-50 border-orange-100'}`}>
+                        <p className="text-xs text-gray-500">Remaining Budget</p>
+                        <p className={`font-bold text-lg ${remaining >= 0 ? 'text-emerald-700' : 'text-orange-700'}`}>{fmt(remaining)}</p>
+                      </div>
                     </div>
                     <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-600">Actual Spend</span>
-                        <span className={`font-semibold ${pct > 90 ? 'text-red-600' : 'text-gray-800'}`}>{fmt(spend)}</span>
+                      <div className="flex justify-between text-xs text-gray-500 mb-1">
+                        <span>Spend vs Budget</span>
+                        <span>{spendPct.toFixed(0)}%</span>
                       </div>
-                      <Progress value={pct} className="h-2" />
+                      <Progress value={spendPct} className="h-2" />
                     </div>
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-gray-500">Projected Spend</span>
-                        <span className="text-amber-600 font-medium">{fmt(projected)}</span>
-                      </div>
-                      <Progress value={projectedPct} className="h-1.5 bg-amber-100" />
-                    </div>
-                    <div className="flex justify-between text-sm border-t pt-2">
-                      <span className="text-gray-600">Remaining</span>
-                      <span className={`font-bold ${allocated - spend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {fmt(allocated - spend)}
-                      </span>
-                    </div>
-                    {getUnallocatedReceipts(section.id) > 0 && (
-                      <div className="flex items-center gap-1.5 mt-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1">
-                        <span className="font-semibold">{getUnallocatedReceipts(section.id)}</span> unallocated receipt{getUnallocatedReceipts(section.id) !== 1 ? 's' : ''} pending Treasurer review
-                      </div>
-                    )}
+                    {budget.notes && <p className="text-xs text-gray-400 italic">{budget.notes}</p>}
                   </>
                 ) : (
-                  <p className="text-sm text-gray-400 text-center py-4">No budget set for this section</p>
+                  <p className="text-sm text-gray-400 text-center py-4">No budget set for this section / term</p>
                 )}
               </CardContent>
             </Card>
@@ -168,18 +195,24 @@ export default function TreasurerBudgets() {
           <div className="space-y-4 py-2">
             <div>
               <Label>Section</Label>
-              <select
-                className="w-full border rounded-md px-3 py-2 text-sm mt-1"
-                value={form.section_id}
-                onChange={e => setField('section_id', e.target.value)}
-              >
-                <option value="">Select section...</option>
-                {sections.map(s => <option key={s.id} value={s.id}>{s.display_name}</option>)}
-              </select>
+              <Select value={form.section_id} onValueChange={v => setField('section_id', v)}>
+                <SelectTrigger><SelectValue placeholder="Select section..." /></SelectTrigger>
+                <SelectContent>
+                  {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <Label>Term / Period Label</Label>
-              <Input value={form.term_label} onChange={e => setField('term_label', e.target.value)} placeholder="e.g. Autumn Term 2025" />
+              <Label>Term</Label>
+              <Select value={form.term_id} onValueChange={v => {
+                const t = terms.find(t => t.id === v);
+                setForm(f => ({ ...f, term_id: v, term_label: t?.title || t?.name || '' }));
+              }}>
+                <SelectTrigger><SelectValue placeholder="Select term..." /></SelectTrigger>
+                <SelectContent>
+                  {terms.map(t => <SelectItem key={t.id} value={t.id}>{t.title || t.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Budget Amount (£)</Label>
