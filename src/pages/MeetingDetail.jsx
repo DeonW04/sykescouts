@@ -53,6 +53,8 @@ export default function MeetingDetail() {
     optional_start_time: '',
     optional_end_time: '',
     home_contact: '',
+    cost: '',
+    payment_deadline: '',
   });
 
   const handleSectionChange = (section) => {
@@ -155,6 +157,8 @@ export default function MeetingDetail() {
         optional_start_time: existingProgramme.optional_start_time || '',
         optional_end_time: existingProgramme.optional_end_time || '',
         home_contact: existingProgramme.home_contact || '',
+        cost: existingProgramme.cost != null ? String(existingProgramme.cost) : '',
+        payment_deadline: existingProgramme.payment_deadline || '',
       });
     }
   }, [existingProgramme]);
@@ -232,7 +236,13 @@ export default function MeetingDetail() {
     onError: () => toast.error('Failed to swap meetings'),
   });
 
-  const handleSave = () => saveProgrammeMutation.mutate(formData);
+  const handleSave = () => {
+    const saveData = {
+      ...formData,
+      cost: formData.cost !== '' ? parseFloat(formData.cost) : null,
+    };
+    saveProgrammeMutation.mutate(saveData);
+  };
 
   const handleAddActivity = () => {
     setFormData({ ...formData, activities: [...formData.activities, { time: '', activity: '', badge_links: [] }] });
@@ -516,6 +526,51 @@ export default function MeetingDetail() {
                       className="min-h-[100px]"
                     />
                   </CardContent>
+                </Card>
+
+                {/* Meeting Cost */}
+                <Card className="shadow-sm border-blue-200 bg-blue-50">
+                  <CardHeader className="border-b border-blue-100">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="has_cost"
+                        checked={formData.cost !== '' && formData.cost !== null}
+                        onChange={(e) => setFormData({ ...formData, cost: e.target.checked ? '' : null, payment_deadline: e.target.checked ? formData.payment_deadline : '' })}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600"
+                      />
+                      <label htmlFor="has_cost" className="text-blue-800 text-xl font-semibold cursor-pointer">
+                        This meeting has a cost
+                      </label>
+                    </div>
+                  </CardHeader>
+                  {(formData.cost !== '' && formData.cost !== null) && (
+                    <CardContent className="pt-4 space-y-3">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Cost per member (£)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={formData.cost}
+                            onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                            placeholder="0.00"
+                            className="min-h-[44px]"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Payment Deadline</Label>
+                          <Input
+                            type="date"
+                            value={formData.payment_deadline}
+                            onChange={(e) => setFormData({ ...formData, payment_deadline: e.target.value })}
+                            className="min-h-[44px]"
+                          />
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
                 </Card>
 
                 <Card className="shadow-sm border-teal-200 bg-teal-50">

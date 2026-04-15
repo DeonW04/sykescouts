@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import TreasurerLayout from '@/components/treasurer/TreasurerLayout';
@@ -9,30 +9,73 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Receipt, CheckCircle, Upload, Plus } from 'lucide-react';
+import { Receipt, CheckCircle, Upload, Plus, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { addDays, format } from 'date-fns';
 
 const fmt = (n) => `£${(n || 0).toFixed(2)}`;
 const CATEGORIES = ['equipment', 'food', 'transport', 'hall_hire', 'badges', 'other'];
+
+const emptyForm = {
+  amount: '',
+  category: 'other',
+  payment_method: 'scout_bank_card',
+  linked_event_id: '',
+  linked_meeting_id: '',
+  leader_id: '',
+  notes: '',
+  receipt_url: '',
+};
 
 export default function TreasurerReceiptAllocation() {
   const queryClient = useQueryClient();
   const [allocateDialog, setAllocateDialog] = useState(null);
   const [newDialog, setNewDialog] = useState(false);
-  const [form, setForm] = useState({ amount: '', category: 'other', payment_method: 'scout_bank_card', linked_event_id: '', linked_meeting_id: '', leader_id: '', notes: '', receipt_url: '' });
+  const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [selectedEventOrMeeting, setSelectedEventOrMeeting] = useState('');
 
-  const { data: allocations = [], refetch } = useQuery({
+  const { data: allocations = [] } = useQuery({
     queryKey: ['receipt-allocations'],
     queryFn: () => base44.entities.ReceiptAllocation.list('-created_date', 200),
   });
   const { data: events = [] } = useQuery({ queryKey: ['events'], queryFn: () => base44.entities.Event.list('-start_date', 100) });
+  const { data: programmes = [] } = useQuery({ queryKey: ['programmes-all'], queryFn: () => base44.entities.Programme.list('-date', 300) });
   const { data: leaders = [] } = useQuery({ queryKey: ['leaders'], queryFn: () => base44.entities.Leader.filter({}) });
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
+  const { data: terms = [] } = useQuery({ queryKey: ['terms'], queryFn: () => base44.entities.Term.list() });
 
   const unallocated = allocations.filter(r => r.status === 'unallocated');
   const allocated = allocations.filter(r => r.status === 'allocated');
+
+  const today = new Date();
+  const oneMonthAgo = addDays(today, -30);
+  const currentTerm = terms.find(t => today >= new Date(t.start_date) && today <= new Date(t.end_date));
+  const upcomingTerm = !currentTerm ? terms.filter(t => new Date(t.start_date) > today).sort((a, b) => new Date(a.start_date) - new Date(b.start_date))[0] : null;
+  const activeTerm = currentTerm || upcomingTerm;
+
+  // Build event+meeting options for linking
+  const linkableOptions = useMemo(() => {
+    const results = [];
+    events.forEach(ev => {
+      const evEnd = ev.end_date ? new Date(ev.end_date) : new Date(ev.start_date);
+      if (evEnd < oneMonthAgo && new Date(ev.start_date) < today) return;
+      results.push({ type: 'event', id: ev.id, label: `Event: ${ev.title} (${format(new Date(ev.start_date), 'dd/MM/yyyy')})` });
+    });
+    if (activeTerm) {
+      const termStart = new Date(activeTerm.start_date);
+      const termEnd = new Date(activeTerm.end_date);
+      programmes.forEach(p => {
+        const pDate = new Date(p.date);
+        if (pDate < termStart || pDate > termEnd) return;
+        results.push({ type: 'meeting', id: p.id, label: `Meeting: ${p.title} — ${format(pDate, 'dd/MM/yyyy')}` });
+      });
+    }
+    return results;
+  }, [events, programmes, activeTerm]);
+
+  const sf = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];
@@ -40,7 +83,7 @@ export default function TreasurerReceiptAllocation() {
     setUploading(true);
     try {
       const res = await base44.integrations.Core.UploadFile({ file });
-      setForm(f => ({ ...f, receipt_url: res.file_url }));
+      sf('receipt_url', res.file_url);
       toast.success('Receipt uploaded');
     } catch (err) {
       toast.error('Upload failed: ' + err.message);
@@ -49,19 +92,32 @@ export default function TreasurerReceiptAllocation() {
     }
   };
 
+  const resolveLinks = (f, sel) => {
+    const linked = { linked_event_id: '', linked_meeting_id: '' };
+    if (sel) {
+      const [type, id] = sel.split(':');
+      if (type === 'event') linked.linked_event_id = id;
+      if (type === 'meeting') linked.linked_meeting_id = id;
+    }
+    return linked;
+  };
+
   const handleAddReceipt = async () => {
     if (!form.amount) { toast.error('Amount is required'); return; }
     setSaving(true);
     try {
+      const links = resolveLinks(form, selectedEventOrMeeting);
       await base44.entities.ReceiptAllocation.create({
         ...form,
+        ...links,
         amount: parseFloat(form.amount),
         status: 'unallocated',
       });
       queryClient.invalidateQueries({ queryKey: ['receipt-allocations'] });
       toast.success('Receipt added');
       setNewDialog(false);
-      setForm({ amount: '', category: 'other', payment_method: 'scout_bank_card', linked_event_id: '', linked_meeting_id: '', leader_id: '', notes: '', receipt_url: '' });
+      setForm(emptyForm);
+      setSelectedEventOrMeeting('');
     } catch (e) { toast.error('Failed: ' + e.message); }
     finally { setSaving(false); }
   };
@@ -70,12 +126,13 @@ export default function TreasurerReceiptAllocation() {
     if (!allocateDialog) return;
     setSaving(true);
     try {
+      const links = resolveLinks(form, selectedEventOrMeeting);
       const updates = {
         status: 'allocated',
         category: form.category,
         payment_method: form.payment_method,
         amount: parseFloat(form.amount || allocateDialog.amount),
-        linked_event_id: form.linked_event_id || null,
+        ...links,
         leader_id: form.payment_method === 'leader_paid_personally' ? form.leader_id : null,
         notes: form.notes,
         allocated_by: user?.email,
@@ -84,19 +141,18 @@ export default function TreasurerReceiptAllocation() {
 
       await base44.entities.ReceiptAllocation.update(allocateDialog.id, updates);
 
-      // Create ledger entry
       const ledgerEntry = await base44.entities.LedgerEntry.create({
         date: new Date().toISOString().split('T')[0],
         type: 'expense',
         amount: updates.amount,
         category: updates.category,
         description: `Receipt: ${form.notes || updates.category}`,
-        linked_event_id: updates.linked_event_id,
+        linked_event_id: updates.linked_event_id || null,
+        linked_meeting_id: updates.linked_meeting_id || null,
         receipt_reference: allocateDialog.id,
         entered_by: user?.email,
       });
 
-      // Auto-create reimbursement if paid personally
       if (updates.payment_method === 'leader_paid_personally' && updates.leader_id) {
         await base44.entities.Reimbursement.create({
           leader_id: updates.leader_id,
@@ -104,6 +160,7 @@ export default function TreasurerReceiptAllocation() {
           description: form.notes || `Receipt allocation - ${updates.category}`,
           category: updates.category,
           linked_event_id: updates.linked_event_id || null,
+          linked_meeting_id: updates.linked_meeting_id || null,
           linked_receipt_id: allocateDialog.id,
           approval_status: 'pending_approval',
           payment_status: 'unpaid',
@@ -118,16 +175,43 @@ export default function TreasurerReceiptAllocation() {
       queryClient.invalidateQueries({ queryKey: ['ledger'] });
       queryClient.invalidateQueries({ queryKey: ['reimbursements'] });
       setAllocateDialog(null);
+      setSelectedEventOrMeeting('');
     } catch (e) { toast.error('Failed: ' + e.message); }
     finally { setSaving(false); }
   };
 
   const openAllocate = (r) => {
-    setForm({ amount: String(r.amount), category: r.category || 'other', payment_method: r.payment_method || 'scout_bank_card', linked_event_id: r.linked_event_id || '', leader_id: r.leader_id || '', notes: r.notes || '' });
+    setForm({
+      amount: String(r.amount),
+      category: r.category || 'other',
+      payment_method: r.payment_method || 'scout_bank_card',
+      linked_event_id: r.linked_event_id || '',
+      linked_meeting_id: r.linked_meeting_id || '',
+      leader_id: r.leader_id || '',
+      notes: r.notes || '',
+      receipt_url: r.receipt_url || '',
+    });
+    setSelectedEventOrMeeting(
+      r.linked_event_id ? `event:${r.linked_event_id}` :
+      r.linked_meeting_id ? `meeting:${r.linked_meeting_id}` : ''
+    );
     setAllocateDialog(r);
   };
 
-  const sf = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const LinkedEventMeetingSelector = () => (
+    <div>
+      <Label>Linked Event / Meeting (optional)</Label>
+      <Select value={selectedEventOrMeeting} onValueChange={setSelectedEventOrMeeting}>
+        <SelectTrigger><SelectValue placeholder="None (general expense)" /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="_none">None (general expense)</SelectItem>
+          {linkableOptions.map(i => (
+            <SelectItem key={`${i.type}:${i.id}`} value={`${i.type}:${i.id}`}>{i.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
 
   return (
     <TreasurerLayout title="Receipt Allocation">
@@ -136,13 +220,12 @@ export default function TreasurerReceiptAllocation() {
           <Badge className="bg-amber-100 text-amber-800">{unallocated.length} awaiting allocation</Badge>
           <Badge className="bg-green-100 text-green-800">{allocated.length} allocated</Badge>
         </div>
-        <Button onClick={() => setNewDialog(true)} className="bg-[#1a472a] hover:bg-[#13381f]">
+        <Button onClick={() => { setForm(emptyForm); setSelectedEventOrMeeting(''); setNewDialog(true); }} className="bg-[#1a472a] hover:bg-[#13381f]">
           <Plus className="w-4 h-4 mr-2" />Add Receipt
         </Button>
       </div>
 
       <div className="space-y-6">
-        {/* Unallocated */}
         {unallocated.length > 0 && (
           <Card>
             <CardHeader>
@@ -160,16 +243,13 @@ export default function TreasurerReceiptAllocation() {
                       <a href={r.receipt_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">View receipt</a>
                     )}
                   </div>
-                  <Button size="sm" onClick={() => openAllocate(r)} className="bg-[#1a472a] hover:bg-[#13381f]">
-                    Allocate
-                  </Button>
+                  <Button size="sm" onClick={() => openAllocate(r)} className="bg-[#1a472a] hover:bg-[#13381f]">Allocate</Button>
                 </div>
               ))}
             </CardContent>
           </Card>
         )}
 
-        {/* Allocated */}
         {allocated.length > 0 && (
           <Card>
             <CardHeader>
@@ -179,7 +259,8 @@ export default function TreasurerReceiptAllocation() {
             </CardHeader>
             <CardContent className="space-y-2">
               {allocated.map(r => {
-                const event = events.find(e => e.id === r.linked_event_id);
+                const ev = events.find(e => e.id === r.linked_event_id);
+                const mtg = programmes.find(p => p.id === r.linked_meeting_id);
                 return (
                   <div key={r.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
@@ -188,7 +269,8 @@ export default function TreasurerReceiptAllocation() {
                         <Badge variant="outline" className="text-xs capitalize">{r.category?.replace(/_/g, ' ')}</Badge>
                         <Badge variant="outline" className="text-xs">{r.payment_method?.replace(/_/g, ' ')}</Badge>
                       </div>
-                      {event && <p className="text-xs text-gray-500 mt-0.5">Event: {event.title}</p>}
+                      {ev && <p className="text-xs text-gray-500 mt-0.5">Event: {ev.title}</p>}
+                      {mtg && <p className="text-xs text-gray-500 mt-0.5">Meeting: {mtg.title} ({mtg.date})</p>}
                       {r.notes && <p className="text-xs text-gray-400">{r.notes}</p>}
                     </div>
                     <p className="text-xs text-gray-400">{r.allocation_date}</p>
@@ -211,55 +293,28 @@ export default function TreasurerReceiptAllocation() {
 
       {/* Add Receipt Dialog */}
       <Dialog open={newDialog} onOpenChange={setNewDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Add Receipt</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div>
               <Label>Receipt Image</Label>
-              <div className="mt-1">
-                <label className="flex items-center gap-2 cursor-pointer border-2 border-dashed rounded-lg p-3 hover:border-gray-400 transition-colors">
-                  <Upload className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm text-gray-500">{uploading ? 'Uploading...' : 'Click to upload receipt image'}</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
-                </label>
-                {form.receipt_url && <p className="text-xs text-green-600 mt-1">✓ Receipt uploaded</p>}
-              </div>
+              <label className="flex items-center gap-2 cursor-pointer border-2 border-dashed rounded-lg p-3 hover:border-gray-400 transition-colors mt-1">
+                <Upload className="w-4 h-4 text-gray-400" />
+                <span className="text-sm text-gray-500">{uploading ? 'Uploading...' : 'Click to upload receipt image'}</span>
+                <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+              </label>
+              {form.receipt_url && <p className="text-xs text-green-600 mt-1">✓ Receipt uploaded</p>}
             </div>
-            <div>
-              <Label>Amount (£)</Label>
-              <Input type="number" step="0.01" min="0" value={form.amount} onChange={e => sf('amount', e.target.value)} placeholder="0.00" />
-            </div>
-            <div>
-              <Label>Notes (optional)</Label>
-              <Input value={form.notes} onChange={e => sf('notes', e.target.value)} placeholder="Brief description..." />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewDialog(false)}>Cancel</Button>
-            <Button onClick={handleAddReceipt} disabled={saving} className="bg-[#1a472a] hover:bg-[#13381f]">
-              {saving ? 'Adding...' : 'Add Receipt'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Allocate Dialog */}
-      <Dialog open={!!allocateDialog} onOpenChange={open => !open && setAllocateDialog(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Allocate Receipt — {fmt(allocateDialog?.amount)}</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Amount (£)</Label>
-                <Input type="number" step="0.01" value={form.amount} onChange={e => sf('amount', e.target.value)} />
+                <Input type="number" step="0.01" min="0" value={form.amount} onChange={e => sf('amount', e.target.value)} placeholder="0.00" />
               </div>
               <div>
                 <Label>Category</Label>
                 <Select value={form.category} onValueChange={v => sf('category', v)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c.replace(/_/g, ' ')}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{c.replace(/_/g, ' ')}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
@@ -278,33 +333,74 @@ export default function TreasurerReceiptAllocation() {
                 <Label>Leader</Label>
                 <Select value={form.leader_id} onValueChange={v => sf('leader_id', v)}>
                   <SelectTrigger><SelectValue placeholder="Select leader..." /></SelectTrigger>
-                  <SelectContent>
-                    {leaders.map(l => <SelectItem key={l.id} value={l.id}>{l.display_name}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{leaders.map(l => <SelectItem key={l.id} value={l.id}>{l.display_name}</SelectItem>)}</SelectContent>
+                </Select>
+                <p className="text-xs text-amber-600 mt-1">A reimbursement record will be automatically created on allocation.</p>
+              </div>
+            )}
+            <LinkedEventMeetingSelector />
+            <div>
+              <Label>Notes (optional)</Label>
+              <Input value={form.notes} onChange={e => sf('notes', e.target.value)} placeholder="Brief description..." />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddReceipt} disabled={saving} className="bg-[#1a472a] hover:bg-[#13381f]">{saving ? 'Adding...' : 'Add Receipt'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Allocate Dialog */}
+      <Dialog open={!!allocateDialog} onOpenChange={open => { if (!open) { setAllocateDialog(null); setSelectedEventOrMeeting(''); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Allocate Receipt — {fmt(allocateDialog?.amount)}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            {allocateDialog?.receipt_url && (
+              <a href={allocateDialog.receipt_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">View receipt image</a>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Amount (£)</Label>
+                <Input type="number" step="0.01" value={form.amount} onChange={e => sf('amount', e.target.value)} />
+              </div>
+              <div>
+                <Label>Category</Label>
+                <Select value={form.category} onValueChange={v => sf('category', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{CATEGORIES.map(c => <SelectItem key={c} value={c}>{c.replace(/_/g, ' ')}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>Payment Method</Label>
+              <Select value={form.payment_method} onValueChange={v => sf('payment_method', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="scout_bank_card">Scout Bank Card</SelectItem>
+                  <SelectItem value="leader_paid_personally">Leader Paid Personally</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {form.payment_method === 'leader_paid_personally' && (
+              <div>
+                <Label>Leader</Label>
+                <Select value={form.leader_id} onValueChange={v => sf('leader_id', v)}>
+                  <SelectTrigger><SelectValue placeholder="Select leader..." /></SelectTrigger>
+                  <SelectContent>{leaders.map(l => <SelectItem key={l.id} value={l.id}>{l.display_name}</SelectItem>)}</SelectContent>
                 </Select>
                 <p className="text-xs text-amber-600 mt-1">A reimbursement record will be automatically created.</p>
               </div>
             )}
-            <div>
-              <Label>Linked Event (optional)</Label>
-              <Select value={form.linked_event_id} onValueChange={v => sf('linked_event_id', v)}>
-                <SelectTrigger><SelectValue placeholder="Select event..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={null}>No event</SelectItem>
-                  {events.map(e => <SelectItem key={e.id} value={e.id}>{e.title}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            <LinkedEventMeetingSelector />
             <div>
               <Label>Notes</Label>
               <Input value={form.notes} onChange={e => sf('notes', e.target.value)} placeholder="What was this expense for?" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAllocateDialog(null)}>Cancel</Button>
-            <Button onClick={handleAllocate} disabled={saving} className="bg-[#1a472a] hover:bg-[#13381f]">
-              {saving ? 'Allocating...' : 'Allocate to Ledger'}
-            </Button>
+            <Button variant="outline" onClick={() => { setAllocateDialog(null); setSelectedEventOrMeeting(''); }}>Cancel</Button>
+            <Button onClick={handleAllocate} disabled={saving} className="bg-[#1a472a] hover:bg-[#13381f]">{saving ? 'Allocating...' : 'Allocate to Ledger'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

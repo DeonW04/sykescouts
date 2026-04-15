@@ -186,6 +186,20 @@
       "type": "string",
       "format": "date",
       "description": "Date of Gift Aid declaration"
+    },
+    "next_subs_due": {
+      "type": "string",
+      "format": "date",
+      "description": "Date next subscription payment is due"
+    },
+    "last_subs_payment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of last subscription payment"
+    },
+    "last_subs_months_paid": {
+      "type": "number",
+      "description": "Number of months covered by last subs payment"
     }
   },
   "required": [

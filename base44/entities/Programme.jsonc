@@ -58,6 +58,15 @@
       "default": false,
       "description": "Visible to parents"
     },
+    "cost": {
+      "type": "number",
+      "description": "Cost per member for this meeting (\u00a3)"
+    },
+    "payment_deadline": {
+      "type": "string",
+      "format": "date",
+      "description": "Payment deadline for meeting cost"
+    },
     "risk_assessment_ids": {
       "type": "array",
       "items": {
