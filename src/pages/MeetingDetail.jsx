@@ -124,20 +124,20 @@ export default function MeetingDetail() {
   });
 
   const { data: actionsRequired = [] } = useQuery({
-    queryKey: ['actions-required', existingProgramme],
-    queryFn: async () => {
-      if (!existingProgramme) return [];
-      return base44.entities.ActionRequired.filter({ programme_id: existingProgramme.id });
-    },
-    enabled: !!existingProgramme,
+    queryKey: ['actions-required', existingProgramme?.id],
+    queryFn: () => base44.entities.ActionRequired.filter({ programme_id: existingProgramme.id }),
+    enabled: !!existingProgramme?.id,
   });
 
   const { data: actionResponses = [] } = useQuery({
-    queryKey: ['action-responses', actionsRequired],
+    queryKey: ['action-responses-for-programme', existingProgramme?.id],
     queryFn: async () => {
       if (actionsRequired.length === 0) return [];
-      const allResponses = await base44.entities.ActionResponse.filter({});
-      return allResponses.filter(r => actionsRequired.some(a => a.id === r.action_required_id));
+      // Fetch responses for each action in parallel
+      const allResponses = await Promise.all(
+        actionsRequired.map(a => base44.entities.ActionResponse.filter({ action_required_id: a.id }))
+      );
+      return allResponses.flat();
     },
     enabled: actionsRequired.length > 0,
   });
