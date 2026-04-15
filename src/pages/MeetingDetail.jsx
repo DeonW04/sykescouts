@@ -98,29 +98,34 @@ export default function MeetingDetail() {
   });
 
   const { data: termMeetingDates = [] } = useQuery({
-    queryKey: ['term-meeting-dates', termId],
+    queryKey: ['term-meeting-dates', termId, sectionId],
     queryFn: async () => {
-      if (!termId) return [];
-      const terms = await base44.entities.Term.filter({ id: termId });
+      if (!termId || !sectionId) return [];
+      const [terms, sections] = await Promise.all([
+        base44.entities.Term.filter({ id: termId }),
+        base44.entities.Section.filter({ id: sectionId }),
+      ]);
       const term = terms[0];
-      if (!term) return [];
+      const sec = sections[0];
+      if (!term || !sec?.meeting_day) return [];
       const dayOfWeekMap = { 'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6 };
-      const targetDay = dayOfWeekMap[term.meeting_day];
+      const targetDay = dayOfWeekMap[sec.meeting_day];
+      if (targetDay === undefined) return [];
       const start = new Date(term.start_date);
       const end = new Date(term.end_date);
-      const halfTermStart = new Date(term.half_term_start);
-      const halfTermEnd = new Date(term.half_term_end);
+      const halfTermStart = term.half_term_start ? new Date(term.half_term_start) : null;
+      const halfTermEnd = term.half_term_end ? new Date(term.half_term_end) : null;
       const dates = [];
       let current = new Date(start);
       while (current.getDay() !== targetDay) current.setDate(current.getDate() + 1);
       while (current <= end) {
-        const isHalfTerm = current >= halfTermStart && current <= halfTermEnd;
+        const isHalfTerm = halfTermStart && halfTermEnd && current >= halfTermStart && current <= halfTermEnd;
         if (!isHalfTerm) dates.push(current.toISOString().split('T')[0]);
         current.setDate(current.getDate() + 7);
       }
       return dates;
     },
-    enabled: !!termId,
+    enabled: !!termId && !!sectionId,
   });
 
   const { data: actionsRequired = [] } = useQuery({
