@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Calendar, Plus, ChevronRight, Sparkles, Clock, List, Pencil, Download, ArrowRight, Wand2, Ban } from 'lucide-react';
-import NewTermDialog from '../components/programme/NewTermDialog';
+import { Calendar, ChevronRight, Sparkles, Clock, List, Download, ArrowRight, Wand2, Ban } from 'lucide-react';
 import AllTermsDialog from '../components/programme/AllTermsDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -20,9 +19,7 @@ import { toast } from 'sonner';
 export default function LeaderProgramme() {
   const navigate = useNavigate();
   const { selectedSection } = useSectionContext();
-  const [showNewTermDialog, setShowNewTermDialog] = useState(false);
   const [showAllTermsDialog, setShowAllTermsDialog] = useState(false);
-  const [editingTerm, setEditingTerm] = useState(null);
   const [selectedTerm, setSelectedTerm] = useState(null);
   const [showAIModal, setShowAIModal] = useState(false);
   const [noMeetingDialog, setNoMeetingDialog] = useState(null); // date string or null
@@ -309,15 +306,7 @@ export default function LeaderProgramme() {
                   <Calendar className="w-10 h-10 text-[#004851]" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">No Terms Yet</h3>
-                <p className="text-gray-600 mb-8 max-w-md mx-auto">Start organizing your weekly programme by creating your first term.</p>
-                <Button 
-                  onClick={() => setShowNewTermDialog(true)} 
-                  size="lg"
-                  className="bg-gradient-to-r from-[#004851] to-[#003840] hover:from-[#003840] hover:to-[#004851] shadow-lg"
-                >
-                  <Plus className="w-5 h-5 mr-2" />
-                  Create First Term
-                </Button>
+                <p className="text-gray-600 mb-8 max-w-md mx-auto">No terms have been created yet. Please ask an Admin to create a term in Admin Settings.</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -354,15 +343,7 @@ export default function LeaderProgramme() {
                       </span>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { setEditingTerm(currentTerm); setShowNewTermDialog(true); }}
-                    className="flex items-center gap-2"
-                  >
-                    <Pencil className="w-4 h-4" />
-                    Edit Term
-                  </Button>
+
                 </div>
               </CardHeader>
             </Card>
@@ -537,24 +518,12 @@ export default function LeaderProgramme() {
         </DialogContent>
       </Dialog>
 
-      <NewTermDialog
-        open={showNewTermDialog}
-        onOpenChange={(open) => {
-          setShowNewTermDialog(open);
-          if (!open) setEditingTerm(null);
-        }}
-        editTerm={editingTerm}
-      />
-
       <AllTermsDialog
         open={showAllTermsDialog}
         onOpenChange={setShowAllTermsDialog}
         terms={terms}
         onSelectTerm={setSelectedTerm}
-        onCreateNew={() => {
-          setEditingTerm(null);
-          setShowNewTermDialog(true);
-        }}
+        onCreateNew={() => {}}
       />
 
       <AnimatePresence>

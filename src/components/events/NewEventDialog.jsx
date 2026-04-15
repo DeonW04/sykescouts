@@ -261,10 +261,6 @@ export default function NewEventDialog({ open, onOpenChange, sections, editEvent
 
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Checkbox id="requires_consent" checked={formData.requires_consent} onCheckedChange={(checked) => setFormData({ ...formData, requires_consent: checked })} />
-              <label htmlFor="requires_consent" className="text-sm cursor-pointer">Requires parent consent</label>
-            </div>
-            <div className="flex items-center gap-2">
               <Checkbox id="published" checked={formData.published} onCheckedChange={(checked) => setFormData({ ...formData, published: checked })} />
               <label htmlFor="published" className="text-sm cursor-pointer">Publish to parent portal</label>
             </div>

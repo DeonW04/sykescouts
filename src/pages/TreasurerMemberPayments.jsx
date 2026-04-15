@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Search, Trash2, CreditCard, CheckCircle, AlertTriangle, XCircle, Calendar, Clock } from 'lucide-react';
+import { Search, Trash2, CreditCard, CheckCircle, AlertTriangle, XCircle, Calendar, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
 const fmt = (n) => `£${(n || 0).toFixed(2)}`;
@@ -229,9 +229,7 @@ export default function TreasurerMemberPayments() {
                   <h2 className="text-xl font-bold">{selectedMember.full_name}</h2>
                   <p className="text-sm text-gray-500">{getSectionName(selectedMember.section_id)} · Total paid: <span className="font-semibold text-green-600">{fmt(totalPaid)}</span></p>
                 </div>
-                <Button onClick={openDialog} className="bg-[#1a472a] hover:bg-[#13381f]">
-                  <Plus className="w-4 h-4 mr-1" />Add Payment
-                </Button>
+
               </div>
 
               {/* Two-column: Subs + Events/Meetings */}

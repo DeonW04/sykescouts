@@ -61,11 +61,13 @@ export default function TreasurerProgrammeFinances() {
   const budgetAmount = budget?.budget_amount || 0;
 
   // Budget-allocated general expenses (section_id match + budget_allocated flag, or linked_term_id)
+  // Exclude entries already counted via linked_meeting_id to avoid double-counting
   const budgetAllocatedExpenses = useMemo(() => {
     if (!activeSection || !activeTerm) return 0;
     return ledgerEntries.filter(e =>
       e.type === 'expense' &&
       e.budget_allocated &&
+      !e.linked_meeting_id &&
       (
         e.section_id === activeSection.id ||
         e.split_section_id === activeSection.id

@@ -9,7 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, TrendingUp, TrendingDown, Search, Edit, Trash2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, Search, Edit, Trash2, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import { addMonths, format, parseISO, isAfter, isBefore, addDays } from 'date-fns';
 
@@ -65,6 +67,7 @@ export default function TreasurerLedger() {
   const { data: terms = [] } = useQuery({ queryKey: ['terms'], queryFn: () => base44.entities.Term.list() });
   const { data: programmes = [] } = useQuery({ queryKey: ['programmes-all'], queryFn: () => base44.entities.Programme.list('-date', 300) });
   const { data: eventAttendances = [] } = useQuery({ queryKey: ['event-attendances-all'], queryFn: () => base44.entities.EventAttendance.filter({}) });
+  const { data: unallocatedReceipts = [] } = useQuery({ queryKey: ['unallocated-receipts'], queryFn: () => base44.entities.ReceiptAllocation.filter({ status: 'unallocated' }) });
   const { data: actionsRequired = [] } = useQuery({ queryKey: ['actions-required-all'], queryFn: () => base44.entities.ActionRequired.filter({}) });
   const { data: actionResponses = [] } = useQuery({ queryKey: ['action-responses-all'], queryFn: () => base44.entities.ActionResponse.filter({}) });
 
@@ -273,6 +276,40 @@ export default function TreasurerLedger() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Unallocated receipts awaiting reimbursement */}
+      {unallocatedReceipts.length > 0 && (
+        <Card className="border-red-300 bg-red-50 mb-2">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <Clock className="w-5 h-5 text-red-600 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-red-800 text-sm">
+                    {unallocatedReceipts.length} Receipt{unallocatedReceipts.length > 1 ? 's' : ''} Awaiting Reimbursement
+                  </p>
+                  <p className="text-xs text-red-600 mt-0.5">
+                    Total: £{unallocatedReceipts.reduce((s, r) => s + (r.amount || 0), 0).toFixed(2)} — these receipts have been submitted but not yet allocated to the ledger.
+                  </p>
+                </div>
+              </div>
+              <Link to={createPageUrl('TreasurerReceiptAllocation')}>
+                <Button size="sm" variant="outline" className="border-red-400 text-red-700 hover:bg-red-100">
+                  Go to Receipt Allocation →
+                </Button>
+              </Link>
+            </div>
+            <div className="mt-3 space-y-1.5">
+              {unallocatedReceipts.map(r => (
+                <div key={r.id} className="flex items-center justify-between text-xs bg-white border border-red-200 rounded-lg px-3 py-1.5">
+                  <span className="text-gray-700 capitalize">{r.category?.replace(/_/g, ' ')} — {r.notes || 'No description'}</span>
+                  <span className="font-semibold text-red-700">£{(r.amount || 0).toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

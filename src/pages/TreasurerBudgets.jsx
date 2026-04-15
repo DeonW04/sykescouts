@@ -53,10 +53,11 @@ export default function TreasurerBudgets() {
     const meetingLedgerSpend = ledger
       .filter(e => e.type === 'expense' && e.linked_meeting_id && progIds.has(e.linked_meeting_id))
       .reduce((s, e) => s + (e.amount || 0), 0);
-    // Budget-allocated general ledger expenses for this section/term
+    // Budget-allocated general ledger expenses for this section/term (exclude those already counted via linked_meeting_id)
     const budgetAllocSpend = ledger.filter(e =>
       e.type === 'expense' &&
       e.budget_allocated &&
+      !e.linked_meeting_id &&
       (e.section_id === sectionId || e.split_section_id === sectionId) &&
       (
         e.linked_term_id === activeTerm.id ||
