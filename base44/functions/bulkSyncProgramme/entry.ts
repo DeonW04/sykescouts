@@ -72,9 +72,7 @@ Deno.serve(async (req) => {
               await base44.asServiceRole.entities.Programme.update(local_id, updateFields);
             } else {
               const updateFields = mapOSMToFields(osmMeeting);
-              const programmes = await base44.asServiceRole.entities.Programme.filter({ id: local_id });
-              const prog = programmes[0];
-              if (prog && !prog.osm_evening_id) updateFields.osm_evening_id = String(osmMeeting.eveningid);
+              updateFields.osm_evening_id = String(osmMeeting.eveningid);
               await base44.asServiceRole.entities.Programme.update(local_id, updateFields);
             }
             updated++;
@@ -126,6 +124,11 @@ Deno.serve(async (req) => {
           });
 
           if (!res.ok) { const rb = await res.text(); throw new Error(`OSM returned ${res.status}: ${rb.substring(0, 100)}`); }
+
+          // Save osm_evening_id back to local programme if not already set
+          if (!programme.osm_evening_id) {
+            await base44.asServiceRole.entities.Programme.update(local_id, { osm_evening_id: String(osm_evening_id) });
+          }
           pushed++;
         } catch (e) {
           failed.push({ date, reason: e.message });
