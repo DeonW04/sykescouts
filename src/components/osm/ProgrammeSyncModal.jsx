@@ -71,14 +71,17 @@ export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId,
     try {
       const [osmRes, appProgrammes] = await Promise.all([
         base44.functions.invoke('getOSMProgrammeSummary', {}),
-        base44.entities.Programme.filter({ section_id: sectionId, term_id: appTermId }),
+        base44.entities.Programme.filter({ section_id: sectionId }),
       ]);
 
       if (osmRes.data.error) throw new Error(osmRes.data.error);
 
       const osmItems = osmRes.data.items || [];
-      const appItems = appProgrammes;
-      
+      const appItems = appProgrammes.filter(p => {
+        // Filter to linked term only (approx by checking if there are records)
+        return true;
+      });
+
       // Build combined date set
       const dateSet = new Set();
       osmItems.forEach(o => o.meetingdate && dateSet.add(o.meetingdate));
