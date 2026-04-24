@@ -42,8 +42,9 @@ const NAV_ITEMS = [
   { key: 'push',           label: 'Push Notifications', icon: Bell,     group: 'System' },
   { key: 'notif-log',      label: 'Notification Log',   icon: Mail,     group: 'System' },
   { key: 'osm-overview',   label: 'Overview',           icon: Award,    group: 'OSM Sync' },
-  { key: 'osm-badge-ids',  label: 'Badge ID Sync',      icon: Award,    group: 'OSM Sync' },
   { key: 'osm-members',    label: 'Member Sync',        icon: Users,    group: 'OSM Sync' },
+  { key: 'osm-programme',  label: 'Programme Sync',     icon: Calendar, group: 'OSM Sync' },
+  { key: 'osm-badge-ids',  label: 'Badge ID Sync',      icon: Award,    group: 'OSM Sync' },
   { key: 'osm-awards',     label: 'Badge Award Sync',   icon: Award,    group: 'OSM Sync' },
 ];
 const GROUPS = [...new Set(NAV_ITEMS.map(n => n.group))];
@@ -436,13 +437,16 @@ export default function AdminSettings() {
               {/* ── OSM Overview ── */}
               <TabsContent value="osm-overview"><OSMOverview /></TabsContent>
 
+              {/* ── OSM Member Sync ── */}
+              <TabsContent value="osm-members"><OSMSyncPanel defaultTab="member-sync" /></TabsContent>
+
+              {/* ── OSM Programme Sync ── */}
+              <TabsContent value="osm-programme"><OSMSyncPanel defaultTab="programme-sync" /></TabsContent>
+
               {/* ── OSM Badge ID Sync ── */}
               <TabsContent value="osm-badge-ids">
                 <OSMSyncPanel defaultTab="badge-sync" />
               </TabsContent>
-
-              {/* ── OSM Member Sync ── */}
-              <TabsContent value="osm-members"><OSMSyncPanel defaultTab="member-sync" /></TabsContent>
 
               {/* ── OSM Badge Award Sync ── */}
               <TabsContent value="osm-awards"><OSMBadgeAwardSync /></TabsContent>

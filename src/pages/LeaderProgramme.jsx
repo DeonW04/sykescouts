@@ -549,6 +549,8 @@ export default function LeaderProgramme() {
         osmTermId={osmConfig?.osm_term_id}
         appTermId={osmConfig?.linked_app_term_id}
         sectionId={selectedSection}
+        termStartDate={currentTerm?.start_date}
+        termEndDate={currentTerm?.end_date}
         onSyncComplete={() => queryClient.invalidateQueries({ queryKey: ['programmes'] })}
       />
 

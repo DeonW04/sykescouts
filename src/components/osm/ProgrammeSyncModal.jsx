@@ -51,7 +51,7 @@ function MeetingCell({ data, side, diffFields }) {
   );
 }
 
-export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId, appTermId, sectionId, onSyncComplete }) {
+export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId, appTermId, sectionId, onSyncComplete, termStartDate, termEndDate }) {
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState([]);
   const [actions, setActions] = useState({});
@@ -77,8 +77,11 @@ export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId,
       if (osmRes.data.error) throw new Error(osmRes.data.error);
 
       const osmItems = osmRes.data.items || [];
+      // Filter app programmes to the linked term's date range
       const appItems = appProgrammes.filter(p => {
-        // Filter to linked term only (approx by checking if there are records)
+        if (!p.date) return false;
+        if (termStartDate && p.date < termStartDate) return false;
+        if (termEndDate && p.date > termEndDate) return false;
         return true;
       });
 

@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Loader2, Edit, Trash2, CheckCircle, XCircle, Link, Zap, Sparkles } from 'lucide-react';
 import OSMProgrammeSyncPanel from '../osm/OSMProgrammeSyncPanel';
@@ -201,17 +200,14 @@ export default function OSMSyncPanel({ defaultTab }) {
     return a.name.localeCompare(b.name);
   });
 
+  // Render only the requested section — no internal tab strip
+  const activePanel = defaultTab || 'badge-sync';
+
   return (
-    <Tabs defaultValue={defaultTab || 'overview'} className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="overview">Overview</TabsTrigger>
-        <TabsTrigger value="badge-sync">Badge Sync</TabsTrigger>
-        <TabsTrigger value="programme-sync">Programme Sync</TabsTrigger>
-        <TabsTrigger value="member-sync">Member Sync</TabsTrigger>
-      </TabsList>
+    <div className="w-full">
 
       {/* ── Overview ── */}
-      <TabsContent value="overview" className="space-y-6">
+      {activePanel === 'overview' && <div className="space-y-6">
         <Card className={osmConnected ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
           <CardContent className="p-5">
             <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -278,10 +274,10 @@ export default function OSMSyncPanel({ defaultTab }) {
             ) : <p className="text-sm text-gray-500">Loading settings...</p>}
           </CardContent>
         </Card>
-      </TabsContent>
+      </div>}
 
       {/* ── Badge Sync ── */}
-      <TabsContent value="badge-sync" className="space-y-4">
+      {activePanel === 'badge-sync' && <div className="space-y-4">
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between flex-wrap gap-3">
@@ -506,15 +502,13 @@ export default function OSMSyncPanel({ defaultTab }) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </TabsContent>
+      </div>}
 
       {/* ── Programme Sync ── */}
-      <TabsContent value="programme-sync" className="space-y-4">
-        <OSMProgrammeSyncPanel />
-      </TabsContent>
+      {activePanel === 'programme-sync' && <OSMProgrammeSyncPanel />}
 
       {/* ── Member Sync ── */}
-      <TabsContent value="member-sync" className="space-y-6">
+      {activePanel === 'member-sync' && <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Member OSM Linking</CardTitle>
@@ -536,7 +530,7 @@ export default function OSMSyncPanel({ defaultTab }) {
             ))}
           </CardContent>
         </Card>
-      </TabsContent>
-    </Tabs>
+      </div>}
+    </div>
   );
 }
