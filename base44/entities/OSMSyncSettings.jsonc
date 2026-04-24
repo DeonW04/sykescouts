@@ -2,6 +2,26 @@
   "name": "OSMSyncSettings",
   "type": "object",
   "properties": {
+    "osm_access_token": {
+      "type": "string",
+      "description": "OAuth access token"
+    },
+    "osm_refresh_token": {
+      "type": "string",
+      "description": "OAuth refresh token"
+    },
+    "osm_token_expiry": {
+      "type": "string",
+      "description": "Token expiry timestamp"
+    },
+    "osm_section_id": {
+      "type": "string",
+      "description": "Connected OSM section ID"
+    },
+    "osm_section": {
+      "type": "string",
+      "description": "OSM section type (e.g. cubs)"
+    },
     "sync_frequency": {
       "type": "string",
       "enum": [
@@ -9,51 +29,27 @@
         "fortnightly",
         "monthly"
       ],
-      "default": "monthly",
-      "description": "How often to sync"
+      "default": "monthly"
     },
     "notification_emails": {
       "type": "string",
-      "description": "Comma-separated email addresses"
-    },
-    "osm_section_id": {
-      "type": "number",
-      "description": "OSM section ID"
-    },
-    "osm_section": {
-      "type": "string",
-      "description": "OSM section type e.g. scouts"
-    },
-    "osm_userid": {
-      "type": "string",
-      "description": "OSM User ID (legacy, kept for backward compatibility)"
-    },
-    "osm_secret": {
-      "type": "string",
-      "description": "OSM Secret (legacy, kept for backward compatibility)"
-    },
-    "osm_access_token": {
-      "type": "string",
-      "description": "OAuth 2.0 Access Token"
-    },
-    "osm_refresh_token": {
-      "type": "string",
-      "description": "OAuth 2.0 Refresh Token"
-    },
-    "osm_token_expiry": {
-      "type": "string",
-      "format": "date-time",
-      "description": "Access token expiry time"
-    },
-    "last_synced": {
-      "type": "string",
-      "format": "date-time",
-      "description": "Last successful sync datetime"
+      "description": "Comma-separated notification emails"
     },
     "is_active": {
       "type": "boolean",
-      "default": true,
-      "description": "Whether scheduled sync is active"
+      "default": true
+    },
+    "last_synced": {
+      "type": "string",
+      "description": "Last sync timestamp"
+    },
+    "osm_term_id": {
+      "type": "string",
+      "description": "OSM termid for the currently active term"
+    },
+    "linked_app_term_id": {
+      "type": "string",
+      "description": "ID of the matching app term"
     }
   },
   "required": []

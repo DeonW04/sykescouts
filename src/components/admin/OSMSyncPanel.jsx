@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Loader2, Edit, Trash2, CheckCircle, XCircle, Link, Zap, Sparkles } from 'lucide-react';
+import OSMProgrammeSyncPanel from '../osm/OSMProgrammeSyncPanel';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -202,9 +203,10 @@ export default function OSMSyncPanel({ defaultTab }) {
 
   return (
     <Tabs defaultValue={defaultTab || 'overview'} className="w-full">
-      <TabsList className="grid w-full grid-cols-3">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="badge-sync">Badge Sync</TabsTrigger>
+        <TabsTrigger value="programme-sync">Programme Sync</TabsTrigger>
         <TabsTrigger value="member-sync">Member Sync</TabsTrigger>
       </TabsList>
 
@@ -504,6 +506,11 @@ export default function OSMSyncPanel({ defaultTab }) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      </TabsContent>
+
+      {/* ── Programme Sync ── */}
+      <TabsContent value="programme-sync" className="space-y-4">
+        <OSMProgrammeSyncPanel />
       </TabsContent>
 
       {/* ── Member Sync ── */}

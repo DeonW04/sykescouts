@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Save, Calendar, Users, Award, Eye, EyeOff, Plus, Trash2,
   ListTodo, Shield, AlertCircle, Image, ArrowLeftRight, Zap, FileText,
-  Menu, X, FolderOpen
+  Menu, X, FolderOpen, RefreshCw
 } from 'lucide-react';
 import { toast } from 'sonner';
 import TodoSection from '../components/meeting/TodoSection';
@@ -26,6 +26,7 @@ import LeaderRotaSection from '../components/meeting/LeaderRotaSection';
 import LeaderNav from '../components/leader/LeaderNav';
 import IScoutSection from '../components/meeting/IScoutSection';
 import MeetingFinancesTab from '../components/meeting/MeetingFinancesTab';
+import MeetingOSMSyncModal from '../components/osm/MeetingOSMSyncModal';
 
 export default function MeetingDetail() {
   const navigate = useNavigate();
@@ -41,6 +42,7 @@ export default function MeetingDetail() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [swapDialogOpen, setSwapDialogOpen] = useState(false);
   const [swapTargetDate, setSwapTargetDate] = useState('');
+  const [osmSyncOpen, setOsmSyncOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -348,6 +350,14 @@ export default function MeetingDetail() {
                 ) : (
                   <><EyeOff className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Draft</span></>
                 )}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setOsmSyncOpen(true)}
+                className="bg-white/10 text-white border-white/30 hover:bg-white/20 min-h-[44px]"
+              >
+                <RefreshCw className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Sync with OSM</span>
               </Button>
               <Button
                 onClick={handleSave}
@@ -801,6 +811,15 @@ export default function MeetingDetail() {
           </main>
         </div>
       </div>
+
+      <MeetingOSMSyncModal
+        open={osmSyncOpen}
+        onClose={() => setOsmSyncOpen(false)}
+        programme={existingProgramme}
+        onSynced={() => {
+          queryClient.invalidateQueries({ queryKey: ['programme', sectionId, date] });
+        }}
+      />
 
       {/* Swap Dialog */}
       <Dialog open={swapDialogOpen} onOpenChange={setSwapDialogOpen}>

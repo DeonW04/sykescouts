@@ -161,6 +161,10 @@
       "type": "boolean",
       "default": false,
       "description": "If true, forces the live view banner to appear for testing purposes"
+    },
+    "osm_evening_id": {
+      "type": "string",
+      "description": "OSM eveningid after a meeting is linked or synced"
     }
   },
   "required": [

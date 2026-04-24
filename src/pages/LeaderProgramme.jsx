@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Calendar, ChevronRight, Sparkles, Clock, List, Download, ArrowRight, Wand2, Ban } from 'lucide-react';
+import { Calendar, ChevronRight, Sparkles, Clock, List, Download, ArrowRight, Wand2, Ban, RefreshCw } from 'lucide-react';
 import AllTermsDialog from '../components/programme/AllTermsDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import { createPageUrl } from '../utils';
 import LeaderNav from '../components/leader/LeaderNav';
 import { useSectionContext } from '../components/leader/SectionContext';
 import AIPlannerModal from '../components/aiPlanner/AIPlannerModal';
+import ProgrammeSyncModal from '../components/osm/ProgrammeSyncModal';
 import { toast } from 'sonner';
 
 export default function LeaderProgramme() {
@@ -24,6 +25,7 @@ export default function LeaderProgramme() {
   const [showAIModal, setShowAIModal] = useState(false);
   const [noMeetingDialog, setNoMeetingDialog] = useState(null); // date string or null
   const [noMeetingReason, setNoMeetingReason] = useState('');
+  const [showOsmSync, setShowOsmSync] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: sections = [] } = useQuery({
@@ -85,6 +87,12 @@ export default function LeaderProgramme() {
     queryFn: () => base44.entities.Programme.filter({ section_id: selectedSection }),
     enabled: !!selectedSection,
   });
+
+  const { data: osmSettings = [] } = useQuery({
+    queryKey: ['osm-settings'],
+    queryFn: () => base44.entities.OSMSyncSettings.filter({}),
+  });
+  const osmConfig = osmSettings[0];
 
   const { data: savedDraft } = useQuery({
     queryKey: ['ai-draft', currentTerm?.id],
@@ -172,15 +180,28 @@ export default function LeaderProgramme() {
               </div>
               <p className="text-blue-100 text-lg">Plan weekly meetings and track your section's progress</p>
             </div>
-            <Button
-              onClick={() => setShowAllTermsDialog(true)}
-              size="lg"
-              variant="outline"
-              className="bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20 font-semibold self-start md:self-auto"
-            >
-              <List className="w-5 h-5 mr-2" />
-              Past & Future Terms
-            </Button>
+            <div className="flex gap-3 flex-wrap self-start md:self-auto">
+              {currentTerm && (
+                <Button
+                  onClick={() => osmConfig?.osm_term_id ? setShowOsmSync(true) : toast.warning('Set up OSM term link in Admin Settings first')}
+                  size="lg"
+                  variant="outline"
+                  className={`backdrop-blur-sm font-semibold ${osmConfig?.osm_term_id ? 'bg-white/10 text-white border-white/30 hover:bg-white/20' : 'bg-white/5 text-white/50 border-white/20 cursor-default'}`}
+                >
+                  <RefreshCw className="w-5 h-5 mr-2" />
+                  Sync with OSM
+                </Button>
+              )}
+              <Button
+                onClick={() => setShowAllTermsDialog(true)}
+                size="lg"
+                variant="outline"
+                className="bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20 font-semibold"
+              >
+                <List className="w-5 h-5 mr-2" />
+                Past & Future Terms
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -419,6 +440,9 @@ export default function LeaderProgramme() {
                                   No Meeting
                                 </Badge>
                               )}
+                              {programme?.osm_evening_id && (
+                                <Badge className="bg-green-700 text-white text-xs">OSM</Badge>
+                              )}
                             </div>
                             {isNoMeeting ? (
                               <div>
@@ -517,6 +541,16 @@ export default function LeaderProgramme() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ProgrammeSyncModal
+        open={showOsmSync}
+        onClose={() => setShowOsmSync(false)}
+        termName={currentTerm?.title}
+        osmTermId={osmConfig?.osm_term_id}
+        appTermId={osmConfig?.linked_app_term_id}
+        sectionId={selectedSection}
+        onSyncComplete={() => queryClient.invalidateQueries({ queryKey: ['programmes'] })}
+      />
 
       <AllTermsDialog
         open={showAllTermsDialog}
