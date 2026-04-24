@@ -80,16 +80,11 @@ Deno.serve(async (req) => {
     // Store tokens in OSMSyncSettings
     const settingsArr = await base44.asServiceRole.entities.OSMSyncSettings.filter({});
     if (settingsArr[0]) {
-      const updatePayload = {
+      await base44.asServiceRole.entities.OSMSyncSettings.update(settingsArr[0].id, {
         osm_access_token: access_token,
         osm_refresh_token: refresh_token,
         osm_token_expiry: expiryTime,
-      };
-      // Coerce osm_section_id to string if it was stored as a number (schema requires string)
-      if (settingsArr[0].osm_section_id != null) {
-        updatePayload.osm_section_id = String(settingsArr[0].osm_section_id);
-      }
-      await base44.asServiceRole.entities.OSMSyncSettings.update(settingsArr[0].id, updatePayload);
+      });
     } else {
       await base44.asServiceRole.entities.OSMSyncSettings.create({
         osm_access_token: access_token,
