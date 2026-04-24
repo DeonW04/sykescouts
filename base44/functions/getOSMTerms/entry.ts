@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     // Filter out past terms, sort by startdate descending
     const filtered = termsArray
       .filter(t => !t.past)
-      .sort((a, b) => new Date(b.startdate) - new Date(a.startdate))
+      .sort((a, b) => new Date(b.enddate) - new Date(a.enddate))
       .map(t => ({
         termid: String(t.termid),
         name: t.name,
