@@ -34,6 +34,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'This meeting has no OSM evening ID. Link it to an OSM meeting first.' }, { status: 400 });
     }
 
+    // Fall back to section default times if no override is set on the meeting
+    const sections = await base44.asServiceRole.entities.Section.filter({ id: programme.section_id });
+    const section = sections[0];
+    const starttime = programme.optional_start_time || section?.meeting_start_time || '';
+    const endtime = programme.optional_end_time || section?.meeting_end_time || '';
+
     // Build parts
     let title;
     if (programme.no_meeting) {
@@ -45,8 +51,8 @@ Deno.serve(async (req) => {
     const parts = {
       title,
       notesforparents: programme.description || '',
-      starttime: programme.optional_start_time || '',
-      endtime: programme.optional_end_time || '',
+      starttime,
+      endtime,
     };
 
     const body = new URLSearchParams({

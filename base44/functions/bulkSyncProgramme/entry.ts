@@ -41,6 +41,9 @@ Deno.serve(async (req) => {
 
     const { osm_access_token: accessToken, osm_section_id: sectionId, osm_term_id: termId, linked_app_term_id: appTermId } = settings;
 
+    // Fetch all sections so we can use their default meeting times as fallback
+    const allSections = await base44.asServiceRole.entities.Section.filter({});
+
     let created = 0, updated = 0, pushed = 0, skipped = 0;
     const failed = [];
 
@@ -102,12 +105,17 @@ Deno.serve(async (req) => {
           const programme = programmes[0];
           if (!programme) { failed.push({ date, reason: 'Local programme not found' }); continue; }
 
+          // Fall back to section default times if no override is set on the meeting
+          const section = allSections.find(s => s.id === programme.section_id);
+          const starttime = programme.optional_start_time || section?.meeting_start_time || '';
+          const endtime = programme.optional_end_time || section?.meeting_end_time || '';
+
           let title = programme.no_meeting ? (programme.no_meeting_reason || 'No Meeting') : (programme.title || '');
           const parts = {
             title,
             notesforparents: programme.description || '',
-            starttime: programme.optional_start_time || '',
-            endtime: programme.optional_end_time || '',
+            starttime,
+            endtime,
           };
 
           const body = new URLSearchParams({ sectionid: sectionId, eveningid: osm_evening_id, parts: JSON.stringify(parts) });
