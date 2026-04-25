@@ -41,37 +41,8 @@ Deno.serve(async (req) => {
     const synced = [];
     const failed = [];
 
-    // Step B — complete actions
-    const completeRecords = pending.filter(r => r.action === 'complete');
-    for (const record of completeRecords) {
-      const params = new URLSearchParams();
-      params.append('action', 'overrideCompletion');
-      params.append('badge_id', String(record.badge_id));
-      params.append('badge_version', String(record.badge_version ?? 0));
-      params.append('section_id', String(record.section_id));
-      params.append('section', record.section);
-      params.append('level', String(record.level ?? 1));
-      params.append('scouts', JSON.stringify([record.scoutid]));
-      const res = await fetch('https://www.onlinescoutmanager.co.uk/ext/badges/records/?action=overrideCompletion', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Bearer ${accessToken}`,
-        },
-        body: params.toString(),
-      });
-      const resText = await res.text();
-      console.log(`overrideCompletion response [${res.status}]:`, resText.slice(0, 500));
-      if (res.ok) {
-        await base44.asServiceRole.entities.PendingBadgeSync.update(record.id, { status: 'synced', synced_date: now });
-        synced.push(record);
-      } else {
-        await base44.asServiceRole.entities.PendingBadgeSync.update(record.id, { status: 'failed', error_notes: `HTTP ${res.status}: ${resText.slice(0, 500)}` });
-        failed.push({ ...record, error: `HTTP ${res.status}: ${resText.slice(0, 200)}` });
-      }
-    }
-
-    // Step C — award actions, grouped by section_id
+    // Step B — award actions FIRST (must register badge before overriding completion level)
+    // Grouped by section_id so we can batch the awardBadge call per section
     const awardRecords = pending.filter(r => r.action === 'award');
     const bySection = {};
     for (const r of awardRecords) {
@@ -108,6 +79,36 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.entities.PendingBadgeSync.update(r.id, { status: 'failed', error_notes: `HTTP ${res.status}: ${resText.slice(0, 500)}` });
           failed.push({ ...r, error: `HTTP ${res.status}: ${resText.slice(0, 200)}` });
         }
+      }
+    }
+
+    // Step C — overrideCompletion actions (run AFTER awardBadge so OSM has the badge record)
+    const completeRecords = pending.filter(r => r.action === 'complete');
+    for (const record of completeRecords) {
+      const params = new URLSearchParams();
+      params.append('action', 'overrideCompletion');
+      params.append('badge_id', String(record.badge_id));
+      params.append('badge_version', String(record.badge_version ?? 0));
+      params.append('section_id', String(record.section_id));
+      params.append('section', record.section);
+      params.append('level', String(record.level ?? 1));
+      params.append('scouts', JSON.stringify([record.scoutid]));
+      const res = await fetch('https://www.onlinescoutmanager.co.uk/ext/badges/records/?action=overrideCompletion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: params.toString(),
+      });
+      const resText = await res.text();
+      console.log(`overrideCompletion response [${res.status}]:`, resText.slice(0, 500));
+      if (res.ok) {
+        await base44.asServiceRole.entities.PendingBadgeSync.update(record.id, { status: 'synced', synced_date: now });
+        synced.push(record);
+      } else {
+        await base44.asServiceRole.entities.PendingBadgeSync.update(record.id, { status: 'failed', error_notes: `HTTP ${res.status}: ${resText.slice(0, 500)}` });
+        failed.push({ ...record, error: `HTTP ${res.status}: ${resText.slice(0, 200)}` });
       }
     }
 
