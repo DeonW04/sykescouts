@@ -432,7 +432,7 @@ export default function LeaderDashboard() {
       iconColor: 'text-teal-600',
       dropdown: [
         { label: 'Communications', page: 'Communications', icon: Mail },
-        { label: 'Section Accounting', page: 'TreasurerMemberPayments', icon: Landmark },
+        { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark },
         ...(['admin','treasurer','glv','team_leader'].includes(user?.role) ? [{ label: 'Treasurer Portal', page: 'TreasurerDashboard', icon: Landmark, separator: true }] : []),
       ]
     },
