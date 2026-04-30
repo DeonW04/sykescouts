@@ -12,22 +12,23 @@ export default function LoadingScreen({ sessionKey, duration = 6000 }) {
 
   const [visible, setVisible] = useState(!alreadyShown);
   const [gifUrl, setGifUrl] = useState(null);
+  const [gifSize, setGifSize] = useState(60); // percentage of viewport
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
     if (alreadyShown) return;
 
-    // Fetch the GIF URL from WebsiteImage
+    // Fetch GIF URL and size config
     base44.entities.WebsiteImage.filter({ page: 'loading_gif' }).then(imgs => {
-      if (imgs && imgs.length > 0) {
-        setGifUrl(imgs[0].image_url);
-      }
+      if (imgs && imgs.length > 0) setGifUrl(imgs[0].image_url);
     }).catch(() => {});
 
-    // Mark as shown for this session immediately
+    base44.entities.WebsiteImage.filter({ page: 'loading_gif_config' }).then(configs => {
+      if (configs && configs.length > 0) setGifSize(configs[0].order || 60);
+    }).catch(() => {});
+
     sessionStorage.setItem(storageKey, '1');
 
-    // Start fade out before hiding
     const fadeTimer = setTimeout(() => setFading(true), duration - 400);
     const hideTimer = setTimeout(() => setVisible(false), duration);
 
@@ -48,7 +49,7 @@ export default function LoadingScreen({ sessionKey, duration = 6000 }) {
         <img
           src={gifUrl}
           alt="Loading..."
-          className="w-full h-full object-cover"
+          style={{ width: `${gifSize}%`, maxHeight: `${gifSize}vh`, objectFit: 'contain' }}
         />
       ) : (
         <div className="flex flex-col items-center gap-4">

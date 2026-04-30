@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Users, Shield, Mail, Edit, Image, Upload, X, Award, Download, Camera, PieChart, Bell, BarChart2, Calendar } from 'lucide-react';
+import { Settings, Users, Shield, Mail, Edit, Image, Upload, X, Award, Download, Camera, PieChart, Bell, BarChart2, Calendar, Play } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -60,6 +61,9 @@ export default function AdminSettings() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showGallerySelector, setShowGallerySelector] = useState(false);
   const [currentImagePage, setCurrentImagePage] = useState(null);
+  const [gifSize, setGifSize] = useState(60);
+  const [gifPreviewOpen, setGifPreviewOpen] = useState(false);
+  const [savingGifSize, setSavingGifSize] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importFile, setImportFile] = useState(null);
@@ -75,6 +79,33 @@ export default function AdminSettings() {
   const { data: galleryPhotos = [] } = useQuery({ queryKey: ['gallery-photos'], queryFn: () => base44.entities.EventPhoto.filter({}) });
   const { data: events = [] } = useQuery({ queryKey: ['events-for-gallery'], queryFn: () => base44.entities.Event.list('-start_date') });
   const { data: programmes = [] } = useQuery({ queryKey: ['programmes-for-gallery'], queryFn: () => base44.entities.Programme.list('-date') });
+  const { data: gifConfigs = [] } = useQuery({
+    queryKey: ['loading-gif-config'],
+    queryFn: () => base44.entities.WebsiteImage.filter({ page: 'loading_gif_config' }),
+  });
+
+  // Sync gifSize from loaded config
+  useEffect(() => {
+    if (gifConfigs[0]) setGifSize(gifConfigs[0].order || 60);
+  }, [gifConfigs]);
+
+  const handleSaveGifSize = async (size) => {
+    setSavingGifSize(true);
+    try {
+      const existing = gifConfigs[0];
+      if (existing) {
+        await base44.entities.WebsiteImage.update(existing.id, { order: size });
+      } else {
+        await base44.entities.WebsiteImage.create({ page: 'loading_gif_config', image_url: '', order: size });
+      }
+      queryClient.invalidateQueries({ queryKey: ['loading-gif-config'] });
+      toast.success('GIF size saved');
+    } catch (e) {
+      toast.error('Failed to save size');
+    } finally {
+      setSavingGifSize(false);
+    }
+  };
 
   // ── Gallery groupings ──────────────────────────────────────
   const galleryCamps = [...new Map(galleryPhotos.filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp')).map(p => [p.event_id, events.find(e => e.id === p.event_id)])).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
@@ -359,9 +390,9 @@ export default function AdminSettings() {
                         <Upload className="w-5 h-5" />
                         Loading Screen GIF
                       </CardTitle>
-                      <p className="text-sm text-purple-700">This GIF plays as a full-screen loading animation on the Home page, Leader Portal, and Parent Portal on first visit per session.</p>
+                      <p className="text-sm text-purple-700">This GIF plays as a loading animation on the Home page, Leader Portal, and Parent Portal on first visit per session.</p>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="space-y-5">
                       {getImagesForPage('loading_gif')[0] && (
                         <div className="relative group w-fit">
                           <img
@@ -380,7 +411,38 @@ export default function AdminSettings() {
                       {!getImagesForPage('loading_gif')[0] && (
                         <p className="text-sm text-purple-600 italic">No loading GIF uploaded yet. Upload one to enable the loading screen animation.</p>
                       )}
-                      <div>
+
+                      {/* Size Slider */}
+                      {getImagesForPage('loading_gif')[0] && (
+                        <div className="space-y-3 p-4 bg-white rounded-lg border border-purple-200">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-purple-900 font-semibold">Display Size: {gifSize}%</Label>
+                            <span className="text-xs text-purple-600">of screen width</span>
+                          </div>
+                          <Slider
+                            min={10}
+                            max={100}
+                            step={5}
+                            value={[gifSize]}
+                            onValueChange={([v]) => setGifSize(v)}
+                            className="w-full"
+                          />
+                          <div className="flex items-center justify-between text-xs text-purple-500">
+                            <span>Small (10%)</span>
+                            <span>Full screen (100%)</span>
+                          </div>
+                          <Button
+                            size="sm"
+                            disabled={savingGifSize}
+                            onClick={() => handleSaveGifSize(gifSize)}
+                            className="bg-purple-600 hover:bg-purple-700 text-white"
+                          >
+                            {savingGifSize ? 'Saving...' : 'Save Size'}
+                          </Button>
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap gap-2">
                         <Button
                           type="button"
                           variant="outline"
@@ -391,6 +453,17 @@ export default function AdminSettings() {
                           <Upload className="w-4 h-4 mr-2" />
                           {getImagesForPage('loading_gif').length > 0 ? 'Replace GIF' : 'Upload GIF'}
                         </Button>
+                        {getImagesForPage('loading_gif')[0] && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                            onClick={() => setGifPreviewOpen(true)}
+                          >
+                            <Play className="w-4 h-4 mr-2" />
+                            Preview
+                          </Button>
+                        )}
                         <input
                           id="loading-gif-upload"
                           type="file"
@@ -399,7 +472,6 @@ export default function AdminSettings() {
                           onChange={async (e) => {
                             const f = e.target.files[0];
                             if (!f) return;
-                            // Delete existing first
                             const existing = getImagesForPage('loading_gif')[0];
                             if (existing) await deleteImageMutation.mutateAsync(existing.id);
                             handleFileUpload('loading_gif', f, 0);
@@ -408,6 +480,27 @@ export default function AdminSettings() {
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* GIF Preview Modal */}
+                  {gifPreviewOpen && getImagesForPage('loading_gif')[0] && (
+                    <div
+                      className="fixed inset-0 z-[9999] flex items-center justify-center bg-white"
+                      onClick={() => setGifPreviewOpen(false)}
+                    >
+                      <img
+                        src={getImagesForPage('loading_gif')[0].image_url}
+                        alt="Preview"
+                        style={{ width: `${gifSize}%`, maxHeight: `${gifSize}vh`, objectFit: 'contain' }}
+                      />
+                      <button
+                        className="absolute top-4 right-4 p-2 bg-gray-900/70 text-white rounded-full hover:bg-gray-900"
+                        onClick={() => setGifPreviewOpen(false)}
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                      <p className="absolute bottom-6 text-gray-500 text-sm">Click anywhere to close preview</p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 
