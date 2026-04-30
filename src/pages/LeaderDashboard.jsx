@@ -11,6 +11,7 @@ import ActionsDrilldownModal from '../components/leader/ActionsDrilldownModal';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
+import LoadingScreen from '../components/LoadingScreen';
 
 const UpcomingMeetings = ({ sections, selectedSection }) => {
   const navigate = useNavigate();
@@ -448,6 +449,7 @@ export default function LeaderDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+      <LoadingScreen sessionKey="leader_portal" duration={6000} />
       {/* Header */}
       <div className="bg-gradient-to-r from-[#004851] to-[#006b7a] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -351,6 +351,63 @@ export default function AdminSettings() {
                       </CardContent>
                     </Card>
                   ))}
+
+                  {/* Loading Screen GIF */}
+                  <Card className="border-purple-200 bg-purple-50">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-purple-900">
+                        <Upload className="w-5 h-5" />
+                        Loading Screen GIF
+                      </CardTitle>
+                      <p className="text-sm text-purple-700">This GIF plays as a full-screen loading animation on the Home page, Leader Portal, and Parent Portal on first visit per session.</p>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {getImagesForPage('loading_gif')[0] && (
+                        <div className="relative group w-fit">
+                          <img
+                            src={getImagesForPage('loading_gif')[0].image_url}
+                            alt="Loading GIF"
+                            className="h-48 rounded-lg border border-purple-200 object-contain bg-white"
+                          />
+                          <button
+                            onClick={() => deleteImageMutation.mutate(getImagesForPage('loading_gif')[0].id)}
+                            className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                      {!getImagesForPage('loading_gif')[0] && (
+                        <p className="text-sm text-purple-600 italic">No loading GIF uploaded yet. Upload one to enable the loading screen animation.</p>
+                      )}
+                      <div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={uploadingImage}
+                          className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                          onClick={() => document.getElementById('loading-gif-upload').click()}
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          {getImagesForPage('loading_gif').length > 0 ? 'Replace GIF' : 'Upload GIF'}
+                        </Button>
+                        <input
+                          id="loading-gif-upload"
+                          type="file"
+                          accept="image/gif,image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const f = e.target.files[0];
+                            if (!f) return;
+                            // Delete existing first
+                            const existing = getImagesForPage('loading_gif')[0];
+                            if (existing) await deleteImageMutation.mutateAsync(existing.id);
+                            handleFileUpload('loading_gif', f, 0);
+                          }}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </TabsContent>
 
