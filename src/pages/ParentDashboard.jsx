@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import LoadingScreen from '../components/LoadingScreen';
+
 
 // Handle parent volunteer responses
 const handleVolunteerResponse = async (actionId, memberId, response, user, queryClient, children) => {
@@ -231,7 +231,6 @@ export default function ParentDashboard() {
 
   return (
     <>
-    <LoadingScreen sessionKey="parent_portal" duration={6000} />
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Header */}
       <div className="relative bg-gradient-to-br from-[#7413dc] via-[#8b32eb] to-[#5c0fb0] text-white py-20 overflow-hidden">

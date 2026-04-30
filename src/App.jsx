@@ -4,6 +4,7 @@ import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import React from 'react';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -33,6 +34,7 @@ import { usePWA } from './hooks/usePWA';
 import PWAInstallGate from './components/pwa/PWAInstallGate';
 import { useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import LoadingScreen from '@/components/LoadingScreen';
 
 // Public-only pages that should never be shown in PWA mode
 const PUBLIC_PAGES = ['/', '/Home', '/About', '/Contact', '/Gallery', '/Join', '/Sections', '/Parents', '/Volunteer', '/SharedPage'];
@@ -84,31 +86,34 @@ const PWAGate = ({ children }) => {
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const pageReady = !isLoadingPublicSettings && !isLoadingAuth;
+  const location = useLocation();
 
-  // Show loading spinner while checking app public settings or auth
-  if (isLoadingPublicSettings || isLoadingAuth) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  const getSessionKey = () => {
+    const path = location.pathname;
+    if (path === '/' || path === '/Home') return 'home';
+    if (path === '/LeaderDashboard') return 'leader_portal';
+    if (path === '/ParentDashboard') return 'parent_portal';
+    return null;
+  };
 
-  // Handle authentication errors
-  if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
+  const sessionKey = getSessionKey();
+
+  const appContent = () => {
+    if (isLoadingPublicSettings || isLoadingAuth) {
+      return (
+        <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 1 }}>
+          <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+        </div>
+      );
     }
-  }
-
-  // Render the main app
-  return (
-    <PWAGate>
-    <Routes>
+    if (authError) {
+      if (authError.type === 'user_not_registered') return <UserNotRegisteredError />;
+      if (authError.type === 'auth_required') { navigateToLogin(); return null; }
+    }
+    return (
+      <PWAGate>
+      <Routes>
       <Route path="/" element={
         <LayoutWrapper currentPageName={mainPageKey}>
           <MainPage />
@@ -158,6 +163,14 @@ const AuthenticatedApp = () => {
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </PWAGate>
+    );
+  };
+
+  return (
+    <>
+      {sessionKey && <LoadingScreen sessionKey={sessionKey} pageReady={pageReady} />}
+      {appContent()}
+    </>
   );
 };
 
