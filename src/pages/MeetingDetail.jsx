@@ -200,7 +200,7 @@ export default function MeetingDetail() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['attendance'] });
+      queryClient.invalidateQueries({ queryKey: ['attendance', sectionId, date] });
       toast.success('Attendance saved and badges awarded');
     },
   });
