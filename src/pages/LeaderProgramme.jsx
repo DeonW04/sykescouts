@@ -66,9 +66,14 @@ export default function LeaderProgramme() {
       const meetingDay = currentSection?.meeting_day || currentTerm.meeting_day;
       const targetDay = dayOfWeekMap[meetingDay];
 
+      if (targetDay === undefined) return [];
+
       let current = new Date(start);
-      while (current.getDay() !== targetDay) {
+      // Safety: cap the search at 7 days to avoid any infinite loop
+      let safety = 0;
+      while (current.getDay() !== targetDay && safety < 7) {
         current.setDate(current.getDate() + 1);
+        safety++;
       }
 
       while (current <= end) {
