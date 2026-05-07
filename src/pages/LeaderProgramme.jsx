@@ -55,8 +55,8 @@ export default function LeaderProgramme() {
       const allMeetings = [];
       const start = new Date(currentTerm.start_date);
       const end = new Date(currentTerm.end_date);
-      const halfTermStart = new Date(currentTerm.half_term_start);
-      const halfTermEnd = new Date(currentTerm.half_term_end);
+      const halfTermStart = currentTerm.half_term_start ? new Date(currentTerm.half_term_start) : null;
+      const halfTermEnd = currentTerm.half_term_end ? new Date(currentTerm.half_term_end) : null;
 
       const dayOfWeekMap = {
         'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
@@ -72,7 +72,7 @@ export default function LeaderProgramme() {
       }
 
       while (current <= end) {
-        const isHalfTerm = current >= halfTermStart && current <= halfTermEnd;
+        const isHalfTerm = halfTermStart && halfTermEnd && current >= halfTermStart && current <= halfTermEnd;
         allMeetings.push({ date: new Date(current), isHalfTerm });
         current.setDate(current.getDate() + 7);
       }
