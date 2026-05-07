@@ -84,7 +84,7 @@ export default function LeaderProgramme() {
 
       return allMeetings;
     },
-    enabled: !!currentTerm,
+    enabled: !!currentTerm && !!currentSection,
   });
 
   const { data: programmes = [] } = useQuery({
