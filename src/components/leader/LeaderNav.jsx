@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { Users, Calendar, Award, Mail, Settings, ArrowLeft, Image, ShieldAlert, ChevronDown, UserCheck, CalendarDays, Lightbulb, Package, TrendingUp, FileText, Landmark, BookOpen } from 'lucide-react';
+import { Users, Calendar, Award, Mail, Settings, ArrowLeft, Image, ShieldAlert, ChevronDown, UserCheck, CalendarDays, Lightbulb, Package, TrendingUp, FileText, Landmark, BookOpen, ScrollText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -66,6 +66,7 @@ export default function LeaderNav() {
       dropdown: [
         { label: 'Communications', page: 'Communications', icon: Mail },
         { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark },
+        { label: 'POR Helper', page: 'PORHelper', icon: ScrollText },
         ...(['admin','treasurer','glv','team_leader'].includes(userRole) ? [{ label: 'Treasurer Portal', page: 'TreasurerDashboard', icon: Landmark, separator: true }] : []),
       ]
     },
