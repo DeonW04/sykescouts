@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, AlertTriangle, CheckCircle, ArrowDown, ArrowUp, Minus } from 'lucide-react';
 import { toast } from 'sonner';
+import OSMExpiredBanner, { isOSMExpired } from './OSMExpiredBanner';
 
 function ActionControl({ value, onChange }) {
   const opts = [
@@ -58,12 +59,22 @@ export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId,
   const [syncing, setSyncing] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [osmExpired, setOsmExpired] = useState(false);
+  // Store pending sync selections so we can auto-retry after reconnect
+  const [pendingSelections, setPendingSelections] = useState(null);
 
   useEffect(() => {
-    if (!open) { setRows([]); setActions({}); setResult(null); setError(''); return; }
+    if (!open) { setRows([]); setActions({}); setResult(null); setError(''); setOsmExpired(false); setPendingSelections(null); return; }
     if (!osmTermId || !appTermId) return;
     loadData();
   }, [open, osmTermId, appTermId]);
+
+  // After loadData completes and we have rows, check if we should auto-apply pending selections
+  useEffect(() => {
+    if (rows.length > 0 && pendingSelections) {
+      handleApply(pendingSelections);
+    }
+  }, [rows]);
 
   const loadData = async () => {
     setLoading(true);
@@ -110,7 +121,9 @@ export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId,
       setRows(built);
       setActions(initActions);
     } catch (e) {
-      setError(e.message);
+      const expired = await isOSMExpired();
+      if (expired) { setOsmExpired(true); }
+      else { setError(e.message); }
     } finally {
       setLoading(false);
     }
@@ -138,23 +151,30 @@ export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId,
     return { pullOSM, pushApp, skip };
   }, [actions]);
 
-  const handleApply = async () => {
+  const handleApply = async (selectionsOverride) => {
+    const selections = selectionsOverride || rows.map(row => ({
+      action: actions[row.date] || 'skip',
+      local_id: row.appItem?.id || null,
+      osm_evening_id: row.osmItem ? String(row.osmItem.eveningid) : null,
+      date: row.date,
+      osm_item: row.osmItem || null,
+      section_id: sectionId,
+    }));
     setSyncing(true);
     try {
-      const selections = rows.map(row => ({
-        action: actions[row.date] || 'skip',
-        local_id: row.appItem?.id || null,
-        osm_evening_id: row.osmItem ? String(row.osmItem.eveningid) : null,
-        date: row.date,
-        osm_item: row.osmItem || null,
-        section_id: sectionId,
-      }));
       const res = await base44.functions.invoke('bulkSyncProgramme', { selections });
       if (res.data.error) throw new Error(res.data.error);
       setResult(res.data);
+      setPendingSelections(null);
       onSyncComplete?.();
     } catch (e) {
-      toast.error('Sync failed: ' + e.message);
+      const expired = await isOSMExpired();
+      if (expired) {
+        setPendingSelections(selections);
+        setOsmExpired(true);
+      } else {
+        toast.error('Sync failed: ' + e.message);
+      }
     } finally {
       setSyncing(false);
     }
@@ -181,7 +201,15 @@ export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId,
             </div>
           )}
 
-          {error && !loading && (
+          {osmExpired && !loading && (
+            <OSMExpiredBanner onReconnected={() => {
+              setOsmExpired(false);
+              // After reconnect the page reloads via OAuth redirect, so
+              // pendingSelections will be picked up via the sessionStorage flag.
+            }} />
+          )}
+
+          {error && !loading && !osmExpired && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
           )}
 

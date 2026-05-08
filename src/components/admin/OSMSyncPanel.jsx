@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Loader2, Edit, Trash2, CheckCircle, XCircle, Link, Zap, Sparkles } from 'lucide-react';
 import OSMProgrammeSyncPanel from '../osm/OSMProgrammeSyncPanel';
+import OSMExpiredBanner, { isOSMExpired } from '../osm/OSMExpiredBanner';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -18,6 +19,7 @@ export default function OSMSyncPanel({ defaultTab }) {
   const queryClient = useQueryClient();
   const [osmConnected, setOsmConnected] = useState(false);
   const [checkingConnection, setCheckingConnection] = useState(false);
+  const [osmExpired, setOsmExpired] = useState(false);
   const [settingsForm, setSettingsForm] = useState(null);
   const [savingSettings, setSavingSettings] = useState(false);
   const [matchingBadges, setMatchingBadges] = useState(false);
@@ -127,12 +129,24 @@ export default function OSMSyncPanel({ defaultTab }) {
 
   const handleSyncBadges = async () => {
     setMatchingBadges(true);
+    setOsmExpired(false);
     try {
       const res = await base44.functions.invoke('syncOSMBadges', {});
-      if (res.data.error) { toast.error(res.data.error); }
-      else { toast.success(`Synced ${res.data.badges_synced} OSM badges`); refetchOsmBadges(); }
-    } catch (e) { toast.error('Sync failed: ' + e.message); }
-    finally { setMatchingBadges(false); }
+      if (res.data.error) {
+        const expired = await isOSMExpired();
+        if (expired) { setOsmExpired(true); }
+        else { toast.error(res.data.error); }
+      } else {
+        toast.success(`Synced ${res.data.badges_synced} OSM badges`);
+        refetchOsmBadges();
+      }
+    } catch (e) {
+      const expired = await isOSMExpired();
+      if (expired) { setOsmExpired(true); }
+      else { toast.error('Sync failed: ' + e.message); }
+    } finally {
+      setMatchingBadges(false);
+    }
   };
 
   const handleDeleteOsmBadge = async (badgeId) => {
@@ -296,6 +310,10 @@ export default function OSMSyncPanel({ defaultTab }) {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+
+            {osmExpired && (
+              <OSMExpiredBanner onReconnected={() => setOsmExpired(false)} />
+            )}
 
             {/* Action buttons + view toggle */}
             <div className="flex items-center gap-2 flex-wrap">
