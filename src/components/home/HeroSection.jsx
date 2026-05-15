@@ -103,8 +103,8 @@ export default function HeroSection() {
         <div style={{ position: 'relative', zIndex: 2, padding: '0 24px', width: '100%', maxWidth: '760px', margin: '0 auto', textAlign: 'center' }}>
           <div style={{
             background: 'rgba(255,255,255,0.12)',
-            backdropFilter: 'blur(32px) saturate(200%)',
-            WebkitBackdropFilter: 'blur(32px) saturate(200%)',
+backdropFilter: 'blur(6px) saturate(150%)',
+WebkitBackdropFilter: 'blur(6px) saturate(150%)',
             border: '0.5px solid rgba(255,255,255,0.25)',
             borderRadius: '24px',
             padding: 'clamp(32px, 5vw, 56px)',
