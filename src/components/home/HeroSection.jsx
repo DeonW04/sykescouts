@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { base44 } from '@/api/base44Client';
 import { ChevronDown } from 'lucide-react';
+import NavBarSpacer from '../public/NavBarSpacer';
 
 export default function HeroSection() {
   const [images, setImages] = useState([]);
@@ -101,6 +102,7 @@ export default function HeroSection() {
 
         {/* Hero content */}
         <div style={{ position: 'relative', zIndex: 2, padding: '0 24px', width: '100%', maxWidth: '760px', margin: '0 auto', textAlign: 'center' }}>
+          <NavBarSpacer />
           <div style={{
             background: 'rgba(255,255,255,0.12)',
 backdropFilter: 'blur(6px) saturate(150%)',

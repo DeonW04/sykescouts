@@ -1,7 +1,6 @@
 import React from 'react';
 import SEO from '../components/SEO';
 import FloatingNav from '../components/public/FloatingNav';
-import NavBarSpacer from '../components/public/NavBarSpacer';
 import PublicFooter from '../components/public/PublicFooter';
 import HeroSection from '../components/home/HeroSection';
 import WhatWeDo from '../components/home/WhatWeDo';
@@ -17,7 +16,6 @@ export default function Home() {
         path="/"
       />
       <FloatingNav />
-      <NavBarSpacer />
       <HeroSection />
       <WhatWeDo />
       <SectionsOverview />
