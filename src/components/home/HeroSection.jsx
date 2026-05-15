@@ -115,7 +115,7 @@ export default function HeroSection() {
               fontSize: '11px',
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
-              color: '#00a794',
+              color: '#7413dc',
               marginBottom: '18px',
             }}>
               40th Rochdale · Est. 2021
@@ -136,7 +136,7 @@ export default function HeroSection() {
               fontWeight: 700,
               fontSize: 'clamp(28px, 5vw, 54px)',
               lineHeight: 1.05,
-              color: '#00a794',
+              color: '#7413dc',
               margin: '0 0 24px',
             }}>
               Since 2021.
