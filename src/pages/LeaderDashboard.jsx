@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { format, isThisWeek, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import FloatingNav from '../components/public/FloatingNav';
+import { SectionProvider } from '../components/leader/SectionContext';
+import SectionTransitionOverlay from '../components/leader/SectionTransitionOverlay';
 
 const glassCard = {
   background: 'rgba(255,255,255,0.9)',
@@ -520,7 +522,9 @@ export default function LeaderDashboard() {
 
   const actions = getQuickActions(user);
 
+
   return (
+    <SectionProvider>
     <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #f8f7ff 0%, #f0eeff 50%, #f0fdf4 100%)', fontFamily: 'DM Sans, sans-serif' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');
@@ -656,5 +660,6 @@ export default function LeaderDashboard() {
         </div>
       </div>
     </div>
+    </SectionProvider>
   );
 }
