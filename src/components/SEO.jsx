@@ -1,5 +1,5 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
+import { Helmet, HelmetProvider } from 'react-helmet-async';
 
 export default function SEO({ 
   title = '40th Rochdale (Syke) Scouts | Adventure, Skills & Fun for Young People',
@@ -12,6 +12,7 @@ export default function SEO({
   const fullUrl = `${siteUrl}${path}`;
 
   return (
+    <HelmetProvider>
     <Helmet>
       <title>{title}</title>
       <meta name="description" content={description} />
@@ -36,5 +37,6 @@ export default function SEO({
       <meta name="robots" content="index, follow" />
       <meta name="googlebot" content="index, follow" />
     </Helmet>
+    </HelmetProvider>
   );
 }
