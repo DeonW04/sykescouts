@@ -516,13 +516,7 @@ export default function FloatingNav() {
         )}
       </div>
 
-      {/* Desktop spacer — portal pages always get full height (136px = pill + strip) */}
-      <div style={{
-        height: isPortalPage ? '136px' : '80px',
-        display: 'none',
-      }} className="md:block" />
-      {/* Mobile spacer — only pill bar */}
-      <div style={{ height: '80px' }} className="md:hidden" />
+
     </>
   );
 }
