@@ -235,7 +235,7 @@ export default function ParentDashboard() {
     <>
     <FloatingNav />
     <NavBarSpacer />
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Header */}
       <div className="relative bg-gradient-to-br from-[#7413dc] via-[#8b32eb] to-[#5c0fb0] text-white py-20 overflow-hidden">
         {/* Animated background elements */}

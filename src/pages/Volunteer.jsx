@@ -4,7 +4,6 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import SEO from '../components/SEO';
 import FloatingNav from '../components/public/FloatingNav';
-import NavBarSpacer from '../components/public/NavBarSpacer';
 import PublicFooter from '../components/public/PublicFooter';
 
 const inputStyle = {
@@ -96,7 +95,6 @@ export default function Volunteer() {
 
       {/* Hero */}
       <section style={{ background: '#f8f7ff', padding: '80px 32px 60px', borderBottom: '1px solid rgba(116,19,220,0.1)' }}>
-        <NavBarSpacer />
         <div style={{ maxWidth: '800px' }}>
           <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', marginBottom: '12px' }}>For adults</p>
           <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(32px, 5vw, 56px)', color: '#1a1a2e', margin: '0 0 16px' }}>Become a Volunteer</h1>
