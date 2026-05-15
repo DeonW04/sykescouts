@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Users, UserCheck, UserX, AlertTriangle, Mail, CheckCircle, RefreshCw, X, Bell, BellOff, Send } from 'lucide-react';
 import { toast } from 'sonner';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function ParentPortal() {
@@ -155,7 +155,7 @@ export default function ParentPortal() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
+      <FloatingNav />
       <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">

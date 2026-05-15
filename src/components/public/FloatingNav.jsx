@@ -71,7 +71,14 @@ const PORTAL_PAGES = [
   '/BadgeStockManagement', '/NightsAwayTracking', '/ConsentForms', '/ConsentFormBuilder',
   '/SectionAccounting', '/AdminSettings', '/ParentDashboard', '/MyChild',
   '/ParentProgramme', '/ParentEvents', '/ParentEventDetail', '/ParentBadges', '/ParentGoldAward',
-  '/AIProgrammePlanner',
+  '/AIProgrammePlanner', '/ParentPortal', '/IdeasBoard', '/RiskAssessments', '/RiskAssessmentDetail',
+  '/RiskAssessmentHistory', '/AwardBadges', '/BadgeStockManagement', '/ManageBadges', '/ManageStagedBadge',
+  '/EditBadgeStructure', '/Communications', '/WeeklyMessage', '/WeeklyMessageList', '/MonthlyNewsletter',
+  '/MonthlyNewsletterList', '/EventUpdate', '/EventUpdateList', '/SectionAccounting', '/PORHelper',
+  '/AdminSettings', '/ConsentForms', '/ConsentFormBuilder', '/NightsAwayTracking', '/JoinEnquiries',
+  '/ArchivedMembers', '/MeetingDetail', '/EventDetail', '/MemberDetail', '/BadgeDetail',
+  '/StagedBadgeDetail', '/GoldAwardDetail', '/HikesAwayBadgeDetail', '/NightsAwayBadgeDetail',
+  '/JoiningInBadgeDetail',
 ];
 
 export default function FloatingNav() {

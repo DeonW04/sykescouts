@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { base44 } from '@/api/base44Client';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -86,7 +86,7 @@ Focus on practical, specific risks following Scouts UK safety standards. Conside
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-white">
-      <LeaderNav />
+      <FloatingNav />
       {/* Header */}
       <div className="bg-gradient-to-r from-[#7413dc] to-[#ff66b2] text-white py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

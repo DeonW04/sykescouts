@@ -8,7 +8,7 @@ import { Mail, MessageSquare, BookOpen, Users, Plus, TrendingUp, Eye, AlertCircl
 import CustomPushNotification from '../components/admin/CustomPushNotification';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
 import { toast } from 'sonner';
 
 export default function Communications() {
@@ -130,7 +130,7 @@ export default function Communications() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
+      <FloatingNav />
       
       {/* Header */}
       <div className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white py-8">

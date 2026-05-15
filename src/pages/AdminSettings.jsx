@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import BulkBadgeUpdate from '../components/badges/BulkBadgeUpdate';
@@ -212,7 +212,7 @@ export default function AdminSettings() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
+      <FloatingNav />
 
       <div className="bg-[#004851] text-white py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-3">
@@ -243,7 +243,7 @@ export default function AdminSettings() {
 
           {/* Sidebar — desktop */}
           <aside className="w-56 flex-shrink-0 hidden md:block">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden sticky top-24">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden sticky top-4">
               {GROUPS.map(group => (
                 <div key={group}>
                   <p className="px-4 pt-4 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">{group}</p>

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSectionContext } from '../components/leader/SectionContext';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
 import PostItNote from '../components/ideasBoard/PostItNote.jsx';
 import IdeaDetailPanel from '../components/ideasBoard/IdeaDetailPanel.jsx';
 import GenerateIdeasModal from '../components/ideasBoard/GenerateIdeasModal.jsx';
@@ -141,7 +141,7 @@ export default function IdeasBoard() {
 
   return (
     <div className="min-h-screen" style={{ background: '#f5f0e8' }}>
-      <LeaderNav />
+      <FloatingNav />
       <div className="max-w-full px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Header */}

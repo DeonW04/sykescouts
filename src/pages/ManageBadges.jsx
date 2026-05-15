@@ -13,7 +13,7 @@ import StockManagementDialog from '../components/badges/StockManagementDialog';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
 
 export default function ManageBadges() {
   const navigate = useNavigate();
@@ -157,7 +157,7 @@ export default function ManageBadges() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
+      <FloatingNav />
       <div className="bg-[#7413dc] text-white py-6 md:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

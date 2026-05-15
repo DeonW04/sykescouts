@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Receipt, TrendingUp, TrendingDown, Upload, Users, Plus, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
 import { useSectionContext } from '../components/leader/SectionContext';
 
 const fmt = (n) => `£${(n || 0).toFixed(2)}`;
@@ -117,7 +117,7 @@ export default function SectionAccounting() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
+      <FloatingNav />
 
       <div className="bg-gradient-to-r from-[#004851] to-[#006b7a] text-white py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

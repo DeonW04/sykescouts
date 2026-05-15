@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -253,7 +253,7 @@ User question: ${userMsg}`,
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
-      <LeaderNav />
+      <FloatingNav />
 
       {/* Header */}
       <div className="bg-gradient-to-br from-[#004851] to-[#7413dc] text-white py-10">
