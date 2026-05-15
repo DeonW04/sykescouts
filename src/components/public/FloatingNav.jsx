@@ -94,8 +94,8 @@ export default function FloatingNav() {
   // Auto-open the portal strip on leader/parent pages
   const isPortalPage = PORTAL_PAGES.some(p => location.pathname === p || location.pathname.startsWith(p + '?'));
 
-  // Keep portalOpen in sync with page — defaults open on portal pages so strip shows immediately
-  const [portalOpen, setPortalOpen] = useState(isPortalPage);
+  // portalOpen controls manual toggle; strip visibility also uses isLeader
+  const [portalOpen, setPortalOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -270,7 +270,7 @@ export default function FloatingNav() {
           <div style={{
             overflow: 'hidden',
             maxHeight: (isPortalPage || portalOpen) ? '56px' : '0',
-            transition: 'max-height 0.4s cubic-bezier(0.4,0,0.2,1)',
+            transition: isPortalPage ? 'none' : 'max-height 0.4s cubic-bezier(0.4,0,0.2,1)',
             background: 'rgba(255,255,255,0.97)',
           }}>
             <div style={{
@@ -446,8 +446,7 @@ export default function FloatingNav() {
 
       {/* Spacer so page content clears the nav — taller when portal strip is visible */}
       <div style={{
-        height: isLeader && (isPortalPage || portalOpen) ? '136px' : '76px',
-        transition: 'height 0.4s cubic-bezier(0.4,0,0.2,1)',
+        height: isPortalPage ? '136px' : (isLeader && portalOpen ? '136px' : '76px'),
       }} />
     </>
   );
