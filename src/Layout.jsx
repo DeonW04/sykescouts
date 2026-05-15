@@ -7,7 +7,6 @@ import { base44 } from '@/api/base44Client';
 import { Toaster } from 'sonner';
 import { HelmetProvider } from 'react-helmet-async';
 import { SectionProvider } from './components/leader/SectionContext';
-import SectionSelector from './components/leader/SectionSelector';
 import SectionTransitionOverlay from './components/leader/SectionTransitionOverlay';
 import { useSectionContext } from './components/leader/SectionContext';
 
@@ -307,10 +306,7 @@ export default function Layout({ children, currentPageName }) {
             )}
           </header>
 
-          {/* Section Selector for Leaders */}
-          {user && (isLeader || user.role === 'admin') && leaderPages.includes(currentPageName) && (
-            <SectionSelector />
-          )}
+
 
           {/* Main Content */}
           <main className="flex-1">

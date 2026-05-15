@@ -84,7 +84,6 @@ const PORTAL_PAGES = [
 export default function FloatingNav() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [portalOpen, setPortalOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [isLeader, setIsLeader] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -94,6 +93,9 @@ export default function FloatingNav() {
 
   // Auto-open the portal strip on leader/parent pages
   const isPortalPage = PORTAL_PAGES.some(p => location.pathname === p || location.pathname.startsWith(p + '?'));
+
+  // Keep portalOpen in sync with page — defaults open on portal pages so strip shows immediately
+  const [portalOpen, setPortalOpen] = useState(isPortalPage);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -127,9 +129,9 @@ export default function FloatingNav() {
 
   useEffect(() => {
     setMenuOpen(false);
-    // On portal pages, keep strip open; on public pages, close it
-    setPortalOpen(false);
-  }, [location]);
+    // Sync strip open state with page type on navigation
+    setPortalOpen(isPortalPage);
+  }, [location.pathname]);
 
   const navLinks = [
     { label: 'Home', to: '/' },
