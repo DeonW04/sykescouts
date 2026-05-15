@@ -289,7 +289,10 @@ export default function FloatingNav() {
     { label: 'Contact', to: createPageUrl('Contact') },
   ];
 
-  const isActive = (to) => to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
+  const isActive = (to) => {
+    if (to === '/') return location.pathname === '/';
+    return location.pathname.startsWith(to);
+  };
 
   const linkStyle = (active) => ({
     fontFamily: 'DM Sans, sans-serif',
@@ -301,6 +304,11 @@ export default function FloatingNav() {
     transition: 'color 0.2s, background 0.2s',
     whiteSpace: 'nowrap',
   });
+
+  const portalIsActive = () => {
+    const path = location.pathname;
+    return PORTAL_PAGES.some(p => path === p || path.startsWith(p + '?'));
+  };
 
   const stripBtnStyle = {
     display: 'flex', alignItems: 'center', gap: '5px',
@@ -383,8 +391,8 @@ export default function FloatingNav() {
                 onClick={() => setPortalOpen(v => !v)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
-                  background: (isPortalPage || portalOpen) ? '#7413dc' : 'rgba(116,19,220,0.08)',
-                  color: (isPortalPage || portalOpen) ? '#fff' : '#7413dc',
+                  background: portalIsActive() ? '#7413dc' : 'rgba(116,19,220,0.08)',
+                  color: portalIsActive() ? '#fff' : '#7413dc',
                   border: 'none', borderRadius: '25px',
                   padding: '8px 18px', fontSize: '14px', fontWeight: 500,
                   cursor: 'pointer', transition: 'all 0.25s ease',
@@ -393,7 +401,7 @@ export default function FloatingNav() {
               >
                 <LayoutDashboard size={15} />
                 Leader Portal
-                <ChevronDown size={14} style={{ transform: (isPortalPage || portalOpen) ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }} />
+                <ChevronDown size={14} style={{ transform: portalIsActive() ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }} />
               </button>
             ) : portalLabel ? (
               <Link to={portalUrl} style={{

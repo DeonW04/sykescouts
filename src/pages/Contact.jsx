@@ -3,6 +3,7 @@ import { MapPin, Mail, Clock, Send, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import SEO from '../components/SEO';
 import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import PublicFooter from '../components/public/PublicFooter';
 import { base44 } from '@/api/base44Client';
 
@@ -80,6 +81,7 @@ export default function Contact() {
 
       {/* Full-bleed hero */}
       <section style={{ position: 'relative', height: 'clamp(320px, 45vh, 460px)', overflow: 'hidden', display: 'flex', alignItems: 'center', marginTop: '-72px' }}>
+        <NavBarSpacer />
         {heroImage ? (
           <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
         ) : (
