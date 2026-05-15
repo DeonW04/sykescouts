@@ -28,7 +28,26 @@ function SectionTransitionWrapper() {
 }
 
 // Pages that handle their own nav/footer — skip Layout chrome entirely
-const SELF_CONTAINED_PUBLIC_PAGES = ['Home', 'About', 'Gallery', 'Join', 'Volunteer', 'Contact', 'LeaderDashboard'];
+const SELF_CONTAINED_PUBLIC_PAGES = [
+  // Public pages with their own FloatingNav
+  'Home', 'About', 'Gallery', 'Join', 'Volunteer', 'Contact',
+  // All leader/portal pages that use FloatingNav directly
+  'LeaderDashboard', 'LeaderMembers', 'LeaderProgramme', 'LeaderEvents',
+  'LeaderAttendance', 'LeaderBadges', 'LeaderGallery', 'MeetingDetail',
+  'EventDetail', 'MemberDetail', 'BadgeDetail', 'AwardBadges', 'ManageBadges',
+  'EditBadgeStructure', 'StagedBadgeDetail', 'ManageStagedBadge',
+  'NightsAwayBadgeDetail', 'HikesAwayBadgeDetail', 'BadgeStockManagement',
+  'NightsAwayTracking', 'RiskAssessments', 'RiskAssessmentDetail', 'RiskAssessmentHistory',
+  'Communications', 'WeeklyMessage', 'WeeklyMessageList', 'MonthlyNewsletter',
+  'MonthlyNewsletterList', 'EventUpdate', 'EventUpdateList', 'JoinEnquiries',
+  'ArchivedMembers', 'GoldAwardDetail', 'IdeasBoard', 'AIProgrammePlanner',
+  'ConsentForms', 'ConsentFormBuilder', 'SectionAccounting', 'AdminSettings',
+  'ParentDashboard', 'MyChild', 'ParentProgramme', 'ParentEvents',
+  'ParentEventDetail', 'ParentBadges', 'ParentGoldAward', 'ParentPortal',
+  'ParentPortalAnalytics', 'PORHelper', 'RiskAssessments',
+  'JoiningInBadgeDetail', 'NightsAwayBadgeDetail', 'HikesAwayBadgeDetail',
+  'StagedBadgeDetail', 'GoldAwardDetail',
+];
 
 export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
