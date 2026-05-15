@@ -538,7 +538,7 @@ function LeaderDashboardInner() {
         background: 'rgba(255,255,255,0.8)',
         backdropFilter: 'blur(16px)',
         borderBottom: '1px solid rgba(116,19,220,0.1)',
-        padding: '62px 40px 28px',
+        padding: '76px 40px 28px',
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {/* Top row: greeting + section selector */}
