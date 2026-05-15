@@ -51,9 +51,16 @@ export default function SectionsOverview() {
 
   const loadImages = async () => {
     try {
-      const imgs = await base44.entities.WebsiteImage.filter({ page: 'sections' });
+      // Support both old (page=beavers/cubs/scouts) and new (page=sections, label=beavers/cubs/scouts) patterns
+      const [byLabel, byPage] = await Promise.all([
+        base44.entities.WebsiteImage.filter({ page: 'sections' }),
+        Promise.all(['beavers', 'cubs', 'scouts'].map(s => base44.entities.WebsiteImage.filter({ page: s }).then(r => r[0]).catch(() => null))),
+      ]);
       const map = {};
-      imgs.forEach(img => { if (img.label) map[img.label] = img.image_url; });
+      // New pattern takes priority
+      byLabel.forEach(img => { if (img.label) map[img.label] = img.image_url; });
+      // Fall back to old per-page pattern
+      ['beavers', 'cubs', 'scouts'].forEach((s, i) => { if (!map[s] && byPage[i]?.image_url) map[s] = byPage[i].image_url; });
       setSectionImages(map);
     } catch {}
   };

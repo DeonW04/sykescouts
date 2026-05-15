@@ -7,10 +7,10 @@ import PublicFooter from '../components/public/PublicFooter';
 
 const inputStyle = {
   width: '100%',
-  background: 'rgba(255,255,255,0.08)',
-  border: '0.5px solid rgba(255,255,255,0.2)',
+  background: '#fff',
+  border: '1px solid rgba(116,19,220,0.2)',
   borderRadius: '10px',
-  color: '#fff',
+  color: '#1a1a2e',
   padding: '12px 16px',
   fontSize: '15px',
   fontFamily: 'DM Sans, sans-serif',
@@ -22,15 +22,13 @@ const labelStyle = {
   display: 'block',
   fontFamily: 'DM Sans, sans-serif',
   fontSize: '13px',
-  color: 'rgba(255,255,255,0.6)',
+  color: 'rgba(26,26,46,0.6)',
   marginBottom: '6px',
 };
 
 const glassCard = {
-  background: 'rgba(116,19,220,0.08)',
-  backdropFilter: 'blur(20px) saturate(180%)',
-  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-  border: '0.5px solid rgba(255,255,255,0.2)',
+  background: '#f8f7ff',
+  border: '1px solid rgba(116,19,220,0.12)',
   borderRadius: '20px',
 };
 
@@ -59,21 +57,21 @@ export default function Contact() {
   ];
 
   return (
-    <div style={{ background: '#002a6e', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ background: '#ffffff', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap');
-        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
-        input:focus, textarea:focus { border-color: rgba(116,19,220,0.5) !important; box-shadow: 0 0 0 2px rgba(116,19,220,0.2); }
+        input::placeholder, textarea::placeholder { color: rgba(26,26,46,0.35); }
+        input:focus, textarea:focus { border-color: rgba(116,19,220,0.5) !important; box-shadow: 0 0 0 2px rgba(116,19,220,0.15); }
       `}</style>
       <SEO title="Contact Us | 40th Rochdale (Syke) Scouts" description="Get in touch with 40th Rochdale (Syke) Scouts." path="/Contact" />
       <FloatingNav />
 
       {/* Hero */}
-      <section style={{ background: '#003982', padding: '80px 32px 60px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <section style={{ background: '#f8f7ff', padding: '80px 32px 60px', borderBottom: '1px solid rgba(116,19,220,0.1)' }}>
         <div style={{ maxWidth: '800px' }}>
-          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#00a794', marginBottom: '12px' }}>Get in touch</p>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(32px, 5vw, 56px)', color: '#fff', margin: '0 0 16px' }}>Say hello.</h1>
-          <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, margin: 0 }}>Have a question? We'd love to hear from you.</p>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', marginBottom: '12px' }}>Get in touch</p>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(32px, 5vw, 56px)', color: '#1a1a2e', margin: '0 0 16px' }}>Say hello.</h1>
+          <p style={{ fontSize: '17px', color: 'rgba(26,26,46,0.65)', lineHeight: 1.75, margin: 0 }}>Have a question? We'd love to hear from you.</p>
         </div>
       </section>
 
@@ -87,25 +85,25 @@ export default function Contact() {
                 <div style={{ width: '40px', height: '40px', background: 'rgba(116,19,220,0.3)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
                   <info.icon size={20} color="#7413dc" />
                 </div>
-                <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '17px', color: '#fff', marginBottom: '8px' }}>{info.title}</h3>
-                {info.details.map((d, i) => <p key={i} style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', margin: '2px 0' }}>{d}</p>)}
+                <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '17px', color: '#1a1a2e', marginBottom: '8px' }}>{info.title}</h3>
+                {info.details.map((d, i) => <p key={i} style={{ fontSize: '13px', color: 'rgba(26,26,46,0.6)', margin: '2px 0' }}>{d}</p>)}
               </div>
             ))}
             {/* Safeguarding note — uses yellow per Scouting standard */}
             <div style={{ background: '#ffe627', borderRadius: '16px', padding: '20px 24px' }}>
-              <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '15px', color: '#003982', marginBottom: '8px' }}>Safeguarding</h3>
-              <p style={{ fontSize: '13px', color: '#003982', lineHeight: 1.6, margin: 0 }}>For safeguarding concerns, please speak directly to a leader or follow our safeguarding procedures. This takes priority over all other contact methods.</p>
+              <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '15px', color: '#1a1a00', marginBottom: '8px' }}>Safeguarding</h3>
+              <p style={{ fontSize: '13px', color: '#1a1a00', lineHeight: 1.6, margin: 0 }}>For safeguarding concerns, please speak directly to a leader or follow our safeguarding procedures. This takes priority over all other contact methods.</p>
             </div>
           </div>
 
           {/* Contact form */}
           <div style={{ ...glassCard, padding: '36px' }}>
-            <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '22px', color: '#fff', marginBottom: '28px' }}>Send us a Message</h2>
+            <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '22px', color: '#1a1a2e', marginBottom: '28px' }}>Send us a Message</h2>
             {submitted ? (
               <div style={{ textAlign: 'center', padding: '40px 0' }}>
-                <CheckCircle size={48} color="#00a794" style={{ marginBottom: '16px' }} />
-                <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '20px', color: '#fff', marginBottom: '8px' }}>Message Sent!</h3>
-                <p style={{ color: 'rgba(255,255,255,0.65)' }}>We'll get back to you as soon as possible.</p>
+                <CheckCircle size={48} color="#7413dc" style={{ marginBottom: '16px' }} />
+                <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '20px', color: '#1a1a2e', marginBottom: '8px' }}>Message Sent!</h3>
+                <p style={{ color: 'rgba(26,26,46,0.6)' }}>We'll get back to you as soon as possible.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit}>

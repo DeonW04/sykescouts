@@ -11,10 +11,8 @@ import FloatingNav from '../components/public/FloatingNav';
 import PublicFooter from '../components/public/PublicFooter';
 
 const glassCard = {
-  background: 'rgba(116,19,220,0.08)',
-  backdropFilter: 'blur(20px) saturate(180%)',
-  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-  border: '0.5px solid rgba(255,255,255,0.2)',
+  background: '#f8f7ff',
+  border: '1px solid rgba(116,19,220,0.12)',
   borderRadius: '20px',
 };
 
@@ -73,21 +71,21 @@ export default function Gallery() {
   const getItemPhotoCount = (item, type) => type === 'meeting' ? allPhotos.filter(p => p.programme_id === item.id).length : allPhotos.filter(p => p.event_id === item.id).length;
 
   const tabBtn = (label, active, onClick) => (
-    <button onClick={onClick} style={{ padding: '8px 20px', borderRadius: '25px', border: '1px solid', borderColor: active ? 'transparent' : 'rgba(255,255,255,0.2)', background: active ? '#7413dc' : 'transparent', color: active ? '#fff' : 'rgba(255,255,255,0.65)', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s' }}>{label}</button>
+    <button onClick={onClick} style={{ padding: '8px 20px', borderRadius: '25px', border: '1px solid', borderColor: active ? 'transparent' : 'rgba(26,26,46,0.2)', background: active ? '#7413dc' : 'transparent', color: active ? '#fff' : 'rgba(26,26,46,0.65)', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s' }}>{label}</button>
   );
 
   return (
-    <div style={{ background: '#002a6e', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ background: '#ffffff', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap');`}</style>
       <SEO title="Gallery | 40th Rochdale (Syke) Scouts" description="View photos from our scout activities, camps, and events." path="/Gallery" />
       <FloatingNav />
 
       {/* Hero */}
-      <section style={{ background: '#003982', padding: '80px 32px 60px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <section style={{ background: '#f8f7ff', padding: '80px 32px 60px', borderBottom: '1px solid rgba(116,19,220,0.1)' }}>
         <div style={{ maxWidth: '800px' }}>
-          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#00a794', marginBottom: '12px' }}>Adventures in pictures</p>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(32px, 5vw, 56px)', color: '#fff', margin: '0 0 16px' }}>{selectedItem ? (selectedItem.title || 'Event Photos') : 'Photo Gallery'}</h1>
-          <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, margin: 0 }}>Browse photos from our adventures.</p>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', marginBottom: '12px' }}>Adventures in pictures</p>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(32px, 5vw, 56px)', color: '#1a1a2e', margin: '0 0 16px' }}>{selectedItem ? (selectedItem.title || 'Event Photos') : 'Photo Gallery'}</h1>
+          <p style={{ fontSize: '17px', color: 'rgba(26,26,46,0.65)', lineHeight: 1.75, margin: 0 }}>Browse photos from our adventures.</p>
         </div>
       </section>
 
@@ -95,7 +93,7 @@ export default function Gallery() {
         {/* Section filter */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', marginBottom: '32px' }}>
           {[{ id: 'all', label: 'All Sections' }, ...['beavers', 'cubs', 'scouts'].map(name => sections.find(s => s.name === name)).filter(Boolean).map(s => ({ id: s.id, label: s.display_name }))].map(opt => (
-            <button key={opt.id} onClick={() => { setSelectedSection(opt.id); setSelectedItem(null); }} style={{ padding: '7px 18px', borderRadius: '25px', border: '1px solid', borderColor: selectedSection === opt.id ? 'transparent' : 'rgba(255,255,255,0.2)', background: selectedSection === opt.id ? '#7413dc' : 'transparent', color: selectedSection === opt.id ? '#fff' : 'rgba(255,255,255,0.65)', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '13px', cursor: 'pointer' }}>
+            <button key={opt.id} onClick={() => { setSelectedSection(opt.id); setSelectedItem(null); }} style={{ padding: '7px 18px', borderRadius: '25px', border: '1px solid', borderColor: selectedSection === opt.id ? 'transparent' : 'rgba(26,26,46,0.2)', background: selectedSection === opt.id ? '#7413dc' : 'transparent', color: selectedSection === opt.id ? '#fff' : 'rgba(26,26,46,0.65)', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '13px', cursor: 'pointer' }}>
               {opt.label}
             </button>
           ))}
@@ -110,18 +108,18 @@ export default function Gallery() {
         </div>
 
         {selectedItem && (
-          <button onClick={() => { setSelectedItem(null); window.history.pushState({}, '', createPageUrl('Gallery') + `?view=${viewParam}`); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.08)', border: '0.5px solid rgba(255,255,255,0.2)', borderRadius: '25px', padding: '8px 18px', color: '#fff', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: '14px', marginBottom: '28px' }}>
+          <button onClick={() => { setSelectedItem(null); window.history.pushState({}, '', createPageUrl('Gallery') + `?view=${viewParam}`); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(116,19,220,0.06)', border: '1px solid rgba(116,19,220,0.15)', borderRadius: '25px', padding: '8px 18px', color: '#7413dc', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: '14px', marginBottom: '28px' }}>
             <ArrowLeft size={16} /> Back
           </button>
         )}
 
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '80px 0' }}><Loader2 size={48} color="#7413dc" style={{ animation: 'spin 1s linear infinite', marginBottom: '12px' }} /><p style={{ color: 'rgba(255,255,255,0.5)' }}>Loading photos...</p></div>
+          <div style={{ textAlign: 'center', padding: '80px 0' }}><Loader2 size={48} color="#7413dc" style={{ animation: 'spin 1s linear infinite', marginBottom: '12px' }} /><p style={{ color: 'rgba(26,26,46,0.5)' }}>Loading photos...</p></div>
         ) : displayPhotos.length === 0 && (view === 'all' || selectedItem) ? (
           <div style={{ ...glassCard, padding: '60px', textAlign: 'center' }}>
-            <ImageIcon size={48} color="rgba(255,255,255,0.2)" style={{ marginBottom: '16px' }} />
-            <h3 style={{ fontFamily: 'Outfit, sans-serif', color: '#fff', marginBottom: '8px' }}>No photos yet</h3>
-            <p style={{ color: 'rgba(255,255,255,0.4)' }}>Check back soon for event photos!</p>
+            <ImageIcon size={48} color="rgba(116,19,220,0.2)" style={{ marginBottom: '16px' }} />
+            <h3 style={{ fontFamily: 'Outfit, sans-serif', color: '#1a1a2e', marginBottom: '8px' }}>No photos yet</h3>
+            <p style={{ color: 'rgba(26,26,46,0.4)' }}>Check back soon for event photos!</p>
           </div>
         ) : view === 'all' || selectedItem ? (
           <>
@@ -161,7 +159,7 @@ export default function Gallery() {
                   <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 60%)' }}>
                     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px' }}>
                       <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '16px', color: '#fff', marginBottom: '4px' }}>{item.title}</h3>
-                      <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', margin: 0 }}>{count} photos</p>
+                      <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)', margin: 0 }}>{count} photos</p>
                     </div>
                   </div>
                 </motion.div>
@@ -174,9 +172,9 @@ export default function Gallery() {
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-4xl p-0">
           {lightboxPhoto && (
-            <div style={{ background: '#002a6e' }}>
+            <div style={{ background: '#1a1a2e' }}>
               <img src={lightboxPhoto.file_url} alt={lightboxPhoto.caption || ''} style={{ width: '100%', maxHeight: '80vh', objectFit: 'contain', display: 'block' }} />
-              {lightboxPhoto.caption && <div style={{ padding: '16px 24px', background: '#002a6e' }}><p style={{ color: '#fff', fontFamily: 'DM Sans, sans-serif', margin: 0 }}>{lightboxPhoto.caption}</p></div>}
+              {lightboxPhoto.caption && <div style={{ padding: '16px 24px', background: '#1a1a2e' }}><p style={{ color: '#fff', fontFamily: 'DM Sans, sans-serif', margin: 0 }}>{lightboxPhoto.caption}</p></div>}
             </div>
           )}
         </DialogContent>

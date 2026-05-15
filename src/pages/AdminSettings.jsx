@@ -28,12 +28,14 @@ import OSMOverview from '../components/admin/OSMOverview';
 import OSMBadgeAwardSync from '../components/admin/OSMBadgeAwardSync';
 import SectionSettingsTab from '../components/admin/SectionSettingsTab';
 import AdminTermsTab from '../components/admin/AdminTermsTab';
+import PublicWebsiteSettings from '../components/admin/PublicWebsiteSettings';
 
 const NAV_ITEMS = [
   { key: 'users',          label: 'User Management',    icon: Users,    group: 'People' },
   { key: 'leaders',        label: 'Leader Management',  icon: Shield,   group: 'People' },
   { key: 'sections',       label: 'Section Settings',   icon: Users,    group: 'People' },
   { key: 'terms',          label: 'Terms',              icon: Calendar, group: 'People' },
+  { key: 'website',        label: 'Public Website',     icon: Image,    group: 'Content' },
   { key: 'images',         label: 'Website Images',     icon: Image,    group: 'Content' },
   { key: 'badges',         label: 'Badge System',       icon: Award,    group: 'Content' },
   { key: 'uniform',        label: 'Uniform Guide',      icon: Shield,   group: 'Content' },
@@ -332,6 +334,11 @@ export default function AdminSettings() {
               {/* ── Terms ── */}
               <TabsContent value="terms">
                 <AdminTermsTab />
+              </TabsContent>
+
+              {/* ── Public Website Settings ── */}
+              <TabsContent value="website">
+                <PublicWebsiteSettings />
               </TabsContent>
 
               {/* ── Website Images ── */}

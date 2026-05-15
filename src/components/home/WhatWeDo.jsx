@@ -29,8 +29,9 @@ export default function WhatWeDo() {
     try {
       const configs = await base44.entities.WebsiteImage.filter({ page: 'activities' });
       if (configs.length > 0) {
-        setActivities(configs.map(c => ({
-          title: c.label || c.title || 'Activity',
+        const sorted = [...configs].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        setActivities(sorted.map(c => ({
+          title: c.title || c.label || 'Activity',
           description: c.description || '',
           image_url: c.image_url || '',
         })));

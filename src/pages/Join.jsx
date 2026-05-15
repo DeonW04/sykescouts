@@ -8,10 +8,10 @@ import PublicFooter from '../components/public/PublicFooter';
 
 const inputStyle = {
   width: '100%',
-  background: 'rgba(255,255,255,0.08)',
-  border: '0.5px solid rgba(255,255,255,0.2)',
+  background: '#fff',
+  border: '1px solid rgba(116,19,220,0.2)',
   borderRadius: '10px',
-  color: '#fff',
+  color: '#1a1a2e',
   padding: '12px 16px',
   fontSize: '15px',
   fontFamily: 'DM Sans, sans-serif',
@@ -23,15 +23,13 @@ const labelStyle = {
   display: 'block',
   fontFamily: 'DM Sans, sans-serif',
   fontSize: '13px',
-  color: 'rgba(255,255,255,0.6)',
+  color: 'rgba(26,26,46,0.6)',
   marginBottom: '6px',
 };
 
 const glassCard = {
-  background: 'rgba(116,19,220,0.08)',
-  backdropFilter: 'blur(20px) saturate(180%)',
-  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-  border: '0.5px solid rgba(255,255,255,0.2)',
+  background: '#f8f7ff',
+  border: '1px solid rgba(116,19,220,0.12)',
   borderRadius: '24px',
   padding: '40px',
 };
@@ -70,35 +68,35 @@ export default function Join() {
 
   if (submitted) {
     return (
-      <div style={{ background: '#002a6e', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#ffffff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <FloatingNav />
         <div style={{ ...glassCard, maxWidth: '480px', textAlign: 'center' }}>
-          <CheckCircle size={56} color="#00a794" style={{ marginBottom: '20px' }} />
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '28px', color: '#fff', marginBottom: '12px' }}>Thank You!</h1>
-          <p style={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.75 }}>Your registration has been submitted. We'll review your information and be in touch soon about availability and next steps.</p>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginTop: '12px' }}>Submitting this form registers your interest. A place is not confirmed until you hear from us.</p>
+          <CheckCircle size={56} color="#7413dc" style={{ marginBottom: '20px' }} />
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '28px', color: '#1a1a2e', marginBottom: '12px' }}>Thank You!</h1>
+          <p style={{ color: 'rgba(26,26,46,0.65)', lineHeight: 1.75 }}>Your registration has been submitted. We'll review your information and be in touch soon about availability and next steps.</p>
+          <p style={{ color: 'rgba(26,26,46,0.4)', fontSize: '13px', marginTop: '12px' }}>Submitting this form registers your interest. A place is not confirmed until you hear from us.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ background: '#002a6e', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ background: '#ffffff', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap');
-        input::placeholder, textarea::placeholder, select option { color: rgba(255,255,255,0.3); }
-        input:focus, textarea:focus, select:focus { border-color: rgba(116,19,220,0.5) !important; box-shadow: 0 0 0 2px rgba(116,19,220,0.2); }
-        select option { background: #003982; color: #fff; }
+        input::placeholder, textarea::placeholder { color: rgba(26,26,46,0.35); }
+        input:focus, textarea:focus, select:focus { border-color: rgba(116,19,220,0.5) !important; box-shadow: 0 0 0 2px rgba(116,19,220,0.15); }
+        select option { background: #fff; color: #1a1a2e; }
       `}</style>
       <SEO title="Join Scouts | 40th Rochdale (Syke) Scouts" description="Register your child's interest in joining Scouts." path="/Join" />
       <FloatingNav />
 
       {/* Hero */}
-      <section style={{ background: '#003982', padding: '80px 32px 60px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <section style={{ background: '#f8f7ff', padding: '80px 32px 60px', borderBottom: '1px solid rgba(116,19,220,0.1)' }}>
         <div style={{ maxWidth: '800px' }}>
-          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#00a794', marginBottom: '12px' }}>For parents</p>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(32px, 5vw, 56px)', color: '#fff', margin: '0 0 16px' }}>Join Scouts</h1>
-          <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, maxWidth: '560px', margin: 0 }}>Register your child's interest and start their scouting adventure.</p>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', marginBottom: '12px' }}>For parents</p>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(32px, 5vw, 56px)', color: '#1a1a2e', margin: '0 0 16px' }}>Join Scouts</h1>
+          <p style={{ fontSize: '17px', color: 'rgba(26,26,46,0.65)', lineHeight: 1.75, maxWidth: '560px', margin: 0 }}>Register your child's interest and start their scouting adventure.</p>
         </div>
       </section>
 
@@ -110,13 +108,13 @@ export default function Join() {
               <Users size={22} color="#fff" />
             </div>
             <div>
-              <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '22px', color: '#fff', margin: 0 }}>Child Registration</h2>
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', margin: 0 }}>Register your interest in joining</p>
+              <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '22px', color: '#1a1a2e', margin: 0 }}>Child Registration</h2>
+              <p style={{ color: 'rgba(26,26,46,0.5)', fontSize: '13px', margin: 0 }}>Register your interest in joining</p>
             </div>
           </div>
 
           <form onSubmit={handleSubmit}>
-            <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '14px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', paddingBottom: '12px', borderBottom: '0.5px solid rgba(255,255,255,0.1)', marginBottom: '20px' }}>Child's Details</p>
+            <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '14px', color: 'rgba(26,26,46,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', paddingBottom: '12px', borderBottom: '1px solid rgba(116,19,220,0.1)', marginBottom: '20px' }}>Child's Details</p>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
               <div><label style={labelStyle}>Child's Full Name *</label><input style={inputStyle} value={formData.child_name} onChange={set('child_name')} required placeholder="Full name" /></div>
@@ -131,7 +129,7 @@ export default function Join() {
               </select>
             </div>
 
-            <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '14px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', paddingBottom: '12px', borderBottom: '0.5px solid rgba(255,255,255,0.1)', marginBottom: '20px' }}>Parent / Guardian Details</p>
+            <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '14px', color: 'rgba(26,26,46,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', paddingBottom: '12px', borderBottom: '1px solid rgba(116,19,220,0.1)', marginBottom: '20px' }}>Parent / Guardian Details</p>
 
             <div style={{ marginBottom: '16px' }}><label style={labelStyle}>Parent/Guardian Name *</label><input style={inputStyle} value={formData.parent_name} onChange={set('parent_name')} required placeholder="Full name" /></div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
@@ -140,23 +138,23 @@ export default function Join() {
             </div>
             <div style={{ marginBottom: '24px' }}><label style={labelStyle}>Home Address</label><textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={formData.address} onChange={set('address')} placeholder="Full address including postcode" /></div>
 
-            <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '14px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', paddingBottom: '12px', borderBottom: '0.5px solid rgba(255,255,255,0.1)', marginBottom: '20px' }}>Additional Information</p>
+            <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '14px', color: 'rgba(26,26,46,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', paddingBottom: '12px', borderBottom: '1px solid rgba(116,19,220,0.1)', marginBottom: '20px' }}>Additional Information</p>
 
             <div style={{ marginBottom: '16px' }}><label style={labelStyle}>Medical Conditions / Allergies</label><textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={formData.medical_info} onChange={set('medical_info')} placeholder="Any medical conditions, allergies, or dietary requirements" /></div>
             <div style={{ marginBottom: '20px' }}><label style={labelStyle}>Anything Else We Should Know?</label><textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={formData.additional_info} onChange={set('additional_info')} placeholder="Any other information" /></div>
 
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', marginBottom: '28px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '16px', background: 'rgba(116,19,220,0.04)', borderRadius: '12px', marginBottom: '28px', border: '1px solid rgba(116,19,220,0.1)' }}>
               <input type="checkbox" id="consent_photos" checked={formData.consent_photos} onChange={e => setFormData({ ...formData, consent_photos: e.target.checked })} style={{ marginTop: '2px', accentColor: '#7413dc' }} />
               <div>
-                <label htmlFor="consent_photos" style={{ ...labelStyle, marginBottom: '4px', color: 'rgba(255,255,255,0.8)', cursor: 'pointer' }}>Photo Consent</label>
-                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>I give permission for photos of my child to be taken and used on the group's website and social media channels.</p>
+                <label htmlFor="consent_photos" style={{ ...labelStyle, marginBottom: '4px', color: 'rgba(26,26,46,0.8)', cursor: 'pointer' }}>Photo Consent</label>
+                <p style={{ fontSize: '12px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>I give permission for photos of my child to be taken and used on the group's website and social media channels.</p>
               </div>
             </div>
 
             <button type="submit" disabled={submitting} style={{ width: '100%', background: '#7413dc', color: '#fff', border: 'none', borderRadius: '30px', padding: '14px 28px', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '15px', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
               {submitting ? 'Submitting...' : <><span>Submit Registration</span><ArrowRight size={18} /></>}
             </button>
-            <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.35)', marginTop: '16px' }}>By submitting this form, you're registering your interest. We'll be in touch to discuss availability and next steps.</p>
+            <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(26,26,46,0.4)', marginTop: '16px' }}>By submitting this form, you're registering your interest. We'll be in touch to discuss availability and next steps.</p>
           </form>
         </div>
       </section>
