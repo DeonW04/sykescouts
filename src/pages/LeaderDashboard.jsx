@@ -4,26 +4,39 @@ import { createPageUrl } from '../utils';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { useSectionContext } from '../components/leader/SectionContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, Mail, Settings, ArrowRight, Tent, ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt, Lightbulb, Package, TrendingUp, FileText, Landmark, BookOpen } from 'lucide-react';
+import {
+  Users, Calendar, Award, Mail, Settings, ArrowRight, Tent,
+  ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt,
+  Lightbulb, Package, TrendingUp, FileText, Landmark, BookOpen,
+  LayoutDashboard, Star, Zap,
+} from 'lucide-react';
 import ActionsDrilldownModal from '../components/leader/ActionsDrilldownModal';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 
+// ── Shared card style ──────────────────────────────────────────────────────────
+const glassCard = {
+  background: 'rgba(255,255,255,0.85)',
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+  border: '1px solid rgba(116,19,220,0.1)',
+  borderRadius: '20px',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+};
+
+// ── Sub-components ─────────────────────────────────────────────────────────────
 
 const UpcomingMeetings = ({ sections, selectedSection }) => {
   const navigate = useNavigate();
   const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
   const sectionIds = filteredSections.map(s => s.id);
-  
+
   const { data: programmes = [] } = useQuery({
     queryKey: ['upcoming-programmes', sectionIds],
     queryFn: async () => {
       if (sectionIds.length === 0) return [];
-      const allProgrammes = await base44.entities.Programme.filter({});
-      return allProgrammes
+      const all = await base44.entities.Programme.filter({});
+      return all
         .filter(p => sectionIds.includes(p.section_id) && new Date(p.date) >= new Date())
         .sort((a, b) => new Date(a.date) - new Date(b.date))
         .slice(0, 5);
@@ -32,86 +45,53 @@ const UpcomingMeetings = ({ sections, selectedSection }) => {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Upcoming Meetings</CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => navigate(createPageUrl('LeaderProgramme'))}>
-            View All <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
+    <div style={glassCard}>
+      <div style={{ padding: '24px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '32px', height: '32px', background: 'rgba(116,19,220,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Calendar size={16} color="#7413dc" />
+          </div>
+          <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '16px', color: '#1a1a2e', margin: 0 }}>Upcoming Meetings</h3>
         </div>
-      </CardHeader>
-      <CardContent>
+        <button
+          onClick={() => navigate(createPageUrl('LeaderProgramme'))}
+          style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#7413dc', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}
+        >
+          View all <ArrowRight size={13} />
+        </button>
+      </div>
+      <div style={{ padding: '16px 24px 24px' }}>
         {programmes.length === 0 ? (
-          <p className="text-gray-500 text-sm">No upcoming meetings scheduled</p>
+          <p style={{ color: 'rgba(26,26,46,0.4)', fontSize: '14px', fontFamily: 'DM Sans, sans-serif' }}>No upcoming meetings scheduled</p>
         ) : (
-          <div className="space-y-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {programmes.map(p => {
               const section = sections.find(s => s.id === p.section_id);
               return (
                 <div
                   key={p.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                   onClick={() => navigate(createPageUrl('MeetingDetail') + `?sectionId=${p.section_id}&date=${p.date}`)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '12px 14px', borderRadius: '12px', cursor: 'pointer',
+                    background: 'rgba(116,19,220,0.03)', border: '1px solid rgba(116,19,220,0.07)',
+                    transition: 'background 0.2s',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(116,19,220,0.08)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'rgba(116,19,220,0.03)'}
                 >
                   <div>
-                    <p className="font-medium">{p.title}</p>
-                    <p className="text-sm text-gray-600">
-                      {section?.display_name} • {format(new Date(p.date), 'EEE, MMM d')}
+                    <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '14px', color: '#1a1a2e', margin: 0 }}>{p.title}</p>
+                    <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.5)', margin: '2px 0 0' }}>
+                      {section?.display_name} · {format(new Date(p.date), 'EEE, d MMM')}
                     </p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400" />
+                  <ArrowRight size={14} color="rgba(116,19,220,0.4)" />
                 </div>
               );
             })}
           </div>
         )}
-      </CardContent>
-    </Card>
-  );
-};
-
-const BadgesDue = ({ sections, selectedSection }) => {
-  const navigate = useNavigate();
-  const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
-  const sectionIds = filteredSections.map(s => s.id);
-
-  const { data: members = [] } = useQuery({
-    queryKey: ['members'],
-    queryFn: () => base44.entities.Member.filter({ active: true }),
-  });
-
-  const { data: awards = [] } = useQuery({
-    queryKey: ['awards'],
-    queryFn: () => base44.entities.MemberBadgeAward.filter({ award_status: 'pending' }),
-  });
-
-  const relevantAwards = awards.filter(a => {
-    const member = members.find(m => m.id === a.member_id);
-    return member && sectionIds.includes(member.section_id);
-  });
-
-  const uniqueMembers = new Set(relevantAwards.map(a => a.member_id)).size;
-
-  if (relevantAwards.length === 0) return null;
-
-  return (
-    <div
-      className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl px-4 py-3 cursor-pointer hover:from-green-100 hover:to-emerald-100 transition-colors"
-      onClick={() => navigate(createPageUrl('AwardBadges'))}
-    >
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0">
-          <Award className="w-4 h-4 text-white" />
-        </div>
-        <div>
-          <p className="font-semibold text-gray-900 text-sm">Badges Ready to Award</p>
-          <p className="text-xs text-gray-500">{uniqueMembers} {uniqueMembers === 1 ? 'member' : 'members'} waiting</p>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-2xl font-bold text-green-600">{relevantAwards.length}</span>
-        <ArrowRight className="w-4 h-4 text-green-500" />
       </div>
     </div>
   );
@@ -126,8 +106,8 @@ const UpcomingEvents = ({ sections, selectedSection }) => {
     queryKey: ['upcoming-events-dashboard', sectionIds],
     queryFn: async () => {
       if (sectionIds.length === 0) return [];
-      const allEvents = await base44.entities.Event.filter({});
-      return allEvents
+      const all = await base44.entities.Event.filter({});
+      return all
         .filter(e => e.section_ids?.some(sid => sectionIds.includes(sid)) && new Date(e.start_date) >= new Date())
         .sort((a, b) => new Date(a.start_date) - new Date(b.start_date))
         .slice(0, 4);
@@ -136,40 +116,100 @@ const UpcomingEvents = ({ sections, selectedSection }) => {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Upcoming Events</CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => navigate(createPageUrl('LeaderEvents'))}>
-            View All <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
+    <div style={glassCard}>
+      <div style={{ padding: '24px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '32px', height: '32px', background: 'rgba(116,19,220,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Tent size={16} color="#7413dc" />
+          </div>
+          <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '16px', color: '#1a1a2e', margin: 0 }}>Upcoming Events</h3>
         </div>
-      </CardHeader>
-      <CardContent>
+        <button
+          onClick={() => navigate(createPageUrl('LeaderEvents'))}
+          style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#7413dc', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}
+        >
+          View all <ArrowRight size={13} />
+        </button>
+      </div>
+      <div style={{ padding: '16px 24px 24px' }}>
         {events.length === 0 ? (
-          <p className="text-gray-500 text-sm">No upcoming events</p>
+          <p style={{ color: 'rgba(26,26,46,0.4)', fontSize: '14px', fontFamily: 'DM Sans, sans-serif' }}>No upcoming events</p>
         ) : (
-          <div className="space-y-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {events.map(e => (
               <div
                 key={e.id}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                 onClick={() => navigate(createPageUrl('EventDetail') + `?id=${e.id}`)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '12px',
+                  padding: '12px 14px', borderRadius: '12px', cursor: 'pointer',
+                  background: 'rgba(116,19,220,0.03)', border: '1px solid rgba(116,19,220,0.07)',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={el => el.currentTarget.style.background = 'rgba(116,19,220,0.08)'}
+                onMouseLeave={el => el.currentTarget.style.background = 'rgba(116,19,220,0.03)'}
               >
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Tent className="w-4 h-4 text-purple-600" />
+                <div style={{ width: '34px', height: '34px', background: 'rgba(116,19,220,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Tent size={16} color="#7413dc" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{e.title}</p>
-                  <p className="text-xs text-gray-500">{format(new Date(e.start_date), 'EEE, d MMM yyyy')} · {e.type}</p>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '14px', color: '#1a1a2e', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</p>
+                  <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.5)', margin: '2px 0 0' }}>{format(new Date(e.start_date), 'EEE, d MMM yyyy')} · {e.type}</p>
                 </div>
-                <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <ArrowRight size={14} color="rgba(116,19,220,0.4)" style={{ flexShrink: 0 }} />
               </div>
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
+  );
+};
+
+const BadgesDue = ({ sections, selectedSection }) => {
+  const navigate = useNavigate();
+  const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
+  const sectionIds = filteredSections.map(s => s.id);
+
+  const { data: members = [] } = useQuery({ queryKey: ['members'], queryFn: () => base44.entities.Member.filter({ active: true }) });
+  const { data: awards = [] } = useQuery({ queryKey: ['awards'], queryFn: () => base44.entities.MemberBadgeAward.filter({ award_status: 'pending' }) });
+
+  const relevantAwards = awards.filter(a => {
+    const member = members.find(m => m.id === a.member_id);
+    return member && sectionIds.includes(member.section_id);
+  });
+
+  const uniqueMembers = new Set(relevantAwards.map(a => a.member_id)).size;
+  if (relevantAwards.length === 0) return null;
+
+  return (
+    <div
+      onClick={() => navigate(createPageUrl('AwardBadges'))}
+      style={{
+        ...glassCard,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '16px 20px', cursor: 'pointer',
+        background: 'linear-gradient(135deg, rgba(34,197,94,0.08) 0%, rgba(16,185,129,0.08) 100%)',
+        border: '1px solid rgba(34,197,94,0.2)',
+        transition: 'background 0.2s',
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = 'linear-gradient(135deg, rgba(34,197,94,0.14) 0%, rgba(16,185,129,0.14) 100%)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'linear-gradient(135deg, rgba(34,197,94,0.08) 0%, rgba(16,185,129,0.08) 100%)'}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ width: '36px', height: '36px', background: '#22c55e', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Award size={18} color="#fff" />
+        </div>
+        <div>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '14px', color: '#1a1a2e', margin: 0 }}>Badges Ready to Award</p>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.5)', margin: '2px 0 0' }}>{uniqueMembers} {uniqueMembers === 1 ? 'member' : 'members'} waiting</p>
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '26px', color: '#22c55e' }}>{relevantAwards.length}</span>
+        <ArrowRight size={14} color="#22c55e" />
+      </div>
+    </div>
   );
 };
 
@@ -184,7 +224,6 @@ const ActionsStatus = ({ sections, selectedSection }) => {
       if (sectionIds.length === 0) return null;
       const now = new Date();
       const sevenDays = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
       const [allActions, allAssignments, allResponses, allEvents, allProgrammes] = await Promise.all([
         base44.entities.ActionRequired.filter({}),
         base44.entities.ActionAssignment.filter({}),
@@ -192,64 +231,41 @@ const ActionsStatus = ({ sections, selectedSection }) => {
         base44.entities.Event.filter({}),
         base44.entities.Programme.filter({}),
       ]);
-
       const relevantActions = allActions.filter(a => {
         if (!a.is_open) return false;
         if (a.event_id) {
           const ev = allEvents.find(e => e.id === a.event_id);
-          if (!ev) return false;
-          if (new Date(ev.start_date) < now) return false;
+          if (!ev || new Date(ev.start_date) < now) return false;
           return ev.section_ids?.some(sid => sectionIds.includes(sid));
         }
         if (a.programme_id) {
           const prog = allProgrammes.find(p => p.id === a.programme_id);
-          if (!prog) return false;
-          if (new Date(prog.date) < now) return false;
+          if (!prog || new Date(prog.date) < now) return false;
           return sectionIds.includes(prog.section_id);
         }
         return false;
       });
-
       const actionIds = relevantActions.map(a => a.id);
       const relevantAssignments = allAssignments.filter(a => actionIds.includes(a.action_required_id));
       const relevantResponses = allResponses.filter(r => actionIds.includes(r.action_required_id) && r.response_value);
-
       const respondedPairs = new Set(relevantResponses.map(r => `${r.action_required_id}:${r.member_id}`));
-      const unrespondedAssignments = relevantAssignments.filter(
-        a => !respondedPairs.has(`${a.action_required_id}:${a.member_id}`)
-      );
-
+      const unrespondedAssignments = relevantAssignments.filter(a => !respondedPairs.has(`${a.action_required_id}:${a.member_id}`));
       const unrespondedMemberIds = new Set(unrespondedAssignments.map(a => a.member_id));
       const closingSoon = relevantActions.filter(a => a.deadline && new Date(a.deadline) <= sevenDays && new Date(a.deadline) >= now);
-      const responseRate = relevantAssignments.length > 0
-        ? Math.round((relevantResponses.length / relevantAssignments.length) * 100)
-        : 100;
-
-      const attendanceActions = relevantActions.filter(a => a.action_purpose === 'attendance').length;
-      const consentActions = relevantActions.filter(a => a.action_purpose === 'consent' || a.action_purpose === 'consent_form').length;
-      const volunteerActions = relevantActions.filter(a => a.action_purpose === 'volunteer').length;
-
+      const responseRate = relevantAssignments.length > 0 ? Math.round((relevantResponses.length / relevantAssignments.length) * 100) : 100;
       const allMembers = await base44.entities.Member.filter({ active: true });
-
       return {
-        totalActions: relevantActions.length,
-        totalAssignments: relevantAssignments.length,
-        responded: relevantResponses.length,
+        totalActions: relevantActions.length, responseRate,
         unresponded: unrespondedAssignments.length,
         unrespondedMembers: unrespondedMemberIds.size,
         closingSoon: closingSoon.length,
-        responseRate,
-        attendanceActions,
-        consentActions,
-        volunteerActions,
-        _relevantActions: relevantActions,
-        _relevantAssignments: relevantAssignments,
-        _relevantResponses: relevantResponses,
-        _closingSoonActions: closingSoon,
-        _unrespondedAssignments: unrespondedAssignments,
-        _allMembers: allMembers,
-        _allEvents: allEvents,
-        _allProgrammes: allProgrammes,
+        attendanceActions: relevantActions.filter(a => a.action_purpose === 'attendance').length,
+        consentActions: relevantActions.filter(a => a.action_purpose === 'consent' || a.action_purpose === 'consent_form').length,
+        volunteerActions: relevantActions.filter(a => a.action_purpose === 'volunteer').length,
+        _relevantActions: relevantActions, _relevantAssignments: relevantAssignments,
+        _relevantResponses: relevantResponses, _closingSoonActions: closingSoon,
+        _unrespondedAssignments: unrespondedAssignments, _allMembers: allMembers,
+        _allEvents: allEvents, _allProgrammes: allProgrammes,
       };
     },
     enabled: sectionIds.length > 0,
@@ -258,98 +274,134 @@ const ActionsStatus = ({ sections, selectedSection }) => {
   if (isLoading || !stats) return null;
 
   const drilldownData = {
-    relevantActions: stats._relevantActions || [],
-    relevantAssignments: stats._relevantAssignments || [],
-    relevantResponses: stats._relevantResponses || [],
-    closingSoonActions: stats._closingSoonActions || [],
-    unrespondedAssignments: stats._unrespondedAssignments || [],
-    allMembers: stats._allMembers || [],
-    allEvents: stats._allEvents || [],
-    allProgrammes: stats._allProgrammes || [],
+    relevantActions: stats._relevantActions || [], relevantAssignments: stats._relevantAssignments || [],
+    relevantResponses: stats._relevantResponses || [], closingSoonActions: stats._closingSoonActions || [],
+    unrespondedAssignments: stats._unrespondedAssignments || [], allMembers: stats._allMembers || [],
+    allEvents: stats._allEvents || [], allProgrammes: stats._allProgrammes || [],
   };
 
   const statCards = [
-    { label: 'Active Actions', value: stats.totalActions, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', drilldownType: 'totalActions' },
-    { label: 'Response Rate', value: `${stats.responseRate}%`, color: stats.responseRate >= 75 ? 'text-green-600' : stats.responseRate >= 50 ? 'text-orange-500' : 'text-red-500', bg: stats.responseRate >= 75 ? 'bg-green-50' : stats.responseRate >= 50 ? 'bg-orange-50' : 'bg-red-50', border: stats.responseRate >= 75 ? 'border-green-200' : stats.responseRate >= 50 ? 'border-orange-200' : 'border-red-200' },
-    { label: 'Awaiting Response', value: stats.unresponded, color: stats.unresponded === 0 ? 'text-green-600' : 'text-orange-500', bg: stats.unresponded === 0 ? 'bg-green-50' : 'bg-orange-50', border: stats.unresponded === 0 ? 'border-green-200' : 'border-orange-200', drilldownType: 'unresponded' },
-    { label: 'Members Outstanding', value: stats.unrespondedMembers, color: stats.unrespondedMembers === 0 ? 'text-green-600' : 'text-red-500', bg: stats.unrespondedMembers === 0 ? 'bg-green-50' : 'bg-red-50', border: stats.unrespondedMembers === 0 ? 'border-green-200' : 'border-red-200', drilldownType: 'unrespondedMembers' },
-    { label: 'Closing Within 7 Days', value: stats.closingSoon, color: stats.closingSoon > 0 ? 'text-amber-600' : 'text-gray-500', bg: stats.closingSoon > 0 ? 'bg-amber-50' : 'bg-gray-50', border: stats.closingSoon > 0 ? 'border-amber-200' : 'border-gray-200', drilldownType: 'closingSoon' },
-    { label: 'Attendance Actions', value: stats.attendanceActions, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200', drilldownType: 'attendanceActions' },
-    { label: 'Consent Actions', value: stats.consentActions, color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-teal-200', drilldownType: 'consentActions' },
-    { label: 'Volunteer Requests', value: stats.volunteerActions, color: 'text-pink-600', bg: 'bg-pink-50', border: 'border-pink-200', drilldownType: 'volunteerActions' },
+    { label: 'Active Actions', value: stats.totalActions, color: '#7413dc', bg: 'rgba(116,19,220,0.07)', drilldownType: 'totalActions' },
+    { label: 'Response Rate', value: `${stats.responseRate}%`, color: stats.responseRate >= 75 ? '#22c55e' : stats.responseRate >= 50 ? '#f97316' : '#ef4444', bg: stats.responseRate >= 75 ? 'rgba(34,197,94,0.07)' : stats.responseRate >= 50 ? 'rgba(249,115,22,0.07)' : 'rgba(239,68,68,0.07)' },
+    { label: 'Awaiting Response', value: stats.unresponded, color: stats.unresponded === 0 ? '#22c55e' : '#f97316', bg: stats.unresponded === 0 ? 'rgba(34,197,94,0.07)' : 'rgba(249,115,22,0.07)', drilldownType: 'unresponded' },
+    { label: 'Members Outstanding', value: stats.unrespondedMembers, color: stats.unrespondedMembers === 0 ? '#22c55e' : '#ef4444', bg: stats.unrespondedMembers === 0 ? 'rgba(34,197,94,0.07)' : 'rgba(239,68,68,0.07)', drilldownType: 'unrespondedMembers' },
+    { label: 'Closing in 7 Days', value: stats.closingSoon, color: stats.closingSoon > 0 ? '#f59e0b' : 'rgba(26,26,46,0.4)', bg: stats.closingSoon > 0 ? 'rgba(245,158,11,0.07)' : 'rgba(26,26,46,0.03)', drilldownType: 'closingSoon' },
+    { label: 'Attendance', value: stats.attendanceActions, color: '#6366f1', bg: 'rgba(99,102,241,0.07)', drilldownType: 'attendanceActions' },
+    { label: 'Consent', value: stats.consentActions, color: '#14b8a6', bg: 'rgba(20,184,166,0.07)', drilldownType: 'consentActions' },
+    { label: 'Volunteer', value: stats.volunteerActions, color: '#ec4899', bg: 'rgba(236,72,153,0.07)', drilldownType: 'volunteerActions' },
   ];
 
   return (
     <>
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-            <Mail className="w-4 h-4 text-blue-600" />
+      <div style={glassCard}>
+        <div style={{ padding: '24px 24px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '32px', height: '32px', background: 'rgba(116,19,220,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Zap size={16} color="#7413dc" />
           </div>
           <div>
-            <CardTitle>Actions Required — Status</CardTitle>
-            <p className="text-xs text-gray-400 mt-0.5">Active actions for upcoming meetings & events only · click a card for details</p>
+            <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '16px', color: '#1a1a2e', margin: 0 }}>Actions Required</h3>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.4)', margin: '2px 0 0' }}>Active actions for upcoming meetings & events · click a card for details</p>
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        {stats.totalActions === 0 ? (
-          <p className="text-gray-500 text-sm">No active actions for upcoming sessions</p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {statCards.map(stat => (
-              <button
-                key={stat.label}
-                onClick={() => stat.drilldownType ? setDrilldown(stat.drilldownType) : null}
-                className={`${stat.bg} border ${stat.border} rounded-xl p-3 text-center ${stat.drilldownType ? 'hover:opacity-80 cursor-pointer transition-opacity' : 'cursor-default'}`}
-              >
-                <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-                <p className="text-xs text-gray-500 mt-1 leading-tight">{stat.label}</p>
-              </button>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-    <ActionsDrilldownModal
-      open={!!drilldown}
-      onClose={() => setDrilldown(null)}
-      type={drilldown}
-      data={drilldownData}
-    />
+        <div style={{ padding: '16px 24px 24px' }}>
+          {stats.totalActions === 0 ? (
+            <p style={{ color: 'rgba(26,26,46,0.4)', fontSize: '14px', fontFamily: 'DM Sans, sans-serif' }}>No active actions for upcoming sessions</p>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+              {statCards.map(stat => (
+                <button
+                  key={stat.label}
+                  onClick={() => stat.drilldownType ? setDrilldown(stat.drilldownType) : null}
+                  style={{
+                    background: stat.bg, borderRadius: '14px', padding: '14px 12px',
+                    textAlign: 'center', border: 'none', cursor: stat.drilldownType ? 'pointer' : 'default',
+                    transition: 'transform 0.15s ease',
+                  }}
+                  onMouseEnter={e => { if (stat.drilldownType) e.currentTarget.style.transform = 'scale(1.03)'; }}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                >
+                  <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '24px', color: stat.color, margin: 0 }}>{stat.value}</p>
+                  <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(26,26,46,0.5)', margin: '4px 0 0', lineHeight: 1.3 }}>{stat.label}</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      <ActionsDrilldownModal open={!!drilldown} onClose={() => setDrilldown(null)} type={drilldown} data={drilldownData} />
     </>
   );
 };
 
+// ── Quick action tiles ─────────────────────────────────────────────────────────
+const quickActions = (user) => [
+  {
+    icon: Users, label: 'Members', accent: '#3b82f6',
+    dropdown: [
+      { label: 'Member Details', page: 'LeaderMembers', icon: Users },
+      { label: 'Attendance', page: 'LeaderAttendance', icon: UserCheck },
+      { label: 'Parent Portal', page: 'ParentPortal', icon: Users },
+    ],
+  },
+  {
+    icon: Calendar, label: 'Programme', accent: '#7413dc',
+    dropdown: [
+      { label: 'Weekly Meetings', page: 'LeaderProgramme', icon: Calendar },
+      { label: 'Events', page: 'LeaderEvents', icon: CalendarDays },
+      { label: 'Ideas Board', page: 'IdeasBoard', icon: Lightbulb },
+    ],
+  },
+  {
+    icon: ShieldAlert, label: 'Safety', accent: '#f97316',
+    dropdown: [
+      { label: 'Risk Assessments', page: 'RiskAssessments', icon: ShieldAlert },
+      { label: 'Consent Forms', page: 'ConsentForms', icon: FileText },
+    ],
+  },
+  {
+    icon: Award, label: 'Badges', accent: '#22c55e',
+    dropdown: [
+      { label: 'Badge Tracking', page: 'LeaderBadges', icon: Award },
+      { label: 'Due Badges', page: 'AwardBadges', icon: TrendingUp },
+      { label: 'Badge Stock', page: 'BadgeStockManagement', icon: Package },
+      ...(user?.role === 'admin' ? [{ label: 'Manage Badges', page: 'ManageBadges', icon: Settings, separator: true }] : []),
+    ],
+  },
+  {
+    icon: BookOpen, label: 'Section Admin', accent: '#14b8a6',
+    dropdown: [
+      { label: 'Communications', page: 'Communications', icon: Mail },
+      { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark },
+      ...(['admin', 'treasurer', 'glv', 'team_leader'].includes(user?.role) ? [{ label: 'Treasurer Portal', page: 'TreasurerDashboard', icon: Landmark, separator: true }] : []),
+    ],
+  },
+  { icon: Image, label: 'Gallery', accent: '#ec4899', page: 'LeaderGallery' },
+];
+
+// ── Main page ──────────────────────────────────────────────────────────────────
 export default function LeaderDashboard() {
   const [user, setUser] = useState(null);
   const [leader, setLeader] = useState(null);
   const { selectedSection } = useSectionContext();
 
-  useEffect(() => {
-    loadUserData();
-  }, []);
+  useEffect(() => { loadUserData(); }, []);
 
   const loadUserData = async () => {
     const currentUser = await base44.auth.me();
     setUser(currentUser);
-
     if (currentUser.role !== 'admin') {
       const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
-      if (leaders.length > 0) {
-        setLeader(leaders[0]);
-      }
+      if (leaders.length > 0) setLeader(leaders[0]);
     }
   };
 
   const { data: sections = [] } = useQuery({
     queryKey: ['sections', leader],
     queryFn: async () => {
-      const allSections = await base44.entities.Section.filter({ active: true });
-      if (user?.role === 'admin') return allSections;
+      const all = await base44.entities.Section.filter({ active: true });
+      if (user?.role === 'admin') return all;
       if (!leader) return [];
-      return allSections.filter(s => leader.section_ids?.includes(s.id));
+      return all.filter(s => leader.section_ids?.includes(s.id));
     },
     enabled: !!user,
   });
@@ -367,258 +419,193 @@ export default function LeaderDashboard() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-gray-600">Loading your dashboard...</p>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f7ff' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: '36px', height: '36px', border: '3px solid rgba(116,19,220,0.2)', borderTopColor: '#7413dc', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
+          <p style={{ fontFamily: 'DM Sans, sans-serif', color: 'rgba(26,26,46,0.5)', fontSize: '14px' }}>Loading your portal...</p>
         </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-  const quickActions = [
-    { 
-      icon: Users, 
-      label: 'Members',
-      gradient: 'from-blue-500 to-blue-600',
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600',
-      dropdown: [
-        { label: 'Member Details', page: 'LeaderMembers', icon: Users },
-        { label: 'Attendance', page: 'LeaderAttendance', icon: UserCheck },
-        { label: 'Parent Portal', page: 'ParentPortal', icon: Users }
-      ]
-    },
-    { 
-      icon: Calendar, 
-      label: 'Programme',
-      gradient: 'from-purple-500 to-purple-600',
-      iconBg: 'bg-purple-100',
-      iconColor: 'text-purple-600',
-      dropdown: [
-        { label: 'Weekly Meetings', page: 'LeaderProgramme', icon: Calendar },
-        { label: 'Events', page: 'LeaderEvents', icon: CalendarDays },
-        { label: 'Ideas Board', page: 'IdeasBoard', icon: Lightbulb }
-      ]
-    },
-    { 
-      icon: ShieldAlert, 
-      label: 'Safety', 
-      gradient: 'from-orange-500 to-orange-600',
-      iconBg: 'bg-orange-100',
-      iconColor: 'text-orange-600',
-      dropdown: [
-        { label: 'Risk Assessments', page: 'RiskAssessments', icon: ShieldAlert },
-        { label: 'Consent Forms', page: 'ConsentForms', icon: FileText },
-      ]
-    },
-    { 
-      icon: Award, 
-      label: 'Badges', 
-      gradient: 'from-green-500 to-green-600',
-      iconBg: 'bg-green-100',
-      iconColor: 'text-green-600',
-      dropdown: [
-        { label: 'Badge Tracking', page: 'LeaderBadges', icon: Award },
-        { label: 'Due Badges', page: 'AwardBadges', icon: TrendingUp },
-        { label: 'Badge Stock', page: 'BadgeStockManagement', icon: Package },
-        ...(user?.role === 'admin' ? [{ label: 'Manage Badges', page: 'ManageBadges', icon: Settings, separator: true }] : []),
-      ]
-    },
-    { 
-      icon: BookOpen, 
-      label: 'Section Admin', 
-      gradient: 'from-teal-500 to-teal-600',
-      iconBg: 'bg-teal-100',
-      iconColor: 'text-teal-600',
-      dropdown: [
-        { label: 'Communications', page: 'Communications', icon: Mail },
-        { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark },
-        ...(['admin','treasurer','glv','team_leader'].includes(user?.role) ? [{ label: 'Treasurer Portal', page: 'TreasurerDashboard', icon: Landmark, separator: true }] : []),
-      ]
-    },
-    { 
-      icon: Image, 
-      label: 'Gallery', 
-      page: 'LeaderGallery',
-      gradient: 'from-pink-500 to-pink-600',
-      iconBg: 'bg-pink-100',
-      iconColor: 'text-pink-600'
-    },
-  ];
+  const actions = quickActions(user);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#004851] to-[#006b7a] text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex justify-between items-center"
-          >
-            <div>
-              <motion.h1 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="text-4xl font-bold mb-2"
-              >
-                Leader Portal
-              </motion.h1>
-              <motion.p 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-xl text-white/90"
-              >
-                Welcome back, {user.display_name || user.full_name}
-                {user.role === 'admin' && (
-                  <span className="ml-2 px-3 py-1 bg-white/20 rounded-full text-sm">Administrator</span>
-                )}
-              </motion.p>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #f8f7ff 0%, #ede9ff 60%, #f0fdf4 100%)', fontFamily: 'DM Sans, sans-serif' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');`}</style>
+
+      {/* ── Hero header ── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #2d1a5e 60%, #1a1a2e 100%)',
+        padding: '56px 40px 48px',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        {/* Background decoration */}
+        <div style={{ position: 'absolute', top: '-60px', right: '-60px', width: '300px', height: '300px', background: 'rgba(116,19,220,0.15)', borderRadius: '50%', filter: 'blur(60px)' }} />
+        <div style={{ position: 'absolute', bottom: '-40px', left: '20%', width: '200px', height: '200px', background: 'rgba(116,19,220,0.08)', borderRadius: '50%', filter: 'blur(40px)' }} />
+
+        <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+          <div>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', marginBottom: '10px' }}>
+              Leader Portal
+            </p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 44px)', color: '#fff', margin: '0 0 8px', lineHeight: 1.1 }}>
+              Welcome back, {user.display_name || user.full_name?.split(' ')[0]}
+            </h1>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '15px', margin: 0 }}>
+              {sections.length > 0
+                ? `Managing ${sections.map(s => s.display_name).join(', ')} · ${totalMembers} active members`
+                : '40th Rochdale (Syke) Scouts'}
+            </p>
+          </div>
+
+          {/* Stats pills */}
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', padding: '14px 20px', textAlign: 'center', minWidth: '80px' }}>
+              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '24px', color: '#fff', margin: 0 }}>{totalMembers}</p>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: '4px 0 0', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Members</p>
+            </div>
+            <div style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', padding: '14px 20px', textAlign: 'center', minWidth: '80px' }}>
+              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '24px', color: '#fff', margin: 0 }}>{sections.length}</p>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: '4px 0 0', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Sections</p>
             </div>
             {user.role === 'admin' && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 }}
+              <Link
+                to={createPageUrl('AdminSettings')}
+                style={{
+                  background: 'rgba(116,19,220,0.3)', border: '1px solid rgba(116,19,220,0.5)',
+                  borderRadius: '16px', padding: '14px 20px', display: 'flex',
+                  alignItems: 'center', gap: '8px', textDecoration: 'none',
+                  color: '#fff', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
+                }}
               >
-                <Link to={createPageUrl('AdminSettings')}>
-                  <Button className="bg-white text-[#004851] hover:bg-gray-100">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Admin Settings
-                  </Button>
-                </Link>
-              </motion.div>
+                <Settings size={16} />
+                Admin Settings
+              </Link>
             )}
-          </motion.div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          {quickActions.map((action, index) => (
-            <motion.div
-              key={action.label}
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ 
-                delay: index * 0.1,
-                type: "spring",
-                stiffness: 260,
-                damping: 20
-              }}
-              whileHover={{ scale: 1.05, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {action.dropdown ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Card className={`cursor-pointer bg-gradient-to-br ${action.gradient} border-0 shadow-lg hover:shadow-xl transition-all overflow-hidden relative group`}>
-                      <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
-                      <CardContent className="p-6 text-center relative z-10">
-                        <motion.div 
-                          className={`w-14 h-14 mx-auto ${action.iconBg} rounded-2xl flex items-center justify-center mb-3 shadow-md`}
-                          whileHover={{ rotate: 360 }}
-                          transition={{ duration: 0.6 }}
-                        >
-                          <action.icon className={`w-7 h-7 ${action.iconColor}`} />
-                        </motion.div>
-                        <div className="flex items-center justify-center gap-1">
-                          <h3 className="text-sm font-semibold text-white">{action.label}</h3>
-                          <ChevronDown className="w-3 h-3 text-white" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="center">
-                    {action.dropdown.map((subItem) => (
-                      <React.Fragment key={subItem.page}>
-                        {subItem.separator && <DropdownMenuSeparator />}
-                        <DropdownMenuItem asChild>
-                          <Link to={createPageUrl(subItem.page)} className="flex items-center gap-2 cursor-pointer">
-                            <subItem.icon className="w-4 h-4" />
-                            {subItem.label}
-                          </Link>
-                        </DropdownMenuItem>
-                      </React.Fragment>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Link to={createPageUrl(action.page)}>
-                  <Card className={`cursor-pointer bg-gradient-to-br ${action.gradient} border-0 shadow-lg hover:shadow-xl transition-all overflow-hidden relative group`}>
-                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
-                    <CardContent className="p-6 text-center relative z-10">
-                      <motion.div 
-                        className={`w-14 h-14 mx-auto ${action.iconBg} rounded-2xl flex items-center justify-center mb-3 shadow-md`}
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.6 }}
-                      >
-                        <action.icon className={`w-7 h-7 ${action.iconColor}`} />
-                      </motion.div>
-                      <h3 className="text-sm font-semibold text-white">{action.label}</h3>
-                    </CardContent>
-                  </Card>
-                </Link>
-              )}
-            </motion.div>
+      {/* ── Quick Actions ── */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 40px 0' }}>
+        <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,26,46,0.35)', marginBottom: '16px' }}>Quick access</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '12px' }}>
+          {actions.map(action => (
+            action.dropdown ? (
+              <DropdownMenu key={action.label}>
+                <DropdownMenuTrigger asChild>
+                  <button style={{
+                    background: 'rgba(255,255,255,0.85)',
+                    backdropFilter: 'blur(12px)',
+                    border: `1px solid ${action.accent}22`,
+                    borderRadius: '18px',
+                    padding: '20px 12px',
+                    cursor: 'pointer', textAlign: 'center',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+                    fontFamily: 'DM Sans, sans-serif',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
+                    width: '100%',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${action.accent}22`; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.05)'; }}
+                  >
+                    <div style={{ width: '44px', height: '44px', background: `${action.accent}18`, borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <action.icon size={20} color={action.accent} />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ fontWeight: 600, fontSize: '13px', color: '#1a1a2e' }}>{action.label}</span>
+                      <ChevronDown size={12} color="rgba(26,26,46,0.4)" />
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center">
+                  {action.dropdown.map(sub => (
+                    <React.Fragment key={sub.page}>
+                      {sub.separator && <DropdownMenuSeparator />}
+                      <DropdownMenuItem asChild>
+                        <Link to={createPageUrl(sub.page)} className="flex items-center gap-2 cursor-pointer">
+                          <sub.icon className="w-4 h-4" />
+                          {sub.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    </React.Fragment>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link key={action.label} to={createPageUrl(action.page)} style={{ textDecoration: 'none' }}>
+                <div style={{
+                  background: 'rgba(255,255,255,0.85)',
+                  backdropFilter: 'blur(12px)',
+                  border: `1px solid ${action.accent}22`,
+                  borderRadius: '18px',
+                  padding: '20px 12px',
+                  cursor: 'pointer', textAlign: 'center',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${action.accent}22`; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.05)'; }}
+                >
+                  <div style={{ width: '44px', height: '44px', background: `${action.accent}18`, borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <action.icon size={20} color={action.accent} />
+                  </div>
+                  <span style={{ fontWeight: 600, fontSize: '13px', color: '#1a1a2e', fontFamily: 'DM Sans, sans-serif' }}>{action.label}</span>
+                </div>
+              </Link>
+            )
           ))}
         </div>
+      </div>
 
-        {/* Dashboard Content */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="grid lg:grid-cols-2 gap-6 mb-6"
-        >
+      {/* ── Dashboard content ── */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 40px' }}>
+        <BadgesDue sections={sections} selectedSection={selectedSection} />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
           <UpcomingMeetings sections={sections} selectedSection={selectedSection} />
-          <div className="flex flex-col gap-4">
-            <BadgesDue sections={sections} selectedSection={selectedSection} />
-            <UpcomingEvents sections={sections} selectedSection={selectedSection} />
-          </div>
-        </motion.div>
+          <UpcomingEvents sections={sections} selectedSection={selectedSection} />
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="mb-6"
-        >
+        <div style={{ marginTop: '20px' }}>
           <ActionsStatus sections={sections} selectedSection={selectedSection} />
-        </motion.div>
+        </div>
 
-        {/* Receipt Upload Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
+        {/* Receipt upload CTA */}
+        <div
+          style={{
+            marginTop: '20px',
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #2d1a5e 100%)',
+            borderRadius: '20px', padding: '24px 28px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px',
+          }}
         >
-          <Card className="bg-gradient-to-r from-emerald-500 to-emerald-600 border-0 shadow-lg">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3 md:gap-4">
-                  <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Receipt className="w-5 h-5 md:w-6 md:h-6 text-white" />
-                  </div>
-                  <div className="text-white">
-                    <h3 className="text-base md:text-lg font-semibold">Upload Receipts</h3>
-                    <p className="text-white/90 text-xs md:text-sm">Submit your expenses for reimbursement</p>
-                  </div>
-                </div>
-                <Link to={createPageUrl('ReceiptUploader')} className="w-full sm:w-auto">
-                  <Button className="bg-white text-emerald-600 hover:bg-white/90 w-full sm:w-auto">
-                    <Receipt className="w-4 h-4 mr-2" />
-                    Upload Receipt
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{ width: '42px', height: '42px', background: 'rgba(116,19,220,0.3)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Receipt size={20} color="#fff" />
+            </div>
+            <div>
+              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '16px', color: '#fff', margin: 0 }}>Upload Receipts</p>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>Submit your expenses for reimbursement</p>
+            </div>
+          </div>
+          <Link
+            to={createPageUrl('ReceiptUploader')}
+            style={{
+              fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
+              color: '#1a1a2e', background: '#fff', textDecoration: 'none',
+              borderRadius: '25px', padding: '10px 24px',
+              display: 'flex', alignItems: 'center', gap: '8px',
+              transition: 'opacity 0.2s',
+            }}
+          >
+            <Receipt size={15} /> Upload Receipt
+          </Link>
+        </div>
       </div>
     </div>
   );
