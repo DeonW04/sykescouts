@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
 import { useSectionContext } from '../components/leader/SectionContext';
 import AIPlannerModal from '../components/aiPlanner/AIPlannerModal';
 import ProgrammeSyncModal from '../components/osm/ProgrammeSyncModal';
@@ -168,7 +168,7 @@ export default function LeaderProgramme() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <LeaderNav />
+      <FloatingNav />
       <div className="relative bg-gradient-to-br from-[#004851] to-[#7413dc] text-white py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>

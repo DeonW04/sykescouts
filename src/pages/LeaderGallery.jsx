@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -380,7 +380,7 @@ export default function LeaderGallery() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
+      <FloatingNav />
       <div className="bg-gradient-to-r from-pink-500 to-rose-600 text-white py-8">
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-3xl font-bold">Photo Gallery</h1>

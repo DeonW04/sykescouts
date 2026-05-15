@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Calendar, Users, Check, X, Minus } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
 
 export default function LeaderAttendance() {
   const queryClient = useQueryClient();
@@ -148,7 +148,7 @@ export default function LeaderAttendance() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
+      <FloatingNav />
       <div className="bg-[#004851] text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">

@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Badge } from '@/components/ui/badge';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
 import MemberBadgeView from '../components/badges/MemberBadgeView';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -250,7 +250,7 @@ export default function LeaderBadges() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
+      <FloatingNav />
       <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
