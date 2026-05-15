@@ -7,26 +7,210 @@ import { useSectionContext } from '../components/leader/SectionContext';
 import {
   Users, Calendar, Award, Mail, Settings, ArrowRight, Tent,
   ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt,
-  Lightbulb, Package, TrendingUp, FileText, Landmark, BookOpen,
-  LayoutDashboard, Star, Zap,
+  Lightbulb, Package, TrendingUp, FileText, Landmark, BookOpen, Zap, Star,
 } from 'lucide-react';
 import ActionsDrilldownModal from '../components/leader/ActionsDrilldownModal';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { format, isThisWeek, startOfWeek, endOfWeek, parseISO } from 'date-fns';
+import FloatingNav from '../components/public/FloatingNav';
 
-// ── Shared card style ──────────────────────────────────────────────────────────
 const glassCard = {
-  background: 'rgba(255,255,255,0.85)',
+  background: 'rgba(255,255,255,0.9)',
   backdropFilter: 'blur(12px)',
   WebkitBackdropFilter: 'blur(12px)',
   border: '1px solid rgba(116,19,220,0.1)',
   borderRadius: '20px',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
 };
 
-// ── Sub-components ─────────────────────────────────────────────────────────────
+// ── Section Selector (inline, styled to match) ─────────────────────────────────
+function InlineSectionSelector() {
+  const { selectedSection, setSelectedSection, availableSections, loading, user } = useSectionContext();
+  const [showDefaultDialog, setShowDefaultDialog] = useState(false);
+  const [defaultSection, setDefaultSection] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-const UpcomingMeetings = ({ sections, selectedSection }) => {
+  if (loading || availableSections.length <= 1) return null;
+
+  const currentDefault = user?.default_section_id;
+
+  const handleSaveDefault = async () => {
+    setSaving(true);
+    try {
+      await base44.auth.updateMe({ default_section_id: defaultSection });
+      toast.success('Default section saved');
+      setShowDefaultDialog(false);
+    } catch {
+      toast.error('Failed to save default section');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 20px', background: 'rgba(116,19,220,0.04)', borderTop: '1px solid rgba(116,19,220,0.08)' }}>
+        <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.5)', whiteSpace: 'nowrap' }}>Viewing:</span>
+        <Select value={selectedSection} onValueChange={val => {
+          if (val === '__set_default__') { setDefaultSection(currentDefault || selectedSection || availableSections[0]?.id); setShowDefaultDialog(true); }
+          else setSelectedSection(val);
+        }}>
+          <SelectTrigger style={{ width: '200px', borderRadius: '20px', border: '1px solid rgba(116,19,220,0.2)', fontFamily: 'DM Sans, sans-serif', fontSize: '13px', height: '34px' }}>
+            <SelectValue placeholder="Select section" />
+          </SelectTrigger>
+          <SelectContent>
+            {availableSections.map(s => (
+              <SelectItem key={s.id} value={s.id}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {s.display_name}
+                  {s.id === currentDefault && <Star size={11} color="#f59e0b" fill="#f59e0b" />}
+                </span>
+              </SelectItem>
+            ))}
+            <SelectSeparator />
+            <SelectItem value="__set_default__">
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(26,26,46,0.5)' }}>
+                <Star size={12} /> Set default section…
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Dialog open={showDefaultDialog} onOpenChange={setShowDefaultDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Star className="w-4 h-4 text-amber-400" /> Set Default Section
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-500">Choose which section opens by default when you log in.</p>
+          <div className="space-y-2 mt-2">
+            {availableSections.map(s => (
+              <button key={s.id} onClick={() => setDefaultSection(s.id)}
+                className={`w-full text-left px-4 py-2.5 rounded-lg border text-sm font-medium transition-all flex items-center justify-between ${defaultSection === s.id ? 'border-amber-400 bg-amber-50 text-amber-800' : 'border-gray-200 hover:border-gray-300'}`}
+              >
+                {s.display_name}
+                {defaultSection === s.id && <Star className="w-4 h-4 text-amber-400 fill-amber-400" />}
+              </button>
+            ))}
+          </div>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setShowDefaultDialog(false)}>Cancel</Button>
+            <Button onClick={handleSaveDefault} disabled={saving} className="bg-amber-500 hover:bg-amber-600 text-white">
+              {saving ? 'Saving…' : 'Save Default'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+// ── This Week's Meeting ────────────────────────────────────────────────────────
+function ThisWeeksMeeting({ sections, selectedSection }) {
+  const navigate = useNavigate();
+  const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
+  const sectionIds = filteredSections.map(s => s.id);
+
+  const { data: meeting, isLoading } = useQuery({
+    queryKey: ['this-weeks-meeting', sectionIds],
+    queryFn: async () => {
+      if (sectionIds.length === 0) return null;
+      const now = new Date();
+      const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+      const all = await base44.entities.Programme.filter({});
+      const thisWeek = all
+        .filter(p => {
+          const d = parseISO(p.date);
+          return sectionIds.includes(p.section_id) && d >= weekStart && d <= weekEnd;
+        })
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+      return thisWeek[0] || null;
+    },
+    enabled: sectionIds.length > 0,
+  });
+
+  const section = meeting ? sections.find(s => s.id === meeting.section_id) : null;
+
+  return (
+    <div style={{ ...glassCard, overflow: 'hidden' }}>
+      <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: meeting ? '1px solid rgba(116,19,220,0.07)' : 'none' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '32px', height: '32px', background: 'rgba(116,19,220,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Calendar size={16} color="#7413dc" />
+          </div>
+          <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '16px', color: '#1a1a2e', margin: 0 }}>This Week's Meeting</h3>
+        </div>
+        <button onClick={() => navigate(createPageUrl('LeaderProgramme'))}
+          style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#7413dc', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}>
+          Programme <ArrowRight size={13} />
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div style={{ padding: '24px', textAlign: 'center' }}>
+          <div style={{ width: '24px', height: '24px', border: '2px solid rgba(116,19,220,0.15)', borderTopColor: '#7413dc', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+        </div>
+      ) : meeting ? (
+        <div
+          style={{ padding: '20px 24px', cursor: 'pointer', transition: 'background 0.2s' }}
+          onClick={() => navigate(createPageUrl('MeetingDetail') + `?sectionId=${meeting.section_id}&date=${meeting.date}`)}
+          onMouseEnter={e => e.currentTarget.style.background = 'rgba(116,19,220,0.03)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '20px', color: '#1a1a2e', margin: '0 0 6px' }}>{meeting.title}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.55)' }}>
+                  {format(parseISO(meeting.date), 'EEEE, d MMMM')}
+                </span>
+                {section && (
+                  <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#7413dc', background: 'rgba(116,19,220,0.08)', padding: '2px 10px', borderRadius: '20px', fontWeight: 500 }}>
+                    {section.display_name}
+                  </span>
+                )}
+                {section?.meeting_start_time && (
+                  <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.55)' }}>
+                    {section.meeting_start_time}{section.meeting_end_time ? `–${section.meeting_end_time}` : ''}
+                  </span>
+                )}
+              </div>
+              {meeting.description && (
+                <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.5)', margin: '10px 0 0', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {meeting.description}
+                </p>
+              )}
+              {meeting.equipment_needed && (
+                <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.4)', margin: '8px 0 0' }}>
+                  Equipment: {meeting.equipment_needed}
+                </p>
+              )}
+            </div>
+            <ArrowRight size={18} color="rgba(116,19,220,0.4)" style={{ flexShrink: 0, marginTop: '4px' }} />
+          </div>
+        </div>
+      ) : (
+        <div style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.4)', margin: 0 }}>No meeting scheduled this week</p>
+          <button onClick={() => navigate(createPageUrl('LeaderProgramme'))}
+            style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#7413dc', background: 'rgba(116,19,220,0.08)', border: 'none', cursor: 'pointer', padding: '6px 14px', borderRadius: '20px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+            Add meeting
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Upcoming Meetings ──────────────────────────────────────────────────────────
+function UpcomingMeetings({ sections, selectedSection }) {
   const navigate = useNavigate();
   const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
   const sectionIds = filteredSections.map(s => s.id);
@@ -36,57 +220,50 @@ const UpcomingMeetings = ({ sections, selectedSection }) => {
     queryFn: async () => {
       if (sectionIds.length === 0) return [];
       const all = await base44.entities.Programme.filter({});
+      const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
       return all
-        .filter(p => sectionIds.includes(p.section_id) && new Date(p.date) >= new Date())
+        .filter(p => sectionIds.includes(p.section_id) && new Date(p.date) > weekEnd)
         .sort((a, b) => new Date(a.date) - new Date(b.date))
-        .slice(0, 5);
+        .slice(0, 4);
     },
     enabled: sectionIds.length > 0,
   });
 
   return (
     <div style={glassCard}>
-      <div style={{ padding: '24px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ padding: '20px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '32px', height: '32px', background: 'rgba(116,19,220,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Calendar size={16} color="#7413dc" />
           </div>
           <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '16px', color: '#1a1a2e', margin: 0 }}>Upcoming Meetings</h3>
         </div>
-        <button
-          onClick={() => navigate(createPageUrl('LeaderProgramme'))}
-          style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#7413dc', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}
-        >
+        <button onClick={() => navigate(createPageUrl('LeaderProgramme'))}
+          style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#7413dc', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}>
           View all <ArrowRight size={13} />
         </button>
       </div>
-      <div style={{ padding: '16px 24px 24px' }}>
+      <div style={{ padding: '14px 24px 20px' }}>
         {programmes.length === 0 ? (
-          <p style={{ color: 'rgba(26,26,46,0.4)', fontSize: '14px', fontFamily: 'DM Sans, sans-serif' }}>No upcoming meetings scheduled</p>
+          <p style={{ color: 'rgba(26,26,46,0.4)', fontSize: '14px', fontFamily: 'DM Sans, sans-serif' }}>No upcoming meetings after this week</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {programmes.map(p => {
               const section = sections.find(s => s.id === p.section_id);
               return (
-                <div
-                  key={p.id}
+                <div key={p.id}
                   onClick={() => navigate(createPageUrl('MeetingDetail') + `?sectionId=${p.section_id}&date=${p.date}`)}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '12px 14px', borderRadius: '12px', cursor: 'pointer',
-                    background: 'rgba(116,19,220,0.03)', border: '1px solid rgba(116,19,220,0.07)',
-                    transition: 'background 0.2s',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(116,19,220,0.08)'}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '12px', cursor: 'pointer', background: 'rgba(116,19,220,0.03)', border: '1px solid rgba(116,19,220,0.06)', transition: 'background 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(116,19,220,0.07)'}
                   onMouseLeave={e => e.currentTarget.style.background = 'rgba(116,19,220,0.03)'}
                 >
                   <div>
                     <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '14px', color: '#1a1a2e', margin: 0 }}>{p.title}</p>
                     <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.5)', margin: '2px 0 0' }}>
-                      {section?.display_name} · {format(new Date(p.date), 'EEE, d MMM')}
+                      {section?.display_name} · {format(parseISO(p.date), 'EEE, d MMM')}
                     </p>
                   </div>
-                  <ArrowRight size={14} color="rgba(116,19,220,0.4)" />
+                  <ArrowRight size={14} color="rgba(116,19,220,0.35)" />
                 </div>
               );
             })}
@@ -95,9 +272,10 @@ const UpcomingMeetings = ({ sections, selectedSection }) => {
       </div>
     </div>
   );
-};
+}
 
-const UpcomingEvents = ({ sections, selectedSection }) => {
+// ── Upcoming Events ────────────────────────────────────────────────────────────
+function UpcomingEvents({ sections, selectedSection }) {
   const navigate = useNavigate();
   const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
   const sectionIds = filteredSections.map(s => s.id);
@@ -117,46 +295,38 @@ const UpcomingEvents = ({ sections, selectedSection }) => {
 
   return (
     <div style={glassCard}>
-      <div style={{ padding: '24px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ padding: '20px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '32px', height: '32px', background: 'rgba(116,19,220,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Tent size={16} color="#7413dc" />
           </div>
           <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '16px', color: '#1a1a2e', margin: 0 }}>Upcoming Events</h3>
         </div>
-        <button
-          onClick={() => navigate(createPageUrl('LeaderEvents'))}
-          style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#7413dc', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}
-        >
+        <button onClick={() => navigate(createPageUrl('LeaderEvents'))}
+          style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#7413dc', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}>
           View all <ArrowRight size={13} />
         </button>
       </div>
-      <div style={{ padding: '16px 24px 24px' }}>
+      <div style={{ padding: '14px 24px 20px' }}>
         {events.length === 0 ? (
           <p style={{ color: 'rgba(26,26,46,0.4)', fontSize: '14px', fontFamily: 'DM Sans, sans-serif' }}>No upcoming events</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {events.map(e => (
-              <div
-                key={e.id}
+              <div key={e.id}
                 onClick={() => navigate(createPageUrl('EventDetail') + `?id=${e.id}`)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '12px',
-                  padding: '12px 14px', borderRadius: '12px', cursor: 'pointer',
-                  background: 'rgba(116,19,220,0.03)', border: '1px solid rgba(116,19,220,0.07)',
-                  transition: 'background 0.2s',
-                }}
-                onMouseEnter={el => el.currentTarget.style.background = 'rgba(116,19,220,0.08)'}
+                style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '12px', cursor: 'pointer', background: 'rgba(116,19,220,0.03)', border: '1px solid rgba(116,19,220,0.06)', transition: 'background 0.2s' }}
+                onMouseEnter={el => el.currentTarget.style.background = 'rgba(116,19,220,0.07)'}
                 onMouseLeave={el => el.currentTarget.style.background = 'rgba(116,19,220,0.03)'}
               >
-                <div style={{ width: '34px', height: '34px', background: 'rgba(116,19,220,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Tent size={16} color="#7413dc" />
+                <div style={{ width: '32px', height: '32px', background: 'rgba(116,19,220,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Tent size={15} color="#7413dc" />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '14px', color: '#1a1a2e', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</p>
                   <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.5)', margin: '2px 0 0' }}>{format(new Date(e.start_date), 'EEE, d MMM yyyy')} · {e.type}</p>
                 </div>
-                <ArrowRight size={14} color="rgba(116,19,220,0.4)" style={{ flexShrink: 0 }} />
+                <ArrowRight size={14} color="rgba(116,19,220,0.35)" style={{ flexShrink: 0 }} />
               </div>
             ))}
           </div>
@@ -164,37 +334,22 @@ const UpcomingEvents = ({ sections, selectedSection }) => {
       </div>
     </div>
   );
-};
+}
 
-const BadgesDue = ({ sections, selectedSection }) => {
+// ── Badges Due ─────────────────────────────────────────────────────────────────
+function BadgesDue({ sections, selectedSection }) {
   const navigate = useNavigate();
   const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
   const sectionIds = filteredSections.map(s => s.id);
-
   const { data: members = [] } = useQuery({ queryKey: ['members'], queryFn: () => base44.entities.Member.filter({ active: true }) });
   const { data: awards = [] } = useQuery({ queryKey: ['awards'], queryFn: () => base44.entities.MemberBadgeAward.filter({ award_status: 'pending' }) });
-
-  const relevantAwards = awards.filter(a => {
-    const member = members.find(m => m.id === a.member_id);
-    return member && sectionIds.includes(member.section_id);
-  });
-
+  const relevantAwards = awards.filter(a => { const m = members.find(m => m.id === a.member_id); return m && sectionIds.includes(m.section_id); });
   const uniqueMembers = new Set(relevantAwards.map(a => a.member_id)).size;
   if (relevantAwards.length === 0) return null;
-
   return (
-    <div
-      onClick={() => navigate(createPageUrl('AwardBadges'))}
-      style={{
-        ...glassCard,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '16px 20px', cursor: 'pointer',
-        background: 'linear-gradient(135deg, rgba(34,197,94,0.08) 0%, rgba(16,185,129,0.08) 100%)',
-        border: '1px solid rgba(34,197,94,0.2)',
-        transition: 'background 0.2s',
-      }}
-      onMouseEnter={e => e.currentTarget.style.background = 'linear-gradient(135deg, rgba(34,197,94,0.14) 0%, rgba(16,185,129,0.14) 100%)'}
-      onMouseLeave={e => e.currentTarget.style.background = 'linear-gradient(135deg, rgba(34,197,94,0.08) 0%, rgba(16,185,129,0.08) 100%)'}
+    <div onClick={() => navigate(createPageUrl('AwardBadges'))} style={{ ...glassCard, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 22px', cursor: 'pointer', background: 'linear-gradient(135deg, rgba(34,197,94,0.07) 0%, rgba(16,185,129,0.07) 100%)', border: '1px solid rgba(34,197,94,0.18)', transition: 'background 0.2s' }}
+      onMouseEnter={e => e.currentTarget.style.background = 'linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(16,185,129,0.12) 100%)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'linear-gradient(135deg, rgba(34,197,94,0.07) 0%, rgba(16,185,129,0.07) 100%)'}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div style={{ width: '36px', height: '36px', background: '#22c55e', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -211,9 +366,10 @@ const BadgesDue = ({ sections, selectedSection }) => {
       </div>
     </div>
   );
-};
+}
 
-const ActionsStatus = ({ sections, selectedSection }) => {
+// ── Actions Status ─────────────────────────────────────────────────────────────
+function ActionsStatus({ sections, selectedSection }) {
   const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
   const sectionIds = filteredSections.map(s => s.id);
   const [drilldown, setDrilldown] = useState(null);
@@ -225,24 +381,14 @@ const ActionsStatus = ({ sections, selectedSection }) => {
       const now = new Date();
       const sevenDays = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
       const [allActions, allAssignments, allResponses, allEvents, allProgrammes] = await Promise.all([
-        base44.entities.ActionRequired.filter({}),
-        base44.entities.ActionAssignment.filter({}),
-        base44.entities.ActionResponse.filter({}),
-        base44.entities.Event.filter({}),
+        base44.entities.ActionRequired.filter({}), base44.entities.ActionAssignment.filter({}),
+        base44.entities.ActionResponse.filter({}), base44.entities.Event.filter({}),
         base44.entities.Programme.filter({}),
       ]);
       const relevantActions = allActions.filter(a => {
         if (!a.is_open) return false;
-        if (a.event_id) {
-          const ev = allEvents.find(e => e.id === a.event_id);
-          if (!ev || new Date(ev.start_date) < now) return false;
-          return ev.section_ids?.some(sid => sectionIds.includes(sid));
-        }
-        if (a.programme_id) {
-          const prog = allProgrammes.find(p => p.id === a.programme_id);
-          if (!prog || new Date(prog.date) < now) return false;
-          return sectionIds.includes(prog.section_id);
-        }
+        if (a.event_id) { const ev = allEvents.find(e => e.id === a.event_id); if (!ev || new Date(ev.start_date) < now) return false; return ev.section_ids?.some(sid => sectionIds.includes(sid)); }
+        if (a.programme_id) { const prog = allProgrammes.find(p => p.id === a.programme_id); if (!prog || new Date(prog.date) < now) return false; return sectionIds.includes(prog.section_id); }
         return false;
       });
       const actionIds = relevantActions.map(a => a.id);
@@ -250,14 +396,13 @@ const ActionsStatus = ({ sections, selectedSection }) => {
       const relevantResponses = allResponses.filter(r => actionIds.includes(r.action_required_id) && r.response_value);
       const respondedPairs = new Set(relevantResponses.map(r => `${r.action_required_id}:${r.member_id}`));
       const unrespondedAssignments = relevantAssignments.filter(a => !respondedPairs.has(`${a.action_required_id}:${a.member_id}`));
-      const unrespondedMemberIds = new Set(unrespondedAssignments.map(a => a.member_id));
       const closingSoon = relevantActions.filter(a => a.deadline && new Date(a.deadline) <= sevenDays && new Date(a.deadline) >= now);
       const responseRate = relevantAssignments.length > 0 ? Math.round((relevantResponses.length / relevantAssignments.length) * 100) : 100;
       const allMembers = await base44.entities.Member.filter({ active: true });
       return {
         totalActions: relevantActions.length, responseRate,
         unresponded: unrespondedAssignments.length,
-        unrespondedMembers: unrespondedMemberIds.size,
+        unrespondedMembers: new Set(unrespondedAssignments.map(a => a.member_id)).size,
         closingSoon: closingSoon.length,
         attendanceActions: relevantActions.filter(a => a.action_purpose === 'attendance').length,
         consentActions: relevantActions.filter(a => a.action_purpose === 'consent' || a.action_purpose === 'consent_form').length,
@@ -285,7 +430,7 @@ const ActionsStatus = ({ sections, selectedSection }) => {
     { label: 'Response Rate', value: `${stats.responseRate}%`, color: stats.responseRate >= 75 ? '#22c55e' : stats.responseRate >= 50 ? '#f97316' : '#ef4444', bg: stats.responseRate >= 75 ? 'rgba(34,197,94,0.07)' : stats.responseRate >= 50 ? 'rgba(249,115,22,0.07)' : 'rgba(239,68,68,0.07)' },
     { label: 'Awaiting Response', value: stats.unresponded, color: stats.unresponded === 0 ? '#22c55e' : '#f97316', bg: stats.unresponded === 0 ? 'rgba(34,197,94,0.07)' : 'rgba(249,115,22,0.07)', drilldownType: 'unresponded' },
     { label: 'Members Outstanding', value: stats.unrespondedMembers, color: stats.unrespondedMembers === 0 ? '#22c55e' : '#ef4444', bg: stats.unrespondedMembers === 0 ? 'rgba(34,197,94,0.07)' : 'rgba(239,68,68,0.07)', drilldownType: 'unrespondedMembers' },
-    { label: 'Closing in 7 Days', value: stats.closingSoon, color: stats.closingSoon > 0 ? '#f59e0b' : 'rgba(26,26,46,0.4)', bg: stats.closingSoon > 0 ? 'rgba(245,158,11,0.07)' : 'rgba(26,26,46,0.03)', drilldownType: 'closingSoon' },
+    { label: 'Closing in 7 Days', value: stats.closingSoon, color: stats.closingSoon > 0 ? '#f59e0b' : 'rgba(26,26,46,0.35)', bg: stats.closingSoon > 0 ? 'rgba(245,158,11,0.07)' : 'rgba(26,26,46,0.03)', drilldownType: 'closingSoon' },
     { label: 'Attendance', value: stats.attendanceActions, color: '#6366f1', bg: 'rgba(99,102,241,0.07)', drilldownType: 'attendanceActions' },
     { label: 'Consent', value: stats.consentActions, color: '#14b8a6', bg: 'rgba(20,184,166,0.07)', drilldownType: 'consentActions' },
     { label: 'Volunteer', value: stats.volunteerActions, color: '#ec4899', bg: 'rgba(236,72,153,0.07)', drilldownType: 'volunteerActions' },
@@ -294,7 +439,7 @@ const ActionsStatus = ({ sections, selectedSection }) => {
   return (
     <>
       <div style={glassCard}>
-        <div style={{ padding: '24px 24px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ padding: '20px 24px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div style={{ width: '32px', height: '32px', background: 'rgba(116,19,220,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Zap size={16} color="#7413dc" />
           </div>
@@ -303,21 +448,16 @@ const ActionsStatus = ({ sections, selectedSection }) => {
             <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.4)', margin: '2px 0 0' }}>Active actions for upcoming meetings & events · click a card for details</p>
           </div>
         </div>
-        <div style={{ padding: '16px 24px 24px' }}>
+        <div style={{ padding: '14px 24px 20px' }}>
           {stats.totalActions === 0 ? (
             <p style={{ color: 'rgba(26,26,46,0.4)', fontSize: '14px', fontFamily: 'DM Sans, sans-serif' }}>No active actions for upcoming sessions</p>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
               {statCards.map(stat => (
-                <button
-                  key={stat.label}
+                <button key={stat.label}
                   onClick={() => stat.drilldownType ? setDrilldown(stat.drilldownType) : null}
-                  style={{
-                    background: stat.bg, borderRadius: '14px', padding: '14px 12px',
-                    textAlign: 'center', border: 'none', cursor: stat.drilldownType ? 'pointer' : 'default',
-                    transition: 'transform 0.15s ease',
-                  }}
-                  onMouseEnter={e => { if (stat.drilldownType) e.currentTarget.style.transform = 'scale(1.03)'; }}
+                  style={{ background: stat.bg, borderRadius: '14px', padding: '14px 10px', textAlign: 'center', border: 'none', cursor: stat.drilldownType ? 'pointer' : 'default', transition: 'transform 0.15s ease', fontFamily: 'inherit' }}
+                  onMouseEnter={e => { if (stat.drilldownType) e.currentTarget.style.transform = 'scale(1.04)'; }}
                   onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                 >
                   <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '24px', color: stat.color, margin: 0 }}>{stat.value}</p>
@@ -331,50 +471,15 @@ const ActionsStatus = ({ sections, selectedSection }) => {
       <ActionsDrilldownModal open={!!drilldown} onClose={() => setDrilldown(null)} type={drilldown} data={drilldownData} />
     </>
   );
-};
+}
 
-// ── Quick action tiles ─────────────────────────────────────────────────────────
-const quickActions = (user) => [
-  {
-    icon: Users, label: 'Members', accent: '#3b82f6',
-    dropdown: [
-      { label: 'Member Details', page: 'LeaderMembers', icon: Users },
-      { label: 'Attendance', page: 'LeaderAttendance', icon: UserCheck },
-      { label: 'Parent Portal', page: 'ParentPortal', icon: Users },
-    ],
-  },
-  {
-    icon: Calendar, label: 'Programme', accent: '#7413dc',
-    dropdown: [
-      { label: 'Weekly Meetings', page: 'LeaderProgramme', icon: Calendar },
-      { label: 'Events', page: 'LeaderEvents', icon: CalendarDays },
-      { label: 'Ideas Board', page: 'IdeasBoard', icon: Lightbulb },
-    ],
-  },
-  {
-    icon: ShieldAlert, label: 'Safety', accent: '#f97316',
-    dropdown: [
-      { label: 'Risk Assessments', page: 'RiskAssessments', icon: ShieldAlert },
-      { label: 'Consent Forms', page: 'ConsentForms', icon: FileText },
-    ],
-  },
-  {
-    icon: Award, label: 'Badges', accent: '#22c55e',
-    dropdown: [
-      { label: 'Badge Tracking', page: 'LeaderBadges', icon: Award },
-      { label: 'Due Badges', page: 'AwardBadges', icon: TrendingUp },
-      { label: 'Badge Stock', page: 'BadgeStockManagement', icon: Package },
-      ...(user?.role === 'admin' ? [{ label: 'Manage Badges', page: 'ManageBadges', icon: Settings, separator: true }] : []),
-    ],
-  },
-  {
-    icon: BookOpen, label: 'Section Admin', accent: '#14b8a6',
-    dropdown: [
-      { label: 'Communications', page: 'Communications', icon: Mail },
-      { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark },
-      ...(['admin', 'treasurer', 'glv', 'team_leader'].includes(user?.role) ? [{ label: 'Treasurer Portal', page: 'TreasurerDashboard', icon: Landmark, separator: true }] : []),
-    ],
-  },
+// ── Quick action tiles config ──────────────────────────────────────────────────
+const getQuickActions = (user) => [
+  { icon: Users, label: 'Members', accent: '#3b82f6', dropdown: [{ label: 'Member Details', page: 'LeaderMembers', icon: Users }, { label: 'Attendance', page: 'LeaderAttendance', icon: UserCheck }, { label: 'Parent Portal', page: 'ParentPortal', icon: Users }] },
+  { icon: Calendar, label: 'Programme', accent: '#7413dc', dropdown: [{ label: 'Weekly Meetings', page: 'LeaderProgramme', icon: Calendar }, { label: 'Events', page: 'LeaderEvents', icon: CalendarDays }, { label: 'Ideas Board', page: 'IdeasBoard', icon: Lightbulb }] },
+  { icon: ShieldAlert, label: 'Safety', accent: '#f97316', dropdown: [{ label: 'Risk Assessments', page: 'RiskAssessments', icon: ShieldAlert }, { label: 'Consent Forms', page: 'ConsentForms', icon: FileText }] },
+  { icon: Award, label: 'Badges', accent: '#22c55e', dropdown: [{ label: 'Badge Tracking', page: 'LeaderBadges', icon: Award }, { label: 'Due Badges', page: 'AwardBadges', icon: TrendingUp }, { label: 'Badge Stock', page: 'BadgeStockManagement', icon: Package }, ...(user?.role === 'admin' ? [{ label: 'Manage Badges', page: 'ManageBadges', icon: Settings, separator: true }] : [])] },
+  { icon: BookOpen, label: 'Section Admin', accent: '#14b8a6', dropdown: [{ label: 'Communications', page: 'Communications', icon: Mail }, { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark }, ...(['admin', 'treasurer', 'glv', 'team_leader'].includes(user?.role) ? [{ label: 'Treasurer Portal', page: 'TreasurerDashboard', icon: Landmark, separator: true }] : [])] },
   { icon: Image, label: 'Gallery', accent: '#ec4899', page: 'LeaderGallery' },
 ];
 
@@ -406,118 +511,72 @@ export default function LeaderDashboard() {
     enabled: !!user,
   });
 
-  const { data: totalMembers = 0 } = useQuery({
-    queryKey: ['total-members', sections],
-    queryFn: async () => {
-      if (sections.length === 0) return 0;
-      const sectionIds = sections.map(s => s.id);
-      const members = await base44.entities.Member.filter({ active: true });
-      return members.filter(m => sectionIds.includes(m.section_id)).length;
-    },
-    enabled: sections.length > 0,
-  });
+  if (!user) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f7ff' }}>
+      <div style={{ width: '32px', height: '32px', border: '3px solid rgba(116,19,220,0.15)', borderTopColor: '#7413dc', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 
-  if (!user) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f7ff' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '36px', height: '36px', border: '3px solid rgba(116,19,220,0.2)', borderTopColor: '#7413dc', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
-          <p style={{ fontFamily: 'DM Sans, sans-serif', color: 'rgba(26,26,46,0.5)', fontSize: '14px' }}>Loading your portal...</p>
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
-
-  const actions = quickActions(user);
+  const actions = getQuickActions(user);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #f8f7ff 0%, #ede9ff 60%, #f0fdf4 100%)', fontFamily: 'DM Sans, sans-serif' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');`}</style>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #f8f7ff 0%, #f0eeff 50%, #f0fdf4 100%)', fontFamily: 'DM Sans, sans-serif' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
 
-      {/* ── Hero header ── */}
+      <FloatingNav />
+
+      {/* ── Hero header — light ── */}
       <div style={{
-        background: 'linear-gradient(135deg, #1a1a2e 0%, #2d1a5e 60%, #1a1a2e 100%)',
-        padding: '56px 40px 48px',
-        position: 'relative', overflow: 'hidden',
+        background: 'rgba(255,255,255,0.7)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(116,19,220,0.1)',
+        padding: '40px 40px 0',
       }}>
-        {/* Background decoration */}
-        <div style={{ position: 'absolute', top: '-60px', right: '-60px', width: '300px', height: '300px', background: 'rgba(116,19,220,0.15)', borderRadius: '50%', filter: 'blur(60px)' }} />
-        <div style={{ position: 'absolute', bottom: '-40px', left: '20%', width: '200px', height: '200px', background: 'rgba(116,19,220,0.08)', borderRadius: '50%', filter: 'blur(40px)' }} />
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', marginBottom: '8px' }}>Leader Portal</p>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(26px, 3.5vw, 40px)', color: '#1a1a2e', margin: '0 0 4px', lineHeight: 1.15 }}>
+            Welcome back, {user.display_name || user.full_name?.split(' ')[0]}
+          </h1>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '15px', color: 'rgba(26,26,46,0.5)', margin: '0 0 0' }}>
+            40th Rochdale (Syke) Scouts
+          </p>
+        </div>
 
-        <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', marginBottom: '10px' }}>
-              Leader Portal
-            </p>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 44px)', color: '#fff', margin: '0 0 8px', lineHeight: 1.1 }}>
-              Welcome back, {user.display_name || user.full_name?.split(' ')[0]}
-            </h1>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '15px', margin: 0 }}>
-              {sections.length > 0
-                ? `Managing ${sections.map(s => s.display_name).join(', ')} · ${totalMembers} active members`
-                : '40th Rochdale (Syke) Scouts'}
-            </p>
-          </div>
-
-          {/* Stats pills */}
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <div style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', padding: '14px 20px', textAlign: 'center', minWidth: '80px' }}>
-              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '24px', color: '#fff', margin: 0 }}>{totalMembers}</p>
-              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: '4px 0 0', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Members</p>
-            </div>
-            <div style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '16px', padding: '14px 20px', textAlign: 'center', minWidth: '80px' }}>
-              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '24px', color: '#fff', margin: 0 }}>{sections.length}</p>
-              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: '4px 0 0', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Sections</p>
-            </div>
-            {user.role === 'admin' && (
-              <Link
-                to={createPageUrl('AdminSettings')}
-                style={{
-                  background: 'rgba(116,19,220,0.3)', border: '1px solid rgba(116,19,220,0.5)',
-                  borderRadius: '16px', padding: '14px 20px', display: 'flex',
-                  alignItems: 'center', gap: '8px', textDecoration: 'none',
-                  color: '#fff', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
-                }}
-              >
-                <Settings size={16} />
-                Admin Settings
-              </Link>
-            )}
-          </div>
+        {/* Section selector sits inside the hero, below title */}
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <InlineSectionSelector />
         </div>
       </div>
 
       {/* ── Quick Actions ── */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 40px 0' }}>
-        <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,26,46,0.35)', marginBottom: '16px' }}>Quick access</p>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 40px 0' }}>
+        <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,26,46,0.35)', marginBottom: '14px' }}>Quick access</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '12px' }}>
           {actions.map(action => (
             action.dropdown ? (
               <DropdownMenu key={action.label}>
                 <DropdownMenuTrigger asChild>
                   <button style={{
-                    background: 'rgba(255,255,255,0.85)',
-                    backdropFilter: 'blur(12px)',
-                    border: `1px solid ${action.accent}22`,
-                    borderRadius: '18px',
-                    padding: '20px 12px',
-                    cursor: 'pointer', textAlign: 'center',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-                    fontFamily: 'DM Sans, sans-serif',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
-                    width: '100%',
+                    background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)',
+                    border: `1px solid ${action.accent}20`, borderRadius: '18px',
+                    padding: '18px 10px', cursor: 'pointer', textAlign: 'center',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', width: '100%',
+                    transition: 'transform 0.2s, box-shadow 0.2s', fontFamily: 'inherit',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${action.accent}22`; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.05)'; }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 8px 20px ${action.accent}22`; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.04)'; }}
                   >
-                    <div style={{ width: '44px', height: '44px', background: `${action.accent}18`, borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: '42px', height: '42px', background: `${action.accent}18`, borderRadius: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <action.icon size={20} color={action.accent} />
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ fontWeight: 600, fontSize: '13px', color: '#1a1a2e' }}>{action.label}</span>
-                      <ChevronDown size={12} color="rgba(26,26,46,0.4)" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '12px', color: '#1a1a2e' }}>{action.label}</span>
+                      <ChevronDown size={11} color="rgba(26,26,46,0.4)" />
                     </div>
                   </button>
                 </DropdownMenuTrigger>
@@ -527,8 +586,7 @@ export default function LeaderDashboard() {
                       {sub.separator && <DropdownMenuSeparator />}
                       <DropdownMenuItem asChild>
                         <Link to={createPageUrl(sub.page)} className="flex items-center gap-2 cursor-pointer">
-                          <sub.icon className="w-4 h-4" />
-                          {sub.label}
+                          <sub.icon className="w-4 h-4" /> {sub.label}
                         </Link>
                       </DropdownMenuItem>
                     </React.Fragment>
@@ -538,23 +596,20 @@ export default function LeaderDashboard() {
             ) : (
               <Link key={action.label} to={createPageUrl(action.page)} style={{ textDecoration: 'none' }}>
                 <div style={{
-                  background: 'rgba(255,255,255,0.85)',
-                  backdropFilter: 'blur(12px)',
-                  border: `1px solid ${action.accent}22`,
-                  borderRadius: '18px',
-                  padding: '20px 12px',
-                  cursor: 'pointer', textAlign: 'center',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
+                  background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)',
+                  border: `1px solid ${action.accent}20`, borderRadius: '18px',
+                  padding: '18px 10px', cursor: 'pointer', textAlign: 'center',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${action.accent}22`; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.05)'; }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 8px 20px ${action.accent}22`; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.04)'; }}
                 >
-                  <div style={{ width: '44px', height: '44px', background: `${action.accent}18`, borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: '42px', height: '42px', background: `${action.accent}18`, borderRadius: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <action.icon size={20} color={action.accent} />
                   </div>
-                  <span style={{ fontWeight: 600, fontSize: '13px', color: '#1a1a2e', fontFamily: 'DM Sans, sans-serif' }}>{action.label}</span>
+                  <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '12px', color: '#1a1a2e' }}>{action.label}</span>
                 </div>
               </Link>
             )
@@ -563,47 +618,40 @@ export default function LeaderDashboard() {
       </div>
 
       {/* ── Dashboard content ── */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 40px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 40px 48px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <BadgesDue sections={sections} selectedSection={selectedSection} />
+        <ThisWeeksMeeting sections={sections} selectedSection={selectedSection} />
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <UpcomingMeetings sections={sections} selectedSection={selectedSection} />
           <UpcomingEvents sections={sections} selectedSection={selectedSection} />
         </div>
 
-        <div style={{ marginTop: '20px' }}>
-          <ActionsStatus sections={sections} selectedSection={selectedSection} />
-        </div>
+        <ActionsStatus sections={sections} selectedSection={selectedSection} />
 
         {/* Receipt upload CTA */}
-        <div
-          style={{
-            marginTop: '20px',
-            background: 'linear-gradient(135deg, #1a1a2e 0%, #2d1a5e 100%)',
-            borderRadius: '20px', padding: '24px 28px',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px',
-          }}
-        >
+        <div style={{
+          background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(116,19,220,0.1)',
+          borderRadius: '20px', padding: '22px 28px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ width: '42px', height: '42px', background: 'rgba(116,19,220,0.3)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Receipt size={20} color="#fff" />
+            <div style={{ width: '40px', height: '40px', background: 'rgba(116,19,220,0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Receipt size={18} color="#7413dc" />
             </div>
             <div>
-              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '16px', color: '#fff', margin: 0 }}>Upload Receipts</p>
-              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(255,255,255,0.5)', margin: '3px 0 0' }}>Submit your expenses for reimbursement</p>
+              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '15px', color: '#1a1a2e', margin: 0 }}>Upload Receipts</p>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.45)', margin: '2px 0 0' }}>Submit your expenses for reimbursement</p>
             </div>
           </div>
-          <Link
-            to={createPageUrl('ReceiptUploader')}
-            style={{
-              fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
-              color: '#1a1a2e', background: '#fff', textDecoration: 'none',
-              borderRadius: '25px', padding: '10px 24px',
-              display: 'flex', alignItems: 'center', gap: '8px',
-              transition: 'opacity 0.2s',
-            }}
-          >
-            <Receipt size={15} /> Upload Receipt
+          <Link to={createPageUrl('ReceiptUploader')} style={{
+            fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
+            color: '#fff', background: '#7413dc', textDecoration: 'none',
+            borderRadius: '25px', padding: '9px 22px',
+            display: 'flex', alignItems: 'center', gap: '8px',
+          }}>
+            <Receipt size={14} /> Upload Receipt
           </Link>
         </div>
       </div>

@@ -28,8 +28,8 @@ function SectionTransitionWrapper() {
   ); 
 }
 
-// Public pages that handle their own nav/footer
-const SELF_CONTAINED_PUBLIC_PAGES = ['Home', 'About', 'Gallery', 'Join', 'Volunteer', 'Contact'];
+// Pages that handle their own nav/footer — skip Layout chrome entirely
+const SELF_CONTAINED_PUBLIC_PAGES = ['Home', 'About', 'Gallery', 'Join', 'Volunteer', 'Contact', 'LeaderDashboard'];
 
 export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
