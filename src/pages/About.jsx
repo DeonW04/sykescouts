@@ -4,6 +4,7 @@ import { createPageUrl } from '../utils';
 import { MapPin, Clock, Users, Award, Heart, Target } from 'lucide-react';
 import SEO from '../components/SEO';
 import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import PublicFooter from '../components/public/PublicFooter';
 import { base44 } from '@/api/base44Client';
 
@@ -47,6 +48,7 @@ export default function About() {
 
       {/* Full-bleed hero — matches home page style */}
       <section style={{ position: 'relative', height: 'clamp(360px, 50vh, 520px)', overflow: 'hidden', display: 'flex', alignItems: 'center', marginTop: '-72px' }}>
+        <NavBarSpacer />
         {/* Background */}
         {heroImage ? (
           <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />

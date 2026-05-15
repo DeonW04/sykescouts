@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Calendar, Award, AlertCircle, Clock, Check, X, Tent } from 'lucide-react';
@@ -231,6 +233,8 @@ export default function ParentDashboard() {
 
   return (
     <>
+    <FloatingNav />
+    <NavBarSpacer />
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Header */}
       <div className="relative bg-gradient-to-br from-[#7413dc] via-[#8b32eb] to-[#5c0fb0] text-white py-20 overflow-hidden">
