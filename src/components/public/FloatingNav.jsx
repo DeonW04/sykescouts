@@ -2,16 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import { Menu, X } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 
 export default function FloatingNav() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [portalLabel, setPortalLabel] = useState(null);
+  const [portalUrl, setPortalUrl] = useState(null);
   const location = useLocation();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    base44.auth.isAuthenticated().then(async (authed) => {
+      if (!authed) return;
+      const me = await base44.auth.me();
+      setUser(me);
+      if (me.role === 'admin') {
+        setPortalLabel('Leader Portal');
+        setPortalUrl(createPageUrl('LeaderDashboard'));
+      } else {
+        // Check if leader
+        const leaders = await base44.entities.Leader.filter({ user_id: me.id });
+        if (leaders.length > 0) {
+          setPortalLabel('Leader Portal');
+          setPortalUrl(createPageUrl('LeaderDashboard'));
+        } else {
+          setPortalLabel('Parent Portal');
+          setPortalUrl(createPageUrl('ParentDashboard'));
+        }
+      }
+    }).catch(() => {});
   }, []);
 
   useEffect(() => { setMenuOpen(false); }, [location]);
@@ -51,16 +77,12 @@ export default function FloatingNav() {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px' }}>
           {/* Logo */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
             <img
               src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png"
               alt="Syke Scouts"
-              style={{ height: '38px', width: 'auto' }}
+              style={{ height: '48px', width: 'auto' }}
             />
-            <div style={{ lineHeight: 1.1 }}>
-              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 500, fontSize: '15px', color: '#1a1a2e' }}>Syke Scouts</div>
-              <div style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 400, fontSize: '11px', color: '#7413dc' }}>40th Rochdale</div>
-            </div>
           </Link>
 
           {/* Desktop Links */}
@@ -90,44 +112,68 @@ export default function FloatingNav() {
 
           {/* Desktop CTAs */}
           <div className="hidden md:flex" style={{ alignItems: 'center', gap: '10px' }}>
-            <Link
-              to={createPageUrl('Volunteer')}
-              style={{
-                fontFamily: 'DM Sans, sans-serif',
-                fontWeight: 500,
-                fontSize: '14px',
-                color: 'rgba(26,26,46,0.8)',
-                textDecoration: 'none',
-                border: '0.5px solid rgba(26,26,46,0.25)',
-                borderRadius: '25px',
-                padding: '7px 18px',
-                background: 'transparent',
-                transition: 'background 0.2s, color 0.2s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,26,46,0.06)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-            >
-              Volunteer
-            </Link>
-            <Link
-              to={createPageUrl('Join')}
-              style={{
-                fontFamily: 'DM Sans, sans-serif',
-                fontWeight: 500,
-                fontSize: '14px',
-                color: '#fff',
-                textDecoration: 'none',
-                background: '#7413dc',
-                borderRadius: '25px',
-                padding: '8px 20px',
-                border: 'none',
-                transition: 'transform 0.2s ease, background 0.2s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.background = '#5c0fb0'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = '#7413dc'; }}
-            >
-              Join Us →
-            </Link>
+            {portalLabel ? (
+              <Link
+                to={portalUrl}
+                style={{
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontWeight: 500,
+                  fontSize: '14px',
+                  color: '#fff',
+                  textDecoration: 'none',
+                  background: '#7413dc',
+                  borderRadius: '25px',
+                  padding: '8px 22px',
+                  border: 'none',
+                  transition: 'transform 0.2s ease, background 0.2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.background = '#5c0fb0'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = '#7413dc'; }}
+              >
+                {portalLabel} →
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to={createPageUrl('Volunteer')}
+                  style={{
+                    fontFamily: 'DM Sans, sans-serif',
+                    fontWeight: 500,
+                    fontSize: '14px',
+                    color: 'rgba(26,26,46,0.8)',
+                    textDecoration: 'none',
+                    border: '0.5px solid rgba(26,26,46,0.25)',
+                    borderRadius: '25px',
+                    padding: '7px 18px',
+                    background: 'transparent',
+                    transition: 'background 0.2s, color 0.2s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,26,46,0.06)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  Volunteer
+                </Link>
+                <Link
+                  to={createPageUrl('Join')}
+                  style={{
+                    fontFamily: 'DM Sans, sans-serif',
+                    fontWeight: 500,
+                    fontSize: '14px',
+                    color: '#fff',
+                    textDecoration: 'none',
+                    background: '#7413dc',
+                    borderRadius: '25px',
+                    padding: '8px 20px',
+                    border: 'none',
+                    transition: 'transform 0.2s ease, background 0.2s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.background = '#5c0fb0'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = '#7413dc'; }}
+                >
+                  Join Us →
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Hamburger */}
@@ -170,41 +216,63 @@ export default function FloatingNav() {
                 </Link>
               ))}
               <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
-                <Link
-                  to={createPageUrl('Volunteer')}
-                  style={{
-                    flex: 1,
-                    textAlign: 'center',
-                    fontFamily: 'DM Sans, sans-serif',
-                    fontWeight: 500,
-                    fontSize: '14px',
-                    color: 'rgba(26,26,46,0.8)',
-                    textDecoration: 'none',
-                    border: '0.5px solid rgba(26,26,46,0.25)',
-                    borderRadius: '25px',
-                    padding: '10px 18px',
-                    background: 'transparent',
-                  }}
-                >
-                  Volunteer
-                </Link>
-                <Link
-                  to={createPageUrl('Join')}
-                  style={{
-                    flex: 1,
-                    textAlign: 'center',
-                    fontFamily: 'DM Sans, sans-serif',
-                    fontWeight: 500,
-                    fontSize: '14px',
-                    color: '#fff',
-                    textDecoration: 'none',
-                    background: '#7413dc',
-                    borderRadius: '25px',
-                    padding: '10px 18px',
-                  }}
-                >
-                  Join Us →
-                </Link>
+                {portalLabel ? (
+                  <Link
+                    to={portalUrl}
+                    style={{
+                      flex: 1,
+                      textAlign: 'center',
+                      fontFamily: 'DM Sans, sans-serif',
+                      fontWeight: 500,
+                      fontSize: '14px',
+                      color: '#fff',
+                      textDecoration: 'none',
+                      background: '#7413dc',
+                      borderRadius: '25px',
+                      padding: '10px 18px',
+                    }}
+                  >
+                    {portalLabel} →
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      to={createPageUrl('Volunteer')}
+                      style={{
+                        flex: 1,
+                        textAlign: 'center',
+                        fontFamily: 'DM Sans, sans-serif',
+                        fontWeight: 500,
+                        fontSize: '14px',
+                        color: 'rgba(26,26,46,0.8)',
+                        textDecoration: 'none',
+                        border: '0.5px solid rgba(26,26,46,0.25)',
+                        borderRadius: '25px',
+                        padding: '10px 18px',
+                        background: 'transparent',
+                      }}
+                    >
+                      Volunteer
+                    </Link>
+                    <Link
+                      to={createPageUrl('Join')}
+                      style={{
+                        flex: 1,
+                        textAlign: 'center',
+                        fontFamily: 'DM Sans, sans-serif',
+                        fontWeight: 500,
+                        fontSize: '14px',
+                        color: '#fff',
+                        textDecoration: 'none',
+                        background: '#7413dc',
+                        borderRadius: '25px',
+                        padding: '10px 18px',
+                      }}
+                    >
+                      Join Us →
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
