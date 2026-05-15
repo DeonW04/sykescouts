@@ -175,7 +175,7 @@ export default function FloatingNav() {
         overflow: 'hidden',
         boxShadow: scrolled
           ? '0 0 0 1px rgba(116,19,220,0.2), 0 8px 32px rgba(0,0,0,0.1)'
-          : '0 2px 16px rgba(0,0,0,0.08)',
+          : '0 2px 16px rgba(255, 255, 255, 0.97)',
         border: '0.5px solid rgba(116,19,220,0.18)',
         transition: 'box-shadow 0.3s ease',
         background: 'rgba(255,255,255,0.97)',
