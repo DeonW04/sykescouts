@@ -80,10 +80,10 @@ export default function SectionsOverview() {
         .section-panel:hover .section-desc { opacity: 1; }
         .section-panel .section-btn { opacity: 0; transform: translateY(12px); transition: opacity 0.3s ease 0.2s, transform 0.3s ease 0.2s; }
         .section-panel:hover .section-btn { opacity: 1; transform: translateY(0); }
-        .section-panel .section-bg { transition: transform 0.5s ease; }
+        .section-panel .section-bg { transition: transform 0.6s ease, opacity 0.5s ease; }
         .section-panel:hover .section-bg { transform: scale(1.05); }
-        .section-panel .section-gradient { transition: opacity 0.3s ease; }
-        .section-panel:hover .section-gradient { opacity: 1.1; }
+        .section-panel .section-bg-img { opacity: 0; transition: opacity 0.5s ease 0.1s, transform 0.6s ease; }
+        .section-panel:hover .section-bg-img { opacity: 1; }
         @media (max-width: 767px) {
           .section-panel { flex: none !important; width: 100% !important; height: 240px !important; }
           .section-panel .section-desc { opacity: 1 !important; }
@@ -122,20 +122,25 @@ export default function SectionsOverview() {
                 onMouseEnter={() => setHoveredIdx(i)}
                 onMouseLeave={() => setHoveredIdx(null)}
               >
-                {/* Background image */}
-                <div
-                  className="section-bg"
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    backgroundImage: bgImage ? `url(${bgImage})` : 'none',
-                    background: bgImage ? undefined : `linear-gradient(135deg, ${sec.color}aa, ${sec.color}55)`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                  }}
-                />
-                {/* Gradient overlay */}
-                <div className="section-gradient" style={{ position: 'absolute', inset: 0, background: sec.gradient }} />
+                {/* Solid colour base — always visible */}
+                <div style={{ position: 'absolute', inset: 0, background: sec.color }} />
+
+                {/* Background photo — fades in on hover */}
+                {bgImage && (
+                  <div
+                    className="section-bg section-bg-img"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      backgroundImage: `url(${bgImage})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }}
+                  />
+                )}
+
+                {/* Colour tint overlay — keeps text readable over the photo */}
+                <div style={{ position: 'absolute', inset: 0, background: sec.gradient }} />
 
                 {/* Content */}
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '28px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
