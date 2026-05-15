@@ -485,8 +485,8 @@ const getQuickActions = (user) => [
   { icon: Image, label: 'Gallery', accent: '#ec4899', page: 'LeaderGallery' },
 ];
 
-// ── Main page ──────────────────────────────────────────────────────────────────
-export default function LeaderDashboard() {
+// ── Inner dashboard (consumes SectionContext) ──────────────────────────────────
+function LeaderDashboardInner() {
   const [user, setUser] = useState(null);
   const [leader, setLeader] = useState(null);
   const { selectedSection } = useSectionContext();
@@ -522,9 +522,7 @@ export default function LeaderDashboard() {
 
   const actions = getQuickActions(user);
 
-
   return (
-    <SectionProvider>
     <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #f8f7ff 0%, #f0eeff 50%, #f0fdf4 100%)', fontFamily: 'DM Sans, sans-serif' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');
@@ -660,6 +658,14 @@ export default function LeaderDashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ── Main page (provides SectionContext) ────────────────────────────────────────
+export default function LeaderDashboard() {
+  return (
+    <SectionProvider>
+      <LeaderDashboardInner />
     </SectionProvider>
   );
 }
