@@ -29,7 +29,7 @@ const glassCard = {
   boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
 };
 
-// ── Section Selector (inline, styled to match) ─────────────────────────────────
+// ── Section Selector (chip-style, sits in hero) ────────────────────────────────
 function InlineSectionSelector() {
   const { selectedSection, setSelectedSection, availableSections, loading, user } = useSectionContext();
   const [showDefaultDialog, setShowDefaultDialog] = useState(false);
@@ -55,32 +55,34 @@ function InlineSectionSelector() {
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 20px', background: 'rgba(116,19,220,0.04)', borderTop: '1px solid rgba(116,19,220,0.08)' }}>
-        <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.5)', whiteSpace: 'nowrap' }}>Viewing:</span>
-        <Select value={selectedSection} onValueChange={val => {
-          if (val === '__set_default__') { setDefaultSection(currentDefault || selectedSection || availableSections[0]?.id); setShowDefaultDialog(true); }
-          else setSelectedSection(val);
-        }}>
-          <SelectTrigger style={{ width: '200px', borderRadius: '20px', border: '1px solid rgba(116,19,220,0.2)', fontFamily: 'DM Sans, sans-serif', fontSize: '13px', height: '34px' }}>
-            <SelectValue placeholder="Select section" />
-          </SelectTrigger>
-          <SelectContent>
-            {availableSections.map(s => (
-              <SelectItem key={s.id} value={s.id}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {s.display_name}
-                  {s.id === currentDefault && <Star size={11} color="#f59e0b" fill="#f59e0b" />}
-                </span>
-              </SelectItem>
-            ))}
-            <SelectSeparator />
-            <SelectItem value="__set_default__">
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'rgba(26,26,46,0.5)' }}>
-                <Star size={12} /> Set default section…
-              </span>
-            </SelectItem>
-          </SelectContent>
-        </Select>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
+        <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(26,26,46,0.4)', margin: 0, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Viewing section</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {availableSections.map(s => (
+            <button
+              key={s.id}
+              onClick={() => setSelectedSection(s.id)}
+              style={{
+                fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '13px',
+                padding: '6px 14px', borderRadius: '25px', border: 'none', cursor: 'pointer',
+                transition: 'all 0.2s',
+                background: selectedSection === s.id ? '#7413dc' : 'rgba(116,19,220,0.07)',
+                color: selectedSection === s.id ? '#fff' : 'rgba(26,26,46,0.6)',
+                display: 'flex', alignItems: 'center', gap: '4px',
+              }}
+            >
+              {s.display_name}
+              {s.id === currentDefault && <Star size={10} color={selectedSection === s.id ? 'rgba(255,255,255,0.7)' : '#f59e0b'} fill={selectedSection === s.id ? 'rgba(255,255,255,0.7)' : '#f59e0b'} />}
+            </button>
+          ))}
+          <button
+            onClick={() => { setDefaultSection(currentDefault || selectedSection || availableSections[0]?.id); setShowDefaultDialog(true); }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'rgba(26,26,46,0.3)', display: 'flex', alignItems: 'center' }}
+            title="Set default section"
+          >
+            <Star size={14} />
+          </button>
+        </div>
       </div>
 
       <Dialog open={showDefaultDialog} onOpenChange={setShowDefaultDialog}>
@@ -113,7 +115,7 @@ function InlineSectionSelector() {
   );
 }
 
-// ── This Week's Meeting ────────────────────────────────────────────────────────
+// ── This Week's Meeting (hero variant — horizontal compact) ───────────────────
 function ThisWeeksMeeting({ sections, selectedSection }) {
   const navigate = useNavigate();
   const filteredSections = selectedSection ? sections.filter(s => s.id === selectedSection) : sections;
@@ -140,73 +142,57 @@ function ThisWeeksMeeting({ sections, selectedSection }) {
 
   const section = meeting ? sections.find(s => s.id === meeting.section_id) : null;
 
+  if (isLoading) return (
+    <div style={{ height: '56px', display: 'flex', alignItems: 'center' }}>
+      <div style={{ width: '20px', height: '20px', border: '2px solid rgba(116,19,220,0.15)', borderTopColor: '#7413dc', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+    </div>
+  );
+
   return (
-    <div style={{ ...glassCard, overflow: 'hidden' }}>
-      <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: meeting ? '1px solid rgba(116,19,220,0.07)' : 'none' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '32px', height: '32px', background: 'rgba(116,19,220,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Calendar size={16} color="#7413dc" />
-          </div>
-          <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '16px', color: '#1a1a2e', margin: 0 }}>This Week's Meeting</h3>
-        </div>
-        <button onClick={() => navigate(createPageUrl('LeaderProgramme'))}
-          style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#7413dc', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}>
-          Programme <ArrowRight size={13} />
-        </button>
+    <div
+      style={{
+        background: 'rgba(116,19,220,0.06)',
+        border: '1px solid rgba(116,19,220,0.12)',
+        borderRadius: '16px',
+        padding: '14px 20px',
+        display: 'flex', alignItems: 'center', gap: '16px',
+        cursor: meeting ? 'pointer' : 'default',
+        transition: 'background 0.2s',
+      }}
+      onClick={() => meeting && navigate(createPageUrl('MeetingDetail') + `?sectionId=${meeting.section_id}&date=${meeting.date}`)}
+      onMouseEnter={e => { if (meeting) e.currentTarget.style.background = 'rgba(116,19,220,0.1)'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.06)'; }}
+    >
+      <div style={{ width: '36px', height: '36px', background: '#7413dc', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Calendar size={17} color="#fff" />
       </div>
 
-      {isLoading ? (
-        <div style={{ padding: '24px', textAlign: 'center' }}>
-          <div style={{ width: '24px', height: '24px', border: '2px solid rgba(116,19,220,0.15)', borderTopColor: '#7413dc', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
-        </div>
-      ) : meeting ? (
-        <div
-          style={{ padding: '20px 24px', cursor: 'pointer', transition: 'background 0.2s' }}
-          onClick={() => navigate(createPageUrl('MeetingDetail') + `?sectionId=${meeting.section_id}&date=${meeting.date}`)}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(116,19,220,0.03)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-        >
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '20px', color: '#1a1a2e', margin: '0 0 6px' }}>{meeting.title}</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.55)' }}>
-                  {format(parseISO(meeting.date), 'EEEE, d MMMM')}
-                </span>
-                {section && (
-                  <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#7413dc', background: 'rgba(116,19,220,0.08)', padding: '2px 10px', borderRadius: '20px', fontWeight: 500 }}>
-                    {section.display_name}
-                  </span>
-                )}
-                {section?.meeting_start_time && (
-                  <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.55)' }}>
-                    {section.meeting_start_time}{section.meeting_end_time ? `–${section.meeting_end_time}` : ''}
-                  </span>
-                )}
-              </div>
-              {meeting.description && (
-                <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.5)', margin: '10px 0 0', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {meeting.description}
-                </p>
-              )}
-              {meeting.equipment_needed && (
-                <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.4)', margin: '8px 0 0' }}>
-                  Equipment: {meeting.equipment_needed}
-                </p>
-              )}
-            </div>
-            <ArrowRight size={18} color="rgba(116,19,220,0.4)" style={{ flexShrink: 0, marginTop: '4px' }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#7413dc', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 2px' }}>This Week's Meeting</p>
+        {meeting ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '15px', color: '#1a1a2e' }}>{meeting.title}</span>
+            <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.5)' }}>{format(parseISO(meeting.date), 'EEEE, d MMMM')}</span>
+            {section?.meeting_start_time && (
+              <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.5)' }}>
+                · {section.meeting_start_time}{section.meeting_end_time ? `–${section.meeting_end_time}` : ''}
+              </span>
+            )}
+            {section && <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#7413dc', background: 'rgba(116,19,220,0.1)', padding: '2px 9px', borderRadius: '20px', fontWeight: 500 }}>{section.display_name}</span>}
           </div>
-        </div>
-      ) : (
-        <div style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.4)', margin: 0 }}>No meeting scheduled this week</p>
-          <button onClick={() => navigate(createPageUrl('LeaderProgramme'))}
-            style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#7413dc', background: 'rgba(116,19,220,0.08)', border: 'none', cursor: 'pointer', padding: '6px 14px', borderRadius: '20px', fontWeight: 500, whiteSpace: 'nowrap' }}>
-            Add meeting
-          </button>
-        </div>
-      )}
+        ) : (
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>No meeting scheduled this week</p>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+        <button
+          onClick={e => { e.stopPropagation(); navigate(createPageUrl('LeaderProgramme')); }}
+          style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#7413dc', background: 'rgba(116,19,220,0.1)', border: 'none', cursor: 'pointer', padding: '6px 14px', borderRadius: '20px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+          {meeting ? 'View Programme' : 'Add Meeting'}
+        </button>
+        {meeting && <ArrowRight size={16} color="rgba(116,19,220,0.4)" />}
+      </div>
     </div>
   );
 }
@@ -533,24 +519,26 @@ function LeaderDashboardInner() {
 
       {/* ── Hero header — light ── */}
       <div style={{
-        background: 'rgba(255,255,255,0.7)',
-        backdropFilter: 'blur(12px)',
+        background: 'rgba(255,255,255,0.8)',
+        backdropFilter: 'blur(16px)',
         borderBottom: '1px solid rgba(116,19,220,0.1)',
-        padding: '40px 40px 0',
+        padding: '32px 40px 28px',
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', marginBottom: '8px' }}>Leader Portal</p>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(26px, 3.5vw, 40px)', color: '#1a1a2e', margin: '0 0 4px', lineHeight: 1.15 }}>
-            Welcome back, {user.display_name || user.full_name?.split(' ')[0]}
-          </h1>
-          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '15px', color: 'rgba(26,26,46,0.5)', margin: '0 0 0' }}>
-            40th Rochdale (Syke) Scouts
-          </p>
-        </div>
+          {/* Top row: greeting + section selector */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap', marginBottom: '24px' }}>
+            <div>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', marginBottom: '6px', margin: '0 0 6px' }}>Leader Portal</p>
+              <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 36px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.15 }}>
+                Welcome back, {user.display_name || user.full_name?.split(' ')[0]}
+              </h1>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>40th Rochdale (Syke) Scouts</p>
+            </div>
+            <InlineSectionSelector />
+          </div>
 
-        {/* Section selector sits inside the hero, below title */}
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <InlineSectionSelector />
+          {/* This week's meeting in the hero */}
+          <ThisWeeksMeeting sections={sections} selectedSection={selectedSection} />
         </div>
       </div>
 
@@ -622,7 +610,6 @@ function LeaderDashboardInner() {
       {/* ── Dashboard content ── */}
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 40px 48px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <BadgesDue sections={sections} selectedSection={selectedSection} />
-        <ThisWeeksMeeting sections={sections} selectedSection={selectedSection} />
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <UpcomingMeetings sections={sections} selectedSection={selectedSection} />

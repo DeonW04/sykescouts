@@ -318,11 +318,19 @@ export default function FloatingNav() {
                 )}
                 <button
                   onClick={() => base44.auth.logout()}
-                  style={{ ...stripBtnStyle, color: 'rgba(26,26,46,0.4)' }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '13px',
+                    color: 'rgba(26,26,46,0.6)', background: 'rgba(116,19,220,0.04)',
+                    border: '0.5px solid rgba(116,19,220,0.12)', borderRadius: '20px',
+                    cursor: 'pointer', padding: '5px 12px 5px 10px',
+                    whiteSpace: 'nowrap', transition: 'background 0.2s, color 0.2s',
+                  }}
                   onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.07)'; e.currentTarget.style.color = '#ef4444'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'rgba(26,26,46,0.4)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.04)'; e.currentTarget.style.color = 'rgba(26,26,46,0.6)'; }}
                 >
-                  <LogOut size={13} /> Sign out
+                  {user?.full_name?.split(' ')[0] || 'Account'}
+                  <LogOut size={12} />
                 </button>
               </div>
             </div>

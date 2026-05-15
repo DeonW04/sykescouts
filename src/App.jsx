@@ -36,6 +36,7 @@ import PWAInstallGate from './components/pwa/PWAInstallGate';
 import { useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import LoadingScreen from '@/components/LoadingScreen';
+import MobileDashboardDemo from './pages/MobileDashboardDemo';
 
 // Public-only pages that should never be shown in PWA mode
 const PUBLIC_PAGES = ['/', '/Home', '/About', '/Contact', '/Gallery', '/Join', '/Sections', '/Parents', '/Volunteer', '/SharedPage'];
@@ -162,6 +163,7 @@ const AuthenticatedApp = () => {
       <Route path="/SectionAccounting" element={<LayoutWrapper currentPageName="SectionAccounting"><SectionAccounting /></LayoutWrapper>} />
       <Route path="/PORHelper" element={<LayoutWrapper currentPageName="PORHelper"><PORHelper /></LayoutWrapper>} />
       <Route path="/receipt-submit" element={<QRReceiptSubmit />} />
+      <Route path="/MobileDashboardDemo" element={<MobileDashboardDemo />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </PWAGate>
