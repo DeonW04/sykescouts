@@ -29,9 +29,14 @@ const glassCard = {
   boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
 };
 
+const SECTION_ORDER = ['squirrels', 'beavers', 'cubs', 'scouts', 'explorers'];
+
 // ── Section Selector (chip-style, sits in hero) ────────────────────────────────
 function InlineSectionSelector() {
   const { selectedSection, setSelectedSection, availableSections, loading, user } = useSectionContext();
+  const sortedSections = [...availableSections].sort(
+    (a, b) => SECTION_ORDER.indexOf(a.name) - SECTION_ORDER.indexOf(b.name)
+  );
   const [showDefaultDialog, setShowDefaultDialog] = useState(false);
   const [defaultSection, setDefaultSection] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -58,7 +63,7 @@ function InlineSectionSelector() {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
         <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(26,26,46,0.4)', margin: 0, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Viewing section</p>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {availableSections.map(s => (
+          {sortedSections.map(s => (
             <button
               key={s.id}
               onClick={() => setSelectedSection(s.id)}
@@ -76,7 +81,7 @@ function InlineSectionSelector() {
             </button>
           ))}
           <button
-            onClick={() => { setDefaultSection(currentDefault || selectedSection || availableSections[0]?.id); setShowDefaultDialog(true); }}
+            onClick={() => { setDefaultSection(currentDefault || selectedSection || sortedSections[0]?.id); setShowDefaultDialog(true); }}
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'rgba(26,26,46,0.3)', display: 'flex', alignItems: 'center' }}
             title="Set default section"
           >
@@ -94,7 +99,7 @@ function InlineSectionSelector() {
           </DialogHeader>
           <p className="text-sm text-gray-500">Choose which section opens by default when you log in.</p>
           <div className="space-y-2 mt-2">
-            {availableSections.map(s => (
+            {sortedSections.map(s => (
               <button key={s.id} onClick={() => setDefaultSection(s.id)}
                 className={`w-full text-left px-4 py-2.5 rounded-lg border text-sm font-medium transition-all flex items-center justify-between ${defaultSection === s.id ? 'border-amber-400 bg-amber-50 text-amber-800' : 'border-gray-200 hover:border-gray-300'}`}
               >
@@ -475,7 +480,7 @@ const getQuickActions = (user) => [
 function LeaderDashboardInner() {
   const [user, setUser] = useState(null);
   const [leader, setLeader] = useState(null);
-  const { selectedSection } = useSectionContext();
+  const { selectedSection, transitioning, previousSection, pendingSectionId, onTransitionComplete, availableSections: ctxSections } = useSectionContext();
 
   useEffect(() => { loadUserData(); }, []);
 
@@ -508,12 +513,23 @@ function LeaderDashboardInner() {
 
   const actions = getQuickActions(user);
 
+  const transFromSec = ctxSections.find(s => s.id === previousSection);
+  const transToSec = ctxSections.find(s => s.id === pendingSectionId);
+
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #f8f7ff 0%, #f0eeff 50%, #f0fdf4 100%)', fontFamily: 'DM Sans, sans-serif' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
+
+      {transitioning && transFromSec && transToSec && (
+        <SectionTransitionOverlay
+          fromSection={transFromSec}
+          toSection={transToSec}
+          onComplete={onTransitionComplete}
+        />
+      )}
 
       <FloatingNav />
 

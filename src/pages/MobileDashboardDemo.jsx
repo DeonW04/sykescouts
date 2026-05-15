@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Users, Award, Shield, ChevronRight, Home, BookOpen, Bell, User, Menu, X, ArrowRight, Tent, Zap, Star, Receipt, LayoutGrid, List } from 'lucide-react';
+import { Calendar, Users, Award, Shield, ChevronRight, Home, BookOpen, Bell, User, Menu, X, ArrowRight, Tent, Zap, Star, Receipt, LayoutGrid, List, LogOut } from 'lucide-react';
 
 const PURPLE = '#7413dc';
 const DARK = '#1a1a2e';
@@ -116,35 +116,83 @@ function ConceptB() {
   );
 }
 
-// ── Concept C: Sidebar Drawer ──────────────────────────────────────────────────
+// ── Concept C: Sidebar Drawer (Recommended) ────────────────────────────────────
+const drawerGroups = [
+  { label: 'Members', icon: Users, links: ['Member Details', 'Attendance', 'Parent Portal'] },
+  { label: 'Programme', icon: Calendar, links: ['Weekly Meetings', 'Events', 'Ideas Board'] },
+  { label: 'Safety', icon: Shield, links: ['Risk Assessments', 'Consent Forms'] },
+  { label: 'Badges', icon: Award, links: ['Badge Tracking', 'Due Badges', 'Badge Stock'] },
+];
+
 function ConceptC() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [active, setActive] = useState('Dashboard');
+  const [expandedGroup, setExpandedGroup] = useState(null);
+
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', fontFamily: 'DM Sans, sans-serif', overflow: 'hidden', position: 'relative' }}>
       {/* Drawer overlay */}
       {drawerOpen && (
-        <div onClick={() => setDrawerOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 10 }} />
+        <div onClick={() => setDrawerOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 10 }} />
       )}
+
       {/* Sidebar */}
-      <div style={{ position: 'absolute', left: drawerOpen ? 0 : '-240px', top: 0, bottom: 0, width: '240px', background: '#1a1a2e', zIndex: 20, transition: 'left 0.3s ease', padding: '24px 0', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '0 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+      <div style={{ position: 'absolute', left: drawerOpen ? 0 : '-270px', top: 0, bottom: 0, width: '270px', background: '#1a1a2e', zIndex: 20, transition: 'left 0.3s cubic-bezier(0.4,0,0.2,1)', display: 'flex', flexDirection: 'column' }}>
+        {/* Header */}
+        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 4px' }}>Leader Portal</p>
-          <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '16px', color: '#fff', margin: 0 }}>Sam Johnson</p>
+          <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '17px', color: '#fff', margin: '0 0 2px' }}>Sam Johnson</p>
+          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>40th Rochdale Scouts</p>
         </div>
-        <div style={{ flex: 1, padding: '12px 12px', overflowY: 'auto' }}>
-          {mockNav.map(({ icon: Icon, label }) => (
-            <button key={label} onClick={() => { setActive(label); setDrawerOpen(false); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 12px', borderRadius: '10px', background: active === label ? PURPLE : 'transparent', border: 'none', cursor: 'pointer', marginBottom: '2px', color: active === label ? '#fff' : 'rgba(255,255,255,0.6)', fontFamily: 'DM Sans, sans-serif', fontSize: '14px', fontWeight: 500, textAlign: 'left', transition: 'background 0.2s' }}>
-              <Icon size={16} /> {label}
-            </button>
+
+        {/* Nav items */}
+        <div style={{ flex: 1, padding: '10px 10px', overflowY: 'auto' }}>
+          {/* Dashboard */}
+          <button onClick={() => { setActive('Dashboard'); setDrawerOpen(false); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', background: active === 'Dashboard' ? PURPLE : 'transparent', border: 'none', cursor: 'pointer', marginBottom: '2px', color: active === 'Dashboard' ? '#fff' : 'rgba(255,255,255,0.65)', fontFamily: 'DM Sans, sans-serif', fontSize: '14px', fontWeight: 500, textAlign: 'left' }}>
+            <Home size={15} /> Dashboard
+          </button>
+
+          {/* Grouped sections with dropdowns */}
+          {drawerGroups.map(group => (
+            <div key={group.label}>
+              <button
+                onClick={() => setExpandedGroup(expandedGroup === group.label ? null : group.label)}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: '10px', background: 'transparent', border: 'none', cursor: 'pointer', marginBottom: '2px', color: 'rgba(255,255,255,0.65)', fontFamily: 'DM Sans, sans-serif', fontSize: '14px', fontWeight: 500 }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <group.icon size={15} /> {group.label}
+                </div>
+                <ChevronRight size={13} style={{ transform: expandedGroup === group.label ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', color: 'rgba(255,255,255,0.3)' }} />
+              </button>
+              {expandedGroup === group.label && (
+                <div style={{ paddingLeft: '14px', marginBottom: '4px' }}>
+                  {group.links.map(link => (
+                    <button key={link} onClick={() => { setActive(link); setDrawerOpen(false); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px', borderRadius: '8px', background: active === link ? 'rgba(116,19,220,0.3)' : 'transparent', border: 'none', cursor: 'pointer', marginBottom: '1px', color: active === link ? '#fff' : 'rgba(255,255,255,0.5)', fontFamily: 'DM Sans, sans-serif', fontSize: '13px', fontWeight: 500, textAlign: 'left' }}>
+                      <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+                      {link}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
+        </div>
+
+        {/* Back to public site */}
+        <div style={{ padding: '12px 10px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <button style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', color: 'rgba(255,255,255,0.5)', fontFamily: 'DM Sans, sans-serif', fontSize: '13px', fontWeight: 500 }}>
+            <Home size={14} /> Back to Public Site
+          </button>
+          <button style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', fontFamily: 'DM Sans, sans-serif', fontSize: '13px', fontWeight: 500, marginTop: '2px' }}>
+            <LogOut size={14} /> Sign Out
+          </button>
         </div>
       </div>
 
       {/* Main content */}
       <div style={{ flex: 1, background: '#f8f7ff', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Topbar */}
-        <div style={{ background: '#fff', padding: '14px 16px', borderBottom: '1px solid rgba(116,19,220,0.1)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ background: '#fff', padding: '12px 16px', borderBottom: '1px solid rgba(116,19,220,0.1)', display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button onClick={() => setDrawerOpen(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: DARK }}>
             <Menu size={22} />
           </button>
@@ -152,22 +200,22 @@ function ConceptC() {
           <Bell size={18} color="rgba(26,26,46,0.4)" />
         </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
-          <div style={{ background: 'rgba(116,19,220,0.07)', borderRadius: '14px', padding: '16px', marginBottom: '12px', border: '1px solid rgba(116,19,220,0.12)' }}>
-            <p style={{ fontSize: '10px', fontWeight: 600, color: PURPLE, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 4px' }}>This Week</p>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '14px' }}>
+          <div style={{ background: 'rgba(116,19,220,0.07)', borderRadius: '14px', padding: '14px 16px', marginBottom: '12px', border: '1px solid rgba(116,19,220,0.12)' }}>
+            <p style={{ fontSize: '10px', fontWeight: 600, color: PURPLE, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 3px' }}>This Week · Cubs</p>
             <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '16px', color: DARK, margin: '0 0 2px' }}>{mockMeeting.title}</p>
             <p style={{ fontSize: '12px', color: 'rgba(26,26,46,0.5)', margin: 0 }}>{mockMeeting.date} · {mockMeeting.time}</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
             {mockActions.map(a => (
-              <div key={a.label} style={{ background: '#fff', borderRadius: '12px', padding: '14px', border: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '24px', color: a.color, margin: 0 }}>{a.count}</p>
-                <p style={{ fontSize: '12px', color: 'rgba(26,26,46,0.5)', margin: 0 }}>{a.label}</p>
+              <div key={a.label} style={{ background: '#fff', borderRadius: '12px', padding: '12px', border: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '22px', color: a.color, margin: 0 }}>{a.count}</p>
+                <p style={{ fontSize: '11px', color: 'rgba(26,26,46,0.5)', margin: 0 }}>{a.label}</p>
               </div>
             ))}
           </div>
-          {['Member Details', 'Weekly Programme', 'Badge Tracking'].map(label => (
-            <div key={label} style={{ background: '#fff', borderRadius: '12px', padding: '14px 16px', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid rgba(0,0,0,0.05)' }}>
+          {['Member Details', 'Weekly Programme', 'Badge Tracking', 'Risk Assessments'].map(label => (
+            <div key={label} style={{ background: '#fff', borderRadius: '12px', padding: '13px 16px', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid rgba(0,0,0,0.05)' }}>
               <span style={{ fontSize: '14px', color: DARK, fontWeight: 500 }}>{label}</span>
               <ChevronRight size={16} color="rgba(26,26,46,0.3)" />
             </div>
@@ -256,7 +304,7 @@ function ConceptD() {
 const concepts = [
   { id: 'A', label: 'Bottom Tab Bar', desc: 'Classic mobile pattern with persistent bottom navigation. Clean and familiar.', component: ConceptA },
   { id: 'B', label: 'Dark Mode Cards', desc: 'Dark glassmorphism header with light cards. Premium, app-like feel.', component: ConceptB },
-  { id: 'C', label: 'Sidebar Drawer', desc: 'Hamburger menu slides open a full sidebar. More navigation space available.', component: ConceptC },
+  { id: 'C', label: 'Sidebar Drawer', desc: 'Hamburger menu opens a dark sidebar with grouped dropdowns for each section (Members, Programme, Safety, Badges). A "Back to Public Site" button at the bottom keeps navigation clear. Best balance of space and accessibility for leader/parent pages.', component: ConceptC, recommended: true },
   { id: 'D', label: 'Magazine / Card-first', desc: 'Iconic hero card for meeting, 2×2 feature grid below. High visual impact.', component: ConceptD },
 ];
 
@@ -285,9 +333,13 @@ export default function MobileDashboardDemo() {
               color: selected === c.id ? '#fff' : 'rgba(26,26,46,0.7)',
               boxShadow: selected === c.id ? `0 4px 16px ${PURPLE}40` : '0 2px 8px rgba(0,0,0,0.06)',
               transition: 'all 0.2s',
+              position: 'relative',
             }}>
               <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '16px' }}>{c.id}</span>
               {c.label}
+              {c.recommended && (
+                <span style={{ fontSize: '10px', fontWeight: 700, background: '#22c55e', color: '#fff', padding: '2px 7px', borderRadius: '20px', letterSpacing: '0.04em' }}>✓ Recommended</span>
+              )}
             </button>
           ))}
         </div>

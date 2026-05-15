@@ -57,9 +57,22 @@ const portalGroups = [
 
 const adminLink = { label: 'Admin Settings', page: 'AdminSettings', icon: Settings };
 
-// Stable corner radius — nav pill is always pill-shaped; the strip slides under
-const NAV_RADIUS = '60px';
+// Stable corner radius
 const STRIP_RADIUS = '24px';
+
+// Pages where the portal strip should be open by default
+const PORTAL_PAGES = [
+  '/LeaderDashboard', '/LeaderMembers', '/LeaderProgramme', '/LeaderEvents',
+  '/LeaderAttendance', '/LeaderBadges', '/LeaderGallery', '/MeetingDetail',
+  '/EventDetail', '/MemberDetail', '/BadgeDetail', '/AwardBadges', '/ManageBadges',
+  '/RiskAssessments', '/RiskAssessmentDetail', '/Communications', '/WeeklyMessage',
+  '/WeeklyMessageList', '/MonthlyNewsletter', '/MonthlyNewsletterList', '/EventUpdate',
+  '/EventUpdateList', '/IdeasBoard', '/JoinEnquiries', '/ArchivedMembers',
+  '/BadgeStockManagement', '/NightsAwayTracking', '/ConsentForms', '/ConsentFormBuilder',
+  '/SectionAccounting', '/AdminSettings', '/ParentDashboard', '/MyChild',
+  '/ParentProgramme', '/ParentEvents', '/ParentEventDetail', '/ParentBadges', '/ParentGoldAward',
+  '/AIProgrammePlanner',
+];
 
 export default function FloatingNav() {
   const [scrolled, setScrolled] = useState(false);
@@ -71,6 +84,9 @@ export default function FloatingNav() {
   const [portalLabel, setPortalLabel] = useState(null);
   const [portalUrl, setPortalUrl] = useState(null);
   const location = useLocation();
+
+  // Auto-open the portal strip on leader/parent pages
+  const isPortalPage = PORTAL_PAGES.some(p => location.pathname === p || location.pathname.startsWith(p + '?'));
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -102,7 +118,11 @@ export default function FloatingNav() {
     }).catch(() => {});
   }, []);
 
-  useEffect(() => { setMenuOpen(false); setPortalOpen(false); }, [location]);
+  useEffect(() => {
+    setMenuOpen(false);
+    // On portal pages, keep strip open; on public pages, close it
+    setPortalOpen(false);
+  }, [location]);
 
   const navLinks = [
     { label: 'Home', to: '/' },
@@ -138,29 +158,26 @@ export default function FloatingNav() {
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');`}</style>
 
-      {/* ── Outer wrapper keeps a stable pill shape; strip slides in underneath ── */}
+      {/* ── Outer wrapper — stable shape, clips everything inside ── */}
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
         margin: '12px 24px',
-        // We don't animate border-radius on this wrapper — it always clips to the strip radius
         borderRadius: STRIP_RADIUS,
-        // Clip so the strip slides under the pill without altering the pill's own corners
         overflow: 'hidden',
         boxShadow: scrolled
           ? '0 0 0 1px rgba(116,19,220,0.2), 0 8px 32px rgba(0,0,0,0.1)'
           : '0 2px 16px rgba(0,0,0,0.08)',
         border: '0.5px solid rgba(116,19,220,0.18)',
         transition: 'box-shadow 0.3s ease',
+        background: 'rgba(255,255,255,0.97)',
       }}>
 
-        {/* ── Pill nav row — always fully rounded internally ── */}
+        {/* ── Pill nav row — solid fill, no border-radius animation ── */}
         <div style={{
-          background: scrolled ? 'rgba(255,255,255,0.97)' : 'rgba(255,255,255,0.88)',
+          background: scrolled ? 'rgba(255,255,255,0.99)' : 'rgba(255,255,255,0.92)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          // Large radius ensures the pill look; clipped by parent to STRIP_RADIUS at corners
-          borderRadius: `${NAV_RADIUS} ${NAV_RADIUS} ${portalOpen ? '0 0' : `${NAV_RADIUS} ${NAV_RADIUS}`}`,
-          transition: 'background 0.3s ease, border-radius 0.35s ease',
+          transition: 'background 0.3s ease',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '10px 20px',
         }}>
@@ -188,11 +205,11 @@ export default function FloatingNav() {
           <div className="hidden md:flex" style={{ alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             {isLeader ? (
               <button
-                onClick={() => setPortalOpen(!portalOpen)}
+                onClick={() => setPortalOpen(v => !v)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
-                  background: portalOpen ? '#7413dc' : 'rgba(116,19,220,0.08)',
-                  color: portalOpen ? '#fff' : '#7413dc',
+                  background: (isPortalPage || portalOpen) ? '#7413dc' : 'rgba(116,19,220,0.08)',
+                  color: (isPortalPage || portalOpen) ? '#fff' : '#7413dc',
                   border: 'none', borderRadius: '25px',
                   padding: '8px 18px', fontSize: '14px', fontWeight: 500,
                   cursor: 'pointer', transition: 'all 0.25s ease',
@@ -201,7 +218,7 @@ export default function FloatingNav() {
               >
                 <LayoutDashboard size={15} />
                 Leader Portal
-                <ChevronDown size={14} style={{ transform: portalOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }} />
+                <ChevronDown size={14} style={{ transform: (isPortalPage || portalOpen) ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }} />
               </button>
             ) : portalLabel ? (
               <Link to={portalUrl} style={{
@@ -243,11 +260,9 @@ export default function FloatingNav() {
         {isLeader && (
           <div style={{
             overflow: 'hidden',
-            maxHeight: portalOpen ? '56px' : '0',
+            maxHeight: (isPortalPage || portalOpen) ? '56px' : '0',
             transition: 'max-height 0.4s cubic-bezier(0.4,0,0.2,1)',
             background: 'rgba(255,255,255,0.97)',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
           }}>
             <div style={{
               borderTop: '0.5px solid rgba(116,19,220,0.12)',
@@ -420,8 +435,11 @@ export default function FloatingNav() {
         )}
       </div>
 
-      {/* Spacer so page content clears the nav */}
-      <div style={{ height: '76px' }} />
+      {/* Spacer so page content clears the nav — taller when portal strip is visible */}
+      <div style={{
+        height: isLeader && (isPortalPage || portalOpen) ? '136px' : '76px',
+        transition: 'height 0.4s cubic-bezier(0.4,0,0.2,1)',
+      }} />
     </>
   );
 }
