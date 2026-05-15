@@ -446,7 +446,7 @@ export default function FloatingNav() {
 
       {/* Spacer so page content clears the nav — taller when portal strip is visible */}
       <div style={{
-        height: isPortalPage ? '100px' : (isLeader && portalOpen ? '70px' : '76px'),
+        height: isPortalPage ? '70px' : (isLeader && portalOpen ? '70px' : '76px'),
       }} />
     </>
   );
