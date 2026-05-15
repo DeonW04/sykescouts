@@ -1,356 +1,184 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { CheckCircle, ArrowRight, Heart, Award, Users, Clock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import SEO from '../components/SEO';
+import FloatingNav from '../components/public/FloatingNav';
+import PublicFooter from '../components/public/PublicFooter';
+
+const inputStyle = {
+  width: '100%',
+  background: 'rgba(255,255,255,0.08)',
+  border: '0.5px solid rgba(255,255,255,0.2)',
+  borderRadius: '10px',
+  color: '#fff',
+  padding: '12px 16px',
+  fontSize: '15px',
+  fontFamily: 'DM Sans, sans-serif',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
+const labelStyle = {
+  display: 'block',
+  fontFamily: 'DM Sans, sans-serif',
+  fontSize: '13px',
+  color: 'rgba(255,255,255,0.6)',
+  marginBottom: '6px',
+};
+
+const glassCard = {
+  background: 'rgba(116,19,220,0.08)',
+  backdropFilter: 'blur(20px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+  border: '0.5px solid rgba(255,255,255,0.2)',
+  borderRadius: '24px',
+  padding: '40px',
+};
 
 export default function Volunteer() {
   const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    phone: '',
-    address: '',
-    occupation: '',
-    previous_scouting: false,
-    previous_scouting_details: '',
-    skills: '',
-    availability: '',
-    why_volunteer: '',
-    section_preference: '',
+    full_name: '', email: '', phone: '', address: '', occupation: '',
+    previous_scouting: false, previous_scouting_details: '',
+    skills: '', availability: '', why_volunteer: '', section_preference: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const sectionPreferences = [
-    { value: 'any', label: 'Any section - I\'m flexible!' },
-    { value: 'beavers', label: 'Beavers (6-8 years)' },
-    { value: 'cubs', label: 'Cubs (8-10½ years)' },
-    { value: 'scouts', label: 'Scouts (10½-14 years)' },
+    { value: 'any', label: "Any section - I'm flexible!" },
+    { value: 'beavers', label: 'Beavers (6–8 years)' },
+    { value: 'cubs', label: 'Cubs (8–10½ years)' },
+    { value: 'scouts', label: 'Scouts (10½–14 years)' },
     { value: 'admin', label: 'Behind the scenes / Admin' },
   ];
 
   const benefits = [
-    {
-      icon: Heart,
-      title: 'Make a Difference',
-      description: 'Help young people develop confidence, skills, and friendships that last a lifetime.',
-    },
-    {
-      icon: Award,
-      title: 'Gain Qualifications',
-      description: 'Access free training and nationally recognised qualifications in first aid, safeguarding, and leadership.',
-    },
-    {
-      icon: Users,
-      title: 'Join a Community',
-      description: 'Become part of a friendly team of volunteers who support each other and have fun together.',
-    },
-    {
-      icon: Clock,
-      title: 'Flexible Commitment',
-      description: 'Give as much or as little time as you can - even a few hours a month makes a difference.',
-    },
+    { icon: Heart, title: 'Make a Difference', description: 'Help young people develop confidence, skills, and friendships that last a lifetime.' },
+    { icon: Award, title: 'Gain Qualifications', description: 'Access free training and nationally recognised qualifications.' },
+    { icon: Users, title: 'Join a Community', description: 'Become part of a friendly team of volunteers who support each other.' },
+    { icon: Clock, title: 'Flexible Commitment', description: 'Give as much or as little time as you can — even a few hours a month.' },
   ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-
-    await base44.entities.VolunteerApplication.create({
-      ...formData,
-      status: 'pending',
-    });
-
+    await base44.entities.VolunteerApplication.create({ ...formData, status: 'pending' });
     setSubmitting(false);
     setSubmitted(true);
     toast.success('Application submitted successfully!');
   };
 
+  const set = (field) => (e) => setFormData({ ...formData, [field]: e.target.value });
+
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white rounded-2xl shadow-lg p-8 md:p-12 max-w-lg text-center"
-        >
-          <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-6">
-            <CheckCircle className="w-10 h-10 text-green-600" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">Thank You!</h1>
-          <p className="mt-4 text-gray-600">
-            Your volunteer application has been submitted. We're excited you want to 
-            join our team! We'll be in touch soon to discuss opportunities.
-          </p>
-        </motion.div>
+      <div style={{ background: '#002a6e', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <FloatingNav />
+        <div style={{ ...glassCard, maxWidth: '480px', textAlign: 'center' }}>
+          <CheckCircle size={56} color="#00a794" style={{ marginBottom: '20px' }} />
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '28px', color: '#fff', marginBottom: '12px' }}>Thank You!</h1>
+          <p style={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.75 }}>Your volunteer application has been submitted. We're excited you want to join our team! We'll be in touch soon to discuss opportunities.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <SEO 
-        title="Volunteer With Us | 40th Rochdale (Syke) Scouts"
-        description="Become a volunteer with 40th Rochdale (Syke) Scouts. No experience needed! Help make a difference in young people's lives. Full training and support provided."
-        keywords="volunteer scouts rochdale, scout leader volunteer, help scouts, volunteer youth group, become scout leader"
-        path="/Volunteer"
-      />
+    <div style={{ background: '#002a6e', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap');
+        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
+        input:focus, textarea:focus, select:focus { border-color: rgba(116,19,220,0.5) !important; box-shadow: 0 0 0 2px rgba(116,19,220,0.2); }
+        select option { background: #003982; color: #fff; }
+      `}</style>
+      <SEO title="Volunteer With Us | 40th Rochdale (Syke) Scouts" description="Become a volunteer with Syke Scouts. No experience needed." path="/Volunteer" />
+      <FloatingNav />
+
       {/* Hero */}
-      <section className="bg-[#004851] py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-3xl"
-          >
-            <h1 className="text-4xl md:text-5xl font-bold text-white">
-              Become a Volunteer
-            </h1>
-            <p className="mt-6 text-xl text-gray-200">
-              You don't need to be Bear Grylls. We provide all the training - 
-              you just need enthusiasm and a desire to help young people.
-            </p>
-          </motion.div>
+      <section style={{ background: '#003982', padding: '80px 32px 60px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ maxWidth: '800px' }}>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#00a794', marginBottom: '12px' }}>For adults</p>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(32px, 5vw, 56px)', color: '#fff', margin: '0 0 16px' }}>Become a Volunteer</h1>
+          <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, maxWidth: '600px', margin: 0 }}>You don't need to be Bear Grylls. We provide all the training — you just need enthusiasm and a desire to help young people.</p>
         </div>
       </section>
 
       {/* Benefits */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-3xl font-bold text-gray-900 text-center mb-12"
-          >
-            Why Volunteer With Us?
-          </motion.h2>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {benefits.map((benefit, index) => (
-              <motion.div
-                key={benefit.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-xl p-6 shadow-sm text-center"
-              >
-                <div className="w-14 h-14 mx-auto bg-[#7413dc]/10 rounded-full flex items-center justify-center mb-4">
-                  <benefit.icon className="w-7 h-7 text-[#7413dc]" />
-                </div>
-                <h3 className="font-bold text-gray-900">{benefit.title}</h3>
-                <p className="mt-2 text-gray-600 text-sm">{benefit.description}</p>
-              </motion.div>
-            ))}
-          </div>
+      <section style={{ padding: '64px 32px', maxWidth: '1200px', margin: '0 auto' }}>
+        <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: 'clamp(22px, 3vw, 36px)', color: '#fff', textAlign: 'center', marginBottom: '40px' }}>Why Volunteer With Us?</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+          {benefits.map(b => (
+            <div key={b.title} style={{ ...glassCard, padding: '28px', textAlign: 'center' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(116,19,220,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <b.icon size={22} color="#7413dc" />
+              </div>
+              <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '17px', color: '#fff', marginBottom: '8px' }}>{b.title}</h3>
+              <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.65 }}>{b.description}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Form Section */}
-      <section className="py-16">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100"
-          >
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-[#7413dc] rounded-xl flex items-center justify-center">
-                <Heart className="w-6 h-6 text-white" />
-              </div>
+      {/* Form */}
+      <section style={{ padding: '0 32px 80px', maxWidth: '720px', margin: '0 auto' }}>
+        <div style={glassCard}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '36px' }}>
+            <div style={{ width: '44px', height: '44px', background: '#00a794', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Heart size={22} color="#fff" />
+            </div>
+            <div>
+              <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '22px', color: '#fff', margin: 0 }}>Volunteer Application</h2>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', margin: 0 }}>Tell us about yourself</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '14px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', paddingBottom: '12px', borderBottom: '0.5px solid rgba(255,255,255,0.1)', marginBottom: '20px' }}>Your Details</p>
+            <div style={{ marginBottom: '16px' }}><label style={labelStyle}>Full Name *</label><input style={inputStyle} value={formData.full_name} onChange={set('full_name')} required placeholder="Your full name" /></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div><label style={labelStyle}>Email Address *</label><input style={inputStyle} type="email" value={formData.email} onChange={set('email')} required placeholder="email@example.com" /></div>
+              <div><label style={labelStyle}>Phone Number *</label><input style={inputStyle} type="tel" value={formData.phone} onChange={set('phone')} required placeholder="07xxx xxxxxx" /></div>
+            </div>
+            <div style={{ marginBottom: '16px' }}><label style={labelStyle}>Address</label><input style={inputStyle} value={formData.address} onChange={set('address')} placeholder="Your address" /></div>
+            <div style={{ marginBottom: '24px' }}><label style={labelStyle}>Current Occupation</label><input style={inputStyle} value={formData.occupation} onChange={set('occupation')} placeholder="What do you do?" /></div>
+
+            <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '14px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', paddingBottom: '12px', borderBottom: '0.5px solid rgba(255,255,255,0.1)', marginBottom: '20px' }}>Experience & Interests</p>
+
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', marginBottom: '16px' }}>
+              <input type="checkbox" id="prev_scouting" checked={formData.previous_scouting} onChange={e => setFormData({ ...formData, previous_scouting: e.target.checked })} style={{ marginTop: '2px', accentColor: '#7413dc' }} />
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Volunteer Application</h2>
-                <p className="text-gray-500 text-sm">Tell us about yourself</p>
+                <label htmlFor="prev_scouting" style={{ ...labelStyle, color: 'rgba(255,255,255,0.8)', cursor: 'pointer', marginBottom: '2px' }}>I have previous scouting experience</label>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Either as a young person or adult volunteer</p>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Personal Details */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900 border-b pb-2">Your Details</h3>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="full_name">Full Name *</Label>
-                  <Input
-                    id="full_name"
-                    value={formData.full_name}
-                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                    required
-                    placeholder="Your full name"
-                  />
-                </div>
+            {formData.previous_scouting && (
+              <div style={{ marginBottom: '16px' }}><label style={labelStyle}>Tell us about your experience</label><textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={formData.previous_scouting_details} onChange={set('previous_scouting_details')} placeholder="Roles, years involved, etc." /></div>
+            )}
 
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      required
-                      placeholder="email@example.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      required
-                      placeholder="07xxx xxxxxx"
-                    />
-                  </div>
-                </div>
+            <div style={{ marginBottom: '16px' }}><label style={labelStyle}>Skills & Interests</label><textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={formData.skills} onChange={set('skills')} placeholder="What skills or hobbies could you bring?" /></div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="Your address"
-                  />
-                </div>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={labelStyle}>Section Preference</label>
+              <select style={{ ...inputStyle, appearance: 'none' }} value={formData.section_preference} onChange={set('section_preference')}>
+                <option value="">Which section would you prefer?</option>
+                {sectionPreferences.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+              </select>
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="occupation">Current Occupation</Label>
-                  <Input
-                    id="occupation"
-                    value={formData.occupation}
-                    onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
-                    placeholder="What do you do?"
-                  />
-                </div>
-              </div>
+            <div style={{ marginBottom: '16px' }}><label style={labelStyle}>Availability</label><textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={formData.availability} onChange={set('availability')} placeholder="Which days/times are you typically available?" /></div>
+            <div style={{ marginBottom: '28px' }}><label style={labelStyle}>Why do you want to volunteer? *</label><textarea style={{ ...inputStyle, minHeight: '100px', resize: 'vertical' }} value={formData.why_volunteer} onChange={set('why_volunteer')} required placeholder="Tell us what motivates you to volunteer with scouts" /></div>
 
-              {/* Experience */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900 border-b pb-2">Experience & Interests</h3>
-                
-                <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
-                  <Checkbox
-                    id="previous_scouting"
-                    checked={formData.previous_scouting}
-                    onCheckedChange={(checked) => setFormData({ ...formData, previous_scouting: checked })}
-                  />
-                  <div className="space-y-1">
-                    <Label htmlFor="previous_scouting" className="text-sm font-medium cursor-pointer">
-                      I have previous scouting experience
-                    </Label>
-                    <p className="text-xs text-gray-500">
-                      Either as a young person or adult volunteer
-                    </p>
-                  </div>
-                </div>
-
-                {formData.previous_scouting && (
-                  <div className="space-y-2">
-                    <Label htmlFor="previous_scouting_details">Tell us about your experience</Label>
-                    <Textarea
-                      id="previous_scouting_details"
-                      value={formData.previous_scouting_details}
-                      onChange={(e) => setFormData({ ...formData, previous_scouting_details: e.target.value })}
-                      placeholder="Roles, years involved, etc."
-                      className="min-h-[80px]"
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="skills">Skills & Interests</Label>
-                  <Textarea
-                    id="skills"
-                    value={formData.skills}
-                    onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-                    placeholder="What skills or hobbies could you bring? (e.g., camping, crafts, first aid, music)"
-                    className="min-h-[80px]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="section_preference">Section Preference</Label>
-                  <Select
-                    value={formData.section_preference}
-                    onValueChange={(value) => setFormData({ ...formData, section_preference: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Which section would you prefer?" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sectionPreferences.map((section) => (
-                        <SelectItem key={section.value} value={section.value}>
-                          {section.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="availability">Availability</Label>
-                  <Textarea
-                    id="availability"
-                    value={formData.availability}
-                    onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
-                    placeholder="Which days/times are you typically available?"
-                    className="min-h-[80px]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="why_volunteer">Why do you want to volunteer? *</Label>
-                  <Textarea
-                    id="why_volunteer"
-                    value={formData.why_volunteer}
-                    onChange={(e) => setFormData({ ...formData, why_volunteer: e.target.value })}
-                    required
-                    placeholder="Tell us what motivates you to volunteer with scouts"
-                    className="min-h-[100px]"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full bg-[#7413dc] hover:bg-[#5c0fb0]"
-                >
-                  {submitting ? (
-                    'Submitting...'
-                  ) : (
-                    <>
-                      Submit Application
-                      <ArrowRight className="ml-2 w-4 h-4" />
-                    </>
-                  )}
-                </Button>
-                <p className="text-xs text-gray-500 text-center mt-4">
-                  All volunteers are subject to DBS checks and safeguarding training. 
-                  We'll guide you through the process.
-                </p>
-              </div>
-            </form>
-          </motion.div>
+            <button type="submit" disabled={submitting} style={{ width: '100%', background: '#00a794', color: '#fff', border: 'none', borderRadius: '30px', padding: '14px 28px', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '15px', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              {submitting ? 'Submitting...' : <><span>Submit Application</span><ArrowRight size={18} /></>}
+            </button>
+            <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.35)', marginTop: '16px' }}>All volunteers are subject to DBS checks and safeguarding training. We'll guide you through the process.</p>
+          </form>
         </div>
       </section>
+
+      <PublicFooter />
     </div>
   );
 }

@@ -96,7 +96,6 @@ import ReceiptUploader from './pages/ReceiptUploader';
 import RiskAssessmentDetail from './pages/RiskAssessmentDetail';
 import RiskAssessmentHistory from './pages/RiskAssessmentHistory';
 import RiskAssessments from './pages/RiskAssessments';
-import Sections from './pages/Sections';
 import SharedPage from './pages/SharedPage';
 import StagedBadgeDetail from './pages/StagedBadgeDetail';
 import Volunteer from './pages/Volunteer';
@@ -155,7 +154,6 @@ export const PAGES = {
     "RiskAssessmentDetail": RiskAssessmentDetail,
     "RiskAssessmentHistory": RiskAssessmentHistory,
     "RiskAssessments": RiskAssessments,
-    "Sections": Sections,
     "SharedPage": SharedPage,
     "StagedBadgeDetail": StagedBadgeDetail,
     "Volunteer": Volunteer,

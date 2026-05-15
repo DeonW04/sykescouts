@@ -1,235 +1,137 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { MapPin, Mail, Clock, Send, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import SEO from '../components/SEO';
+import FloatingNav from '../components/public/FloatingNav';
+import PublicFooter from '../components/public/PublicFooter';
+
+const inputStyle = {
+  width: '100%',
+  background: 'rgba(255,255,255,0.08)',
+  border: '0.5px solid rgba(255,255,255,0.2)',
+  borderRadius: '10px',
+  color: '#fff',
+  padding: '12px 16px',
+  fontSize: '15px',
+  fontFamily: 'DM Sans, sans-serif',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
+const labelStyle = {
+  display: 'block',
+  fontFamily: 'DM Sans, sans-serif',
+  fontSize: '13px',
+  color: 'rgba(255,255,255,0.6)',
+  marginBottom: '6px',
+};
+
+const glassCard = {
+  background: 'rgba(116,19,220,0.08)',
+  backdropFilter: 'blur(20px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+  border: '0.5px solid rgba(255,255,255,0.2)',
+  borderRadius: '20px',
+};
 
 export default function Contact() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: '',
-  });
+  const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    
-    // Simulate submission
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
     setSubmitting(false);
     setSubmitted(true);
-    toast.success('Message sent! We\'ll be in touch soon.');
+    toast.success("Message sent! We'll be in touch soon.");
     setFormData({ name: '', email: '', subject: '', message: '' });
-    
-    setTimeout(() => setSubmitted(false), 3000);
+    setTimeout(() => setSubmitted(false), 4000);
   };
 
+  const set = (field) => (e) => setFormData({ ...formData, [field]: e.target.value });
+
   const contactInfo = [
-    {
-      icon: MapPin,
-      title: 'Our Location',
-      details: ['Syke Methodist Church', '206 Syke Road', 'Syke, OL12 9TF'],
-    },
-    {
-      icon: Mail,
-      title: 'Email Us',
-      details: ['info@sykescouts.org', 'We aim to respond within 48 hours'],
-    },
-    {
-      icon: Clock,
-      title: 'Meeting Times',
-      details: ['Beavers: Tuesday 6:15pm-7:30pm', 'Cubs: Thursday 6:15-7:30pm', 'Scouts: Thursday 7:45-9:15pm'],
-    },
+    { icon: MapPin, title: 'Our Location', details: ['Syke Methodist Church', '206 Syke Road', 'Syke, OL12 9TF'] },
+    { icon: Mail, title: 'Email Us', details: ['info@sykescouts.org', 'We aim to respond within 48 hours'] },
+    { icon: Clock, title: 'Meeting Times', details: ['Beavers: Tuesday 6:15–7:30pm', 'Cubs: Thursday 6:15–7:30pm', 'Scouts: Thursday 7:45–9:15pm'] },
   ];
 
   return (
-    <div className="min-h-screen">
-      <SEO 
-        title="Contact Us | 40th Rochdale (Syke) Scouts"
-        description="Get in touch with 40th Rochdale (Syke) Scouts. Find our location at Syke Methodist Church, meeting times, and contact details. We'd love to hear from you!"
-        keywords="contact syke scouts, rochdale scouts location, syke methodist church, scouts meeting times"
-        path="/Contact"
-      />
+    <div style={{ background: '#002a6e', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap');
+        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
+        input:focus, textarea:focus { border-color: rgba(116,19,220,0.5) !important; box-shadow: 0 0 0 2px rgba(116,19,220,0.2); }
+      `}</style>
+      <SEO title="Contact Us | 40th Rochdale (Syke) Scouts" description="Get in touch with 40th Rochdale (Syke) Scouts." path="/Contact" />
+      <FloatingNav />
+
       {/* Hero */}
-      <section className="bg-[#004851] py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-3xl"
-          >
-            <h1 className="text-4xl md:text-5xl font-bold text-white">
-              Get in Touch
-            </h1>
-            <p className="mt-6 text-xl text-gray-200">
-              Have a question? We'd love to hear from you.
-            </p>
-          </motion.div>
+      <section style={{ background: '#003982', padding: '80px 32px 60px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ maxWidth: '800px' }}>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#00a794', marginBottom: '12px' }}>Get in touch</p>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(32px, 5vw, 56px)', color: '#fff', margin: '0 0 16px' }}>Say hello.</h1>
+          <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, margin: 0 }}>Have a question? We'd love to hear from you.</p>
         </div>
       </section>
 
-      {/* Contact Content */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-3 gap-12">
-            {/* Contact Info */}
-            <div className="lg:col-span-1 space-y-6">
-              {contactInfo.map((info, index) => (
-                <motion.div
-                  key={info.title}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-gray-50 rounded-xl p-6"
-                >
-                  <div className="w-12 h-12 bg-[#7413dc]/10 rounded-lg flex items-center justify-center mb-4">
-                    <info.icon className="w-6 h-6 text-[#7413dc]" />
-                  </div>
-                  <h3 className="font-bold text-gray-900 text-lg">{info.title}</h3>
-                  <div className="mt-2 space-y-1">
-                    {info.details.map((detail, i) => (
-                      <p key={i} className="text-gray-600 text-sm">{detail}</p>
-                    ))}
-                  </div>
-                </motion.div>
-              ))}
-
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 }}
-                className="bg-[#7413dc] rounded-xl p-6 text-white"
-              >
-                <h3 className="font-bold text-lg">Need Help Urgently?</h3>
-                <p className="mt-2 text-white/80 text-sm">
-                  For urgent matters during meetings, please speak directly to a leader. 
-                  For safeguarding concerns, please follow our safeguarding procedures.
-                </p>
-              </motion.div>
-            </div>
-
-            {/* Contact Form */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="lg:col-span-2"
-            >
-              <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h2>
-                
-                {submitted ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
-                      <CheckCircle className="w-8 h-8 text-green-600" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900">Message Sent!</h3>
-                    <p className="mt-2 text-gray-600">We'll get back to you as soon as possible.</p>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Your Name *</Label>
-                        <Input
-                          id="name"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          required
-                          placeholder="John Smith"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email Address *</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          required
-                          placeholder="john@example.com"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="subject">Subject *</Label>
-                      <Input
-                        id="subject"
-                        value={formData.subject}
-                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                        required
-                        placeholder="What's your enquiry about?"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="message">Message *</Label>
-                      <Textarea
-                        id="message"
-                        value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        required
-                        placeholder="Tell us more about your enquiry..."
-                        className="min-h-[150px]"
-                      />
-                    </div>
-                    
-                    <Button
-                      type="submit"
-                      disabled={submitting}
-                      className="bg-[#7413dc] hover:bg-[#5c0fb0] w-full md:w-auto"
-                    >
-                      {submitting ? (
-                        'Sending...'
-                      ) : (
-                        <>
-                          Send Message
-                          <Send className="ml-2 w-4 h-4" />
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                )}
+      {/* Content */}
+      <section style={{ padding: '64px 32px', maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '32px', alignItems: 'start' }}>
+          {/* Info cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {contactInfo.map(info => (
+              <div key={info.title} style={{ ...glassCard, padding: '24px' }}>
+                <div style={{ width: '40px', height: '40px', background: 'rgba(116,19,220,0.3)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+                  <info.icon size={20} color="#7413dc" />
+                </div>
+                <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '17px', color: '#fff', marginBottom: '8px' }}>{info.title}</h3>
+                {info.details.map((d, i) => <p key={i} style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', margin: '2px 0' }}>{d}</p>)}
               </div>
-            </motion.div>
+            ))}
+            {/* Safeguarding note — uses yellow per Scouting standard */}
+            <div style={{ background: '#ffe627', borderRadius: '16px', padding: '20px 24px' }}>
+              <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '15px', color: '#003982', marginBottom: '8px' }}>Safeguarding</h3>
+              <p style={{ fontSize: '13px', color: '#003982', lineHeight: 1.6, margin: 0 }}>For safeguarding concerns, please speak directly to a leader or follow our safeguarding procedures. This takes priority over all other contact methods.</p>
+            </div>
+          </div>
+
+          {/* Contact form */}
+          <div style={{ ...glassCard, padding: '36px' }}>
+            <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '22px', color: '#fff', marginBottom: '28px' }}>Send us a Message</h2>
+            {submitted ? (
+              <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                <CheckCircle size={48} color="#00a794" style={{ marginBottom: '16px' }} />
+                <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '20px', color: '#fff', marginBottom: '8px' }}>Message Sent!</h3>
+                <p style={{ color: 'rgba(255,255,255,0.65)' }}>We'll get back to you as soon as possible.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                  <div><label style={labelStyle}>Your Name *</label><input style={inputStyle} value={formData.name} onChange={set('name')} required placeholder="John Smith" /></div>
+                  <div><label style={labelStyle}>Email Address *</label><input style={inputStyle} type="email" value={formData.email} onChange={set('email')} required placeholder="john@example.com" /></div>
+                </div>
+                <div style={{ marginBottom: '16px' }}><label style={labelStyle}>Subject *</label><input style={inputStyle} value={formData.subject} onChange={set('subject')} required placeholder="What's your enquiry about?" /></div>
+                <div style={{ marginBottom: '28px' }}><label style={labelStyle}>Message *</label><textarea style={{ ...inputStyle, minHeight: '150px', resize: 'vertical' }} value={formData.message} onChange={set('message')} required placeholder="Tell us more about your enquiry..." /></div>
+                <button type="submit" disabled={submitting} style={{ background: '#7413dc', color: '#fff', border: 'none', borderRadius: '30px', padding: '13px 28px', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '15px', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {submitting ? 'Sending...' : <><span>Send Message</span><Send size={16} /></>}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </section>
 
       {/* Map */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="aspect-[21/9] rounded-2xl overflow-hidden shadow-lg"
-          >
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2067.750593194814!2d-2.157421029994334!3d53.63814087185271!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487bbf001add47e9%3A0x250cbb2c42e3f300!2sSyke%20Scout%20Group!5e1!3m2!1sen!2suk!4v1770370159006!5m2!1sen!2suk"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen=""
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="Syke Methodist Church"
-            />
-          </motion.div>
+      <section style={{ padding: '0 32px 80px', maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ borderRadius: '20px', overflow: 'hidden', aspectRatio: '21/9' }}>
+          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2067.750593194814!2d-2.157421029994334!3d53.63814087185271!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x487bbf001add47e9%3A0x250cbb2c42e3f300!2sSyke%20Scout%20Group!5e1!3m2!1sen!2suk!4v1770370159006!5m2!1sen!2suk" width="100%" height="100%" style={{ border: 0, display: 'block' }} allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" title="Syke Methodist Church" />
         </div>
       </section>
+
+      <PublicFooter />
     </div>
   );
 }

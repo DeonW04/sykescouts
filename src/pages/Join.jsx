@@ -1,58 +1,62 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { CheckCircle, ArrowRight, Users } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import SEO from '../components/SEO';
+import FloatingNav from '../components/public/FloatingNav';
+import PublicFooter from '../components/public/PublicFooter';
+
+const inputStyle = {
+  width: '100%',
+  background: 'rgba(255,255,255,0.08)',
+  border: '0.5px solid rgba(255,255,255,0.2)',
+  borderRadius: '10px',
+  color: '#fff',
+  padding: '12px 16px',
+  fontSize: '15px',
+  fontFamily: 'DM Sans, sans-serif',
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
+const labelStyle = {
+  display: 'block',
+  fontFamily: 'DM Sans, sans-serif',
+  fontSize: '13px',
+  color: 'rgba(255,255,255,0.6)',
+  marginBottom: '6px',
+};
+
+const glassCard = {
+  background: 'rgba(116,19,220,0.08)',
+  backdropFilter: 'blur(20px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+  border: '0.5px solid rgba(255,255,255,0.2)',
+  borderRadius: '24px',
+  padding: '40px',
+};
 
 export default function Join() {
   const [formData, setFormData] = useState({
-    child_name: '',
-    date_of_birth: '',
-    parent_name: '',
-    email: '',
-    phone: '',
-    address: '',
-    section_interest: '',
-    medical_info: '',
-    additional_info: '',
-    consent_photos: false,
+    child_name: '', date_of_birth: '', parent_name: '', email: '',
+    phone: '', address: '', section_interest: '', medical_info: '',
+    additional_info: '', consent_photos: false,
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const sections = [
-    { value: 'beavers', label: 'Beavers (6-8 years)' },
-    { value: 'cubs', label: 'Cubs (8-10½ years)' },
-    { value: 'scouts', label: 'Scouts (10½-14 years)' },
+    { value: 'beavers', label: 'Beavers (6–8 years)' },
+    { value: 'cubs', label: 'Cubs (8–10½ years)' },
+    { value: 'scouts', label: 'Scouts (10½–14 years)' },
   ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-
     try {
-      const registration = await base44.entities.ChildRegistration.create({
-        ...formData,
-        status: 'pending',
-      });
-
-      // Send email notifications to leaders
-      await base44.functions.invoke('sendJoinEnquiryEmail', { 
-        registrationId: registration.id 
-      });
-
+      const registration = await base44.entities.ChildRegistration.create({ ...formData, status: 'pending' });
+      await base44.functions.invoke('sendJoinEnquiryEmail', { registrationId: registration.id });
       setSubmitting(false);
       setSubmitted(true);
       toast.success('Registration submitted successfully!');
@@ -62,239 +66,102 @@ export default function Join() {
     }
   };
 
+  const set = (field) => (e) => setFormData({ ...formData, [field]: e.target.value });
+
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white rounded-2xl shadow-lg p-8 md:p-12 max-w-lg text-center"
-        >
-          <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-6">
-            <CheckCircle className="w-10 h-10 text-green-600" />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900">Thank You!</h1>
-          <p className="mt-4 text-gray-600">
-            Your registration has been submitted. We'll review your information and 
-            be in touch soon about availability and next steps.
-          </p>
-          <p className="mt-4 text-sm text-gray-500">
-            Please note: Submitting this form registers your interest. 
-            A place is not confirmed until you hear from us.
-          </p>
-        </motion.div>
+      <div style={{ background: '#002a6e', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <FloatingNav />
+        <div style={{ ...glassCard, maxWidth: '480px', textAlign: 'center' }}>
+          <CheckCircle size={56} color="#00a794" style={{ marginBottom: '20px' }} />
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '28px', color: '#fff', marginBottom: '12px' }}>Thank You!</h1>
+          <p style={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.75 }}>Your registration has been submitted. We'll review your information and be in touch soon about availability and next steps.</p>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', marginTop: '12px' }}>Submitting this form registers your interest. A place is not confirmed until you hear from us.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
+    <div style={{ background: '#002a6e', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap');
+        input::placeholder, textarea::placeholder, select option { color: rgba(255,255,255,0.3); }
+        input:focus, textarea:focus, select:focus { border-color: rgba(116,19,220,0.5) !important; box-shadow: 0 0 0 2px rgba(116,19,220,0.2); }
+        select option { background: #003982; color: #fff; }
+      `}</style>
+      <SEO title="Join Scouts | 40th Rochdale (Syke) Scouts" description="Register your child's interest in joining Scouts." path="/Join" />
+      <FloatingNav />
 
       {/* Hero */}
-      <section className="bg-[#004851] py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-3xl"
-          >
-            <h1 className="text-4xl md:text-5xl font-bold text-white">
-              Join Scouts
-            </h1>
-            <p className="mt-6 text-xl text-gray-200">
-              Register your child's interest and start their scouting adventure
-            </p>
-          </motion.div>
+      <section style={{ background: '#003982', padding: '80px 32px 60px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ maxWidth: '800px' }}>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#00a794', marginBottom: '12px' }}>For parents</p>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(32px, 5vw, 56px)', color: '#fff', margin: '0 0 16px' }}>Join Scouts</h1>
+          <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, maxWidth: '560px', margin: 0 }}>Register your child's interest and start their scouting adventure.</p>
         </div>
       </section>
 
-      {/* Form Section */}
-      <section className="py-16">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100"
-          >
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-[#7413dc] rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6 text-white" />
-              </div>
+      {/* Form */}
+      <section style={{ padding: '64px 32px', maxWidth: '720px', margin: '0 auto' }}>
+        <div style={glassCard}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '36px' }}>
+            <div style={{ width: '44px', height: '44px', background: '#7413dc', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Users size={22} color="#fff" />
+            </div>
+            <div>
+              <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '22px', color: '#fff', margin: 0 }}>Child Registration</h2>
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', margin: 0 }}>Register your interest in joining</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '14px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', paddingBottom: '12px', borderBottom: '0.5px solid rgba(255,255,255,0.1)', marginBottom: '20px' }}>Child's Details</p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div><label style={labelStyle}>Child's Full Name *</label><input style={inputStyle} value={formData.child_name} onChange={set('child_name')} required placeholder="Full name" /></div>
+              <div><label style={labelStyle}>Date of Birth *</label><input style={{ ...inputStyle, colorScheme: 'dark' }} type="date" value={formData.date_of_birth} onChange={set('date_of_birth')} required /></div>
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={labelStyle}>Section of Interest *</label>
+              <select style={{ ...inputStyle, appearance: 'none' }} value={formData.section_interest} onChange={set('section_interest')} required>
+                <option value="">Select a section</option>
+                {sections.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+              </select>
+            </div>
+
+            <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '14px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', paddingBottom: '12px', borderBottom: '0.5px solid rgba(255,255,255,0.1)', marginBottom: '20px' }}>Parent / Guardian Details</p>
+
+            <div style={{ marginBottom: '16px' }}><label style={labelStyle}>Parent/Guardian Name *</label><input style={inputStyle} value={formData.parent_name} onChange={set('parent_name')} required placeholder="Full name" /></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div><label style={labelStyle}>Email Address *</label><input style={inputStyle} type="email" value={formData.email} onChange={set('email')} required placeholder="email@example.com" /></div>
+              <div><label style={labelStyle}>Phone Number *</label><input style={inputStyle} type="tel" value={formData.phone} onChange={set('phone')} required placeholder="07xxx xxxxxx" /></div>
+            </div>
+            <div style={{ marginBottom: '24px' }}><label style={labelStyle}>Home Address</label><textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={formData.address} onChange={set('address')} placeholder="Full address including postcode" /></div>
+
+            <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '14px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', paddingBottom: '12px', borderBottom: '0.5px solid rgba(255,255,255,0.1)', marginBottom: '20px' }}>Additional Information</p>
+
+            <div style={{ marginBottom: '16px' }}><label style={labelStyle}>Medical Conditions / Allergies</label><textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={formData.medical_info} onChange={set('medical_info')} placeholder="Any medical conditions, allergies, or dietary requirements" /></div>
+            <div style={{ marginBottom: '20px' }}><label style={labelStyle}>Anything Else We Should Know?</label><textarea style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }} value={formData.additional_info} onChange={set('additional_info')} placeholder="Any other information" /></div>
+
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', marginBottom: '28px' }}>
+              <input type="checkbox" id="consent_photos" checked={formData.consent_photos} onChange={e => setFormData({ ...formData, consent_photos: e.target.checked })} style={{ marginTop: '2px', accentColor: '#7413dc' }} />
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Child Registration</h2>
-                <p className="text-gray-500 text-sm">Register your interest in joining</p>
+                <label htmlFor="consent_photos" style={{ ...labelStyle, marginBottom: '4px', color: 'rgba(255,255,255,0.8)', cursor: 'pointer' }}>Photo Consent</label>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>I give permission for photos of my child to be taken and used on the group's website and social media channels.</p>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Child Details */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900 border-b pb-2">Child's Details</h3>
-                
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="child_name">Child's Full Name *</Label>
-                    <Input
-                      id="child_name"
-                      value={formData.child_name}
-                      onChange={(e) => setFormData({ ...formData, child_name: e.target.value })}
-                      required
-                      placeholder="Full name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="date_of_birth">Date of Birth *</Label>
-                    <Input
-                      id="date_of_birth"
-                      type="date"
-                      value={formData.date_of_birth}
-                      onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="section_interest">Section of Interest *</Label>
-                  <Select
-                    value={formData.section_interest}
-                    onValueChange={(value) => setFormData({ ...formData, section_interest: value })}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a section" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sections.map((section) => (
-                        <SelectItem key={section.value} value={section.value}>
-                          {section.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Parent Details */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900 border-b pb-2">Parent/Guardian Details</h3>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="parent_name">Parent/Guardian Name *</Label>
-                  <Input
-                    id="parent_name"
-                    value={formData.parent_name}
-                    onChange={(e) => setFormData({ ...formData, parent_name: e.target.value })}
-                    required
-                    placeholder="Full name"
-                  />
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      required
-                      placeholder="email@example.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      required
-                      placeholder="07xxx xxxxxx"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Home Address</Label>
-                  <Textarea
-                    id="address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="Full address including postcode"
-                    className="min-h-[80px]"
-                  />
-                </div>
-              </div>
-
-              {/* Additional Info */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900 border-b pb-2">Additional Information</h3>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="medical_info">Medical Conditions / Allergies</Label>
-                  <Textarea
-                    id="medical_info"
-                    value={formData.medical_info}
-                    onChange={(e) => setFormData({ ...formData, medical_info: e.target.value })}
-                    placeholder="Please list any medical conditions, allergies, or dietary requirements"
-                    className="min-h-[80px]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="additional_info">Anything Else We Should Know?</Label>
-                  <Textarea
-                    id="additional_info"
-                    value={formData.additional_info}
-                    onChange={(e) => setFormData({ ...formData, additional_info: e.target.value })}
-                    placeholder="Any other information that might help us"
-                    className="min-h-[80px]"
-                  />
-                </div>
-
-                <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
-                  <Checkbox
-                    id="consent_photos"
-                    checked={formData.consent_photos}
-                    onCheckedChange={(checked) => setFormData({ ...formData, consent_photos: checked })}
-                  />
-                  <div className="space-y-1">
-                    <Label htmlFor="consent_photos" className="text-sm font-medium cursor-pointer">
-                      Photo Consent
-                    </Label>
-                    <p className="text-xs text-gray-500">
-                      I give permission for photos of my child to be taken and used on the 
-                      group's website and social media channels.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4">
-                <Button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full bg-[#7413dc] hover:bg-[#5c0fb0]"
-                >
-                  {submitting ? (
-                    'Submitting...'
-                  ) : (
-                    <>
-                      Submit Registration
-                      <ArrowRight className="ml-2 w-4 h-4" />
-                    </>
-                  )}
-                </Button>
-                <p className="text-xs text-gray-500 text-center mt-4">
-                  By submitting this form, you're registering your interest. 
-                  We'll be in touch to discuss availability and next steps.
-                </p>
-              </div>
-            </form>
-          </motion.div>
+            <button type="submit" disabled={submitting} style={{ width: '100%', background: '#7413dc', color: '#fff', border: 'none', borderRadius: '30px', padding: '14px 28px', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '15px', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              {submitting ? 'Submitting...' : <><span>Submit Registration</span><ArrowRight size={18} /></>}
+            </button>
+            <p style={{ textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.35)', marginTop: '16px' }}>By submitting this form, you're registering your interest. We'll be in touch to discuss availability and next steps.</p>
+          </form>
         </div>
       </section>
+
+      <PublicFooter />
     </div>
   );
 }

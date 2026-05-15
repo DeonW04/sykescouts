@@ -1,0 +1,41 @@
+{
+  "name": "WebsiteImage",
+  "type": "object",
+  "properties": {
+    "page": {
+      "type": "string",
+      "enum": [
+        "hero",
+        "activities",
+        "sections",
+        "cta",
+        "about"
+      ],
+      "description": "Which section/page this image belongs to"
+    },
+    "label": {
+      "type": "string",
+      "description": "Identifier within the page (e.g. 'beavers', 'cubs', 'scouts', 'join', 'volunteer', or activity name like 'Rock Climbing')"
+    },
+    "title": {
+      "type": "string",
+      "description": "Display title (used for activity cards)"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description shown alongside the image (used for activity cards)"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "URL of the image"
+    },
+    "order": {
+      "type": "number",
+      "description": "Display order (used for hero slideshow \u2014 lower numbers appear first)"
+    }
+  },
+  "required": [
+    "page",
+    "image_url"
+  ]
+}

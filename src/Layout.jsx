@@ -28,6 +28,9 @@ function SectionTransitionWrapper() {
   ); 
 }
 
+// Public pages that handle their own nav/footer
+const SELF_CONTAINED_PUBLIC_PAGES = ['Home', 'About', 'Gallery', 'Join', 'Volunteer', 'Contact'];
+
 export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -132,6 +135,11 @@ export default function Layout({ children, currentPageName }) {
     }
   }, [user, isLeader, currentPageName, checkingAuth]);
 
+  // These pages render their own FloatingNav and PublicFooter — skip Layout chrome entirely
+  if (SELF_CONTAINED_PUBLIC_PAGES.includes(currentPageName)) {
+    return <>{children}</>;
+  }
+
   if (checkingAuth && protectedPages.includes(currentPageName)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -146,7 +154,6 @@ export default function Layout({ children, currentPageName }) {
   const navLinks = [
     { name: 'Home', page: '/', isRoot: true },
     { name: 'About Us', page: 'About' },
-    { name: 'Our Sections', page: 'Sections' },
     { name: 'Parents', page: 'Parents' },
     { name: 'Gallery', page: 'Gallery' },
     { name: 'Contact', page: 'Contact' },
@@ -331,7 +338,6 @@ export default function Layout({ children, currentPageName }) {
                   <h4 className="font-semibold mb-4">Quick Links</h4>
                   <ul className="space-y-2 text-sm text-gray-400">
                     <li><Link to={createPageUrl('About')} className="hover:text-white transition-colors">About Us</Link></li>
-                    <li><Link to={createPageUrl('Sections')} className="hover:text-white transition-colors">Our Sections</Link></li>
                     <li><Link to={createPageUrl('Parents')} className="hover:text-white transition-colors">Parent Info</Link></li>
                     <li><Link to={createPageUrl('Join')} className="hover:text-white transition-colors">Join Scouts</Link></li>
                   </ul>

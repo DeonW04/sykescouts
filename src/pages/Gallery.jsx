@@ -1,21 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Loader2, ImageIcon, Calendar, ArrowLeft } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { createPageUrl } from '../utils';
 import SEO from '../components/SEO';
 import LazyImage from '../components/gallery/LazyImage';
+import FloatingNav from '../components/public/FloatingNav';
+import PublicFooter from '../components/public/PublicFooter';
+
+const glassCard = {
+  background: 'rgba(116,19,220,0.08)',
+  backdropFilter: 'blur(20px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+  border: '0.5px solid rgba(255,255,255,0.2)',
+  borderRadius: '20px',
+};
 
 export default function Gallery() {
   const urlParams = new URLSearchParams(window.location.search);
-  const viewParam = urlParams.get('view'); // 'camp', 'event', or 'meeting'
+  const viewParam = urlParams.get('view');
   const itemId = urlParams.get('id');
-  
+
   const [view, setView] = useState(viewParam || 'all');
   const [selectedItem, setSelectedItem] = useState(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -23,16 +30,8 @@ export default function Gallery() {
   const [displayCount, setDisplayCount] = useState(30);
   const [selectedSection, setSelectedSection] = useState('all');
 
-  const { data: events = [], isLoading: eventsLoading } = useQuery({
-    queryKey: ['all-events'],
-    queryFn: () => base44.entities.Event.list('-start_date'),
-  });
-
-  const { data: programmes = [], isLoading: programmesLoading } = useQuery({
-    queryKey: ['all-programmes'],
-    queryFn: () => base44.entities.Programme.list('-date'),
-  });
-
+  const { data: events = [], isLoading: eventsLoading } = useQuery({ queryKey: ['all-events'], queryFn: () => base44.entities.Event.list('-start_date') });
+  const { data: programmes = [], isLoading: programmesLoading } = useQuery({ queryKey: ['all-programmes'], queryFn: () => base44.entities.Programme.list('-date') });
   const { data: rawPhotos = [], isLoading: photosLoading } = useQuery({
     queryKey: ['public-photos'],
     queryFn: async () => {
@@ -40,414 +39,150 @@ export default function Gallery() {
       return photos.filter(p => p.is_public === true || p.visible_to === 'parents' || p.visible_to === 'public');
     },
   });
+  const { data: sections = [] } = useQuery({ queryKey: ['active-sections'], queryFn: () => base44.entities.Section.filter({ active: true }) });
 
-  // Section-filtered photos: 'all' section photos always included
-  const allPhotos = selectedSection === 'all'
-    ? rawPhotos
-    : rawPhotos.filter(p => p.section_id === selectedSection || p.section_id === 'all');
-
-  const { data: sections = [] } = useQuery({
-    queryKey: ['active-sections'],
-    queryFn: () => base44.entities.Section.filter({ active: true }),
-  });
-
+  const allPhotos = selectedSection === 'all' ? rawPhotos : rawPhotos.filter(p => p.section_id === selectedSection || p.section_id === 'all');
   const isLoading = eventsLoading || photosLoading || programmesLoading;
 
-  // Handle URL-based viewing
   React.useEffect(() => {
     if (itemId) {
       if (viewParam === 'camp' || viewParam === 'event') {
         const event = events.find(e => e.id === itemId);
-        if (event) {
-          setSelectedItem(event);
-        }
+        if (event) setSelectedItem(event);
       } else if (viewParam === 'meeting') {
         const meeting = programmes.find(p => p.id === itemId);
-        if (meeting) {
-          setSelectedItem(meeting);
-        }
+        if (meeting) setSelectedItem(meeting);
       }
     } else {
       setSelectedItem(null);
     }
   }, [itemId, viewParam, events, programmes]);
 
-  // Get unique camps, events, and meetings
-  const camps = [...new Map(
-    allPhotos
-      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp'))
-      .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
-  ).values()].filter(Boolean);
+  const camps = [...new Map(allPhotos.filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp')).map(p => [p.event_id, events.find(e => e.id === p.event_id)])).values()].filter(Boolean);
+  const regularEvents = [...new Map(allPhotos.filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'Camp')).map(p => [p.event_id, events.find(e => e.id === p.event_id)])).values()].filter(Boolean);
+  const meetings = [...new Map(allPhotos.filter(p => p.programme_id).map(p => [p.programme_id, programmes.find(pr => pr.id === p.programme_id)])).values()].filter(Boolean);
 
-  const regularEvents = [...new Map(
-    allPhotos
-      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'Camp'))
-      .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
-  ).values()].filter(Boolean);
-
-  const meetings = [...new Map(
-    allPhotos
-      .filter(p => p.programme_id)
-      .map(p => [p.programme_id, programmes.find(pr => pr.id === p.programme_id)])
-  ).values()].filter(Boolean);
-
-  // Get photos for current view
   const getDisplayPhotos = () => {
-    if (selectedItem) {
-      return allPhotos.filter(p => 
-        p.event_id === selectedItem.id || 
-        p.programme_id === selectedItem.id
-      );
-    }
+    if (selectedItem) return allPhotos.filter(p => p.event_id === selectedItem.id || p.programme_id === selectedItem.id);
     return [...allPhotos].sort(() => Math.random() - 0.5);
   };
-
   const allDisplayPhotos = getDisplayPhotos();
   const displayPhotos = allDisplayPhotos.slice(0, displayCount);
   const hasMore = allDisplayPhotos.length > displayCount;
+  const getItemPhoto = (item, type) => type === 'meeting' ? allPhotos.find(p => p.programme_id === item.id)?.file_url : allPhotos.find(p => p.event_id === item.id)?.file_url;
+  const getItemPhotoCount = (item, type) => type === 'meeting' ? allPhotos.filter(p => p.programme_id === item.id).length : allPhotos.filter(p => p.event_id === item.id).length;
 
-  const getItemPhoto = (item, type) => {
-    if (type === 'meeting') {
-      return allPhotos.find(p => p.programme_id === item.id)?.file_url;
-    }
-    return allPhotos.find(p => p.event_id === item.id)?.file_url;
-  };
-
-  const getItemPhotoCount = (item, type) => {
-    if (type === 'meeting') {
-      return allPhotos.filter(p => p.programme_id === item.id).length;
-    }
-    return allPhotos.filter(p => p.event_id === item.id).length;
-  };
+  const tabBtn = (label, active, onClick) => (
+    <button onClick={onClick} style={{ padding: '8px 20px', borderRadius: '25px', border: '1px solid', borderColor: active ? 'transparent' : 'rgba(255,255,255,0.2)', background: active ? '#7413dc' : 'transparent', color: active ? '#fff' : 'rgba(255,255,255,0.65)', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s' }}>{label}</button>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-      <SEO 
-        title="Gallery | 40th Rochdale (Syke) Scouts"
-        description="View photos from our scout activities, camps, and events. See the adventures and fun at 40th Rochdale (Syke) Scouts in action!"
-        keywords="scout photos, scout gallery, rochdale scouts events, scout activities photos"
-        path="/Gallery"
-      />
-      {/* Hero Header */}
-      <div className="relative bg-gradient-to-br from-[#7413dc] to-[#004851] text-white py-12 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-72 h-72 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
-              <h1 className="text-4xl font-bold mb-3">Photo Gallery</h1>
-              <p className="text-purple-100 text-lg">
-                {selectedItem 
-                  ? (selectedItem.title || 'Event Photos')
-                  : 'Browse photos from our adventures'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div style={{ background: '#002a6e', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap');`}</style>
+      <SEO title="Gallery | 40th Rochdale (Syke) Scouts" description="View photos from our scout activities, camps, and events." path="/Gallery" />
+      <FloatingNav />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Section Filter */}
-        <div className="flex flex-wrap justify-center gap-3 mb-8">
-          {[
-            { id: 'all', label: 'All Sections' },
-            ...['beavers', 'cubs', 'scouts']
-              .map(name => sections.find(s => s.name === name))
-              .filter(Boolean)
-              .map(s => ({ id: s.id, label: s.display_name })),
-          ].map(opt => (
-            <button
-              key={opt.id}
-              onClick={() => { setSelectedSection(opt.id); setSelectedItem(null); }}
-              className={`px-5 py-2 rounded-full font-medium text-sm transition-all ${
-                selectedSection === opt.id
-                  ? 'bg-[#7413dc] text-white shadow-lg'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:border-[#7413dc] hover:text-[#7413dc]'
-              }`}
-            >
+      {/* Hero */}
+      <section style={{ background: '#003982', padding: '80px 32px 60px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ maxWidth: '800px' }}>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#00a794', marginBottom: '12px' }}>Adventures in pictures</p>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(32px, 5vw, 56px)', color: '#fff', margin: '0 0 16px' }}>{selectedItem ? (selectedItem.title || 'Event Photos') : 'Photo Gallery'}</h1>
+          <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75, margin: 0 }}>Browse photos from our adventures.</p>
+        </div>
+      </section>
+
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '48px 32px' }}>
+        {/* Section filter */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', marginBottom: '32px' }}>
+          {[{ id: 'all', label: 'All Sections' }, ...['beavers', 'cubs', 'scouts'].map(name => sections.find(s => s.name === name)).filter(Boolean).map(s => ({ id: s.id, label: s.display_name }))].map(opt => (
+            <button key={opt.id} onClick={() => { setSelectedSection(opt.id); setSelectedItem(null); }} style={{ padding: '7px 18px', borderRadius: '25px', border: '1px solid', borderColor: selectedSection === opt.id ? 'transparent' : 'rgba(255,255,255,0.2)', background: selectedSection === opt.id ? '#7413dc' : 'transparent', color: selectedSection === opt.id ? '#fff' : 'rgba(255,255,255,0.65)', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '13px', cursor: 'pointer' }}>
               {opt.label}
             </button>
           ))}
         </div>
 
-        {/* Category Icons */}
-        <div className="grid grid-cols-3 gap-6 mb-10">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setView('camps');
-              setSelectedItem(null);
-              window.history.pushState({}, '', createPageUrl('Gallery') + '?view=camp');
-            }}
-            className={`relative overflow-hidden rounded-2xl p-8 text-center transition-all ${
-              view === 'camps' 
-                ? 'bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-xl' 
-                : 'bg-white hover:bg-gray-50 text-gray-700 shadow-md'
-            }`}
-          >
-            <div className="flex flex-col items-center">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-                view === 'camps' ? 'bg-white/20' : 'bg-green-100'
-              }`}>
-                <svg className={`w-8 h-8 ${view === 'camps' ? 'text-white' : 'text-green-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-2">Camps</h3>
-              <p className="text-sm opacity-80">{camps.length} camps</p>
-            </div>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setView('events');
-              setSelectedItem(null);
-              window.history.pushState({}, '', createPageUrl('Gallery') + '?view=event');
-            }}
-            className={`relative overflow-hidden rounded-2xl p-8 text-center transition-all ${
-              view === 'events' 
-                ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-xl' 
-                : 'bg-white hover:bg-gray-50 text-gray-700 shadow-md'
-            }`}
-          >
-            <div className="flex flex-col items-center">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-                view === 'events' ? 'bg-white/20' : 'bg-blue-100'
-              }`}>
-                <Calendar className={`w-8 h-8 ${view === 'events' ? 'text-white' : 'text-blue-600'}`} />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Events</h3>
-              <p className="text-sm opacity-80">{regularEvents.length} events</p>
-            </div>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setView('meetings');
-              setSelectedItem(null);
-              window.history.pushState({}, '', createPageUrl('Gallery') + '?view=meeting');
-            }}
-            className={`relative overflow-hidden rounded-2xl p-8 text-center transition-all ${
-              view === 'meetings' 
-                ? 'bg-gradient-to-br from-purple-500 to-pink-600 text-white shadow-xl' 
-                : 'bg-white hover:bg-gray-50 text-gray-700 shadow-md'
-            }`}
-          >
-            <div className="flex flex-col items-center">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
-                view === 'meetings' ? 'bg-white/20' : 'bg-purple-100'
-              }`}>
-                <svg className={`w-8 h-8 ${view === 'meetings' ? 'text-white' : 'text-purple-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-2">Meetings</h3>
-              <p className="text-sm opacity-80">{meetings.length} meetings</p>
-            </div>
-          </motion.button>
+        {/* Category tabs */}
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '40px' }}>
+          {tabBtn(`All Photos`, view === 'all', () => { setView('all'); setSelectedItem(null); window.history.pushState({}, '', createPageUrl('Gallery')); })}
+          {tabBtn(`Camps (${camps.length})`, view === 'camps', () => { setView('camps'); setSelectedItem(null); window.history.pushState({}, '', createPageUrl('Gallery') + '?view=camp'); })}
+          {tabBtn(`Events (${regularEvents.length})`, view === 'events', () => { setView('events'); setSelectedItem(null); window.history.pushState({}, '', createPageUrl('Gallery') + '?view=event'); })}
+          {tabBtn(`Meetings (${meetings.length})`, view === 'meetings', () => { setView('meetings'); setSelectedItem(null); window.history.pushState({}, '', createPageUrl('Gallery') + '?view=meeting'); })}
         </div>
 
-        {/* Back Button when viewing specific item */}
         {selectedItem && (
-          <Button
-            variant="outline"
-            className="mb-6"
-            onClick={() => {
-              setSelectedItem(null);
-              window.history.pushState({}, '', createPageUrl('Gallery') + `?view=${viewParam}`);
-            }}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to {view === 'camps' ? 'Camps' : view === 'events' ? 'Events' : 'Meetings'}
-          </Button>
+          <button onClick={() => { setSelectedItem(null); window.history.pushState({}, '', createPageUrl('Gallery') + `?view=${viewParam}`); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.08)', border: '0.5px solid rgba(255,255,255,0.2)', borderRadius: '25px', padding: '8px 18px', color: '#fff', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: '14px', marginBottom: '28px' }}>
+            <ArrowLeft size={16} /> Back
+          </button>
         )}
 
-        {/* Gallery Content */}
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="h-12 w-12 animate-spin text-purple-600 mb-4" />
-            <p className="text-gray-500">Loading photos...</p>
+          <div style={{ textAlign: 'center', padding: '80px 0' }}><Loader2 size={48} color="#7413dc" style={{ animation: 'spin 1s linear infinite', marginBottom: '12px' }} /><p style={{ color: 'rgba(255,255,255,0.5)' }}>Loading photos...</p></div>
+        ) : displayPhotos.length === 0 && (view === 'all' || selectedItem) ? (
+          <div style={{ ...glassCard, padding: '60px', textAlign: 'center' }}>
+            <ImageIcon size={48} color="rgba(255,255,255,0.2)" style={{ marginBottom: '16px' }} />
+            <h3 style={{ fontFamily: 'Outfit, sans-serif', color: '#fff', marginBottom: '8px' }}>No photos yet</h3>
+            <p style={{ color: 'rgba(255,255,255,0.4)' }}>Check back soon for event photos!</p>
           </div>
-        ) : displayPhotos.length === 0 ? (
-          <Card className="shadow-sm">
-            <CardContent className="py-20 text-center">
-              <div className="w-20 h-20 mx-auto mb-6 bg-purple-100 rounded-full flex items-center justify-center">
-                <ImageIcon className="h-10 w-10 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No photos yet</h3>
-              <p className="text-gray-500">Check back soon for event photos!</p>
-            </CardContent>
-          </Card>
         ) : view === 'all' || selectedItem ? (
-          /* Show photos grid */
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
               <AnimatePresence>
                 {displayPhotos.map((photo, index) => (
-                  <motion.div
-                    key={photo.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ delay: Math.min(index * 0.02, 0.5) }}
-                    className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer"
-                    onClick={() => {
-                      setLightboxPhoto(photo);
-                      setLightboxOpen(true);
-                    }}
+                  <motion.div key={photo.id} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ delay: Math.min(index * 0.02, 0.5) }}
+                    onClick={() => { setLightboxPhoto(photo); setLightboxOpen(true); }}
+                    style={{ position: 'relative', aspectRatio: '1', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer' }}
+                    className="group"
                   >
-                    <LazyImage
-                      src={photo.file_url}
-                      alt={photo.caption || ''}
-                      className="w-full h-full group-hover:scale-110 transition-transform duration-500"
-                    />
-                    {photo.caption && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
-                        <p className="text-white text-sm p-3 font-medium">{photo.caption}</p>
-                      </div>
-                    )}
+                    <LazyImage src={photo.file_url} alt={photo.caption || ''} className="w-full h-full" style={{ objectFit: 'cover', width: '100%', height: '100%', transition: 'transform 0.4s ease' }} />
                   </motion.div>
                 ))}
               </AnimatePresence>
             </div>
-            
             {hasMore && (
-              <div className="flex justify-center mt-8">
-                <Button
-                  onClick={() => setDisplayCount(prev => prev + 30)}
-                  size="lg"
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                >
+              <div style={{ textAlign: 'center', marginTop: '40px' }}>
+                <button onClick={() => setDisplayCount(prev => prev + 30)} style={{ background: '#7413dc', color: '#fff', border: 'none', borderRadius: '30px', padding: '13px 28px', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '15px', cursor: 'pointer' }}>
                   Load More Photos ({allDisplayPhotos.length - displayCount} remaining)
-                </Button>
+                </button>
               </div>
             )}
           </>
         ) : (
-          /* Show grid of camps/events/meetings */
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-            {view === 'camps' && camps.map((camp) => (
-              <motion.div
-                key={camp.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer"
-                onClick={() => {
-                  setSelectedItem(camp);
-                  window.history.pushState({}, '', createPageUrl('Gallery') + `?view=camp&id=${camp.id}`);
-                }}
-              >
-                {getItemPhoto(camp, 'camp') ? (
-                  <LazyImage
-                    src={getItemPhoto(camp, 'camp')}
-                    alt={camp.title}
-                    className="w-full h-full group-hover:scale-110 transition-transform duration-500"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
-                    <ImageIcon className="w-16 h-16 text-white opacity-50" />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
+            {(view === 'camps' ? camps : view === 'events' ? regularEvents : meetings).map((item) => {
+              const type = view === 'meetings' ? 'meeting' : view;
+              const photo = getItemPhoto(item, type);
+              const count = getItemPhotoCount(item, type);
+              return (
+                <motion.div key={item.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  onClick={() => { setSelectedItem(item); window.history.pushState({}, '', createPageUrl('Gallery') + `?view=${view === 'camps' ? 'camp' : view === 'events' ? 'event' : 'meeting'}&id=${item.id}`); }}
+                  style={{ position: 'relative', aspectRatio: '1', borderRadius: '16px', overflow: 'hidden', cursor: 'pointer' }}
+                >
+                  {photo ? <img src={photo} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', background: 'rgba(116,19,220,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={40} color="rgba(255,255,255,0.3)" /></div>}
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 60%)' }}>
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px' }}>
+                      <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '16px', color: '#fff', marginBottom: '4px' }}>{item.title}</h3>
+                      <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', margin: 0 }}>{count} photos</p>
+                    </div>
                   </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                    <h3 className="font-bold text-lg mb-1 line-clamp-2">{camp.title}</h3>
-                    <p className="text-sm opacity-90">{getItemPhotoCount(camp, 'camp')} photos</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-            
-            {view === 'events' && regularEvents.map((event) => (
-              <motion.div
-                key={event.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer"
-                onClick={() => {
-                  setSelectedItem(event);
-                  window.history.pushState({}, '', createPageUrl('Gallery') + `?view=event&id=${event.id}`);
-                }}
-              >
-                {getItemPhoto(event, 'event') ? (
-                  <LazyImage
-                    src={getItemPhoto(event, 'event')}
-                    alt={event.title}
-                    className="w-full h-full group-hover:scale-110 transition-transform duration-500"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
-                    <ImageIcon className="w-16 h-16 text-white opacity-50" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                    <h3 className="font-bold text-lg mb-1 line-clamp-2">{event.title}</h3>
-                    <p className="text-sm opacity-90">{getItemPhotoCount(event, 'event')} photos</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-            
-            {view === 'meetings' && meetings.map((meeting) => (
-              <motion.div
-                key={meeting.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer"
-                onClick={() => {
-                  setSelectedItem(meeting);
-                  window.history.pushState({}, '', createPageUrl('Gallery') + `?view=meeting&id=${meeting.id}`);
-                }}
-              >
-                {getItemPhoto(meeting, 'meeting') ? (
-                  <LazyImage
-                    src={getItemPhoto(meeting, 'meeting')}
-                    alt={meeting.title}
-                    className="w-full h-full group-hover:scale-110 transition-transform duration-500"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
-                    <ImageIcon className="w-16 h-16 text-white opacity-50" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent">
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-                    <h3 className="font-bold text-lg mb-1 line-clamp-2">{meeting.title}</h3>
-                    <p className="text-sm opacity-90">{getItemPhotoCount(meeting, 'meeting')} photos</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Lightbox */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-4xl p-0">
           {lightboxPhoto && (
-            <div className="relative">
-              <img
-                src={lightboxPhoto.file_url}
-                alt={lightboxPhoto.caption || ''}
-                className="w-full max-h-[80vh] object-contain"
-              />
-              {lightboxPhoto.caption && (
-                <div className="p-6 bg-white">
-                  <p className="text-gray-900 font-medium">{lightboxPhoto.caption}</p>
-                </div>
-              )}
+            <div style={{ background: '#002a6e' }}>
+              <img src={lightboxPhoto.file_url} alt={lightboxPhoto.caption || ''} style={{ width: '100%', maxHeight: '80vh', objectFit: 'contain', display: 'block' }} />
+              {lightboxPhoto.caption && <div style={{ padding: '16px 24px', background: '#002a6e' }}><p style={{ color: '#fff', fontFamily: 'DM Sans, sans-serif', margin: 0 }}>{lightboxPhoto.caption}</p></div>}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      <PublicFooter />
     </div>
   );
 }

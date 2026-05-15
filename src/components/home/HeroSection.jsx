@@ -1,148 +1,215 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-
-const ImageCarousel = ({ websiteImages }) => {
-  // Use uploaded home images or fall back to defaults
-  const defaultImages = [
-    'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/2e87b5f25_492395842_2704743879914647_1991593466070344351_n_2704743866581315.jpg',
-    'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/b5c4d9296_campfire.jpg',
-    'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/a7545720b_487691994_10162610204869169_513148409949064129_n_10162610203574169.jpg',
-  ];
-  
-  const homeImages = websiteImages?.filter(img => img.page === 'home').sort((a, b) => (a.order || 0) - (b.order || 0)) || [];
-  const images = homeImages.length > 0 ? homeImages.map(img => img.image_url) : defaultImages;
-
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  useEffect(() => {
-    if (images.length === 0) return;
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % images.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [images.length]);
-
-  const goToNext = () => setCurrentIndex((prev) => (prev + 1) % images.length);
-  const goToPrev = () => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-
-  return (
-    <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border-4 border-white/20">
-      <AnimatePresence mode="wait">
-        <motion.img
-          key={currentIndex}
-          src={images[currentIndex]}
-          alt="Scout group activities"
-          className="w-full h-full object-cover"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-        />
-      </AnimatePresence>
-
-      <button
-        onClick={goToPrev}
-        className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-all"
-      >
-        <ChevronLeft className="w-6 h-6" />
-      </button>
-      <button
-        onClick={goToNext}
-        className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-all"
-      >
-        <ChevronRight className="w-6 h-6" />
-      </button>
-
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-        {images.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrentIndex(idx)}
-            className={`w-2 h-2 rounded-full transition-all ${
-              idx === currentIndex ? 'bg-white w-6' : 'bg-white/50'
-            }`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
+import { base44 } from '@/api/base44Client';
+import { ChevronDown } from 'lucide-react';
 
 export default function HeroSection() {
-  const [websiteImages, setWebsiteImages] = React.useState([]);
+  const [images, setImages] = useState([]);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [prevIdx, setPrevIdx] = useState(null);
+  const [fading, setFading] = useState(false);
+  const [showChevron, setShowChevron] = useState(true);
+  const timerRef = useRef(null);
 
-  React.useEffect(() => {
-    loadImages();
+  useEffect(() => {
+    loadConfig();
+    const onScroll = () => setShowChevron(window.scrollY < 100);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const loadImages = async () => {
+  const loadConfig = async () => {
     try {
-      const { base44 } = await import('@/api/base44Client');
-      const images = await base44.entities.WebsiteImage.filter({});
-      setWebsiteImages(images);
-    } catch (error) {
-      console.error('Error loading website images:', error);
-    }
+      const configs = await base44.entities.WebsiteImage.filter({ page: 'hero' });
+      if (configs.length > 0) {
+        setImages(configs.map(c => c.image_url).filter(Boolean));
+      }
+    } catch {}
   };
 
-  return (
-    <section className="relative bg-[#004851] overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 right-20 w-64 h-64 border-4 border-white rounded-full" />
-        <div className="absolute bottom-10 left-10 w-32 h-32 border-2 border-white rounded-full" />
-        <div className="absolute top-40 left-1/4 w-16 h-16 bg-yellow-400 rotate-45" />
-      </div>
+  useEffect(() => {
+    if (images.length < 2) return;
+    timerRef.current = setInterval(() => {
+      setFading(true);
+      setPrevIdx(currentIdx);
+      setTimeout(() => {
+        setCurrentIdx(i => (i + 1) % images.length);
+        setFading(false);
+        setPrevIdx(null);
+      }, 1200);
+    }, 5000);
+    return () => clearInterval(timerRef.current);
+  }, [images, currentIdx]);
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
-              Preparing young people with{' '}
-              <span className="text-[#ffe627]">skills for life</span>
-            </h1>
-            <p className="mt-6 text-lg text-gray-200 max-w-xl">
-              Join our scout group for adventure, friendship, and personal growth. 
-              We help young people aged 6-14 develop confidence, teamwork, and leadership skills.
+  const bgStyle = (url, active) => ({
+    position: 'absolute',
+    inset: 0,
+    backgroundImage: `url(${url})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    animation: active ? 'kenBurns 6.2s ease forwards' : 'none',
+    transition: 'opacity 1.2s ease',
+    opacity: active ? 1 : 0,
+  });
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap');
+
+        @keyframes kenBurns {
+          from { transform: scale(1.0); }
+          to   { transform: scale(1.08); }
+        }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(24px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes chevronPulse {
+          0%, 100% { opacity: 0.7; transform: translateY(0); }
+          50% { opacity: 1; transform: translateY(6px); }
+        }
+        .hero-eyebrow { animation: fadeUp 0.65s ease forwards; animation-delay: 0ms; opacity: 0; }
+        .hero-h1      { animation: fadeUp 0.65s ease forwards; animation-delay: 120ms; opacity: 0; }
+        .hero-body    { animation: fadeUp 0.65s ease forwards; animation-delay: 240ms; opacity: 0; }
+        .hero-btns    { animation: fadeUp 0.65s ease forwards; animation-delay: 360ms; opacity: 0; }
+        .hero-btn:hover { transform: scale(1.03); }
+        .hero-btn { transition: transform 0.2s ease; }
+      `}</style>
+
+      <section style={{ position: 'relative', height: '100vh', minHeight: '600px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {/* Background images */}
+        {images.length > 0 ? (
+          <>
+            {prevIdx !== null && (
+              <div style={{ ...bgStyle(images[prevIdx], false), opacity: fading ? 0 : 1 }} />
+            )}
+            <div style={bgStyle(images[currentIdx], true)} />
+          </>
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #003982 0%, #004851 100%)' }} />
+        )}
+
+        {/* Dark overlay */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to bottom, rgba(0,57,130,0.25) 0%, rgba(0,57,130,0.5) 50%, rgba(0,72,81,0.85) 100%)',
+          zIndex: 1,
+        }} />
+
+        {/* Hero content */}
+        <div style={{ position: 'relative', zIndex: 2, padding: '0 24px', width: '100%', maxWidth: '760px', margin: '0 auto', textAlign: 'center' }}>
+          <div style={{
+            background: 'rgba(0,57,130,0.55)',
+            backdropFilter: 'blur(32px) saturate(200%)',
+            WebkitBackdropFilter: 'blur(32px) saturate(200%)',
+            border: '0.5px solid rgba(255,255,255,0.25)',
+            borderRadius: '24px',
+            padding: 'clamp(32px, 5vw, 56px)',
+          }}>
+            <p className="hero-eyebrow" style={{
+              fontFamily: 'DM Sans, sans-serif',
+              fontWeight: 500,
+              fontSize: '11px',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: '#00a794',
+              marginBottom: '18px',
+            }}>
+              40th Rochdale · Est. 2021
             </p>
-            <div className="mt-8 flex flex-wrap gap-4 relative z-10">
-              <Link to={createPageUrl('Join')} className="inline-block">
-                <button className="px-8 py-3 bg-[#7413dc] hover:bg-[#5c0fb0] text-white rounded-lg font-medium transition-colors duration-200 flex items-center gap-2">
-                  Join Scouts
-                  <ArrowRight className="w-5 h-5" />
-                </button>
+
+            <h1 className="hero-h1" style={{
+              fontFamily: 'Outfit, sans-serif',
+              fontWeight: 700,
+              fontSize: 'clamp(36px, 6vw, 64px)',
+              lineHeight: 1.05,
+              color: '#fff',
+              margin: '0 0 4px',
+            }}>
+              Built different.
+            </h1>
+            <h1 className="hero-h1" style={{
+              fontFamily: 'Outfit, sans-serif',
+              fontWeight: 700,
+              fontSize: 'clamp(28px, 5vw, 54px)',
+              lineHeight: 1.05,
+              color: '#00a794',
+              margin: '0 0 24px',
+            }}>
+              Since 2021.
+            </h1>
+
+            <p className="hero-body" style={{
+              fontFamily: 'DM Sans, sans-serif',
+              fontWeight: 400,
+              fontSize: '17px',
+              lineHeight: 1.75,
+              color: 'rgba(255,255,255,0.85)',
+              marginBottom: '32px',
+              maxWidth: '560px',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+            }}>
+              We climb, kayak, build, code, camp, and surprise ourselves every single week. This is Scouts — just not as you remember it.
+            </p>
+
+            <div className="hero-btns" style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link
+                to={createPageUrl('Join')}
+                className="hero-btn"
+                style={{
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontWeight: 500,
+                  fontSize: '16px',
+                  color: '#fff',
+                  textDecoration: 'none',
+                  background: '#7413dc',
+                  borderRadius: '30px',
+                  padding: '14px 32px',
+                  display: 'inline-block',
+                }}
+              >
+                Join Us →
               </Link>
-              <Link to={createPageUrl('About')} className="inline-block">
-                <button className="px-8 py-3 border-2 border-white text-white hover:bg-white hover:text-black rounded-lg font-medium transition-colors duration-200">
-                  Learn More
-                </button>
+              <Link
+                to={createPageUrl('Volunteer')}
+                className="hero-btn"
+                style={{
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontWeight: 500,
+                  fontSize: '16px',
+                  color: 'rgba(255,255,255,0.9)',
+                  textDecoration: 'none',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  borderRadius: '30px',
+                  padding: '14px 32px',
+                  display: 'inline-block',
+                  background: 'transparent',
+                }}
+              >
+                Volunteer
               </Link>
             </div>
-          </motion.div>
-
-          {/* Image Carousel */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="relative"
-          >
-            <ImageCarousel websiteImages={websiteImages} />
-            {/* Decorative Elements */}
-            <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-[#ffe627] rounded-lg -z-10" />
-            <div className="absolute -top-4 -right-4 w-16 h-16 bg-[#7413dc] rounded-full -z-10" />
-          </motion.div>
+          </div>
         </div>
-      </div>
-    </section>
+
+        {/* Scroll chevron */}
+        <div style={{
+          position: 'absolute',
+          bottom: '32px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 2,
+          opacity: showChevron ? 1 : 0,
+          transition: 'opacity 0.4s ease',
+          animation: 'chevronPulse 2s ease-in-out infinite',
+        }}>
+          <ChevronDown size={32} color="rgba(255,255,255,0.7)" />
+        </div>
+      </section>
+    </>
   );
 }
