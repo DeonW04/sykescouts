@@ -251,48 +251,33 @@ export default function LeaderBadges() {
   return (
     <div className="min-h-screen bg-gray-50">
       <FloatingNav />
-      <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-3">
-              <Award className="w-8 h-8" />
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold">Badge Tracking</h1>
-                <p className="mt-1 text-white/80">Track progress and manage badges</p>
-              </div>
-            </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              {pendingNotifications.length > 0 && (
-                <Button
-                  onClick={() => setShowEmailConfirm(true)}
-                  className="bg-amber-500 hover:bg-amber-600 text-white gap-2 animate-pulse"
-                >
-                  <Mail className="w-4 h-4" />
-                  Send Badge Emails ({pendingMemberList.length})
-                </Button>
-              )}
-              <div className="flex rounded-lg overflow-hidden border border-white/30">
-                <button
-                  onClick={() => setViewMode('badge')}
-                  className={`px-3 py-2 text-sm font-medium flex items-center gap-1.5 ${viewMode === 'badge' ? 'bg-white text-green-700' : 'text-white hover:bg-white/20'}`}
-                >
-                  <Grid className="w-4 h-4" />
-                  <span className="hidden sm:inline">By Badge</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('member')}
-                  className={`px-3 py-2 text-sm font-medium flex items-center gap-1.5 ${viewMode === 'member' ? 'bg-white text-green-700' : 'text-white hover:bg-white/20'}`}
-                >
-                  <LayoutList className="w-4 h-4" />
-                  <span className="hidden sm:inline">By Member</span>
-                </button>
-              </div>
+      <div style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '28px 40px' }}>
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 flex-wrap">
+          <div>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Badge Tracking</h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Track progress and manage badges</p>
+          </div>
+          <div className="flex gap-2 items-center flex-wrap">
+            {pendingNotifications.length > 0 && (
+              <Button onClick={() => setShowEmailConfirm(true)} className="bg-amber-500 hover:bg-amber-600 text-white gap-2 animate-pulse">
+                <Mail className="w-4 h-4" />
+                Send Badge Emails ({pendingMemberList.length})
+              </Button>
+            )}
+            <div className="flex rounded-lg overflow-hidden border border-gray-200">
+              <button onClick={() => setViewMode('badge')} className={`px-3 py-2 text-sm font-medium flex items-center gap-1.5 ${viewMode === 'badge' ? 'bg-[#7413dc] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                <Grid className="w-4 h-4" /><span className="hidden sm:inline">By Badge</span>
+              </button>
+              <button onClick={() => setViewMode('member')} className={`px-3 py-2 text-sm font-medium flex items-center gap-1.5 ${viewMode === 'member' ? 'bg-[#7413dc] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                <LayoutList className="w-4 h-4" /><span className="hidden sm:inline">By Member</span>
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Member view */}
         {viewMode === 'member' && (
           <div>

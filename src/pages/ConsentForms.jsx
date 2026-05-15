@@ -278,25 +278,20 @@ export default function ConsentForms() {
   return (
     <div className="min-h-screen bg-gray-50">
       <FloatingNav />
-      <div className="bg-gradient-to-r from-[#004851] to-[#00a794] text-white py-10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <FileText className="w-10 h-10" />
-              <div>
-                <h1 className="text-3xl font-bold">Consent Forms</h1>
-                <p className="text-white/70 mt-1">Build and manage consent forms for events and meetings</p>
-              </div>
-            </div>
-            <Button onClick={() => navigate(createPageUrl('ConsentFormBuilder'))} className="bg-white text-[#004851] hover:bg-white/90 font-semibold">
-              <Plus className="w-4 h-4 mr-2" />
-              New Form
-            </Button>
+      <div style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '28px 40px' }}>
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Consent Forms</h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Build and manage consent forms for events and meetings</p>
           </div>
+          <Button onClick={() => navigate(createPageUrl('ConsentFormBuilder'))} className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white font-semibold">
+            <Plus className="w-4 h-4 mr-2" />New Form
+          </Button>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {isLoading ? (
           <div className="flex justify-center py-16">
             <div className="animate-spin w-8 h-8 border-4 border-[#004851] border-t-transparent rounded-full" />

@@ -213,27 +213,15 @@ export default function AdminSettings() {
   return (
     <div className="min-h-screen bg-gray-50">
       <FloatingNav />
-
-      <div className="bg-[#004851] text-white py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-3">
-          <Settings className="w-7 h-7" />
+      <div style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '28px 40px' }}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold">Admin Settings</h1>
-            <p className="text-sm text-white/70">Manage system configuration and users</p>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Admin</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Admin Settings</h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Manage system configuration and users</p>
           </div>
-        </div>
-      </div>
-
-      {/* Analytics quick-link bar */}
-      <div className="bg-[#7413dc] text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-between">
-          <p className="text-xs text-purple-200">See how parents are using the portal</p>
-          <button
-            onClick={() => navigate(createPageUrl('ParentPortalAnalytics'))}
-            className="flex items-center gap-1.5 text-xs font-semibold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors"
-          >
-            <BarChart2 className="w-3.5 h-3.5" />
-            Parent Portal Analytics
+          <button onClick={() => navigate(createPageUrl('ParentPortalAnalytics'))} className="flex items-center gap-2 text-sm font-semibold border border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white px-4 py-2 rounded-lg transition-colors">
+            <BarChart2 className="w-4 h-4" />Parent Portal Analytics
           </button>
         </div>
       </div>

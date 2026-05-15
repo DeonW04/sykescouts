@@ -142,39 +142,26 @@ export default function IdeasBoard() {
   return (
     <div className="min-h-screen" style={{ background: '#f5f0e8' }}>
       <FloatingNav />
-      <div className="max-w-full px-4 sm:px-6 lg:px-8 py-6">
-
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+      <div style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '28px 40px' }}>
+        <div className="max-w-full flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800" style={{ fontFamily: 'Georgia, serif' }}>
-              💡 Ideas Board
-            </h1>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {section ? `${section.display_name} section` : 'Select a section above'}
-            </p>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>💡 Ideas Board</h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>{section ? `${section.display_name} section` : 'Select a section'}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowNewIdeaDialog(true)}
-              className="flex items-center gap-2 border-gray-400"
-              disabled={!selectedSection}
-            >
+            <Button variant="outline" onClick={() => setShowNewIdeaDialog(true)} className="flex items-center gap-2 border-[#7413dc] text-[#7413dc]" disabled={!selectedSection}>
               <Plus className="w-4 h-4" /> Add Idea
             </Button>
-            <Button
-              onClick={() => setShowGenerateModal(true)}
-              disabled={!selectedSection}
-              className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white shadow-lg"
-            >
-              <Sparkles className="w-4 h-4" />
-              ✨ Generate Ideas
+            <Button onClick={() => setShowGenerateModal(true)} disabled={!selectedSection} className="flex items-center gap-2 bg-[#7413dc] hover:bg-[#5c0fb0] text-white">
+              <Sparkles className="w-4 h-4" /> ✨ Generate Ideas
             </Button>
           </div>
         </div>
+      </div>
+      <div className="max-w-full px-4 sm:px-6 lg:px-8 py-6">
 
-        {/* Tabs */}
+      {/* Tabs */}
         <div className="flex items-center gap-1 mb-4 bg-amber-100/60 rounded-xl p-1 w-fit border border-amber-200">
           {[
             { key: 'meeting', label: '📋 Meetings' },

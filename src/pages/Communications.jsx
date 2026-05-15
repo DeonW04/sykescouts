@@ -131,23 +131,15 @@ export default function Communications() {
   return (
     <div className="min-h-screen bg-gray-50">
       <FloatingNav />
-      
-      {/* Header */}
-      <div className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Mail className="w-8 h-8" />
-              <div>
-                <h1 className="text-3xl font-bold">Communications</h1>
-                <p className="mt-1 text-white/80">Manage messages, newsletters, and updates</p>
-              </div>
-            </div>
-          </div>
+      <div style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '28px 40px' }}>
+        <div className="max-w-7xl mx-auto">
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Communications</h1>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Manage messages, newsletters, and updates</p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Quick Action Boxes */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <Card className="border-t-4 border-t-blue-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('WeeklyMessageList'))}>

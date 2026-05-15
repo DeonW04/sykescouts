@@ -87,21 +87,15 @@ Focus on practical, specific risks following Scouts UK safety standards. Conside
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-white">
       <FloatingNav />
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#7413dc] to-[#ff66b2] text-white py-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4 mb-2">
-            <ShieldAlert className="w-12 h-12" />
-            <div>
-              <h1 className="text-4xl font-bold">Scouts Risk Assessment</h1>
-              <p className="text-purple-100 mt-1">Preparing young people with skills for life</p>
-            </div>
-          </div>
+      <div style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '28px 40px' }}>
+        <div className="max-w-4xl mx-auto">
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Risk Assessments</h1>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Prepare and manage risk assessments for activities</p>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid gap-6">
           <Card>
             <CardContent className="p-4 sm:p-6">

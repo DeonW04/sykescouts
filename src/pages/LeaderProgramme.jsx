@@ -169,44 +169,32 @@ export default function LeaderProgramme() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <FloatingNav />
-      <div className="relative bg-gradient-to-br from-[#004851] to-[#7413dc] text-white py-16 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-6 h-6" />
-                </div>
-                <h1 className="text-4xl font-bold">Programme Planning</h1>
-              </div>
-              <p className="text-blue-100 text-lg">Plan weekly meetings and track your section's progress</p>
-            </div>
-            <div className="flex gap-3 flex-wrap self-start md:self-auto">
-              {currentTerm && (
-                <Button
-                  onClick={() => osmConfig?.osm_term_id ? setShowOsmSync(true) : toast.warning('Set up OSM term link in Admin Settings first')}
-                  size="lg"
-                  variant="outline"
-                  className={`backdrop-blur-sm font-semibold ${osmConfig?.osm_term_id ? 'bg-white/10 text-white border-white/30 hover:bg-white/20' : 'bg-white/5 text-white/50 border-white/20 cursor-default'}`}
-                >
-                  <RefreshCw className="w-5 h-5 mr-2" />
-                  Sync with OSM
-                </Button>
-              )}
+      <div style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '28px 40px' }}>
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 flex-wrap">
+          <div>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Programme Planning</h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Plan weekly meetings and track your section's progress</p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {currentTerm && (
               <Button
-                onClick={() => setShowAllTermsDialog(true)}
-                size="lg"
+                onClick={() => osmConfig?.osm_term_id ? setShowOsmSync(true) : toast.warning('Set up OSM term link in Admin Settings first')}
                 variant="outline"
-                className="bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20 font-semibold"
+                className={`font-semibold ${osmConfig?.osm_term_id ? 'border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white' : 'text-gray-400 cursor-default'}`}
               >
-                <List className="w-5 h-5 mr-2" />
-                Past & Future Terms
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Sync with OSM
               </Button>
-            </div>
+            )}
+            <Button
+              onClick={() => setShowAllTermsDialog(true)}
+              variant="outline"
+              className="border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white font-semibold"
+            >
+              <List className="w-4 h-4 mr-2" />
+              All Terms
+            </Button>
           </div>
         </div>
       </div>

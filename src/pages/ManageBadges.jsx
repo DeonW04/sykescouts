@@ -158,42 +158,25 @@ export default function ManageBadges() {
   return (
     <div className="min-h-screen bg-gray-50">
       <FloatingNav />
-      <div className="bg-[#7413dc] text-white py-6 md:py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="flex items-center gap-3">
-              <Award className="w-6 h-6 md:w-8 md:h-8" />
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold">Manage Badges</h1>
-                <p className="mt-1 text-white/80 text-sm md:text-base">Create and configure badges</p>
-              </div>
-            </div>
-            <div className="flex gap-2 w-full md:w-auto">
-              <Button
-                onClick={() => navigate(createPageUrl('BadgeStockManagement'))}
-                className="bg-white text-[#7413dc] hover:bg-gray-100 flex-1 md:flex-none text-sm"
-              >
-                <Package className="w-4 h-4 md:mr-2" />
-                <span className="hidden sm:inline">Manage Stock</span>
-                <span className="sm:hidden">Stock</span>
-              </Button>
-              <Button
-                onClick={() => {
-                  resetForm();
-                  setShowDialog(true);
-                }}
-                className="bg-white text-[#7413dc] hover:bg-gray-100 flex-1 md:flex-none text-sm"
-              >
-                <Plus className="w-4 h-4 md:mr-2" />
-                <span className="hidden sm:inline">New Badge</span>
-                <span className="sm:hidden">New</span>
-              </Button>
-            </div>
+      <div style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '28px 40px' }}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Manage Badges</h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Create and configure badges</p>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate(createPageUrl('BadgeStockManagement'))} variant="outline" className="border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white">
+              <Package className="w-4 h-4 mr-2" />Manage Stock
+            </Button>
+            <Button onClick={() => { resetForm(); setShowDialog(true); }} className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white">
+              <Plus className="w-4 h-4 mr-2" />New Badge
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Search Bar */}
         <div className="mb-6 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />

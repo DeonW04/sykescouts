@@ -54,34 +54,20 @@ export default function LeaderEvents() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       <FloatingNav />
-      <div className="relative bg-gradient-to-br from-[#7413dc] to-[#004851] text-white py-16 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                  <Calendar className="w-6 h-6" />
-                </div>
-                <h1 className="text-4xl font-bold">Events & Camps</h1>
-              </div>
-              <p className="text-purple-100 text-lg">Plan and manage your upcoming adventures</p>
-            </div>
-            <Button
-              onClick={() => {
-                setEditingEvent(null);
-                setShowNewDialog(true);
-              }}
-              size="lg"
-              className="bg-white text-[#7413dc] hover:bg-purple-50 font-semibold shadow-xl"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Create Event
-            </Button>
+      <div style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '28px 40px' }}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Events & Camps</h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Plan and manage your upcoming adventures</p>
           </div>
+          <Button
+            onClick={() => { setEditingEvent(null); setShowNewDialog(true); }}
+            className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white font-semibold"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create Event
+          </Button>
         </div>
       </div>
 

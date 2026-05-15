@@ -254,26 +254,16 @@ User question: ${userMsg}`,
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
       <FloatingNav />
-
-      {/* Header */}
-      <div className="bg-gradient-to-br from-[#004851] to-[#7413dc] text-white py-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4 mb-2">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <BookOpen className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">POR Helper</h1>
-              <p className="text-white/70 text-sm">Policy, Organisation and Rules — Spring 2026</p>
-            </div>
+      <div style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '28px 40px' }}>
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>POR Helper</h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Policy, Organisation and Rules — Spring 2026</p>
           </div>
-          <p className="text-white/80 mt-2 max-w-2xl text-sm">
-            Browse and read every chapter of POR, search the full document, or ask the AI assistant any question.
-          </p>
           <a href={POR_URL} target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 rounded-lg text-sm font-medium transition-colors">
-            <ExternalLink className="w-4 h-4" />
-            Open Full PDF Document
+            className="inline-flex items-center gap-2 px-4 py-2 border border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white rounded-lg text-sm font-medium transition-colors">
+            <ExternalLink className="w-4 h-4" />Open Full PDF
           </a>
         </div>
       </div>
