@@ -294,10 +294,10 @@ export default function FloatingNav() {
   const linkStyle = (active) => ({
     fontFamily: 'DM Sans, sans-serif',
     fontWeight: 500, fontSize: '14px',
-    color: active ? '#7413dc' : 'rgba(26,26,46,0.7)',
+    color: active ? '#fff' : 'rgba(26,26,46,0.7)',
     textDecoration: 'none',
     padding: '4px 12px', borderRadius: '20px',
-    background: active ? 'rgba(116,19,220,0.08)' : 'transparent',
+    background: active ? '#7413dc' : 'transparent',
     transition: 'color 0.2s, background 0.2s',
     whiteSpace: 'nowrap',
   });
@@ -335,12 +335,12 @@ export default function FloatingNav() {
           : '0 2px 16px rgba(0,0,0,0.08)',
         border: '0.5px solid rgba(116,19,220,0.18)',
         transition: 'box-shadow 0.3s ease',
-        background: 'rgba(255,255,255,0.97)',
+        background: '#ffffff',
       }}>
 
         {/* ── Pill nav row ── */}
         <div style={{
-          background: scrolled ? 'rgba(255,255,255,0.99)' : 'rgba(255,255,255,0.92)',
+          background: '#ffffff',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
           transition: 'background 0.3s ease',

@@ -8,6 +8,7 @@ import { createPageUrl } from '../utils';
 import SEO from '../components/SEO';
 import LazyImage from '../components/gallery/LazyImage';
 import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import PublicFooter from '../components/public/PublicFooter';
 
 const glassCard = {
@@ -79,6 +80,7 @@ export default function Gallery() {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap');`}</style>
       <SEO title="Gallery | 40th Rochdale (Syke) Scouts" description="View photos from our scout activities, camps, and events." path="/Gallery" />
       <FloatingNav />
+      <NavBarSpacer />
 
       {/* Hero */}
       <section style={{ background: '#f8f7ff', padding: '80px 32px 60px', borderBottom: '1px solid rgba(116,19,220,0.1)' }}>

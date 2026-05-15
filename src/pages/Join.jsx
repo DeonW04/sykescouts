@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import SEO from '../components/SEO';
 import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import PublicFooter from '../components/public/PublicFooter';
 
 const inputStyle = {
@@ -90,6 +91,7 @@ export default function Join() {
       `}</style>
       <SEO title="Join Scouts | 40th Rochdale (Syke) Scouts" description="Register your child's interest in joining Scouts." path="/Join" />
       <FloatingNav />
+      <NavBarSpacer />
 
       {/* Hero */}
       <section style={{ background: '#f8f7ff', padding: '80px 32px 60px', borderBottom: '1px solid rgba(116,19,220,0.1)' }}>
