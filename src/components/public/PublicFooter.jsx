@@ -5,8 +5,8 @@ import { createPageUrl } from '../../utils';
 export default function PublicFooter() {
   return (
     <footer style={{
-      background: '#002a6e',
-      borderTop: '1px solid rgba(255,255,255,0.1)',
+      background: '#1a1a2e',
+      borderTop: '1px solid rgba(255,255,255,0.08)',
       padding: '60px 0 30px',
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px' }}>

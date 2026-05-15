@@ -41,11 +41,11 @@ export default function FloatingNav() {
           zIndex: 1000,
           margin: '12px 24px',
           borderRadius: '60px',
-          background: scrolled ? 'rgba(0,57,130,0.88)' : 'rgba(0,57,130,0.55)',
+          background: scrolled ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.75)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          border: '0.5px solid rgba(255,255,255,0.2)',
-          boxShadow: scrolled ? '0 0 0 1px rgba(116,19,220,0.35), 0 8px 32px rgba(0,0,0,0.3)' : 'none',
+          border: '0.5px solid rgba(116,19,220,0.15)',
+          boxShadow: scrolled ? '0 0 0 1px rgba(116,19,220,0.2), 0 8px 32px rgba(0,0,0,0.1)' : '0 2px 16px rgba(0,0,0,0.08)',
           transition: 'background 0.3s ease, box-shadow 0.3s ease',
         }}
       >
@@ -58,8 +58,8 @@ export default function FloatingNav() {
               style={{ height: '38px', width: 'auto' }}
             />
             <div style={{ lineHeight: 1.1 }}>
-              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 500, fontSize: '15px', color: '#fff' }}>Syke Scouts</div>
-              <div style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 400, fontSize: '11px', color: '#00a794' }}>40th Rochdale</div>
+              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 500, fontSize: '15px', color: '#1a1a2e' }}>Syke Scouts</div>
+              <div style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 400, fontSize: '11px', color: '#7413dc' }}>40th Rochdale</div>
             </div>
           </Link>
 
@@ -73,15 +73,15 @@ export default function FloatingNav() {
                   fontFamily: 'DM Sans, sans-serif',
                   fontWeight: 500,
                   fontSize: '14px',
-                  color: isActive(link.to) ? '#fff' : 'rgba(255,255,255,0.75)',
+                  color: isActive(link.to) ? '#7413dc' : 'rgba(26,26,46,0.7)',
                   textDecoration: 'none',
                   padding: '4px 14px',
                   borderRadius: '20px',
-                  background: isActive(link.to) ? 'rgba(255,255,255,0.12)' : 'transparent',
+                  background: isActive(link.to) ? 'rgba(116,19,220,0.08)' : 'transparent',
                   transition: 'color 0.2s, background 0.2s',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#fff'; }}
-                onMouseLeave={e => { if (!isActive(link.to)) e.currentTarget.style.color = 'rgba(255,255,255,0.75)'; }}
+                onMouseEnter={e => { e.currentTarget.style.color = '#7413dc'; }}
+                onMouseLeave={e => { if (!isActive(link.to)) e.currentTarget.style.color = 'rgba(26,26,46,0.7)'; }}
               >
                 {link.label}
               </Link>
@@ -96,15 +96,15 @@ export default function FloatingNav() {
                 fontFamily: 'DM Sans, sans-serif',
                 fontWeight: 500,
                 fontSize: '14px',
-                color: 'rgba(255,255,255,0.9)',
+                color: 'rgba(26,26,46,0.8)',
                 textDecoration: 'none',
-                border: '0.5px solid rgba(255,255,255,0.35)',
+                border: '0.5px solid rgba(26,26,46,0.25)',
                 borderRadius: '25px',
                 padding: '7px 18px',
                 background: 'transparent',
                 transition: 'background 0.2s, color 0.2s',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,26,46,0.06)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
             >
               Volunteer
@@ -134,7 +134,7 @@ export default function FloatingNav() {
           <button
             className="md:hidden"
             onClick={() => setMenuOpen(!menuOpen)}
-            style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: '4px' }}
+            style={{ background: 'none', border: 'none', color: '#1a1a2e', cursor: 'pointer', padding: '4px' }}
           >
             {menuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -143,10 +143,10 @@ export default function FloatingNav() {
         {/* Mobile Drawer */}
         {menuOpen && (
           <div style={{
-            background: 'rgba(0,57,130,0.95)',
+            background: 'rgba(255,255,255,0.98)',
             backdropFilter: 'blur(24px)',
             WebkitBackdropFilter: 'blur(24px)',
-            borderTop: '0.5px solid rgba(255,255,255,0.15)',
+            borderTop: '0.5px solid rgba(116,19,220,0.1)',
             borderRadius: '0 0 30px 30px',
             padding: '16px 20px 20px',
           }}>
@@ -159,11 +159,11 @@ export default function FloatingNav() {
                     fontFamily: 'DM Sans, sans-serif',
                     fontWeight: 500,
                     fontSize: '16px',
-                    color: isActive(link.to) ? '#fff' : 'rgba(255,255,255,0.75)',
+                    color: isActive(link.to) ? '#7413dc' : 'rgba(26,26,46,0.75)',
                     textDecoration: 'none',
                     padding: '10px 14px',
                     borderRadius: '12px',
-                    background: isActive(link.to) ? 'rgba(255,255,255,0.12)' : 'transparent',
+                    background: isActive(link.to) ? 'rgba(116,19,220,0.08)' : 'transparent',
                   }}
                 >
                   {link.label}
@@ -178,9 +178,9 @@ export default function FloatingNav() {
                     fontFamily: 'DM Sans, sans-serif',
                     fontWeight: 500,
                     fontSize: '14px',
-                    color: 'rgba(255,255,255,0.9)',
+                    color: 'rgba(26,26,46,0.8)',
                     textDecoration: 'none',
-                    border: '0.5px solid rgba(255,255,255,0.35)',
+                    border: '0.5px solid rgba(26,26,46,0.25)',
                     borderRadius: '25px',
                     padding: '10px 18px',
                     background: 'transparent',

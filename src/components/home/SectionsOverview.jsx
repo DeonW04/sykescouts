@@ -84,12 +84,12 @@ export default function SectionsOverview() {
         }
       `}</style>
 
-      <section style={{ background: '#002a6e', padding: '80px 0' }}>
+      <section style={{ background: '#ffffff', padding: '80px 0' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', textAlign: 'center', marginBottom: '40px' }}>
-          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: 'clamp(28px, 4vw, 44px)', color: '#fff', margin: '0 0 12px' }}>
+          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: 'clamp(28px, 4vw, 44px)', color: '#1a1a2e', margin: '0 0 12px' }}>
             Find your section.
           </h2>
-          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '17px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.75 }}>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '17px', color: 'rgba(26,26,46,0.55)', lineHeight: 1.75 }}>
             Every child starts somewhere. Here's where yours belongs.
           </p>
         </div>

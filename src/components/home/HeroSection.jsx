@@ -88,21 +88,21 @@ export default function HeroSection() {
             <div style={bgStyle(images[currentIdx], true)} />
           </>
         ) : (
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #003982 0%, #004851 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #1a1a2e 0%, #2d1b69 100%)' }} />
         )}
 
         {/* Dark overlay */}
         <div style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(to bottom, rgba(0,57,130,0.25) 0%, rgba(0,57,130,0.5) 50%, rgba(0,72,81,0.85) 100%)',
+          background: 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.75) 100%)',
           zIndex: 1,
         }} />
 
         {/* Hero content */}
         <div style={{ position: 'relative', zIndex: 2, padding: '0 24px', width: '100%', maxWidth: '760px', margin: '0 auto', textAlign: 'center' }}>
           <div style={{
-            background: 'rgba(0,57,130,0.55)',
+            background: 'rgba(255,255,255,0.12)',
             backdropFilter: 'blur(32px) saturate(200%)',
             WebkitBackdropFilter: 'blur(32px) saturate(200%)',
             border: '0.5px solid rgba(255,255,255,0.25)',

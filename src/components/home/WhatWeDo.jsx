@@ -58,12 +58,12 @@ export default function WhatWeDo() {
   if (isMobile) {
     // Mobile: tap carousel
     return (
-      <section style={{ background: '#002a6e', padding: '80px 0' }}>
+      <section style={{ background: '#f8f7ff', padding: '80px 0' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
-          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#00a794', marginBottom: '12px', textAlign: 'center' }}>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', marginBottom: '12px', textAlign: 'center' }}>
             What we actually do
           </p>
-          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '28px', color: '#fff', textAlign: 'center', marginBottom: '32px' }}>
+          <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '28px', color: '#1a1a2e', textAlign: 'center', marginBottom: '32px' }}>
             Not what you'd expect.
           </h2>
 
@@ -74,10 +74,10 @@ export default function WhatWeDo() {
           )}
 
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '24px', color: '#fff', marginBottom: '12px' }}>
+            <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '24px', color: '#1a1a2e', marginBottom: '12px' }}>
               {activities[activeIdx]?.title}
             </h3>
-            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '16px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.75 }}>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '16px', color: 'rgba(26,26,46,0.65)', lineHeight: 1.75 }}>
               {activities[activeIdx]?.description}
             </p>
           </div>
@@ -86,15 +86,15 @@ export default function WhatWeDo() {
             <button
               onClick={() => setActiveIdx(i => Math.max(0, i - 1))}
               disabled={activeIdx === 0}
-              style={{ padding: '10px 24px', borderRadius: '25px', border: '1px solid rgba(255,255,255,0.3)', background: 'transparent', color: activeIdx === 0 ? 'rgba(255,255,255,0.3)' : '#fff', cursor: activeIdx === 0 ? 'default' : 'pointer', fontFamily: 'DM Sans, sans-serif' }}
+              style={{ padding: '10px 24px', borderRadius: '25px', border: '1px solid rgba(26,26,46,0.2)', background: 'transparent', color: activeIdx === 0 ? 'rgba(26,26,46,0.3)' : '#1a1a2e', cursor: activeIdx === 0 ? 'default' : 'pointer', fontFamily: 'DM Sans, sans-serif' }}
             >
               ← Prev
             </button>
-            <span style={{ color: 'rgba(255,255,255,0.5)', fontFamily: 'DM Sans, sans-serif', alignSelf: 'center', fontSize: '14px' }}>{activeIdx + 1} / {activities.length}</span>
+            <span style={{ color: 'rgba(26,26,46,0.4)', fontFamily: 'DM Sans, sans-serif', alignSelf: 'center', fontSize: '14px' }}>{activeIdx + 1} / {activities.length}</span>
             <button
               onClick={() => setActiveIdx(i => Math.min(activities.length - 1, i + 1))}
               disabled={activeIdx === activities.length - 1}
-              style={{ padding: '10px 24px', borderRadius: '25px', border: '1px solid rgba(255,255,255,0.3)', background: 'transparent', color: activeIdx === activities.length - 1 ? 'rgba(255,255,255,0.3)' : '#fff', cursor: activeIdx === activities.length - 1 ? 'default' : 'pointer', fontFamily: 'DM Sans, sans-serif' }}
+              style={{ padding: '10px 24px', borderRadius: '25px', border: '1px solid rgba(26,26,46,0.2)', background: 'transparent', color: activeIdx === activities.length - 1 ? 'rgba(26,26,46,0.3)' : '#1a1a2e', cursor: activeIdx === activities.length - 1 ? 'default' : 'pointer', fontFamily: 'DM Sans, sans-serif' }}
             >
               Next →
             </button>
@@ -115,50 +115,48 @@ export default function WhatWeDo() {
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
-      <section ref={sectionRef} style={{ background: '#002a6e', height: sectionScrollHeight, position: 'relative' }}>
+      <section ref={sectionRef} style={{ background: '#f8f7ff', height: sectionScrollHeight, position: 'relative' }}>
         <div style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'hidden', display: 'flex' }}>
           {/* Left sticky column */}
           <div style={{ width: '38%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 48px 0 max(48px, calc((100vw - 1200px)/2 + 48px))', position: 'relative' }}>
             {/* Progress bar */}
-            <div style={{ position: 'absolute', left: 'max(24px, calc((100vw - 1200px)/2 + 24px))', top: '20%', bottom: '20%', width: '3px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px' }}>
+            <div style={{ position: 'absolute', left: 'max(24px, calc((100vw - 1200px)/2 + 24px))', top: '20%', bottom: '20%', width: '3px', background: 'rgba(116,19,220,0.12)', borderRadius: '2px' }}>
               <div style={{ width: '100%', background: '#7413dc', borderRadius: '2px', height: `${progressPercent}%`, transition: 'height 0.4s ease' }} />
             </div>
 
-            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#00a794', marginBottom: '32px' }}>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', marginBottom: '32px' }}>
               What we actually do
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '40px' }}>
               {activities.map((act, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '8px 0', cursor: 'default', transition: 'all 0.3s ease' }}>
-                  <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', fontWeight: 500, color: i === activeIdx ? '#7413dc' : 'rgba(255,255,255,0.2)', minWidth: '24px', transition: 'color 0.3s' }}>
+                  <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', fontWeight: 500, color: i === activeIdx ? '#7413dc' : 'rgba(26,26,46,0.25)', minWidth: '24px', transition: 'color 0.3s' }}>
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <span style={{
                     fontFamily: 'Outfit, sans-serif',
                     fontWeight: i === activeIdx ? 600 : 400,
                     fontSize: '22px',
-                    color: i === activeIdx ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.2)',
+                    color: i === activeIdx ? '#1a1a2e' : 'rgba(26,26,46,0.25)',
                     transition: 'all 0.3s ease',
                     flex: 1,
                   }}>
                     {act.title}
                   </span>
-                  <span style={{ color: '#00a794', opacity: i === activeIdx ? 1 : 0, transition: 'opacity 0.3s', fontFamily: 'DM Sans, sans-serif' }}>→</span>
+                  <span style={{ color: '#7413dc', opacity: i === activeIdx ? 1 : 0, transition: 'opacity 0.3s', fontFamily: 'DM Sans, sans-serif' }}>→</span>
                 </div>
               ))}
             </div>
 
             <div style={{
-              background: 'rgba(116,19,220,0.08)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '0.5px solid rgba(255,255,255,0.15)',
+              background: 'rgba(116,19,220,0.06)',
+              border: '1px solid rgba(116,19,220,0.15)',
               borderRadius: '16px',
               padding: '20px 24px',
               minHeight: '80px',
             }}>
-              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '15px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.75, margin: 0, transition: 'opacity 0.3s ease' }}>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '15px', color: 'rgba(26,26,46,0.65)', lineHeight: 1.75, margin: 0, transition: 'opacity 0.3s ease' }}>
                 {activities[activeIdx]?.description}
               </p>
             </div>
@@ -223,7 +221,7 @@ export default function WhatWeDo() {
                       position: 'absolute',
                       bottom: '14px',
                       left: '14px',
-                      background: 'rgba(0,57,130,0.65)',
+                      background: 'rgba(26,26,46,0.65)',
                       backdropFilter: 'blur(12px)',
                       WebkitBackdropFilter: 'blur(12px)',
                       border: '0.5px solid rgba(255,255,255,0.2)',
