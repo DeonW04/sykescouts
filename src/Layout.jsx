@@ -154,8 +154,14 @@ export default function Layout({ children, currentPageName }) {
   }, [user, isLeader, currentPageName, checkingAuth]);
 
   // These pages render their own FloatingNav and PublicFooter — skip Layout chrome entirely
+  // Still wrap in SectionProvider so pages using useSectionContext work correctly
   if (SELF_CONTAINED_PUBLIC_PAGES.includes(currentPageName)) {
-    return <>{children}</>;
+    return (
+      <SectionProvider>
+        <SectionTransitionWrapper />
+        {children}
+      </SectionProvider>
+    );
   }
 
   if (checkingAuth && protectedPages.includes(currentPageName)) {
