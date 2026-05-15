@@ -142,7 +142,7 @@ export default function IdeasBoard() {
   return (
     <div className="min-h-screen" style={{ background: '#f5f0e8' }}>
       <FloatingNav />
-      <div style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '28px 40px' }}>
+      <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
         <div className="max-w-full flex items-center justify-between gap-4 flex-wrap">
           <div>
             <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>

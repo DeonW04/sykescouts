@@ -37,6 +37,7 @@ import { useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import LoadingScreen from '@/components/LoadingScreen';
 import MobileDashboardDemo from './pages/MobileDashboardDemo';
+import PWAInstallBanner from '@/components/pwa/PWAInstallBanner';
 
 // Public-only pages that should never be shown in PWA mode
 const PUBLIC_PAGES = ['/', '/Home', '/About', '/Contact', '/Gallery', '/Join', '/Sections', '/Parents', '/Volunteer', '/SharedPage'];
@@ -69,17 +70,6 @@ const PWAGate = ({ children }) => {
       <div className="fixed inset-0 flex items-center justify-center bg-white">
         <div className="w-8 h-8 border-4 border-slate-200 border-t-[#7413dc] rounded-full animate-spin" />
       </div>
-    );
-  }
-
-  // --- Non-PWA mobile: show install gate only to signed-in parents ---
-  if (isMobile && !isPWA && isSignedIn && !isLeaderOrAdmin) {
-    return (
-      <PWAInstallGate
-        isIOS={isIOS}
-        canInstall={canInstall}
-        onInstall={triggerInstallPrompt}
-      />
     );
   }
 
@@ -174,6 +164,7 @@ const AuthenticatedApp = () => {
     <>
       {sessionKey && <LoadingScreen sessionKey={sessionKey} pageReady={pageReady} />}
       {appContent()}
+      <PWAInstallBanner />
     </>
   );
 };

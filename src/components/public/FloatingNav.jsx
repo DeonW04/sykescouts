@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import {
-  Menu, X, ChevronDown, Users, Calendar, Award, Mail, Settings,
+  Menu, X, ChevronDown, ChevronRight, Users, Calendar, Award, Mail, Settings,
   Image, ShieldAlert, CalendarDays, Lightbulb, Package, TrendingUp,
-  FileText, Landmark, BookOpen, LogOut, LayoutDashboard, UserCheck,
+  FileText, Landmark, BookOpen, LogOut, LayoutDashboard, UserCheck, Home,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import {
@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// Portal nav groups — each becomes a dropdown button in the strip
+// Portal nav groups
 const portalGroups = [
   {
     label: 'Members', icon: Users,
@@ -55,12 +55,8 @@ const portalGroups = [
   },
 ];
 
-const adminLink = { label: 'Admin Settings', page: 'AdminSettings', icon: Settings };
-
-// Stable corner radius
 const STRIP_RADIUS = '24px';
 
-// Pages where the portal strip should be open by default
 const PORTAL_PAGES = [
   '/LeaderDashboard', '/LeaderMembers', '/LeaderProgramme', '/LeaderEvents',
   '/LeaderAttendance', '/LeaderBadges', '/LeaderGallery', '/MeetingDetail',
@@ -71,31 +67,183 @@ const PORTAL_PAGES = [
   '/BadgeStockManagement', '/NightsAwayTracking', '/ConsentForms', '/ConsentFormBuilder',
   '/SectionAccounting', '/AdminSettings', '/ParentDashboard', '/MyChild',
   '/ParentProgramme', '/ParentEvents', '/ParentEventDetail', '/ParentBadges', '/ParentGoldAward',
-  '/AIProgrammePlanner', '/ParentPortal', '/IdeasBoard', '/RiskAssessments', '/RiskAssessmentDetail',
-  '/RiskAssessmentHistory', '/AwardBadges', '/BadgeStockManagement', '/ManageBadges', '/ManageStagedBadge',
-  '/EditBadgeStructure', '/Communications', '/WeeklyMessage', '/WeeklyMessageList', '/MonthlyNewsletter',
-  '/MonthlyNewsletterList', '/EventUpdate', '/EventUpdateList', '/SectionAccounting', '/PORHelper',
-  '/AdminSettings', '/ConsentForms', '/ConsentFormBuilder', '/NightsAwayTracking', '/JoinEnquiries',
-  '/ArchivedMembers', '/MeetingDetail', '/EventDetail', '/MemberDetail', '/BadgeDetail',
+  '/AIProgrammePlanner', '/ParentPortal', '/RiskAssessmentHistory',
+  '/ManageStagedBadge', '/EditBadgeStructure', '/PORHelper',
   '/StagedBadgeDetail', '/GoldAwardDetail', '/HikesAwayBadgeDetail', '/NightsAwayBadgeDetail',
   '/JoiningInBadgeDetail',
 ];
 
+// ── Mobile Sidebar Drawer ──────────────────────────────────────────────────────
+function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, portalUrl }) {
+  const location = useLocation();
+  const [expandedGroup, setExpandedGroup] = useState(null);
+
+  const navLinks = [
+    { label: 'Home', to: '/' },
+    { label: 'About', to: createPageUrl('About') },
+    { label: 'Gallery', to: createPageUrl('Gallery') },
+    { label: 'Join', to: createPageUrl('Join') },
+    { label: 'Volunteer', to: createPageUrl('Volunteer') },
+    { label: 'Contact', to: createPageUrl('Contact') },
+  ];
+
+  const isActive = (to) => to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
+
+  return (
+    <>
+      {/* Overlay */}
+      {open && (
+        <div
+          onClick={onClose}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1050, backdropFilter: 'blur(2px)' }}
+        />
+      )}
+
+      {/* Drawer */}
+      <div style={{
+        position: 'fixed', top: 0, left: 0, bottom: 0, width: '280px',
+        background: '#1a1a2e', zIndex: 1060,
+        transform: open ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
+        display: 'flex', flexDirection: 'column',
+        overflowY: 'auto',
+      }}>
+        {/* Drawer header */}
+        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 3px' }}>40th Rochdale Scouts</p>
+            <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '16px', color: '#fff', margin: 0 }}>{user?.full_name?.split(' ')[0] || 'Menu'}</p>
+          </div>
+          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: '#fff', cursor: 'pointer', padding: '8px', borderRadius: '10px' }}>
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Nav content */}
+        <div style={{ flex: 1, padding: '12px 10px', overflowY: 'auto' }}>
+
+          {/* Public links */}
+          {navLinks.map(link => (
+            <Link key={link.label} to={link.to} onClick={onClose} style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
+              color: isActive(link.to) ? '#fff' : 'rgba(255,255,255,0.6)',
+              textDecoration: 'none', padding: '10px 12px', borderRadius: '10px',
+              background: isActive(link.to) ? 'rgba(116,19,220,0.4)' : 'transparent',
+              marginBottom: '2px',
+            }}>{link.label}</Link>
+          ))}
+
+          {/* Leader portal section */}
+          {isLeader && (
+            <>
+              <div style={{ margin: '14px 0 8px', padding: '0 12px' }}>
+                <p style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>Leader Portal</p>
+              </div>
+
+              {/* Dashboard */}
+              <Link to={createPageUrl('LeaderDashboard')} onClick={onClose} style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '14px',
+                color: '#fff', textDecoration: 'none', padding: '10px 12px', borderRadius: '10px',
+                background: 'rgba(116,19,220,0.3)', marginBottom: '2px',
+              }}><LayoutDashboard size={15} /> Dashboard</Link>
+
+              {/* Groups */}
+              {portalGroups.map(group => (
+                <div key={group.label}>
+                  <button
+                    onClick={() => setExpandedGroup(expandedGroup === group.label ? null : group.label)}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '10px 12px', borderRadius: '10px', background: 'transparent', border: 'none',
+                      cursor: 'pointer', marginBottom: '2px', color: 'rgba(255,255,255,0.65)',
+                      fontFamily: 'DM Sans, sans-serif', fontSize: '14px', fontWeight: 500,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <group.icon size={15} /> {group.label}
+                    </div>
+                    <ChevronRight size={13} style={{ transform: expandedGroup === group.label ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', color: 'rgba(255,255,255,0.3)' }} />
+                  </button>
+                  {expandedGroup === group.label && (
+                    <div style={{ paddingLeft: '12px', marginBottom: '4px' }}>
+                      {group.links.map(({ label, page, icon: Icon }) => (
+                        <Link key={page} to={createPageUrl(page)} onClick={onClose} style={{
+                          display: 'flex', alignItems: 'center', gap: '8px',
+                          fontFamily: 'DM Sans, sans-serif', fontSize: '13px', fontWeight: 500,
+                          color: 'rgba(255,255,255,0.55)', textDecoration: 'none',
+                          padding: '8px 12px', borderRadius: '8px', marginBottom: '1px',
+                        }}>
+                          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+                          {label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {isAdmin && (
+                <Link to={createPageUrl('AdminSettings')} onClick={onClose} style={{
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
+                  color: 'rgba(255,255,255,0.65)', textDecoration: 'none', padding: '10px 12px', borderRadius: '10px',
+                  marginBottom: '2px',
+                }}><Settings size={15} /> Admin Settings</Link>
+              )}
+            </>
+          )}
+
+          {/* Parent portal */}
+          {!isLeader && portalLabel && (
+            <Link to={portalUrl} onClick={onClose} style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '14px',
+              color: '#fff', textDecoration: 'none', padding: '10px 12px', borderRadius: '10px',
+              background: 'rgba(116,19,220,0.3)', marginTop: '14px', marginBottom: '2px',
+            }}><LayoutDashboard size={15} /> {portalLabel}</Link>
+          )}
+
+          {!user && (
+            <button onClick={() => { base44.auth.redirectToLogin(); onClose(); }} style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+              fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
+              color: '#fff', background: '#7413dc', border: 'none', cursor: 'pointer',
+              padding: '10px 12px', borderRadius: '10px', marginTop: '14px',
+            }}>Sign In</button>
+          )}
+        </div>
+
+        {/* Footer */}
+        {user && (
+          <div style={{ padding: '10px', borderTop: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
+            <button onClick={() => base44.auth.logout()} style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+              fontFamily: 'DM Sans, sans-serif', fontSize: '13px', fontWeight: 500,
+              color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none',
+              cursor: 'pointer', padding: '10px 12px', borderRadius: '10px',
+            }}><LogOut size={14} /> Sign out</button>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+// ── Main FloatingNav ───────────────────────────────────────────────────────────
 export default function FloatingNav() {
   const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [isLeader, setIsLeader] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [portalLabel, setPortalLabel] = useState(null);
   const [portalUrl, setPortalUrl] = useState(null);
+  const [portalOpen, setPortalOpen] = useState(false);
   const location = useLocation();
 
-  // Auto-open the portal strip on leader/parent pages
   const isPortalPage = PORTAL_PAGES.some(p => location.pathname === p || location.pathname.startsWith(p + '?'));
-
-  // portalOpen controls manual toggle; strip visibility also uses isLeader
-  const [portalOpen, setPortalOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -128,8 +276,7 @@ export default function FloatingNav() {
   }, []);
 
   useEffect(() => {
-    setMenuOpen(false);
-    // Sync strip open state with page type on navigation
+    setMobileDrawerOpen(false);
     setPortalOpen(isPortalPage);
   }, [location.pathname]);
 
@@ -167,21 +314,31 @@ export default function FloatingNav() {
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');`}</style>
 
-      {/* ── Outer wrapper — stable shape, clips everything inside ── */}
+      <MobileSidebar
+        open={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        isLeader={isLeader}
+        isAdmin={isAdmin}
+        user={user}
+        portalLabel={portalLabel}
+        portalUrl={portalUrl}
+      />
+
+      {/* ── Outer wrapper ── */}
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
         margin: '12px 24px',
         borderRadius: STRIP_RADIUS,
         overflow: 'hidden',
         boxShadow: scrolled
-          ? '0 0 0 1px rgba(116,19,220,0.2), 0 8px 32px rgba(255, 255, 255, 0.97)'
-          : '0 2px 16px rgba(255, 255, 255, 0.97)',
+          ? '0 0 0 1px rgba(116,19,220,0.2), 0 8px 32px rgba(0,0,0,0.1)'
+          : '0 2px 16px rgba(0,0,0,0.08)',
         border: '0.5px solid rgba(116,19,220,0.18)',
         transition: 'box-shadow 0.3s ease',
         background: 'rgba(255,255,255,0.97)',
       }}>
 
-        {/* ── Pill nav row — solid fill, no border-radius animation ── */}
+        {/* ── Pill nav row ── */}
         <div style={{
           background: scrolled ? 'rgba(255,255,255,0.99)' : 'rgba(255,255,255,0.92)',
           backdropFilter: 'blur(24px)',
@@ -190,7 +347,16 @@ export default function FloatingNav() {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '10px 20px',
         }}>
-          {/* Logo */}
+          {/* Mobile: hamburger left */}
+          <button
+            className="md:hidden"
+            onClick={() => setMobileDrawerOpen(true)}
+            style={{ background: 'none', border: 'none', color: '#1a1a2e', cursor: 'pointer', padding: '4px', marginRight: '8px' }}
+          >
+            <Menu size={22} />
+          </button>
+
+          {/* Logo — centred on mobile, left on desktop */}
           <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
             <img
               src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png"
@@ -255,19 +421,13 @@ export default function FloatingNav() {
             )}
           </div>
 
-          {/* Mobile hamburger */}
-          <button
-            className="md:hidden"
-            onClick={() => setMenuOpen(!menuOpen)}
-            style={{ background: 'none', border: 'none', color: '#1a1a2e', cursor: 'pointer', padding: '4px' }}
-          >
-            {menuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* Mobile right — logo placeholder for centering balance (empty) */}
+          <div className="md:hidden" style={{ width: '30px' }} />
         </div>
 
         {/* ── Expandable portal strip (desktop leaders only) ── */}
         {isLeader && (
-          <div style={{
+          <div className="hidden md:block" style={{
             overflow: 'hidden',
             maxHeight: (isPortalPage || portalOpen) ? '56px' : '0',
             transition: isPortalPage ? 'none' : 'max-height 0.4s cubic-bezier(0.4,0,0.2,1)',
@@ -279,7 +439,6 @@ export default function FloatingNav() {
               display: 'flex', alignItems: 'center',
               background: 'rgba(116,19,220,0.025)',
             }}>
-              {/* Dashboard — pinned left */}
               <Link
                 to={createPageUrl('LeaderDashboard')}
                 style={{
@@ -295,7 +454,6 @@ export default function FloatingNav() {
 
               <div style={{ width: '1px', height: '18px', background: 'rgba(116,19,220,0.15)', flexShrink: 0, marginRight: '8px' }} />
 
-              {/* Centred dropdown group buttons */}
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
                 {portalGroups.map((group) => (
                   <DropdownMenu key={group.label}>
@@ -325,15 +483,11 @@ export default function FloatingNav() {
 
               <div style={{ width: '1px', height: '18px', background: 'rgba(116,19,220,0.15)', flexShrink: 0, marginLeft: '8px', marginRight: '8px' }} />
 
-              {/* Right side: Admin Settings (if admin) + Sign out */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
                 {isAdmin && (
                   <Link
                     to={createPageUrl('AdminSettings')}
-                    style={{
-                      ...stripBtnStyle, textDecoration: 'none',
-                      color: 'rgba(26,26,46,0.65)',
-                    }}
+                    style={{ ...stripBtnStyle, textDecoration: 'none', color: 'rgba(26,26,46,0.65)' }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.07)'; e.currentTarget.style.color = '#7413dc'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'rgba(26,26,46,0.65)'; }}
                   >
@@ -360,94 +514,15 @@ export default function FloatingNav() {
             </div>
           </div>
         )}
-
-        {/* ── Mobile drawer ── */}
-        {menuOpen && (
-          <div style={{
-            background: 'rgba(255,255,255,0.99)',
-            borderTop: '0.5px solid rgba(116,19,220,0.1)',
-            padding: '16px 20px 20px',
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {navLinks.map(link => (
-                <Link key={link.label} to={link.to} style={{
-                  fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '16px',
-                  color: isActive(link.to) ? '#7413dc' : 'rgba(26,26,46,0.75)',
-                  textDecoration: 'none', padding: '10px 14px', borderRadius: '12px',
-                  background: isActive(link.to) ? 'rgba(116,19,220,0.08)' : 'transparent',
-                }}>{link.label}</Link>
-              ))}
-
-              {isLeader && (
-                <div style={{ marginTop: '12px', borderTop: '0.5px solid rgba(116,19,220,0.1)', paddingTop: '12px' }}>
-                  <p style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(26,26,46,0.35)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px', padding: '0 4px' }}>Leader Portal</p>
-                  <Link to={createPageUrl('LeaderDashboard')} style={{
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '15px',
-                    color: '#7413dc', textDecoration: 'none',
-                    padding: '10px 14px', borderRadius: '12px', background: 'rgba(116,19,220,0.08)',
-                  }}><LayoutDashboard size={16} /> Dashboard</Link>
-                  {portalGroups.flatMap(g => g.links).map(({ label, page, icon: Icon }) => (
-                    <Link key={page} to={createPageUrl(page)} style={{
-                      display: 'flex', alignItems: 'center', gap: '8px',
-                      fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '15px',
-                      color: 'rgba(26,26,46,0.75)', textDecoration: 'none',
-                      padding: '10px 14px', borderRadius: '12px',
-                    }}><Icon size={15} /> {label}</Link>
-                  ))}
-                  {isAdmin && (
-                    <Link to={createPageUrl('AdminSettings')} style={{
-                      display: 'flex', alignItems: 'center', gap: '8px',
-                      fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '15px',
-                      color: 'rgba(26,26,46,0.75)', textDecoration: 'none',
-                      padding: '10px 14px', borderRadius: '12px',
-                    }}><Settings size={15} /> Admin Settings</Link>
-                  )}
-                  <button onClick={() => base44.auth.logout()} style={{
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '15px',
-                    color: 'rgba(26,26,46,0.45)', background: 'none', border: 'none',
-                    cursor: 'pointer', padding: '10px 14px', borderRadius: '12px', width: '100%', marginTop: '4px',
-                  }}><LogOut size={15} /> Sign out</button>
-                </div>
-              )}
-
-              {!isLeader && (
-                <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
-                  {portalLabel ? (
-                    <Link to={portalUrl} style={{
-                      flex: 1, textAlign: 'center', fontFamily: 'DM Sans, sans-serif',
-                      fontWeight: 500, fontSize: '14px', color: '#fff',
-                      textDecoration: 'none', background: '#7413dc',
-                      borderRadius: '25px', padding: '10px 18px',
-                    }}>{portalLabel} →</Link>
-                  ) : (
-                    <>
-                      <Link to={createPageUrl('Volunteer')} style={{
-                        flex: 1, textAlign: 'center', fontFamily: 'DM Sans, sans-serif',
-                        fontWeight: 500, fontSize: '14px', color: 'rgba(26,26,46,0.8)',
-                        textDecoration: 'none', border: '0.5px solid rgba(26,26,46,0.25)',
-                        borderRadius: '25px', padding: '10px 18px', background: 'transparent',
-                      }}>Volunteer</Link>
-                      <Link to={createPageUrl('Join')} style={{
-                        flex: 1, textAlign: 'center', fontFamily: 'DM Sans, sans-serif',
-                        fontWeight: 500, fontSize: '14px', color: '#fff',
-                        textDecoration: 'none', background: '#7413dc',
-                        borderRadius: '25px', padding: '10px 18px',
-                      }}>Join Us →</Link>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Spacer so page content clears the nav — taller when portal strip is visible */}
+      {/* Spacer */}
       <div style={{
-        height: isPortalPage ? '70px' : (isLeader && portalOpen ? '70px' : '76px'),
-      }} />
+        height: isPortalPage ? '136px' : (isLeader && portalOpen ? '136px' : '76px'),
+        display: 'none',
+      }} className="md:block" />
+      {/* Mobile spacer — nav is only the pill bar */}
+      <div style={{ height: '76px' }} className="md:hidden" />
     </>
   );
 }

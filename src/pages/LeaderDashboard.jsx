@@ -535,10 +535,9 @@ function LeaderDashboardInner() {
 
       {/* ── Hero header — light ── */}
       <div style={{
-        background: 'rgba(255,255,255,0.8)',
-        backdropFilter: 'blur(16px)',
+        background: '#ffffff',
         borderBottom: '1px solid rgba(116,19,220,0.1)',
-        padding: '80px 40px 28px',
+        padding: '28px 20px 24px',
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {/* Top row: greeting + section selector */}
@@ -559,9 +558,9 @@ function LeaderDashboardInner() {
       </div>
 
       {/* ── Quick Actions ── */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 40px 0' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 20px 0' }}>
         <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,26,46,0.35)', marginBottom: '14px' }}>Quick access</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '12px' }}>
+        <div className="grid grid-cols-3 md:grid-cols-6" style={{ gap: '10px' }}>
           {actions.map(action => (
             action.dropdown ? (
               <DropdownMenu key={action.label}>
@@ -624,10 +623,10 @@ function LeaderDashboardInner() {
       </div>
 
       {/* ── Dashboard content ── */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 40px 48px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '16px 20px 48px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <BadgesDue sections={sections} selectedSection={selectedSection} />
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '16px' }}>
           <UpcomingMeetings sections={sections} selectedSection={selectedSection} />
           <UpcomingEvents sections={sections} selectedSection={selectedSection} />
         </div>
