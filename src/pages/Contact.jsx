@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapPin, Mail, Clock, Send, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import SEO from '../components/SEO';
 import FloatingNav from '../components/public/FloatingNav';
 import PublicFooter from '../components/public/PublicFooter';
+import { base44 } from '@/api/base44Client';
 
 const inputStyle = {
   width: '100%',
@@ -36,6 +37,13 @@ export default function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [heroImage, setHeroImage] = useState(null);
+
+  useEffect(() => {
+    base44.entities.WebsiteImage.filter({ page: 'contact' }).then(imgs => {
+      if (imgs[0]) setHeroImage(imgs[0].image_url);
+    }).catch(() => {});
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,16 +70,32 @@ export default function Contact() {
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap');
         input::placeholder, textarea::placeholder { color: rgba(26,26,46,0.35); }
         input:focus, textarea:focus { border-color: rgba(116,19,220,0.5) !important; box-shadow: 0 0 0 2px rgba(116,19,220,0.15); }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .contact-hero-eyebrow { animation: fadeUp 0.6s ease forwards; opacity: 0; }
+        .contact-hero-h1 { animation: fadeUp 0.6s ease 0.12s forwards; opacity: 0; }
+        .contact-hero-sub { animation: fadeUp 0.6s ease 0.24s forwards; opacity: 0; }
       `}</style>
       <SEO title="Contact Us | 40th Rochdale (Syke) Scouts" description="Get in touch with 40th Rochdale (Syke) Scouts." path="/Contact" />
       <FloatingNav />
 
-      {/* Hero */}
-      <section style={{ background: '#f8f7ff', padding: '80px 32px 60px', borderBottom: '1px solid rgba(116,19,220,0.1)' }}>
-        <div style={{ maxWidth: '800px' }}>
-          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', marginBottom: '12px' }}>Get in touch</p>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(32px, 5vw, 56px)', color: '#1a1a2e', margin: '0 0 16px' }}>Say hello.</h1>
-          <p style={{ fontSize: '17px', color: 'rgba(26,26,46,0.65)', lineHeight: 1.75, margin: 0 }}>Have a question? We'd love to hear from you.</p>
+      {/* Full-bleed hero */}
+      <section style={{ position: 'relative', height: 'clamp(320px, 45vh, 460px)', overflow: 'hidden', display: 'flex', alignItems: 'center', marginTop: '-72px' }}>
+        {heroImage ? (
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #1a1a2e 0%, #2d1b69 100%)' }} />
+        )}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.75) 100%)' }} />
+        <div style={{ position: 'relative', zIndex: 1, padding: '80px 40px 40px', maxWidth: '900px', margin: '0 auto', width: '100%' }}>
+          <p className="contact-hero-eyebrow" style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.75)', marginBottom: '14px' }}>
+            Get in touch
+          </p>
+          <h1 className="contact-hero-h1" style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(36px, 5vw, 60px)', color: '#fff', margin: '0 0 16px', lineHeight: 1.05 }}>
+            Say hello.
+          </h1>
+          <p className="contact-hero-sub" style={{ fontSize: '18px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.75, maxWidth: '500px', margin: 0 }}>
+            Have a question? We'd love to hear from you.
+          </p>
         </div>
       </section>
 
@@ -82,14 +106,14 @@ export default function Contact() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {contactInfo.map(info => (
               <div key={info.title} style={{ ...glassCard, padding: '24px' }}>
-                <div style={{ width: '40px', height: '40px', background: 'rgba(116,19,220,0.3)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+                <div style={{ width: '40px', height: '40px', background: 'rgba(116,19,220,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
                   <info.icon size={20} color="#7413dc" />
                 </div>
                 <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '17px', color: '#1a1a2e', marginBottom: '8px' }}>{info.title}</h3>
                 {info.details.map((d, i) => <p key={i} style={{ fontSize: '13px', color: 'rgba(26,26,46,0.6)', margin: '2px 0' }}>{d}</p>)}
               </div>
             ))}
-            {/* Safeguarding note — uses yellow per Scouting standard */}
+            {/* Safeguarding note */}
             <div style={{ background: '#ffe627', borderRadius: '16px', padding: '20px 24px' }}>
               <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '15px', color: '#1a1a00', marginBottom: '8px' }}>Safeguarding</h3>
               <p style={{ fontSize: '13px', color: '#1a1a00', lineHeight: 1.6, margin: 0 }}>For safeguarding concerns, please speak directly to a leader or follow our safeguarding procedures. This takes priority over all other contact methods.</p>

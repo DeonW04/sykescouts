@@ -14,11 +14,15 @@ const glassCard = {
 };
 
 export default function About() {
-  const [aboutImage, setAboutImage] = React.useState(null);
+  const [heroImage, setHeroImage] = useState(null);
+  const [aboutImage, setAboutImage] = useState(null);
 
   useEffect(() => {
     base44.entities.WebsiteImage.filter({ page: 'about' }).then(imgs => {
-      if (imgs[0]) setAboutImage(imgs[0].image_url);
+      const hero = imgs.find(i => i.label === 'hero');
+      const main = imgs.find(i => i.label === 'main' || !i.label);
+      if (hero) setHeroImage(hero.image_url);
+      if (main) setAboutImage(main.image_url);
     }).catch(() => {});
   }, []);
 
@@ -31,23 +35,36 @@ export default function About() {
 
   return (
     <div style={{ background: '#ffffff', minHeight: '100vh', fontFamily: 'DM Sans, sans-serif' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap');`}</style>
-      <SEO
-        title="About Us | 40th Rochdale (Syke) Scouts"
-        description="Learn about 40th Rochdale (Syke) Scouts."
-        path="/About"
-      />
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap');
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .about-hero-eyebrow { animation: fadeUp 0.6s ease forwards; opacity: 0; }
+        .about-hero-h1 { animation: fadeUp 0.6s ease 0.12s forwards; opacity: 0; }
+        .about-hero-sub { animation: fadeUp 0.6s ease 0.24s forwards; opacity: 0; }
+      `}</style>
+      <SEO title="About Us | 40th Rochdale (Syke) Scouts" description="Learn about 40th Rochdale (Syke) Scouts." path="/About" />
       <FloatingNav />
 
-      {/* Hero */}
-      <section style={{ background: '#f8f7ff', padding: '80px 32px 60px', borderBottom: '1px solid rgba(116,19,220,0.1)' }}>
-        <div style={{ maxWidth: '800px' }}>
-          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', marginBottom: '12px' }}>About us</p>
-          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(32px, 5vw, 56px)', color: '#1a1a2e', margin: '0 0 16px' }}>
+      {/* Full-bleed hero — matches home page style */}
+      <section style={{ position: 'relative', height: 'clamp(360px, 50vh, 520px)', overflow: 'hidden', display: 'flex', alignItems: 'center', marginTop: '-72px' }}>
+        {/* Background */}
+        {heroImage ? (
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #1a1a2e 0%, #2d1b69 100%)' }} />
+        )}
+        {/* Dark overlay */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.75) 100%)' }} />
+        {/* Content */}
+        <div style={{ position: 'relative', zIndex: 1, padding: '80px 40px 40px', maxWidth: '900px', margin: '0 auto', width: '100%' }}>
+          <p className="about-hero-eyebrow" style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.75)', marginBottom: '14px' }}>
+            About us
+          </p>
+          <h1 className="about-hero-h1" style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(36px, 5vw, 60px)', color: '#fff', margin: '0 0 16px', lineHeight: 1.05 }}>
             Who we are.
           </h1>
-          <p style={{ fontSize: '17px', color: 'rgba(26,26,46,0.65)', lineHeight: 1.75, maxWidth: '640px', margin: 0 }}>
-            A dedicated volunteer-run Scout Group helping young people develop skills for life through adventure and friendship.
+          <p className="about-hero-sub" style={{ fontSize: '18px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.75, maxWidth: '600px', margin: 0 }}>
+            A volunteer-run Scout Group helping young people develop skills for life through adventure and friendship.
           </p>
         </div>
       </section>
@@ -74,9 +91,9 @@ export default function About() {
               </div>
             ) : (
               <div style={{ ...glassCard, aspectRatio: '4/3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                 <div style={{ textAlign: 'center' }}>
-                   <Users size={48} color="rgba(116,19,220,0.2)" />
-                   <p style={{ color: 'rgba(26,26,46,0.35)', marginTop: '12px', fontSize: '13px' }}>Group photo — upload in Admin Settings</p>
+                <div style={{ textAlign: 'center' }}>
+                  <Users size={48} color="rgba(116,19,220,0.2)" />
+                  <p style={{ color: 'rgba(26,26,46,0.35)', marginTop: '12px', fontSize: '13px' }}>Group photo — upload in Admin Settings</p>
                 </div>
               </div>
             )}
@@ -93,7 +110,7 @@ export default function About() {
             { icon: Clock, title: 'Meeting Times', details: ['Beavers: Tuesday 6:15–7:30pm', 'Cubs: Thursday 6:15–7:30pm', 'Scouts: Thursday 7:45–9:15pm'] },
           ].map(info => (
             <div key={info.title} style={{ ...glassCard, padding: '28px' }}>
-              <div style={{ width: '44px', height: '44px', background: 'rgba(116,19,220,0.3)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+              <div style={{ width: '44px', height: '44px', background: 'rgba(116,19,220,0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
                 <info.icon size={22} color="#7413dc" />
               </div>
               <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '18px', color: '#1a1a2e', marginBottom: '10px' }}>{info.title}</h3>
@@ -116,7 +133,7 @@ export default function About() {
       <section style={{ padding: '0 32px 80px', maxWidth: '1200px', margin: '0 auto' }}>
         <h2 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: 'clamp(24px, 3vw, 38px)', color: '#1a1a2e', textAlign: 'center', marginBottom: '40px' }}>Our Scout Values</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
-          {values.map((v, i) => (
+          {values.map((v) => (
             <div key={v.title} style={{ ...glassCard, padding: '32px 24px', textAlign: 'center' }}>
               <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#7413dc', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                 <v.icon size={26} color="#fff" />

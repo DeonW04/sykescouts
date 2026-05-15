@@ -291,7 +291,7 @@ export default function PublicWebsiteSettings() {
   // Filtered sets
   const heroImages = allImages.filter(i => i.page === 'hero').sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const activityImages = allImages.filter(i => i.page === 'activities').sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  const getFixed = (page, label) => allImages.find(i => i.page === page && i.label === label);
+  const getFixed = (page, label) => allImages.find(i => i.page === page && (label ? i.label === label : true));
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['website-images-public'] });
@@ -371,7 +371,9 @@ export default function PublicWebsiteSettings() {
       const existing = getFixed(page, label);
       if (existing) await base44.entities.WebsiteImage.delete(existing.id);
       const file_url = await uploadFile(file);
-      await base44.entities.WebsiteImage.create({ page, label, image_url: file_url, order: 0 });
+      const record = { page, image_url: file_url, order: 0 };
+      if (label) record.label = label;
+      await base44.entities.WebsiteImage.create(record);
       invalidate();
       toast.success('Image updated');
     } catch (e) { toast.error('Upload failed'); }
@@ -453,13 +455,13 @@ export default function PublicWebsiteSettings() {
             Join & Volunteer CTA — Background Images
           </CardTitle>
           <p className="text-sm text-gray-500">
-            Background photos for the split Join/Volunteer panel near the bottom of the home page. A coloured overlay is applied automatically — any photo works regardless of colour scheme.
+            Background photos for the split Join/Volunteer panel near the bottom of the home page.
           </p>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FixedImageSlot
             label="Join CTA — background image"
-            hint="Left half, purple tint overlay. Recommended: a group photo showing community."
+            hint="Left half, purple tint overlay."
             image={getFixed('cta', 'join')}
             onUpload={(f) => handleFixedUpload('cta', 'join', f)}
             onDelete={handleFixedDelete}
@@ -468,12 +470,54 @@ export default function PublicWebsiteSettings() {
           />
           <FixedImageSlot
             label="Volunteer CTA — background image"
-            hint="Right half, teal tint overlay. Recommended: a leader and young person working together."
+            hint="Right half, teal tint overlay."
             image={getFixed('cta', 'volunteer')}
             onUpload={(f) => handleFixedUpload('cta', 'volunteer', f)}
             onDelete={handleFixedDelete}
             uploading={uploading}
             uploadId="cta-volunteer-upload"
+          />
+        </CardContent>
+      </Card>
+
+      {/* Section 5 — Info pages */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-purple-900">
+            <Image className="w-5 h-5" />
+            About & Contact Pages — Hero Images
+          </CardTitle>
+          <p className="text-sm text-gray-500">
+            Full-bleed hero banner photos for the About and Contact pages. A dark overlay is applied automatically so the white text stays readable.
+          </p>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FixedImageSlot
+            label="About page — hero banner"
+            hint="Shown full-width behind 'Who we are.' headline."
+            image={getFixed('about', 'hero')}
+            onUpload={(f) => handleFixedUpload('about', 'hero', f)}
+            onDelete={handleFixedDelete}
+            uploading={uploading}
+            uploadId="about-hero-upload"
+          />
+          <FixedImageSlot
+            label="About page — group photo"
+            hint="Shown in the two-column welcome section alongside the text."
+            image={getFixed('about', 'main')}
+            onUpload={(f) => handleFixedUpload('about', 'main', f)}
+            onDelete={handleFixedDelete}
+            uploading={uploading}
+            uploadId="about-main-upload"
+          />
+          <FixedImageSlot
+            label="Contact page — hero banner"
+            hint="Shown full-width behind 'Say hello.' headline."
+            image={getFixed('contact', null)}
+            onUpload={(f) => handleFixedUpload('contact', null, f)}
+            onDelete={handleFixedDelete}
+            uploading={uploading}
+            uploadId="contact-hero-upload"
           />
         </CardContent>
       </Card>
