@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import { useSectionContext } from '../components/leader/SectionContext';
 import AIPlannerModal from '../components/aiPlanner/AIPlannerModal';
 import ProgrammeSyncModal from '../components/osm/ProgrammeSyncModal';
@@ -169,6 +170,7 @@ export default function LeaderProgramme() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <FloatingNav />
+      <NavBarSpacer />
       <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 flex-wrap">
           <div>

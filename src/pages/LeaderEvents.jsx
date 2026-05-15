@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import NewEventDialog from '../components/events/NewEventDialog';
 import { motion } from 'framer-motion';
 import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import { useSectionContext } from '../components/leader/SectionContext';
 
 export default function LeaderEvents() {
@@ -54,6 +55,7 @@ export default function LeaderEvents() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       <FloatingNav />
+      <NavBarSpacer />
       <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
           <div>

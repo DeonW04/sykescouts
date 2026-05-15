@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { format, isThisWeek, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import { SectionProvider } from '../components/leader/SectionContext';
 import SectionTransitionOverlay from '../components/leader/SectionTransitionOverlay';
 
@@ -532,6 +533,7 @@ function LeaderDashboardInner() {
       )}
 
       <FloatingNav />
+      <NavBarSpacer />
 
       {/* ── Hero header — light ── */}
       <div style={{
