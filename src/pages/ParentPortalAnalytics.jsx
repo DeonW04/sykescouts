@@ -166,27 +166,23 @@ export default function ParentPortalAnalytics() {
       <FloatingNav />
       <NavBarSpacer />
 
-      <div className="bg-gradient-to-r from-[#7413dc] to-[#004851] text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <Activity className="w-8 h-8" />
-              <div>
-                <h1 className="text-3xl font-bold">Parent Portal Analytics</h1>
-                <p className="text-white/70 mt-1">Track how parents are using the app</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {[7, 30, 90].map(d => (
-                <button
-                  key={d}
-                  onClick={() => setDateRange(d)}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${dateRange === d ? 'bg-white text-[#7413dc]' : 'bg-white/20 text-white hover:bg-white/30'}`}
-                >
-                  {d} days
-                </button>
-              ))}
-            </div>
+      <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Admin</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Parent Portal Analytics</h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Track how parents are using the app</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {[7, 30, 90].map(d => (
+              <button
+                key={d}
+                onClick={() => setDateRange(d)}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${dateRange === d ? 'bg-[#7413dc] text-white border-[#7413dc]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#7413dc] hover:text-[#7413dc]'}`}
+              >
+                {d} days
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -195,7 +191,7 @@ export default function ParentPortalAnalytics() {
 
         {/* Summary stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard title="Registered Parents" value={parentUsers.length} subtitle="with portal accounts" icon={Users} color="#004851" />
+          <StatCard title="Registered Parents" value={parentUsers.length} subtitle="with portal accounts" icon={Users} color="#7413dc" />
           <StatCard title="Active (last period)" value={activeParents} subtitle={`of ${parentUsers.length} parents`} icon={TrendingUp} color="#7413dc" />
           <StatCard title="Total Page Views" value={totalPageViews.toLocaleString()} subtitle={`last ${dateRange} days`} icon={Eye} color="#3b82f6" />
           <StatCard
@@ -210,7 +206,7 @@ export default function ParentPortalAnalytics() {
         {/* Platform & daily activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Platform breakdown */}
-          <Card className="border-0 shadow-sm">
+          <Card className="border border-gray-100 shadow-sm rounded-2xl">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <Smartphone className="w-4 h-4 text-[#7413dc]" />
@@ -249,7 +245,7 @@ export default function ParentPortalAnalytics() {
           </Card>
 
           {/* Daily activity */}
-          <Card className="lg:col-span-2 border-0 shadow-sm">
+          <Card className="lg:col-span-2 border border-gray-100 shadow-sm rounded-2xl">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-[#7413dc]" />
@@ -277,7 +273,7 @@ export default function ParentPortalAnalytics() {
         </div>
 
         {/* Top pages */}
-        <Card className="border-0 shadow-sm">
+        <Card className="border border-gray-100 shadow-sm rounded-2xl">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Eye className="w-4 h-4 text-[#7413dc]" />
@@ -302,7 +298,7 @@ export default function ParentPortalAnalytics() {
         </Card>
 
         {/* Per-parent table */}
-        <Card className="border-0 shadow-sm">
+        <Card className="border border-gray-100 shadow-sm rounded-2xl overflow-hidden">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Users className="w-4 h-4 text-[#7413dc]" />
@@ -454,7 +450,7 @@ export default function ParentPortalAnalytics() {
 
         {/* Never logged in */}
         {inactiveParents.length > 0 && (
-          <Card className="border-0 shadow-sm border-l-4 border-l-red-300">
+          <Card className="border border-gray-100 shadow-sm rounded-2xl border-l-4 border-l-red-300">
             <CardHeader className="pb-2">
               <CardTitle className="text-base text-red-700">
                 ⚠️ {inactiveParents.length} parent{inactiveParents.length > 1 ? 's' : ''} haven't used the portal in the last {dateRange} days

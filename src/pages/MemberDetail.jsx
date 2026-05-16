@@ -225,7 +225,7 @@ export default function MemberDetail() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-[#004851] border-t-transparent rounded-full mx-auto mb-4" />
+          <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full mx-auto mb-4" />
           <p className="text-gray-600">Loading member details...</p>
         </div>
       </div>
@@ -250,11 +250,11 @@ export default function MemberDetail() {
       <FloatingNav />
       <NavBarSpacer />
       {/* Header */}
-      <div className="bg-[#004851] text-white py-8">
+      <div className="bg-[#7413dc] text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-start gap-4">
             <div className="flex items-center gap-4 md:gap-6 flex-1">
-              <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full flex items-center justify-center text-[#004851] font-bold text-2xl md:text-3xl flex-shrink-0">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full flex items-center justify-center text-[#7413dc] font-bold text-2xl md:text-3xl flex-shrink-0">
                 {member.full_name.charAt(0)}
               </div>
               <div className="min-w-0 flex-1">
@@ -319,7 +319,7 @@ export default function MemberDetail() {
               )}
               <Button
                 onClick={() => setShowEditDialog(true)}
-                className="bg-white text-[#004851] hover:bg-gray-100 flex-1 md:flex-none"
+                className="bg-white text-[#7413dc] hover:bg-gray-100 flex-1 md:flex-none"
               >
                 <Edit className="w-4 h-4 md:mr-2" />
                 <span className="hidden sm:inline">Edit</span>
@@ -347,7 +347,7 @@ export default function MemberDetail() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-white border grid grid-cols-7 md:inline-flex">
+          <TabsList className="bg-white border border-gray-200 rounded-xl shadow-sm grid grid-cols-7 md:inline-flex">
             <TabsTrigger value="overview" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
               <User className="w-4 h-4 flex-shrink-0" />
               <span className="hidden md:inline text-sm">Overview</span>
@@ -381,7 +381,7 @@ export default function MemberDetail() {
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
-              <Card>
+              <Card className="rounded-2xl border-gray-100 shadow-sm">
                 <CardHeader>
                   <CardTitle>Personal Information</CardTitle>
                 </CardHeader>
@@ -434,7 +434,7 @@ export default function MemberDetail() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="rounded-2xl border-gray-100 shadow-sm">
                 <CardHeader>
                   <CardTitle>Contact Information</CardTitle>
                 </CardHeader>

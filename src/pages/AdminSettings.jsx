@@ -244,7 +244,7 @@ export default function AdminSettings() {
                       <button
                         key={item.key}
                         onClick={() => setActiveTab(item.key)}
-                        className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors text-left ${active ? 'bg-[#004851] text-white font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
+                        className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors text-left ${active ? 'bg-[#7413dc] text-white font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
                         <span>{item.label}</span>
@@ -266,7 +266,7 @@ export default function AdminSettings() {
                   <button
                     key={item.key}
                     onClick={() => setActiveTab(item.key)}
-                    className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${active ? 'bg-[#004851] text-white' : 'bg-white text-gray-600 border border-gray-200'}`}
+                    className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${active ? 'bg-[#7413dc] text-white' : 'bg-white text-gray-600 border border-gray-200'}`}
                   >
                     <Icon className="w-3.5 h-3.5" />
                     {item.label}

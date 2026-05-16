@@ -209,7 +209,7 @@ export default function EventDetail() {
       <NavBarSpacer />
       
       {/* Header */}
-      <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white py-6 shadow-lg">
+      <div className="bg-[#7413dc] text-white py-6 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 mb-4">
             <Button
@@ -259,7 +259,7 @@ export default function EventDetail() {
               )}
               <Button
                 onClick={() => setShowEditDialog(true)}
-                className={`${isPastEvent() ? 'bg-gray-400 text-gray-700 hover:bg-gray-500' : 'bg-white text-blue-700 hover:bg-gray-100'} min-h-[44px]`}
+                className={`${isPastEvent() ? 'bg-gray-400 text-gray-700 hover:bg-gray-500' : 'bg-white text-[#7413dc] hover:bg-gray-100'} min-h-[44px]`}
               >
                 <span className="sm:hidden">Edit</span>
                 <span className="hidden sm:inline">Edit Details {isPastEvent() && '(Not Recommended)'}</span>
@@ -307,10 +307,10 @@ export default function EventDetail() {
                         setActiveSection(item.id);
                         if (item.id !== 'planning') setSidebarOpen(false);
                       }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all min-h-[44px] ${
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all min-h-[44px] ${
                         activeSection === item.id
-                          ? 'bg-blue-600 text-white shadow-md'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'bg-[#7413dc] text-white shadow-sm'
+                          : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       <Icon className="w-5 h-5" />
@@ -364,7 +364,7 @@ export default function EventDetail() {
         <div className="flex gap-6">
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sticky top-24">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sticky top-24">
               <nav className="space-y-1">
                 {navigationItems.map((item) => {
                   const Icon = item.icon;
@@ -372,10 +372,10 @@ export default function EventDetail() {
                     <div key={item.id}>
                       <button
                         onClick={() => setActiveSection(item.id)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                           activeSection === item.id
-                            ? 'bg-blue-600 text-white shadow-md'
-                            : 'text-gray-700 hover:bg-gray-100'
+                            ? 'bg-[#7413dc] text-white shadow-sm'
+                            : 'text-gray-700 hover:bg-gray-50'
                         }`}
                       >
                         <Icon className="w-5 h-5" />
@@ -391,23 +391,23 @@ export default function EventDetail() {
                                 onClick={() => setActivePlanningTab(subItem.id)}
                                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all ${
                                   activePlanningTab === subItem.id
-                                    ? 'bg-blue-100 text-blue-700 font-medium'
-                                    : 'text-gray-600 hover:bg-gray-100'
-                                }`}
-                              >
-                                <SubIcon className="w-4 h-4" />
-                                <span>{subItem.label}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </nav>
-              
-              {/* Delete Event Section */}
+                                      ? 'bg-[#7413dc]/10 text-[#7413dc] font-medium'
+                                      : 'text-gray-600 hover:bg-gray-50'
+                                  }`}
+                                  >
+                                  <SubIcon className="w-4 h-4" />
+                                  <span>{subItem.label}</span>
+                                  </button>
+                                  );
+                                  })}
+                                  </div>
+                                  )}
+                                  </div>
+                                  );
+                                  })}
+                                  </nav>
+
+                                  {/* Delete Event Section */}
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <Button
                   onClick={() => setShowDeleteDialog(true)}
@@ -509,7 +509,7 @@ export default function EventDetail() {
                           onClick={() => setActivePlanningTab(item.id)}
                           className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all snap-start min-h-[44px] ${
                             activePlanningTab === item.id
-                              ? 'bg-blue-600 text-white shadow-md'
+                              ? 'bg-[#7413dc] text-white shadow-sm'
                               : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                           }`}
                         >
@@ -524,7 +524,7 @@ export default function EventDetail() {
                 {activePlanningTab === 'schedule' && (
                   <div className="space-y-6">
                     <div className="flex justify-end">
-                      <Button onClick={handleAddDay} size="sm" className="bg-blue-600 hover:bg-blue-700 min-h-[44px]">
+                      <Button onClick={handleAddDay} size="sm" className="bg-[#7413dc] hover:bg-[#5c0fb0] min-h-[44px]">
                         <Plus className="w-4 h-4 mr-2" />
                         Add Day
                       </Button>
@@ -553,7 +553,7 @@ export default function EventDetail() {
                                 </Button>
                               )}
                             </div>
-                            <Button onClick={() => handleAddScheduleItem(dayIndex)} size="sm" className="bg-blue-600 hover:bg-blue-700 min-h-[44px]">
+                            <Button onClick={() => handleAddScheduleItem(dayIndex)} size="sm" className="bg-[#7413dc] hover:bg-[#5c0fb0] min-h-[44px]">
                               <Plus className="w-4 h-4 mr-2" />
                               Add Item
                             </Button>
@@ -705,7 +705,7 @@ export default function EventDetail() {
                         <div className="pt-4 border-t mt-4">
                           <Button
                             onClick={() => setShowAwardNightsDialog(true)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white min-h-[44px]"
+                            className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white min-h-[44px]"
                           >
                             <Award className="w-4 h-4 mr-2" />
                             Award Nights Away to Attendees

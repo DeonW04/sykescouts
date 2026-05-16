@@ -308,7 +308,7 @@ export default function MeetingDetail() {
       <NavBarSpacer />
 
       {/* Header */}
-      <div className="bg-gradient-to-br from-[#004851] to-[#006b7a] text-white py-6 shadow-lg">
+      <div className="bg-[#7413dc] text-white py-6 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 mb-3 lg:hidden">
             <Button
@@ -391,10 +391,10 @@ export default function MeetingDetail() {
                   <button
                     key={item.id}
                     onClick={() => handleSectionChange(item.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all min-h-[44px] ${
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all min-h-[44px] ${
                       activeSection === item.id
-                        ? 'bg-[#004851] text-white shadow-md'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-[#7413dc] text-white shadow-sm'
+                        : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -411,7 +411,7 @@ export default function MeetingDetail() {
         <div className="flex gap-6">
           {/* Desktop Sidebar */}
           <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sticky top-28">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sticky top-28">
               <nav className="space-y-1">
                 {navigationItems.map((item) => {
                   const Icon = item.icon;
@@ -419,10 +419,10 @@ export default function MeetingDetail() {
                     <button
                       key={item.id}
                       onClick={() => handleSectionChange(item.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                         activeSection === item.id
-                          ? 'bg-[#004851] text-white shadow-md'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'bg-[#7413dc] text-white shadow-sm'
+                          : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       <Icon className="w-5 h-5" />

@@ -632,16 +632,13 @@ export default function BadgeDetail() {
   const notStartedCount = relevantMembers.filter(m => !getMemberProgress(m.id).hasAnyProgress).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
+    <div className="min-h-screen bg-gray-50">
       <FloatingNav />
       <NavBarSpacer />
       
       {/* Header */}
-      <div className="relative bg-gradient-to-r from-green-500 to-emerald-600 text-white py-12 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
+      <div className="bg-[#7413dc] text-white py-10 overflow-hidden">
+        <div className="absolute inset-0 opacity-0"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -741,7 +738,7 @@ export default function BadgeDetail() {
           transition={{ delay: 0.1 }}
           className="mb-8"
         >
-          <Card className="md:col-span-4 border-l-4 border-l-[#7413dc]">
+          <Card className="md:col-span-4 border border-gray-100 shadow-sm rounded-2xl">
             <CardContent className="p-4">
               <div className="flex items-center gap-6 mb-3">
                 <div className="flex items-center gap-1.5">
@@ -774,10 +771,10 @@ export default function BadgeDetail() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="mb-8 border-2 border-green-200 shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
+          <Card className="mb-8 border border-gray-100 shadow-sm rounded-2xl">
+            <CardHeader className="bg-gray-50 rounded-t-2xl border-b border-gray-100">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-[#7413dc] rounded-xl flex items-center justify-center">
                   <Target className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -805,7 +802,7 @@ export default function BadgeDetail() {
                       className="border-l-4 border-green-400 pl-6 py-2"
                     >
                       <div className="flex items-center gap-2 mb-4">
-                        <div className="w-8 h-8 bg-green-500 text-white rounded-lg flex items-center justify-center font-bold text-sm">
+                        <div className="w-8 h-8 bg-[#7413dc] text-white rounded-lg flex items-center justify-center font-bold text-sm">
                           {moduleIdx + 1}
                         </div>
                         <h3 className="text-lg font-bold text-gray-900">{module.name}</h3>
@@ -857,10 +854,10 @@ export default function BadgeDetail() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Card className="shadow-lg">
-            <CardHeader className="bg-gray-50">
+          <Card className="shadow-sm rounded-2xl border border-gray-100">
+            <CardHeader className="bg-gray-50 rounded-t-2xl border-b border-gray-100">
               <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-green-600" />
+                <Users className="w-5 h-5 text-[#7413dc]" />
                 Individual Member Progress
               </CardTitle>
               <CardDescription>Track each member's progress through the badge requirements</CardDescription>
@@ -869,16 +866,16 @@ export default function BadgeDetail() {
               <div className="overflow-x-auto">
                 <table className="w-full">
               <thead>
-                <tr className="border-b-2 border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
-                  <th className="text-left p-4 font-semibold text-gray-900 sticky left-0 bg-green-50 z-10">Member</th>
+                <tr className="border-b-2 border-gray-200 bg-gray-50">
+                  <th className="text-left p-4 font-semibold text-gray-900 sticky left-0 bg-gray-50 z-10">Member</th>
                   <th className="text-center p-4 font-semibold text-gray-900 w-28">Progress</th>
                   {modules.sort((a, b) => a.order - b.order).map((module, moduleIdx) => {
                     const moduleReqs = requirements.filter(r => r.module_id === module.id).sort((a, b) => a.order - b.order);
                     return (
-                      <th key={module.id} colSpan={moduleReqs.length} className="text-center p-4 font-semibold border-l-4 border-green-300">
+                      <th key={module.id} colSpan={moduleReqs.length} className="text-center p-4 font-semibold border-l-4 border-[#7413dc]/30">
                         <div className="flex flex-col items-center gap-1">
                           <div className="text-xs font-bold text-gray-700 flex items-center justify-center gap-2">
-                            <span className="w-6 h-6 bg-green-500 text-white rounded-lg flex items-center justify-center text-[10px]">
+                            <span className="w-6 h-6 bg-[#7413dc] text-white rounded-lg flex items-center justify-center text-[10px]">
                               {moduleIdx + 1}
                             </span>
                             {module.name}
