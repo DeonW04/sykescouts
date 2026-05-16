@@ -76,9 +76,19 @@ const PORTAL_PAGES = [
 ];
 
 // ── Mobile Sidebar Drawer ──────────────────────────────────────────────────────
-function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, portalUrl }) {
+function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, portalUrl, isPortalPage }) {
   const location = useLocation();
   const [expandedGroup, setExpandedGroup] = useState(null);
+  // showPortal: true = show portal nav, false = show public nav
+  const [showPortal, setShowPortal] = useState(isPortalPage);
+
+  // Sync showPortal when location changes (e.g. navigating to a portal page)
+  useEffect(() => {
+    setShowPortal(isPortalPage);
+    setExpandedGroup(null);
+  }, [isPortalPage, open]);
+
+  const hasPortal = !!(portalLabel && (isLeader || user));
 
   const navLinks = [
     { label: 'Home', to: '/' },
@@ -90,6 +100,15 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, po
   ];
 
   const isActive = (to) => to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
+
+  const linkStyle = (active) => ({
+    display: 'flex', alignItems: 'center', gap: '10px',
+    fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
+    color: active ? '#fff' : 'rgba(255,255,255,0.6)',
+    textDecoration: 'none', padding: '10px 12px', borderRadius: '10px',
+    background: active ? 'rgba(116,19,220,0.4)' : 'transparent',
+    marginBottom: '2px',
+  });
 
   return (
     <>
@@ -108,13 +127,28 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, po
         transform: open ? 'translateX(0)' : 'translateX(-100%)',
         transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
         display: 'flex', flexDirection: 'column',
-        overflowY: 'auto',
+        overflowY: 'hidden',
       }}>
         {/* Drawer header */}
         <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <div>
-            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 3px' }}>40th Rochdale Scouts</p>
-            <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '16px', color: '#fff', margin: 0 }}>{user?.full_name?.split(' ')[0] || 'Menu'}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Back arrow — only shown in portal view */}
+            {showPortal && hasPortal && (
+              <button
+                onClick={() => { setShowPortal(false); setExpandedGroup(null); }}
+                style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: '#fff', cursor: 'pointer', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center' }}
+              >
+                <ChevronRight size={16} style={{ transform: 'rotate(180deg)' }} />
+              </button>
+            )}
+            <div>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 3px' }}>
+                {showPortal ? (portalLabel || 'Portal') : '40th Rochdale Scouts'}
+              </p>
+              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '16px', color: '#fff', margin: 0 }}>
+                {showPortal ? (user?.full_name?.split(' ')[0] || 'Menu') : 'Menu'}
+              </p>
+            </div>
           </div>
           <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: '#fff', cursor: 'pointer', padding: '8px', borderRadius: '10px' }}>
             <X size={18} />
@@ -124,96 +158,113 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, po
         {/* Nav content */}
         <div style={{ flex: 1, padding: '12px 10px', overflowY: 'auto' }}>
 
-          {/* Public links */}
-          {navLinks.map(link => (
-            <Link key={link.label} to={link.to} onClick={onClose} style={{
-              display: 'flex', alignItems: 'center', gap: '10px',
-              fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
-              color: isActive(link.to) ? '#fff' : 'rgba(255,255,255,0.6)',
-              textDecoration: 'none', padding: '10px 12px', borderRadius: '10px',
-              background: isActive(link.to) ? 'rgba(116,19,220,0.4)' : 'transparent',
-              marginBottom: '2px',
-            }}>{link.label}</Link>
-          ))}
-
-          {/* Leader portal section */}
-          {isLeader && (
+          {!showPortal ? (
+            /* ── PUBLIC VIEW ── */
             <>
-              <div style={{ margin: '14px 0 8px', padding: '0 12px' }}>
-                <p style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>Leader Portal</p>
-              </div>
-
-              {/* Dashboard */}
-              <Link to={createPageUrl('LeaderDashboard')} onClick={onClose} style={{
-                display: 'flex', alignItems: 'center', gap: '10px',
-                fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '14px',
-                color: '#fff', textDecoration: 'none', padding: '10px 12px', borderRadius: '10px',
-                background: 'rgba(116,19,220,0.3)', marginBottom: '2px',
-              }}><LayoutDashboard size={15} /> Dashboard</Link>
-
-              {/* Groups */}
-              {portalGroups.map(group => (
-                <div key={group.label}>
-                  <button
-                    onClick={() => setExpandedGroup(expandedGroup === group.label ? null : group.label)}
-                    style={{
-                      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '10px 12px', borderRadius: '10px', background: 'transparent', border: 'none',
-                      cursor: 'pointer', marginBottom: '2px', color: 'rgba(255,255,255,0.65)',
-                      fontFamily: 'DM Sans, sans-serif', fontSize: '14px', fontWeight: 500,
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <group.icon size={15} /> {group.label}
-                    </div>
-                    <ChevronRight size={13} style={{ transform: expandedGroup === group.label ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', color: 'rgba(255,255,255,0.3)' }} />
-                  </button>
-                  {expandedGroup === group.label && (
-                    <div style={{ paddingLeft: '12px', marginBottom: '4px' }}>
-                      {group.links.map(({ label, page, icon: Icon }) => (
-                        <Link key={page} to={createPageUrl(page)} onClick={onClose} style={{
-                          display: 'flex', alignItems: 'center', gap: '8px',
-                          fontFamily: 'DM Sans, sans-serif', fontSize: '13px', fontWeight: 500,
-                          color: 'rgba(255,255,255,0.55)', textDecoration: 'none',
-                          padding: '8px 12px', borderRadius: '8px', marginBottom: '1px',
-                        }}>
-                          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
-                          {label}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
+              {navLinks.map(link => (
+                <Link key={link.label} to={link.to} onClick={onClose} style={linkStyle(isActive(link.to))}>
+                  {link.label}
+                </Link>
               ))}
 
-              {isAdmin && (
-                <Link to={createPageUrl('AdminSettings')} onClick={onClose} style={{
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
-                  color: 'rgba(255,255,255,0.65)', textDecoration: 'none', padding: '10px 12px', borderRadius: '10px',
-                  marginBottom: '2px',
-                }}><Settings size={15} /> Admin Settings</Link>
+              <div style={{ marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '14px' }}>
+                {user && hasPortal ? (
+                  /* Logged in — show portal button */
+                  <button
+                    onClick={() => { setShowPortal(true); setExpandedGroup(null); }}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '14px',
+                      color: '#fff', background: 'rgba(116,19,220,0.35)', border: 'none',
+                      cursor: 'pointer', padding: '11px 14px', borderRadius: '12px',
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <LayoutDashboard size={15} /> {portalLabel}
+                    </span>
+                    <ChevronRight size={14} style={{ color: 'rgba(255,255,255,0.5)' }} />
+                  </button>
+                ) : !user ? (
+                  <button
+                    onClick={() => { base44.auth.redirectToLogin(); onClose(); }}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
+                      fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
+                      color: '#fff', background: '#7413dc', border: 'none', cursor: 'pointer',
+                      padding: '10px 12px', borderRadius: '10px',
+                    }}
+                  >
+                    Sign In
+                  </button>
+                ) : null}
+              </div>
+            </>
+          ) : (
+            /* ── PORTAL VIEW ── */
+            <>
+              {isLeader ? (
+                <>
+                  {/* Dashboard */}
+                  <Link to={createPageUrl('LeaderDashboard')} onClick={onClose} style={linkStyle(location.pathname === '/LeaderDashboard')}>
+                    <LayoutDashboard size={15} /> Dashboard
+                  </Link>
+
+                  {/* Groups */}
+                  {portalGroups.map(group => {
+                    const isGroupActive = group.links.some(({ page }) => location.pathname === '/' + page || location.pathname.startsWith('/' + page));
+                    return (
+                      <div key={group.label}>
+                        <button
+                          onClick={() => setExpandedGroup(expandedGroup === group.label ? null : group.label)}
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '10px 12px', borderRadius: '10px', background: isGroupActive ? 'rgba(116,19,220,0.2)' : 'transparent', border: 'none',
+                            cursor: 'pointer', marginBottom: '2px',
+                            color: isGroupActive ? '#fff' : 'rgba(255,255,255,0.65)',
+                            fontFamily: 'DM Sans, sans-serif', fontSize: '14px', fontWeight: isGroupActive ? 600 : 500,
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <group.icon size={15} /> {group.label}
+                          </div>
+                          <ChevronRight size={13} style={{ transform: expandedGroup === group.label ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', color: 'rgba(255,255,255,0.3)' }} />
+                        </button>
+                        {expandedGroup === group.label && (
+                          <div style={{ paddingLeft: '12px', marginBottom: '4px' }}>
+                            {group.links.map(({ label, page, icon: Icon, adminOnly }) => {
+                              if (adminOnly && !isAdmin) return null;
+                              const active = location.pathname === '/' + page || location.pathname.startsWith('/' + page);
+                              return (
+                                <Link key={page} to={createPageUrl(page)} onClick={onClose} style={{
+                                  display: 'flex', alignItems: 'center', gap: '8px',
+                                  fontFamily: 'DM Sans, sans-serif', fontSize: '13px', fontWeight: 500,
+                                  color: active ? '#fff' : 'rgba(255,255,255,0.55)', textDecoration: 'none',
+                                  padding: '8px 12px', borderRadius: '8px', marginBottom: '1px',
+                                  background: active ? 'rgba(116,19,220,0.3)' : 'transparent',
+                                }}>
+                                  <Icon size={13} style={{ flexShrink: 0 }} /> {label}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {isAdmin && (
+                    <Link to={createPageUrl('AdminSettings')} onClick={onClose} style={linkStyle(location.pathname === '/AdminSettings')}>
+                      <Settings size={15} /> Admin Settings
+                    </Link>
+                  )}
+                </>
+              ) : (
+                /* Parent portal — simple link list */
+                <Link to={portalUrl} onClick={onClose} style={linkStyle(true)}>
+                  <LayoutDashboard size={15} /> {portalLabel}
+                </Link>
               )}
             </>
-          )}
-
-          {/* Parent portal */}
-          {!isLeader && portalLabel && (
-            <Link to={portalUrl} onClick={onClose} style={{
-              display: 'flex', alignItems: 'center', gap: '10px',
-              fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '14px',
-              color: '#fff', textDecoration: 'none', padding: '10px 12px', borderRadius: '10px',
-              background: 'rgba(116,19,220,0.3)', marginTop: '14px', marginBottom: '2px',
-            }}><LayoutDashboard size={15} /> {portalLabel}</Link>
-          )}
-
-          {!user && (
-            <button onClick={() => { base44.auth.redirectToLogin(); onClose(); }} style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-              fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
-              color: '#fff', background: '#7413dc', border: 'none', cursor: 'pointer',
-              padding: '10px 12px', borderRadius: '10px', marginTop: '14px',
-            }}>Sign In</button>
           )}
         </div>
 
@@ -324,6 +375,7 @@ export default function FloatingNav() {
         user={user}
         portalLabel={portalLabel}
         portalUrl={portalUrl}
+        isPortalPage={isPortalPage}
       />
 
       {/* ── Outer wrapper ── */}
