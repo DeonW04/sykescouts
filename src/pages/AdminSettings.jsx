@@ -229,7 +229,7 @@ export default function AdminSettings() {
       </div>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4">
-        <div className="flex gap-6">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6">
 
           {/* Sidebar — desktop */}
           <aside className="w-56 flex-shrink-0 hidden md:block">
@@ -256,35 +256,29 @@ export default function AdminSettings() {
             </div>
           </aside>
 
-          {/* Mobile: grouped accordion-style nav */}
+          {/* Mobile: dropdown nav */}
           <div className="md:hidden w-full mb-4">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              {GROUPS.map(group => (
-                <div key={group}>
-                  <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50/60">{group}</p>
-                  <div className="flex flex-wrap gap-1.5 px-3 pb-3 pt-1">
-                    {NAV_ITEMS.filter(n => n.group === group).map(item => {
-                      const Icon = item.icon;
-                      const active = activeTab === item.key;
-                      return (
-                        <button
-                          key={item.key}
-                          onClick={() => setActiveTab(item.key)}
-                          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${active ? 'bg-[#7413dc] text-white' : 'bg-gray-100 text-gray-600'}`}
-                        >
-                          <Icon className="w-3.5 h-3.5" />
-                          {item.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Select value={activeTab} onValueChange={setActiveTab}>
+              <SelectTrigger className="w-full bg-white border-gray-200 rounded-xl h-12 text-sm font-semibold">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {GROUPS.map(group => (
+                  <React.Fragment key={group}>
+                    <div className="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">{group}</div>
+                    {NAV_ITEMS.filter(n => n.group === group).map(item => (
+                      <SelectItem key={item.key} value={item.key} className="pl-5">
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Main content */}
-          <div className="flex-1 min-w-0">
+          {/* Main content — full width on mobile */}
+          <div className="flex-1 min-w-0 w-full">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="hidden"><TabsTrigger value="_" /></TabsList>
 

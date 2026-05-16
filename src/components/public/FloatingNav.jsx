@@ -146,7 +146,7 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, po
                 {showPortal ? (portalLabel || 'Portal') : '40th Rochdale Scouts'}
               </p>
               <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '16px', color: '#fff', margin: 0 }}>
-                {showPortal ? (user?.full_name?.split(' ')[0] || 'Menu') : 'Menu'}
+                {showPortal ? (() => { const n = user?.full_name?.split(' ')[0] || 'Menu'; return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase(); })() : 'Menu'}
               </p>
             </div>
           </div>
