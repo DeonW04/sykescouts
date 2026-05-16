@@ -79,7 +79,7 @@ export default function HeroSection() {
         .hero-btn { transition: transform 0.2s ease; }
       `}</style>
 
-      <section style={{ position: 'relative', height: calc('110dvh' + '30px'), minHeight: '600px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '-80px', paddingBottom: '0' }}>
+      <section style={{ position: 'relative', height: 'calc(110dvh + 30px)', minHeight: '600px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '-80px', paddingBottom: '0' }}>
         {/* Background images */}
         {images.length > 0 ? (
           <>
