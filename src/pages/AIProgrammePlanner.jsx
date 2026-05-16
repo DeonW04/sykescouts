@@ -13,7 +13,8 @@ import { base44 } from '@/api/base44Client';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import AIPlannerModal from '../components/aiPlanner/AIPlannerModal';
 
 const ENGAGEMENT_ICONS = {
@@ -273,7 +274,8 @@ export default function AIProgrammePlanner() {
   if (!planData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-        <LeaderNav />
+        <FloatingNav />
+        <NavBarSpacer />
         <div className="max-w-2xl mx-auto px-4 py-20 text-center">
           <div className="text-6xl mb-6">🤖</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-3">No Programme Plan Found</h2>
@@ -440,7 +442,8 @@ export default function AIProgrammePlanner() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/30">
-      <LeaderNav />
+      <FloatingNav />
+      <NavBarSpacer />
 
       {/* Header */}
       <div className="bg-gradient-to-r from-[#004851] to-[#7413dc] text-white py-8 sticky top-20 z-30 shadow-xl">

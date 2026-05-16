@@ -9,7 +9,8 @@ import { ArrowLeft, Plus, Search, Eye, Trash2, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 
 export default function WeeklyMessageList() {
   const navigate = useNavigate();
@@ -81,7 +82,8 @@ export default function WeeklyMessageList() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
+      <FloatingNav />
+      <NavBarSpacer />
       
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-500 to-cyan-600 text-white py-8">

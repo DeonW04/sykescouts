@@ -11,7 +11,8 @@ import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import RiskTable from '../components/risk/RiskTable';
 import AIEnhancer from '../components/risk/AIEnhancer';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import PDFGenerator from '../components/risk/PDFGenerator';
 
 export default function RiskAssessmentDetail() {
@@ -101,6 +102,8 @@ export default function RiskAssessmentDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-white">
+      <FloatingNav />
+      <NavBarSpacer />
       {/* Header */}
       <div className="bg-gradient-to-r from-[#7413dc] to-[#ff66b2] text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

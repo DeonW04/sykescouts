@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -254,6 +255,7 @@ User question: ${userMsg}`,
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
       <FloatingNav />
+      <NavBarSpacer />
       <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
           <div>

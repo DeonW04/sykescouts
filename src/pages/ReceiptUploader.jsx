@@ -15,7 +15,8 @@ import { toast } from 'sonner';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 
 const CATEGORIES = [
   { value: 'equipment', label: 'Equipment' },
@@ -215,7 +216,8 @@ export default function ReceiptUploader() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
+      <FloatingNav />
+      <NavBarSpacer />
       <div className="bg-[#004851] text-white py-6 md:py-8 mb-6">
         <div className="max-w-4xl mx-auto px-4">
           <h1 className="text-2xl md:text-3xl font-bold">Receipt Uploader</h1>

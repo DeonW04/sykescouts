@@ -9,7 +9,8 @@ import { ShieldAlert, ArrowLeft, Plus, Calendar, User, AlertCircle } from 'lucid
 import { motion } from 'framer-motion';
 import { format, isPast, parseISO } from 'date-fns';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 
 export default function RiskAssessmentHistory() {
   const navigate = useNavigate();
@@ -46,7 +47,8 @@ export default function RiskAssessmentHistory() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-white">
-      <LeaderNav />
+      <FloatingNav />
+      <NavBarSpacer />
       {/* Header */}
       <div className="bg-gradient-to-r from-[#7413dc] to-[#ff66b2] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
