@@ -132,51 +132,31 @@ export default function SectionAccounting() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Summary cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card className="border-l-4 border-l-green-500">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <TrendingUp className="w-4 h-4 text-green-600" />
-                <p className="text-xs text-gray-500">Calc. Income</p>
+          {[
+            { label: 'Calc. Income', value: fmt(totalIncome), icon: TrendingUp, color: 'text-green-600', bg: 'bg-green-50' },
+            { label: 'Calc. Expenses', value: fmt(totalExpenses), icon: TrendingDown, color: 'text-red-600', bg: 'bg-red-50' },
+            { label: 'Ledger Income', value: fmt(ledgerIncome), icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
+            { label: 'Ledger Expenses', value: fmt(ledgerExpenses), icon: TrendingDown, color: 'text-gray-600', bg: 'bg-gray-100' },
+          ].map(({ label, value, icon: Icon, color, bg }) => (
+            <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+              <div className={`w-9 h-9 ${bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                <Icon className={`w-4 h-4 ${color}`} />
               </div>
-              <p className="text-2xl font-bold text-green-700">{fmt(totalIncome)}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-l-4 border-l-red-400">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <TrendingDown className="w-4 h-4 text-red-500" />
-                <p className="text-xs text-gray-500">Calc. Expenses</p>
+              <div>
+                <p className="text-xs text-gray-500">{label}</p>
+                <p className={`text-xl font-bold ${color}`}>{value}</p>
               </div>
-              <p className="text-2xl font-bold text-red-600">{fmt(totalExpenses)}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-l-4 border-l-blue-400">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <TrendingUp className="w-4 h-4 text-blue-600" />
-                <p className="text-xs text-gray-500">Ledger Income</p>
-              </div>
-              <p className="text-2xl font-bold text-blue-700">{fmt(ledgerIncome)}</p>
-            </CardContent>
-          </Card>
-          <Card className="border-l-4 border-l-gray-400">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <TrendingDown className="w-4 h-4 text-gray-500" />
-                <p className="text-xs text-gray-500">Ledger Expenses</p>
-              </div>
-              <p className="text-2xl font-bold text-gray-700">{fmt(ledgerExpenses)}</p>
-            </CardContent>
-          </Card>
+            </div>
+          ))}
         </div>
 
         {/* Submit Receipt Button */}
-        <div className="mb-6">
-          <Button onClick={() => setShowReceiptDialog(true)} className="bg-[#004851] hover:bg-[#003840] gap-2">
+        <div className="mb-6 flex items-center gap-3">
+          <Button onClick={() => setShowReceiptDialog(true)} className="bg-[#7413dc] hover:bg-[#5c0fb0] gap-2">
             <Receipt className="w-4 h-4" />
             Submit a Receipt
           </Button>
-          <p className="text-xs text-gray-500 mt-1">Submit receipts for equipment, food, transport etc. for treasurer processing.</p>
+          <p className="text-xs text-gray-500">Submit receipts for equipment, food, transport etc. for treasurer processing.</p>
         </div>
 
         <Tabs defaultValue="receipts">

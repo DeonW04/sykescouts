@@ -235,202 +235,161 @@ export default function AwardBadges() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Manual Award Section */}
         {manualBadges.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-yellow-500" />
-                Manual Awards
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {manualBadges.map(badge => (
-                  <button
-                    key={badge.id}
-                    onClick={() => setManualAwardBadge(badge)}
-                    className="flex flex-col items-center gap-2 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <img src={badge.image_url} alt={badge.name} className="w-20 h-20 object-contain" />
-                    <p className="text-sm font-medium text-center">{badge.name}</p>
-                  </button>
-                ))}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-yellow-50 rounded-xl flex items-center justify-center">
+                <Star className="w-4 h-4 text-yellow-500" />
               </div>
-            </CardContent>
-          </Card>
+              <h3 className="font-semibold text-gray-900">Manual Awards</h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {manualBadges.map(badge => (
+                <button
+                  key={badge.id}
+                  onClick={() => setManualAwardBadge(badge)}
+                  className="flex flex-col items-center gap-2 p-4 bg-gray-50 rounded-xl hover:bg-purple-50 hover:shadow-sm transition-all border border-transparent hover:border-purple-100"
+                >
+                  <img src={badge.image_url} alt={badge.name} className="w-16 h-16 object-contain" />
+                  <p className="text-sm font-medium text-center text-gray-700">{badge.name}</p>
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Joining In Check */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Joining In Awards</p>
-                <p className="text-sm text-gray-600">Check for members eligible for automatic Joining In badges</p>
-              </div>
-              <Button
-                onClick={handleCheckJoiningIn}
-                disabled={checkingJoiningIn}
-                variant="outline"
-              >
-                <Award className="w-4 h-4 mr-2" />
-                {checkingJoiningIn ? 'Checking...' : 'Check Now'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5 flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p className="font-semibold text-gray-900">Joining In Awards</p>
+            <p className="text-sm text-gray-500 mt-0.5">Check for members eligible for automatic Joining In badges</p>
+          </div>
+          <Button onClick={handleCheckJoiningIn} disabled={checkingJoiningIn} variant="outline" className="border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white">
+            <Award className="w-4 h-4 mr-2" />
+            {checkingJoiningIn ? 'Checking...' : 'Check Now'}
+          </Button>
+        </div>
 
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex gap-4 flex-wrap">
-              <Select value={sectionFilter} onValueChange={setSectionFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="All sections" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sections</SelectItem>
-                  {sections.map(section => (
-                    <SelectItem key={section.id} value={section.id}>
-                      {section.display_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={badgeFilter} onValueChange={setBadgeFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="All badges" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Badges</SelectItem>
-                  {badges.map(badge => (
-                    <SelectItem key={badge.id} value={badge.id}>
-                      {badge.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="only-due"
-                  checked={onlyDue}
-                  onCheckedChange={setOnlyDue}
-                />
-                <label htmlFor="only-due" className="text-sm font-medium cursor-pointer">
-                  Only show due badges
-                </label>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Filters */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-5 flex gap-3 flex-wrap items-center">
+          <Select value={sectionFilter} onValueChange={setSectionFilter}>
+            <SelectTrigger className="w-44 bg-gray-50 border-gray-200">
+              <SelectValue placeholder="All sections" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sections</SelectItem>
+              {sections.map(section => (
+                <SelectItem key={section.id} value={section.id}>{section.display_name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={badgeFilter} onValueChange={setBadgeFilter}>
+            <SelectTrigger className="w-44 bg-gray-50 border-gray-200">
+              <SelectValue placeholder="All badges" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Badges</SelectItem>
+              {badges.map(badge => (
+                <SelectItem key={badge.id} value={badge.id}>{badge.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex items-center gap-2">
+            <Checkbox id="only-due" checked={onlyDue} onCheckedChange={setOnlyDue} />
+            <label htmlFor="only-due" className="text-sm font-medium cursor-pointer text-gray-700">Only show due badges</label>
+          </div>
+        </div>
 
         {filteredAwards.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600">No badges to award</p>
-            </CardContent>
-          </Card>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Award className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-gray-500 font-medium">No badges to award</p>
+          </div>
         ) : (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Badges Ready to Award</CardTitle>
-                <Button variant="outline" size="sm" onClick={handleSelectAll}>
-                  {selectedAwards.length === filteredAwards.length ? 'Deselect All' : 'Select All'}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto overflow-y-auto max-h-[55vh]">
-                <table className="w-full">
-                  <thead className="border-b">
-                    <tr>
-                      <th className="text-left p-3 w-12"></th>
-                      <th className="text-left p-3">Member</th>
-                      <th className="text-left p-3">Badge</th>
-                      <th className="text-left p-3">Completed</th>
-                      <th className="text-left p-3">Stock</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredAwards.map(award => {
-                      const member = members.find(m => m.id === award.member_id);
-                      const badge = badges.find(b => b.id === award.badge_id);
-                      const stockInfo = getStockInfo(award.badge_id);
-                      const isSelected = selectedAwards.includes(award.id);
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900">Badges Ready to Award</h3>
+              <Button variant="outline" size="sm" onClick={handleSelectAll}>
+                {selectedAwards.length === filteredAwards.length ? 'Deselect All' : 'Select All'}
+              </Button>
+            </div>
+            <div className="overflow-x-auto overflow-y-auto max-h-[55vh]">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="text-left px-4 py-3 w-12 text-xs text-gray-500 font-medium"></th>
+                    <th className="text-left px-4 py-3 text-xs text-gray-500 font-medium uppercase tracking-wide">Member</th>
+                    <th className="text-left px-4 py-3 text-xs text-gray-500 font-medium uppercase tracking-wide">Badge</th>
+                    <th className="text-left px-4 py-3 text-xs text-gray-500 font-medium uppercase tracking-wide">Completed</th>
+                    <th className="text-left px-4 py-3 text-xs text-gray-500 font-medium uppercase tracking-wide">Stock</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredAwards.map(award => {
+                    const member = members.find(m => m.id === award.member_id);
+                    const badge = badges.find(b => b.id === award.badge_id);
+                    const stockInfo = getStockInfo(award.badge_id);
+                    const isSelected = selectedAwards.includes(award.id);
 
-                      return (
-                        <tr key={award.id} className="border-b hover:bg-gray-50">
-                          <td className="p-3">
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedAwards([...selectedAwards, award.id]);
-                                } else {
-                                  setSelectedAwards(selectedAwards.filter(id => id !== award.id));
-                                }
-                              }}
-                            />
-                          </td>
-                          <td className="p-3">
-                            <p className="font-medium">{member?.full_name}</p>
-                            <p className="text-sm text-gray-500">
-                              {sections.find(s => s.id === member?.section_id)?.display_name}
-                            </p>
-                            {!member?.osm_scoutid && (
-                              <p className="text-xs text-amber-600 mt-0.5">⚠ Not linked to OSM</p>
-                            )}
-                          </td>
-                          <td className="p-3">
-                            <div className="flex items-center gap-2">
-                              <img src={badge?.image_url} alt="" className="w-10 h-10 rounded" />
-                              <div>
-                                <p className="font-medium">{badge?.name}</p>
-                                {badge?.category === 'staged' && badge?.stage_number && (
-                                  <p className="text-xs text-gray-500">Stage {badge.stage_number}</p>
-                                )}
-                              </div>
+                    return (
+                      <tr key={award.id} className={`hover:bg-gray-50 transition-colors ${isSelected ? 'bg-purple-50' : ''}`}>
+                        <td className="px-4 py-3">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={(checked) => {
+                              if (checked) setSelectedAwards([...selectedAwards, award.id]);
+                              else setSelectedAwards(selectedAwards.filter(id => id !== award.id));
+                            }}
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                              {member?.full_name?.charAt(0)}
                             </div>
-                          </td>
-                          <td className="p-3">
-                            {new Date(award.completed_date).toLocaleDateString()}
-                          </td>
-                          <td className="p-3">
-                            {stockInfo ? (
-                              <div className="flex items-center gap-2">
-                                <Package className={`w-4 h-4 ${
-                                  stockInfo.current_stock === 0 ? 'text-red-500' :
-                                  stockInfo.current_stock < stockInfo.minimum_threshold ? 'text-orange-500' :
-                                  'text-green-500'
-                                }`} />
-                                <span className={
-                                  stockInfo.current_stock === 0 ? 'text-red-600 font-medium' :
-                                  stockInfo.current_stock < stockInfo.minimum_threshold ? 'text-orange-600' :
-                                  'text-gray-900'
-                                }>
-                                  {stockInfo.current_stock} in stock
-                                </span>
-                                {stockInfo.current_stock === 0 && (
-                                  <Badge variant="destructive" className="ml-2">Out of Stock</Badge>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-gray-500">No stock tracking</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                            <div>
+                              <p className="font-medium text-gray-900 text-sm">{member?.full_name}</p>
+                              <p className="text-xs text-gray-500">{sections.find(s => s.id === member?.section_id)?.display_name}</p>
+                              {!member?.osm_scoutid && <p className="text-xs text-amber-600">⚠ Not linked to OSM</p>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <img src={badge?.image_url} alt="" className="w-9 h-9 rounded-lg object-contain bg-gray-50" />
+                            <div>
+                              <p className="font-medium text-gray-900 text-sm">{badge?.name}</p>
+                              {badge?.category === 'staged' && badge?.stage_number && (
+                                <p className="text-xs text-gray-500">Stage {badge.stage_number}</p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{new Date(award.completed_date).toLocaleDateString()}</td>
+                        <td className="px-4 py-3">
+                          {stockInfo ? (
+                            <div className="flex items-center gap-1.5">
+                              <Package className={`w-4 h-4 ${stockInfo.current_stock === 0 ? 'text-red-500' : stockInfo.current_stock < stockInfo.minimum_threshold ? 'text-orange-500' : 'text-green-500'}`} />
+                              <span className={`text-sm ${stockInfo.current_stock === 0 ? 'text-red-600 font-medium' : stockInfo.current_stock < stockInfo.minimum_threshold ? 'text-orange-600' : 'text-gray-700'}`}>
+                                {stockInfo.current_stock}
+                              </span>
+                              {stockInfo.current_stock === 0 && <Badge variant="destructive" className="text-xs">Out</Badge>}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
       </div>
 

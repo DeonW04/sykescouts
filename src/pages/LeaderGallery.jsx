@@ -427,10 +427,10 @@ export default function LeaderGallery() {
         </label>
 
         {/* Section Filter */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-5">
           <button
             onClick={() => { setSelectedSection('all'); setSelectedItem(null); }}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedSection === 'all' ? 'bg-[#004851] text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'}`}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${selectedSection === 'all' ? 'bg-[#7413dc] text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-600 hover:border-[#7413dc] hover:text-[#7413dc]'}`}
           >
             All Sections
           </button>
@@ -438,7 +438,7 @@ export default function LeaderGallery() {
             <button
               key={s.id}
               onClick={() => { setSelectedSection(s.id); setSelectedItem(null); setView('all'); }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all capitalize ${selectedSection === s.id ? 'bg-[#7413dc] text-white shadow' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-400'}`}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all capitalize ${selectedSection === s.id ? 'bg-[#7413dc] text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-600 hover:border-[#7413dc] hover:text-[#7413dc]'}`}
             >
               {s.display_name}
             </button>
@@ -446,57 +446,22 @@ export default function LeaderGallery() {
         </div>
 
         {/* Category Buttons */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <Button
-            variant={view === 'camps' ? 'default' : 'outline'}
-            className="h-24"
-            onClick={() => {
-              setView('camps');
-              setSelectedItem(null);
-              setSelectMode(false);
-              setSelectedPhotos([]);
-            }}
-          >
-            <div className="flex flex-col items-center">
-              <ImageIcon className="w-8 h-8 mb-2" />
-              <span className="font-semibold">Camps</span>
-              <span className="text-xs opacity-80">{camps.length} albums</span>
-            </div>
-          </Button>
-
-          <Button
-            variant={view === 'events' ? 'default' : 'outline'}
-            className="h-24"
-            onClick={() => {
-              setView('events');
-              setSelectedItem(null);
-              setSelectMode(false);
-              setSelectedPhotos([]);
-            }}
-          >
-            <div className="flex flex-col items-center">
-              <ImageIcon className="w-8 h-8 mb-2" />
-              <span className="font-semibold">Events</span>
-              <span className="text-xs opacity-80">{regularEvents.length} albums</span>
-            </div>
-          </Button>
-
-          <Button
-            variant={view === 'meetings' ? 'default' : 'outline'}
-            className="h-24"
-            onClick={() => {
-              setView('meetings');
-              setSelectedItem(null);
-              setSelectMode(false);
-              setSelectedPhotos([]);
-            }}
-          >
-            <div className="flex flex-col items-center">
-              <ImageIcon className="w-8 h-8 mb-2" />
-              <span className="font-semibold">Meetings</span>
-              <span className="text-xs opacity-80">{meetings.length} albums</span>
-            </div>
-          </Button>
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          {[
+            { key: 'camps', label: 'Camps', count: camps.length },
+            { key: 'events', label: 'Events', count: regularEvents.length },
+            { key: 'meetings', label: 'Meetings', count: meetings.length },
+          ].map(({ key, label, count }) => (
+            <button
+              key={key}
+              onClick={() => { setView(key); setSelectedItem(null); setSelectMode(false); setSelectedPhotos([]); }}
+              className={`py-5 rounded-2xl border text-center transition-all ${view === key ? 'bg-[#7413dc] text-white border-[#7413dc] shadow-sm' : 'bg-white border-gray-100 text-gray-600 hover:border-[#7413dc] hover:text-[#7413dc] shadow-sm'}`}
+            >
+              <ImageIcon className="w-6 h-6 mx-auto mb-1.5" />
+              <p className="font-semibold text-sm">{label}</p>
+              <p className="text-xs opacity-70">{count} albums</p>
+            </button>
+          ))}
         </div>
 
         {/* Back/Actions Bar */}

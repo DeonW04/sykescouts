@@ -174,72 +174,31 @@ export default function ParentPortal() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Parents Registered</p>
-                  <p className="text-3xl font-bold text-indigo-600">{percentRegistered}%</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {stats.parentOneRegistered + stats.parentTwoRegistered} of {stats.totalMembers * 2} possible
-                  </p>
-                </div>
-                <UserCheck className="w-12 h-12 text-indigo-500 opacity-20" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {[
+            { label: 'Parents Registered', value: `${percentRegistered}%`, sub: `${stats.parentOneRegistered + stats.parentTwoRegistered} of ${stats.totalMembers * 2}`, icon: UserCheck, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+            { label: 'No Parent Registered', value: stats.membersWithNoParent, sub: 'members affected', icon: UserX, color: 'text-orange-600', bg: 'bg-orange-50' },
+            { label: 'Avg Data Completion', value: `${stats.averageCompletion}%`, sub: 'across all members', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50' },
+            { label: 'Missing Important Data', value: stats.missingImportantData, sub: 'click to view', icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50', onClick: () => setShowMissingDataModal(true) },
+          ].map(({ label, value, sub, icon: Icon, color, bg, onClick }) => (
+            <div key={label} onClick={onClick} className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 ${onClick ? 'cursor-pointer hover:shadow-md hover:border-red-200 transition-all' : ''}`}>
+              <div className={`w-10 h-10 ${bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                <Icon className={`w-5 h-5 ${color}`} />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">No Parent Registered</p>
-                  <p className="text-3xl font-bold text-orange-600">{stats.membersWithNoParent}</p>
-                  <p className="text-xs text-gray-500 mt-1">members affected</p>
-                </div>
-                <UserX className="w-12 h-12 text-orange-500 opacity-20" />
+              <div>
+                <p className={`text-2xl font-bold ${color}`}>{value}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{label}</p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Avg Data Completion</p>
-                  <p className="text-3xl font-bold text-green-600">{stats.averageCompletion}%</p>
-                  <p className="text-xs text-gray-500 mt-1">across all members</p>
-                </div>
-                <CheckCircle className="w-12 h-12 text-green-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="cursor-pointer hover:shadow-md transition-shadow border-red-100 hover:border-red-300"
-            onClick={() => setShowMissingDataModal(true)}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Missing Important Data</p>
-                  <p className="text-3xl font-bold text-red-600">{stats.missingImportantData}</p>
-                  <p className="text-xs text-red-400 mt-1 font-medium">Click to view →</p>
-                </div>
-                <AlertTriangle className="w-12 h-12 text-red-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          ))}
         </div>
 
         {/* Members List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Member Registration Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100">
+            <h3 className="font-semibold text-gray-900">Member Registration Status</h3>
+          </div>
+          <div className="divide-y divide-gray-50">
               {members
                 .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime())
                 .map(member => {
@@ -249,7 +208,7 @@ export default function ParentPortal() {
                 const hasParent2 = member.parent_two_email && member.parent_two_email.trim() !== '';
 
                 return (
-                  <div key={member.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div key={member.id} className="px-5 py-4 hover:bg-gray-50 transition-colors">
                     <div className="flex flex-col lg:flex-row gap-4">
                       {/* Member Info */}
                       <div className="flex-1">
@@ -397,9 +356,8 @@ export default function ParentPortal() {
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </div>
 
       {/* Missing Data Modal */}
       <Dialog open={showMissingDataModal} onOpenChange={setShowMissingDataModal}>

@@ -86,7 +86,7 @@ Focus on practical, specific risks following Scouts UK safety standards. Conside
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-white">
+    <div className="min-h-screen bg-gray-50">
       <FloatingNav />
       <NavBarSpacer />
       <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
@@ -98,103 +98,88 @@ Focus on practical, specific risks following Scouts UK safety standards. Conside
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid gap-6">
-          <Card>
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Current Risk Assessments</h3>
-                  <p className="text-sm text-gray-600">Access and manage your risk assessments</p>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(createPageUrl('RiskAssessmentHistory'))}
-                  className="border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white w-full sm:w-auto"
-                >
-                  View Current
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid gap-5">
+          {/* View existing */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-gray-900">Current Risk Assessments</h3>
+              <p className="text-sm text-gray-500 mt-0.5">Access and manage your existing risk assessments</p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => navigate(createPageUrl('RiskAssessmentHistory'))}
+              className="border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white w-full sm:w-auto"
+            >
+              View All
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card className="border-2 border-[#7413dc] shadow-xl">
-            <CardContent className="p-4 md:p-8">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#7413dc] to-[#ff66b2] rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-6 h-6 text-white" />
+          <div className="grid md:grid-cols-2 gap-5">
+            {/* AI Generator */}
+            <div className="bg-white rounded-2xl border-2 border-[#7413dc] shadow-sm p-6">
+              <div className="flex items-start gap-4 mb-5">
+                <div className="w-11 h-11 bg-gradient-to-br from-[#7413dc] to-[#ff66b2] rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">AI-Powered Risk Assessment</h2>
-                  <p className="text-gray-600">Describe your activity and our AI will generate a comprehensive risk assessment following Scouts UK safety standards.</p>
+                  <h2 className="text-lg font-bold text-gray-900">AI-Powered Generator</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">Describe your activity and AI will generate a comprehensive assessment following Scouts UK standards.</p>
                 </div>
               </div>
-
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Activity Description
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Activity Description</label>
                   <Textarea
                     value={activityDescription}
                     onChange={(e) => setActivityDescription(e.target.value)}
-                    placeholder="Describe your activity in detail. For example:&#10;&#10;'Weekend camping trip to Lake District for Cubs (8-10 year olds). Activities include hiking, campfire cooking, orienteering, and wild camping. 25 young people, 6 leaders. September weather expected.'&#10;&#10;Include: activity type, location, age group, number of participants, duration, weather conditions, and any special requirements."
-                    className="min-h-[250px] text-base"
+                    placeholder="Describe your activity in detail. Include: activity type, location, age group, number of participants, duration, and any special requirements."
+                    className="min-h-[200px] text-sm bg-gray-50 border-gray-200"
                   />
                 </div>
-
                 <Button
                   onClick={handleGenerate}
                   disabled={loading || !activityDescription.trim()}
-                  className="w-full bg-gradient-to-r from-[#7413dc] to-[#ff66b2] hover:opacity-90 text-lg py-6"
+                  className="w-full bg-[#7413dc] hover:bg-[#5c0fb0] py-5"
                 >
                   {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Generating Risk Assessment...
-                    </>
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating...</>
                   ) : (
-                    <>
-                      <Sparkles className="w-5 h-5 mr-2" />
-                      Generate Risk Assessment
-                    </>
+                    <><Sparkles className="w-4 h-4 mr-2" />Generate Risk Assessment</>
                   )}
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-            <Card className="border-2 border-[#004851] shadow-xl">
-              <CardContent className="p-4 md:p-8">
-                <div className="flex items-start gap-4 mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#004851] to-[#00a794] rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Create Manually</h2>
-                    <p className="text-gray-600">Create a blank risk assessment form to fill in yourself</p>
-                  </div>
+            {/* Manual */}
+            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-6">
+              <div className="flex items-start gap-4 mb-5">
+                <div className="w-11 h-11 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <ShieldAlert className="w-5 h-5 text-gray-600" />
                 </div>
-
-                <Button
-                  onClick={async () => {
-                    const today = new Date();
-                    const reviewDate = addMonths(today, 6);
-                    const assessment = await base44.entities.RiskAssessment.create({
-                      activity_name: 'New Risk Assessment',
-                      assessment_date: format(today, 'yyyy-MM-dd'),
-                      next_review_date: format(reviewDate, 'yyyy-MM-dd'),
-                      risks: []
-                    });
-                    navigate(createPageUrl('RiskAssessmentDetail') + `?id=${assessment.id}`);
-                  }}
-                  className="w-full bg-[#004851] hover:bg-[#003840] text-lg py-6"
-                >
-                  Create Blank Assessment
-                </Button>
-              </CardContent>
-            </Card>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Create Manually</h2>
+                  <p className="text-sm text-gray-500 mt-0.5">Create a blank risk assessment form to fill in yourself</p>
+                </div>
+              </div>
+              <Button
+                onClick={async () => {
+                  const today = new Date();
+                  const reviewDate = addMonths(today, 6);
+                  const assessment = await base44.entities.RiskAssessment.create({
+                    activity_name: 'New Risk Assessment',
+                    assessment_date: format(today, 'yyyy-MM-dd'),
+                    next_review_date: format(reviewDate, 'yyyy-MM-dd'),
+                    risks: []
+                  });
+                  navigate(createPageUrl('RiskAssessmentDetail') + `?id=${assessment.id}`);
+                }}
+                variant="outline"
+                className="w-full border-gray-300 py-5"
+              >
+                Create Blank Assessment
+              </Button>
+            </div>
           </div>
         </div>
       </div>

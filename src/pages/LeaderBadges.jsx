@@ -288,69 +288,36 @@ export default function LeaderBadges() {
         )}
 
         {viewMode === 'badge' && <>
-        {/* Mobile Filters */}
-        <Card className="mb-6 md:hidden">
-          <CardContent className="p-4">
-            <details className="group">
-              <summary className="cursor-pointer list-none flex items-center justify-between">
-                <span className="font-medium">Filters & Search</span>
-                <span className="text-gray-500 group-open:rotate-180 transition-transform">▼</span>
-              </summary>
-              <div className="mt-4 space-y-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder={searchByCriteria ? 'Search by criteria text...' : 'Search badge name...'}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch id="search-mode-m" checked={searchByCriteria} onCheckedChange={(v) => { setSearchByCriteria(v); setSearchTerm(''); }} />
-                  <Label htmlFor="search-mode-m" className="text-sm text-gray-600 cursor-pointer">{searchByCriteria ? 'Searching by criteria' : 'Searching by badge name'}</Label>
-                </div>
-              </div>
-            </details>
-          </CardContent>
-        </Card>
-
-        {/* Desktop Filters */}
-        <Card className="mb-6 hidden md:block">
-          <CardContent className="p-4">
-            <div className="flex gap-4 items-center">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder={searchByCriteria ? 'Search by criteria text...' : 'Search badge name...'}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Switch id="search-mode-d" checked={searchByCriteria} onCheckedChange={(v) => { setSearchByCriteria(v); setSearchTerm(''); }} />
-                <Label htmlFor="search-mode-d" className="text-sm text-gray-600 cursor-pointer whitespace-nowrap">{searchByCriteria ? 'Criteria' : 'Badge name'}</Label>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Filters */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-6 flex flex-col md:flex-row gap-3 items-start md:items-center">
+          <div className="flex-1 relative w-full">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder={searchByCriteria ? 'Search by criteria text...' : 'Search badge name...'}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-gray-50 border-gray-200"
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Switch id="search-mode" checked={searchByCriteria} onCheckedChange={(v) => { setSearchByCriteria(v); setSearchTerm(''); }} />
+            <Label htmlFor="search-mode" className="text-sm text-gray-600 cursor-pointer whitespace-nowrap">{searchByCriteria ? 'By criteria' : 'By badge name'}</Label>
+          </div>
+        </div>
 
         {isLoading ? (
-                  <div className="text-center py-12">
-                    <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full mx-auto mb-4" />
-                    <p className="text-gray-600">Loading badges...</p>
-                  </div>
-                ) : filteredBadges.length === 0 ? (
-                  <Card>
-                    <CardContent className="p-12 text-center">
-                      <Award className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-600">No badges found</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div>
-                    {['challenge', 'activity', 'staged', 'core'].map(category => {
+          <div className="text-center py-16">
+            <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-gray-500">Loading badges...</p>
+          </div>
+        ) : filteredBadges.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+            <Award className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 font-medium">No badges found</p>
+          </div>
+        ) : (
+          <div>
+            {['challenge', 'activity', 'staged', 'core'].map(category => {
                       const categoryBadges = filteredBadges.filter(b => b.category === category);
                       if (categoryBadges.length === 0) return null;
 
@@ -487,9 +454,9 @@ export default function LeaderBadges() {
                         </div>
                       );
                     })}
-                  </div>
-                )}
-        </>}
+                    </div>
+                    )}
+                    </>}
       </div>
 
       {/* Email Confirmation Dialog */}

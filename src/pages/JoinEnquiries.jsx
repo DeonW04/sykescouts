@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { ArrowLeft, Users, UserPlus, CheckCircle, AlertCircle, Mail, Phone } from 'lucide-react';
+import { Users, CheckCircle, AlertCircle, Mail, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
@@ -151,182 +151,112 @@ export default function JoinEnquiries() {
       <FloatingNav />
       <NavBarSpacer />
       
-      {/* Header */}
-      <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Users className="w-8 h-8" />
-            <div>
-              <h1 className="text-3xl font-bold">Join Enquiries</h1>
-              <p className="mt-1 text-white/80">Manage membership and volunteer applications</p>
-            </div>
+      <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Join Enquiries</h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Manage membership applications</p>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm">Pending</p>
-                  <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-                </div>
-                <AlertCircle className="w-8 h-8 text-yellow-500 opacity-20" />
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          {[
+            { label: 'Pending', value: stats.pending, icon: AlertCircle, color: 'text-yellow-600', bg: 'bg-yellow-50' },
+            { label: 'Contacted', value: stats.contacted, icon: Mail, color: 'text-blue-600', bg: 'bg-blue-50' },
+            { label: 'Enrolled', value: stats.enrolled, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50' },
+            { label: 'Waitlist', value: stats.waitlist, icon: Users, color: 'text-orange-600', bg: 'bg-orange-50' },
+          ].map(({ label, value, icon: Icon, color, bg }) => (
+            <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
+              <div className={`w-10 h-10 ${bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                <Icon className={`w-5 h-5 ${color}`} />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm">Contacted</p>
-                  <p className="text-2xl font-bold text-blue-600">{stats.contacted}</p>
-                </div>
-                <Mail className="w-8 h-8 text-blue-500 opacity-20" />
+              <div>
+                <p className="text-xs text-gray-500 font-medium">{label}</p>
+                <p className={`text-2xl font-bold ${color}`}>{value}</p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm">Enrolled</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.enrolled}</p>
-                </div>
-                <CheckCircle className="w-8 h-8 text-green-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm">Waitlist</p>
-                  <p className="text-2xl font-bold text-orange-600">{stats.waitlist}</p>
-                </div>
-                <Users className="w-8 h-8 text-orange-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          ))}
         </div>
 
         {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex gap-4 flex-wrap">
-              <Input
-                placeholder="Search by name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 min-w-64"
-              />
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="contacted">Contacted</SelectItem>
-                  <SelectItem value="enrolled">Enrolled</SelectItem>
-                  <SelectItem value="waitlist">Waitlist</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-6 flex gap-3 flex-wrap">
+          <Input
+            placeholder="Search by name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 min-w-48 bg-gray-50 border-gray-200"
+          />
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-44 bg-gray-50 border-gray-200">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="contacted">Contacted</SelectItem>
+              <SelectItem value="enrolled">Enrolled</SelectItem>
+              <SelectItem value="waitlist">Waitlist</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Enquiries List */}
         <div className="space-y-3">
           {filteredEnquiries.length === 0 ? (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600">No enquiries found</p>
-              </CardContent>
-            </Card>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-gray-500 font-medium">No enquiries found</p>
+            </div>
           ) : (
             filteredEnquiries.map(enquiry => (
-              <Card key={enquiry.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-lg">{enquiry.child_name}</h3>
-                        <Badge className={statusBadgeColor[enquiry.status]}>
-                          <span className="mr-1">{statusIcon[enquiry.status]}</span>
-                          {enquiry.status}
-                        </Badge>
-                      </div>
-                      <div className="grid md:grid-cols-3 gap-3 text-sm text-gray-600 mb-3">
-                        <div>
-                          <span className="text-gray-500">Parent:</span> {enquiry.parent_name}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-4 h-4" />
-                          {enquiry.email}
-                        </div>
-                        {enquiry.phone && (
-                          <div className="flex items-center gap-2">
-                            <Phone className="w-4 h-4" />
-                            {enquiry.phone}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-gray-500">
-                        <span>Section: {enquiry.section_interest}</span>
-                        <span>•</span>
-                        <span>Submitted: {new Date(enquiry.created_date).toLocaleDateString()}</span>
-                      </div>
+              <div key={enquiry.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <h3 className="font-semibold text-gray-900 text-lg">{enquiry.child_name}</h3>
+                      <Badge className={statusBadgeColor[enquiry.status]}>
+                        <span className="mr-1">{statusIcon[enquiry.status]}</span>
+                        {enquiry.status}
+                      </Badge>
                     </div>
-                    <div className="flex gap-2 flex-wrap justify-end">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedEnquiry(enquiry);
-                          setShowDetailDialog(true);
-                        }}
-                      >
-                        View Details
-                      </Button>
-                      {enquiry.status === 'pending' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => updateStatusMutation.mutate({ id: enquiry.id, status: 'contacted' })}
-                        >
-                          Mark Contacted
-                        </Button>
-                      )}
-                      {(enquiry.status === 'pending' || enquiry.status === 'contacted') && (
-                        <Button
-                          size="sm"
-                          className="bg-orange-600 hover:bg-orange-700"
-                          onClick={() => updateStatusMutation.mutate({ id: enquiry.id, status: 'waitlist' })}
-                        >
-                          Add to Waitlist
-                        </Button>
-                      )}
-                      {(enquiry.status === 'pending' || enquiry.status === 'contacted' || enquiry.status === 'waitlist') && (
-                        <Button
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={() => createMemberFromEnquiryMutation.mutate(enquiry)}
-                        >
-                          Convert to Member
-                        </Button>
-                      )}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 mb-2">
+                      <span><span className="text-gray-400">Parent:</span> {enquiry.parent_name}</span>
+                      <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5 text-gray-400" />{enquiry.email}</span>
+                      {enquiry.phone && <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-gray-400" />{enquiry.phone}</span>}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <span className="capitalize bg-gray-100 px-2 py-0.5 rounded-full">{enquiry.section_interest}</span>
+                      <span>Submitted {new Date(enquiry.created_date).toLocaleDateString()}</span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex gap-2 flex-wrap justify-end">
+                    <Button variant="outline" size="sm" onClick={() => { setSelectedEnquiry(enquiry); setShowDetailDialog(true); }}>
+                      View Details
+                    </Button>
+                    {enquiry.status === 'pending' && (
+                      <Button size="sm" variant="outline" onClick={() => updateStatusMutation.mutate({ id: enquiry.id, status: 'contacted' })}>
+                        Mark Contacted
+                      </Button>
+                    )}
+                    {(enquiry.status === 'pending' || enquiry.status === 'contacted') && (
+                      <Button size="sm" className="bg-orange-500 hover:bg-orange-600" onClick={() => updateStatusMutation.mutate({ id: enquiry.id, status: 'waitlist' })}>
+                        Waitlist
+                      </Button>
+                    )}
+                    {(enquiry.status === 'pending' || enquiry.status === 'contacted' || enquiry.status === 'waitlist') && (
+                      <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => createMemberFromEnquiryMutation.mutate(enquiry)}>
+                        Convert to Member
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
             ))
           )}
         </div>

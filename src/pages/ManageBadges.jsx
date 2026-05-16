@@ -178,7 +178,7 @@ export default function ManageBadges() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Bar */}
         <div className="mb-6 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -186,7 +186,7 @@ export default function ManageBadges() {
             placeholder="Search badges..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 bg-white border-gray-200 rounded-xl shadow-sm"
           />
         </div>
 
@@ -240,37 +240,32 @@ export default function ManageBadges() {
           
           return (
             <div key={category} className="mb-8">
-              <h2 className="text-2xl font-bold mb-4 capitalize">{category} Badges</h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4 capitalize flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#7413dc] inline-block" />
+                {category} Badges
+              </h2>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {displayBadges.map(badge => {
                   const isStaged = badge.category === 'staged';
                   const isJoiningIn = badge.isJoiningInPlaceholder;
                   const familyBadges = isStaged ? categoryBadges.filter(b => b.badge_family_id === badge.badge_family_id && b.stage_number !== null) : [badge];
 
                   return (
-                            <Card key={badge.id}>
-                              <CardHeader>
-                                <div className="flex items-start gap-4">
-                                  <img
-                                    src={badge.image_url}
-                                    alt={badge.name}
-                                    className="w-16 h-16 rounded-lg object-cover"
-                                  />
-                                  <div className="flex-1">
-                                    <CardTitle className="text-lg">
-                                      {badge.name}
-                                      {isStaged && (
-                                        <span className="text-sm font-normal text-gray-500"> ({familyBadges.length} stages)</span>
-                                      )}
-                                    </CardTitle>
-                                    <p className="text-sm text-gray-500 mt-1">
-                                      {isStaged ? 'All Sections' : (sections.find(s => s.name === badge.section)?.display_name || badge.section)}
-                                    </p>
-                                  </div>
-                                </div>
-                              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 mb-4">{badge.description}</p>
+                    <div key={badge.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                      <div className="p-4 flex items-start gap-3 border-b border-gray-50">
+                        <img src={badge.image_url} alt={badge.name} className="w-14 h-14 rounded-xl object-contain bg-gray-50 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 text-sm leading-snug">
+                            {badge.name}
+                            {isStaged && <span className="text-xs font-normal text-gray-400 ml-1">({familyBadges.length} stages)</span>}
+                          </p>
+                          <p className="text-xs text-[#7413dc] font-medium mt-0.5">
+                            {isStaged ? 'All Sections' : (sections.find(s => s.name === badge.section)?.display_name || badge.section)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="p-4">
+                <p className="text-sm text-gray-500 mb-4 line-clamp-2">{badge.description}</p>
                 {isJoiningIn ? (
                   <Button
                     variant="outline"
@@ -345,8 +340,8 @@ export default function ManageBadges() {
                     </Button>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
                   );
                 })}
               </div>

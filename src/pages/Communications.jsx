@@ -141,175 +141,96 @@ export default function Communications() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Quick Action Boxes */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card className="border-t-4 border-t-blue-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('WeeklyMessageList'))}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm mb-1">Weekly Message</p>
-                  <p className="text-2xl font-bold">{pages.filter(p => p.type === 'weekly_message').length}</p>
-                </div>
-                <MessageSquare className="w-12 h-12 text-blue-500 opacity-20" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick Action Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {[
+            { label: 'Weekly Message', type: 'weekly_message', page: 'WeeklyMessageList', icon: MessageSquare, color: 'text-blue-600', bg: 'bg-blue-50', count: pages.filter(p => p.type === 'weekly_message').length },
+            { label: 'Monthly Newsletter', type: 'monthly_newsletter', page: 'MonthlyNewsletterList', icon: BookOpen, color: 'text-[#7413dc]', bg: 'bg-purple-50', count: pages.filter(p => p.type === 'monthly_newsletter').length },
+            { label: 'Event Update', type: 'event_update', page: 'EventUpdateList', icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-50', count: pages.filter(p => p.type === 'event_update').length },
+            { label: 'Join Enquiries', type: null, page: 'JoinEnquiries', icon: Users, color: 'text-green-600', bg: 'bg-green-50', count: enquiries.length },
+          ].map(({ label, page, icon: Icon, color, bg, count }) => (
+            <div
+              key={label}
+              onClick={() => navigate(createPageUrl(page))}
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all"
+            >
+              <div className={`w-10 h-10 ${bg} rounded-xl flex items-center justify-center mb-3`}>
+                <Icon className={`w-5 h-5 ${color}`} />
               </div>
-              <Button className="w-full mt-4 bg-blue-500 hover:bg-blue-600" size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Manage
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-t-4 border-t-purple-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('MonthlyNewsletterList'))}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm mb-1">Monthly Newsletter</p>
-                  <p className="text-2xl font-bold">{pages.filter(p => p.type === 'monthly_newsletter').length}</p>
-                </div>
-                <BookOpen className="w-12 h-12 text-purple-500 opacity-20" />
-              </div>
-              <Button className="w-full mt-4 bg-purple-500 hover:bg-purple-600" size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Manage
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-t-4 border-t-orange-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('EventUpdateList'))}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm mb-1">Event Update</p>
-                  <p className="text-2xl font-bold">{pages.filter(p => p.type === 'event_update').length}</p>
-                </div>
-                <TrendingUp className="w-12 h-12 text-orange-500 opacity-20" />
-              </div>
-              <Button className="w-full mt-4 bg-orange-500 hover:bg-orange-600" size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Manage
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="border-t-4 border-t-green-500 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(createPageUrl('JoinEnquiries'))}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-600 text-sm mb-1">Join Enquiries</p>
-                  <p className="text-2xl font-bold">{enquiries.length}</p>
-                </div>
-                <Users className="w-12 h-12 text-green-500 opacity-20" />
-              </div>
-              <Button className="w-full mt-4 bg-green-500 hover:bg-green-600" size="sm">
-                View All
-              </Button>
-            </CardContent>
-          </Card>
+              <p className="text-2xl font-bold text-gray-900">{count}</p>
+              <p className="text-sm text-gray-500 mt-0.5">{label}</p>
+            </div>
+          ))}
         </div>
 
-        {/* Statistics */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-orange-500" />
-                Uncontacted Enquiries
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-orange-600">{stats.uncontactedEnquiries}</p>
-              <p className="text-sm text-gray-600 mt-2">Require follow-up</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Mail className="w-5 h-5 text-purple-500" />
-                Published Pages
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-purple-600">{stats.publishedPages}</p>
-              <p className="text-sm text-gray-600 mt-2">Active communications</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Eye className="w-5 h-5 text-indigo-500" />
-                Total Page Views
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold text-indigo-600">{stats.totalViews}</p>
-              <p className="text-sm text-gray-600 mt-2">Across all pages</p>
-            </CardContent>
-          </Card>
+        {/* Stats row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {[
+            { label: 'Uncontacted Enquiries', value: stats.uncontactedEnquiries, icon: AlertCircle, color: 'text-orange-600', bg: 'bg-orange-50', sub: 'Require follow-up' },
+            { label: 'Published Pages', value: stats.publishedPages, icon: Mail, color: 'text-[#7413dc]', bg: 'bg-purple-50', sub: 'Active communications' },
+            { label: 'Total Page Views', value: stats.totalViews, icon: Eye, color: 'text-indigo-600', bg: 'bg-indigo-50', sub: 'Across all pages' },
+          ].map(({ label, value, icon: Icon, color, bg, sub }) => (
+            <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+              <div className={`w-10 h-10 ${bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                <Icon className={`w-5 h-5 ${color}`} />
+              </div>
+              <div>
+                <p className={`text-2xl font-bold ${color}`}>{value}</p>
+                <p className="text-xs text-gray-500">{label}</p>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Custom Push */}
-        <div className="mb-8">
+        <div className="mb-6">
           <CustomPushNotification />
         </div>
 
-        {/* Recent Pages */}
-        <Card className="mt-6">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Recent Communications</CardTitle>
-              <Select value={sectionFilter} onValueChange={setSectionFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter by section" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sections</SelectItem>
-                  {sections.map(section => (
-                    <SelectItem key={section.id} value={section.id}>
-                      {section.display_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {pages.length === 0 ? (
-              <div className="text-center py-8">
-                <Mail className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-                <p className="text-gray-600">No communications yet. Create one using the boxes above!</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {pages.slice(0, 5).map(page => (
-                  <div key={page.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-                    onClick={() => {
-                      const typeMap = {
-                        'weekly_message': 'WeeklyMessage',
-                        'monthly_newsletter': 'MonthlyNewsletter',
-                        'event_update': 'EventUpdate',
-                      };
-                      navigate(createPageUrl(typeMap[page.type]) + `?pageId=${page.page_id}`);
-                    }}
-                  >
-                    <div>
-                      <p className="font-medium">{page.title}</p>
-                      <p className="text-sm text-gray-600 capitalize">{page.type.replace('_', ' ')}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{page.view_count || 0} views</p>
-                      <p className={`text-xs ${page.status === 'published' ? 'text-green-600' : 'text-yellow-600'}`}>
-                        {page.status}
-                      </p>
-                    </div>
-                  </div>
+        {/* Recent Communications */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900">Recent Communications</h3>
+            <Select value={sectionFilter} onValueChange={setSectionFilter}>
+              <SelectTrigger className="w-44 bg-gray-50 border-gray-200">
+                <SelectValue placeholder="Filter by section" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sections</SelectItem>
+                {sections.map(section => (
+                  <SelectItem key={section.id} value={section.id}>{section.display_name}</SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {pages.length === 0 ? (
+              <div className="p-12 text-center">
+                <Mail className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                <p className="text-gray-500 text-sm">No communications yet</p>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            ) : pages.slice(0, 5).map(page => (
+              <div
+                key={page.id}
+                className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                onClick={() => {
+                  const typeMap = { 'weekly_message': 'WeeklyMessage', 'monthly_newsletter': 'MonthlyNewsletter', 'event_update': 'EventUpdate' };
+                  navigate(createPageUrl(typeMap[page.type]) + `?pageId=${page.page_id}`);
+                }}
+              >
+                <div>
+                  <p className="font-medium text-gray-900">{page.title}</p>
+                  <p className="text-sm text-gray-500 capitalize">{page.type.replace('_', ' ')}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">{page.view_count || 0} views</p>
+                  <p className={`text-xs font-medium ${page.status === 'published' ? 'text-green-600' : 'text-amber-600'}`}>{page.status}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

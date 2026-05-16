@@ -296,51 +296,48 @@ export default function ConsentForms() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {isLoading ? (
           <div className="flex justify-center py-16">
-            <div className="animate-spin w-8 h-8 border-4 border-[#004851] border-t-transparent rounded-full" />
+            <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full" />
           </div>
         ) : forms.length === 0 ? (
-          <Card>
-            <CardContent className="p-16 text-center">
-              <FileText className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">No consent forms yet</h3>
-              <p className="text-gray-500 mb-6">Create your first consent form to use with events and meetings</p>
-              <Button onClick={() => navigate(createPageUrl('ConsentFormBuilder'))} className="bg-[#004851] hover:bg-[#003840]">
-                <Plus className="w-4 h-4 mr-2" />
-                Create First Form
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center">
+            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-8 h-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No consent forms yet</h3>
+            <p className="text-gray-500 mb-6">Create your first consent form to use with events and meetings</p>
+            <Button onClick={() => navigate(createPageUrl('ConsentFormBuilder'))} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
+              <Plus className="w-4 h-4 mr-2" />Create First Form
+            </Button>
+          </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {forms.map(form => (
-              <Card key={form.id} className={`transition-all ${!form.active ? 'opacity-60' : ''}`}>
-                <CardContent className="p-5 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-teal-100 flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-6 h-6 text-teal-700" />
+              <div key={form.id} className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 transition-opacity ${!form.active ? 'opacity-55' : ''}`}>
+                <div className="w-11 h-11 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-5 h-5 text-[#7413dc]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold text-gray-900">{form.title}</h3>
+                    {!form.active && <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Inactive</span>}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-900">{form.title}</h3>
-                      {!form.active && <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">Inactive</span>}
-                    </div>
-                    {form.description && <p className="text-sm text-gray-500 mt-0.5 truncate">{form.description}</p>}
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {form.blocks?.length || 0} field{form.blocks?.length !== 1 ? 's' : ''} · Created {format(new Date(form.created_date), 'd MMM yyyy')}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Button size="sm" variant="ghost" onClick={() => toggleMutation.mutate({ id: form.id, active: !form.active })} title={form.active ? 'Deactivate' : 'Activate'}>
-                      {form.active ? <ToggleRight className="w-5 h-5 text-teal-600" /> : <ToggleLeft className="w-5 h-5 text-gray-400" />}
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => navigate(createPageUrl('ConsentFormBuilder') + `?id=${form.id}`)}>
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setDeletingForm(form)} className="text-red-500 hover:bg-red-50">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  {form.description && <p className="text-sm text-gray-500 mt-0.5 truncate">{form.description}</p>}
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {form.blocks?.length || 0} field{form.blocks?.length !== 1 ? 's' : ''} · Created {format(new Date(form.created_date), 'd MMM yyyy')}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Button size="sm" variant="ghost" onClick={() => toggleMutation.mutate({ id: form.id, active: !form.active })} title={form.active ? 'Deactivate' : 'Activate'}>
+                    {form.active ? <ToggleRight className="w-5 h-5 text-[#7413dc]" /> : <ToggleLeft className="w-5 h-5 text-gray-400" />}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => navigate(createPageUrl('ConsentFormBuilder') + `?id=${form.id}`)}>
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setDeletingForm(form)} className="text-red-500 hover:bg-red-50">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
             ))}
           </div>
         )}
