@@ -8,7 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import { differenceInMonths, differenceInYears } from 'date-fns';
 
 export default function JoiningInBadgeDetail() {
@@ -89,7 +90,8 @@ export default function JoiningInBadgeDetail() {
   if (badgesLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <LeaderNav />
+        <FloatingNav />
+        <NavBarSpacer />
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full" />
         </div>
@@ -99,8 +101,8 @@ export default function JoiningInBadgeDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
-
+      <FloatingNav />
+      <NavBarSpacer />
       <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">

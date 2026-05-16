@@ -11,7 +11,8 @@ import { ArrowLeft, Users, UserPlus, CheckCircle, AlertCircle, Mail, Phone } fro
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function JoinEnquiries() {
@@ -147,7 +148,8 @@ export default function JoinEnquiries() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
+      <FloatingNav />
+      <NavBarSpacer />
       
       {/* Header */}
       <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-8">

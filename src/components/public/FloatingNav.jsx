@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import {
   Menu, X, ChevronDown, ChevronRight, Users, Calendar, Award, Mail, Settings,
   Image, ShieldAlert, CalendarDays, Lightbulb, Package, TrendingUp,
-  FileText, Landmark, BookOpen, LogOut, LayoutDashboard, UserCheck, Home,
+  FileText, Landmark, BookOpen, LogOut, LayoutDashboard, UserCheck, Home, UserCircle,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import {
@@ -43,6 +44,7 @@ const portalGroups = [
       { label: 'Badge Tracking', page: 'LeaderBadges', icon: Award },
       { label: 'Due Badges', page: 'AwardBadges', icon: TrendingUp },
       { label: 'Badge Stock', page: 'BadgeStockManagement', icon: Package },
+      { label: 'Manage Badges', page: 'ManageBadges', icon: Settings, separator: true, adminOnly: true },
     ],
   },
   {
@@ -51,6 +53,7 @@ const portalGroups = [
       { label: 'Communications', page: 'Communications', icon: Mail },
       { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark },
       { label: 'Gallery', page: 'LeaderGallery', icon: Image },
+      { label: 'Treasurer Portal', page: 'TreasurerDashboard', icon: Landmark, separator: true },
     ],
   },
 ];
@@ -455,13 +458,20 @@ export default function FloatingNav() {
               <div style={{ width: '1px', height: '18px', background: 'rgba(116,19,220,0.15)', flexShrink: 0, marginRight: '8px' }} />
 
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
-                {portalGroups.map((group) => (
+                {portalGroups.map((group) => {
+                  const isGroupActive = group.links.some(({ page }) => location.pathname === '/' + page || location.pathname.startsWith('/' + page));
+                  return (
                   <DropdownMenu key={group.label}>
                     <DropdownMenuTrigger asChild>
                       <button
-                        style={stripBtnStyle}
+                        style={{
+                          ...stripBtnStyle,
+                          background: isGroupActive ? 'rgba(116,19,220,0.1)' : 'none',
+                          color: isGroupActive ? '#7413dc' : 'rgba(26,26,46,0.65)',
+                          fontWeight: isGroupActive ? 600 : 500,
+                        }}
                         onMouseEnter={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.07)'; e.currentTarget.style.color = '#7413dc'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'rgba(26,26,46,0.65)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = isGroupActive ? 'rgba(116,19,220,0.1)' : 'none'; e.currentTarget.style.color = isGroupActive ? '#7413dc' : 'rgba(26,26,46,0.65)'; }}
                       >
                         <group.icon size={13} />
                         {group.label}
@@ -469,16 +479,23 @@ export default function FloatingNav() {
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="center" style={{ zIndex: 1100 }}>
-                      {group.links.map(({ label, page, icon: Icon }) => (
-                        <DropdownMenuItem key={page} asChild>
-                          <Link to={createPageUrl(page)} className="flex items-center gap-2 cursor-pointer">
-                            <Icon className="w-4 h-4" /> {label}
-                          </Link>
-                        </DropdownMenuItem>
-                      ))}
+                     {group.links.map(({ label, page, icon: Icon, separator, adminOnly }) => {
+                       if (adminOnly && !isAdmin) return null;
+                       return (
+                         <React.Fragment key={page}>
+                           {separator && <DropdownMenuSeparator />}
+                           <DropdownMenuItem asChild>
+                             <Link to={createPageUrl(page)} className="flex items-center gap-2 cursor-pointer">
+                               <Icon className="w-4 h-4" /> {label}
+                             </Link>
+                           </DropdownMenuItem>
+                         </React.Fragment>
+                       );
+                     })}
                     </DropdownMenuContent>
                   </DropdownMenu>
-                ))}
+                  );
+                })}
               </div>
 
               <div style={{ width: '1px', height: '18px', background: 'rgba(116,19,220,0.15)', flexShrink: 0, marginLeft: '8px', marginRight: '8px' }} />
@@ -494,22 +511,40 @@ export default function FloatingNav() {
                     <Settings size={13} /> Admin Settings
                   </Link>
                 )}
-                <button
-                  onClick={() => base44.auth.logout()}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '13px',
-                    color: 'rgba(26,26,46,0.6)', background: 'rgba(116,19,220,0.04)',
-                    border: '0.5px solid rgba(116,19,220,0.12)', borderRadius: '20px',
-                    cursor: 'pointer', padding: '5px 12px 5px 10px',
-                    whiteSpace: 'nowrap', transition: 'background 0.2s, color 0.2s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.07)'; e.currentTarget.style.color = '#ef4444'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.04)'; e.currentTarget.style.color = 'rgba(26,26,46,0.6)'; }}
-                >
-                  {user?.full_name?.split(' ')[0] || 'Account'}
-                  <LogOut size={12} />
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '13px',
+                        color: 'rgba(26,26,46,0.6)', background: 'rgba(116,19,220,0.04)',
+                        border: '0.5px solid rgba(116,19,220,0.12)', borderRadius: '20px',
+                        cursor: 'pointer', padding: '5px 12px 5px 10px',
+                        whiteSpace: 'nowrap', transition: 'background 0.2s, color 0.2s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.08)'; e.currentTarget.style.color = '#7413dc'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.04)'; e.currentTarget.style.color = 'rgba(26,26,46,0.6)'; }}
+                    >
+                      <UserCircle size={14} />
+                      {(() => {
+                        const name = user?.display_name || user?.full_name || 'Account';
+                        return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase().split(' ')[0];
+                      })()}
+                      <ChevronDown size={11} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" style={{ zIndex: 1100 }}>
+                    <div style={{ padding: '8px 12px 6px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                      <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '13px', color: '#1a1a2e', margin: 0 }}>
+                        {(() => { const n = user?.display_name || user?.full_name || ''; return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase(); })()}
+                      </p>
+                      <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(26,26,46,0.4)', margin: '2px 0 0' }}>{user?.email}</p>
+                    </div>
+                    <DropdownMenuItem onClick={() => base44.auth.logout()} className="cursor-pointer text-red-600 focus:text-red-600">
+                      <LogOut className="w-4 h-4 mr-2" /> Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>

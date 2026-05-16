@@ -9,7 +9,8 @@ import { ArrowLeft, Plus, Search, Eye, Trash2, Edit2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 
 export default function EventUpdateList() {
   const navigate = useNavigate();
@@ -77,8 +78,8 @@ export default function EventUpdateList() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
-      
+      <FloatingNav />
+      <NavBarSpacer />
       <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">

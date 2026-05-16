@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Users, UserCheck, UserX, AlertTriangle, Mail, CheckCircle, RefreshCw, X, Bell, BellOff, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function ParentPortal() {
@@ -156,6 +157,7 @@ export default function ParentPortal() {
   return (
     <div className="min-h-screen bg-gray-50">
       <FloatingNav />
+      <NavBarSpacer />
       <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
           <div>

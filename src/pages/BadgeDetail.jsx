@@ -13,7 +13,8 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { motion } from 'framer-motion';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import StockManagementDialog from '../components/badges/StockManagementDialog';
 
 export default function BadgeDetail() {
@@ -632,7 +633,8 @@ export default function BadgeDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
-      <LeaderNav />
+      <FloatingNav />
+      <NavBarSpacer />
       
       {/* Header */}
       <div className="relative bg-gradient-to-r from-green-500 to-emerald-600 text-white py-12 overflow-hidden">

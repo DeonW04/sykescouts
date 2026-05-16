@@ -6,6 +6,7 @@ import { Sparkles, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSectionContext } from '../components/leader/SectionContext';
 import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import PostItNote from '../components/ideasBoard/PostItNote.jsx';
 import IdeaDetailPanel from '../components/ideasBoard/IdeaDetailPanel.jsx';
 import GenerateIdeasModal from '../components/ideasBoard/GenerateIdeasModal.jsx';
@@ -142,6 +143,7 @@ export default function IdeasBoard() {
   return (
     <div className="min-h-screen" style={{ background: '#f5f0e8' }}>
       <FloatingNav />
+      <NavBarSpacer />
       <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
         <div className="max-w-full flex items-center justify-between gap-4 flex-wrap">
           <div>

@@ -14,6 +14,7 @@ import { Receipt, TrendingUp, TrendingDown, Upload, Users, Plus, Eye } from 'luc
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import { useSectionContext } from '../components/leader/SectionContext';
 
 const fmt = (n) => `£${(n || 0).toFixed(2)}`;
@@ -118,6 +119,7 @@ export default function SectionAccounting() {
   return (
     <div className="min-h-screen bg-gray-50">
       <FloatingNav />
+      <NavBarSpacer />
 
       <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
         <div className="max-w-7xl mx-auto">

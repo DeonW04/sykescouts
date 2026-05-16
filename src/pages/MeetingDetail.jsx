@@ -23,7 +23,8 @@ import DocumentStorageSection from '../components/meeting/DocumentStorageSection
 import BadgesSection from '../components/meeting/BadgesSection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
 import LeaderRotaSection from '../components/meeting/LeaderRotaSection';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import IScoutSection from '../components/meeting/IScoutSection';
 import MeetingFinancesTab from '../components/meeting/MeetingFinancesTab';
 import MeetingOSMSyncModal from '../components/osm/MeetingOSMSyncModal';
@@ -303,10 +304,11 @@ export default function MeetingDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
+      <FloatingNav />
+      <NavBarSpacer />
 
       {/* Header */}
-      <div className="bg-gradient-to-br from-[#004851] to-[#006b7a] text-white py-6 shadow-lg sticky top-0 z-40">
+      <div className="bg-gradient-to-br from-[#004851] to-[#006b7a] text-white py-6 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 mb-3 lg:hidden">
             <Button

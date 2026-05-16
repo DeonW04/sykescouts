@@ -10,7 +10,8 @@ import { ArrowLeft, Plus, Copy, BarChart3, MessageSquare, Mail } from 'lucide-re
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import PageBuilder from '../components/pageBuilder/PageBuilder';
 import ResponsesDialog from '../components/communications/ResponsesDialog';
 import HeaderBarConfig from '../components/communications/HeaderBarConfig';
@@ -106,7 +107,8 @@ export default function EventUpdate() {
   if (!page) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <LeaderNav />
+        <FloatingNav />
+        <NavBarSpacer />
         <div className="max-w-7xl mx-auto px-4 py-8">
           <Button
             variant="ghost"
@@ -130,7 +132,8 @@ export default function EventUpdate() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
+      <FloatingNav />
+      <NavBarSpacer />
       
       {/* Header */}
       <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white py-8">

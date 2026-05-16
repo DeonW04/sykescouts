@@ -21,7 +21,8 @@ import SafetySection from '../components/meeting/SafetySection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
 import DocumentStorageSection from '../components/meeting/DocumentStorageSection';
 import EventFinancesTab from '../components/events/EventFinancesTab';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 
 export default function EventDetail() {
   const navigate = useNavigate();
@@ -204,10 +205,11 @@ export default function EventDetail() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <LeaderNav />
+      <FloatingNav />
+      <NavBarSpacer />
       
       {/* Header */}
-      <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white py-6 shadow-lg sticky top-0 z-40">
+      <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white py-6 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 mb-4">
             <Button

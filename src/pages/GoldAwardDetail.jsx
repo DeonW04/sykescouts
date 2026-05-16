@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, Award, Trophy, Star, CheckCircle, Circle, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
-import LeaderNav from '../components/leader/LeaderNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import { differenceInMonths, differenceInYears, addYears } from 'date-fns';
 
 const SCOUTS_MAX_AGE = 14;
@@ -177,8 +178,8 @@ export default function GoldAwardDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-amber-50">
-      <LeaderNav />
-
+      <FloatingNav />
+      <NavBarSpacer />
       <div className="bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-6">
