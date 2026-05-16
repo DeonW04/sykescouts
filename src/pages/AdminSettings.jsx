@@ -215,15 +215,15 @@ export default function AdminSettings() {
     <div className="min-h-screen bg-gray-50">
       <FloatingNav />
       <NavBarSpacer />
-      <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+      <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '16px' }}>
+        <div className="max-w-7xl mx-auto flex items-start justify-between gap-3 flex-wrap">
           <div>
             <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Admin</p>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Admin Settings</h1>
-            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Manage system configuration and users</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(20px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Admin Settings</h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Manage system configuration and users</p>
           </div>
-          <button onClick={() => navigate(createPageUrl('ParentPortalAnalytics'))} className="flex items-center gap-2 text-sm font-semibold border border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white px-4 py-2 rounded-lg transition-colors">
-            <BarChart2 className="w-4 h-4" />Parent Portal Analytics
+          <button onClick={() => navigate(createPageUrl('ParentPortalAnalytics'))} className="flex items-center gap-2 text-xs font-semibold border border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white px-3 py-2 rounded-lg transition-colors flex-shrink-0">
+            <BarChart2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">Parent Portal</span> Analytics
           </button>
         </div>
       </div>
@@ -350,52 +350,53 @@ export default function AdminSettings() {
 
               {/* ── Website Images ── */}
               <TabsContent value="images">
-                <div className="space-y-6">
-                  {/* Home */}
-                  <Card>
-                    <CardHeader><CardTitle className="flex items-center gap-2"><Image className="w-5 h-5" />Home Page Images</CardTitle><p className="text-sm text-gray-600">Multiple images for the home page carousel</p></CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {getImagesForPage('home').map(img => (
-                          <div key={img.id} className="relative group">
-                            <img src={img.image_url} alt="Home" className="w-full h-48 object-cover rounded-lg" />
-                            <button onClick={() => deleteImageMutation.mutate(img.id)} className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button type="button" variant="outline" disabled={uploadingImage} onClick={() => document.getElementById('home-upload').click()}><Upload className="w-4 h-4 mr-2" />Upload New</Button>
-                        <input id="home-upload" type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files[0]; if (f) handleFileUpload('home', f, getImagesForPage('home').length); }} />
-                        <Button variant="outline" onClick={() => { setCurrentImagePage('home'); setShowGallerySelector(true); }}><Image className="w-4 h-4 mr-2" />From Gallery</Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  {/* About */}
-                  <Card>
-                    <CardHeader><CardTitle>About Us Image</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                      {getImagesForPage('about')[0] && <div className="relative group w-fit"><img src={getImagesForPage('about')[0].image_url} alt="About" className="w-full max-w-md h-64 object-cover rounded-lg" /><button onClick={() => deleteImageMutation.mutate(getImagesForPage('about')[0].id)} className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button></div>}
-                      <div className="flex gap-2">
-                        <Button type="button" variant="outline" disabled={uploadingImage} onClick={() => document.getElementById('about-upload').click()}><Upload className="w-4 h-4 mr-2" />{getImagesForPage('about').length > 0 ? 'Replace' : 'Upload'}</Button>
-                        <input id="about-upload" type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files[0]; if (f) handleFileUpload('about', f, 0); }} />
-                        <Button variant="outline" onClick={() => { setCurrentImagePage('about'); setShowGallerySelector(true); }}><Image className="w-4 h-4 mr-2" />From Gallery</Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  {/* Section images */}
-                  {['beavers', 'cubs', 'scouts'].map(section => (
-                    <Card key={section}>
-                      <CardHeader><CardTitle className="capitalize">{section} Image</CardTitle></CardHeader>
-                      <CardContent className="space-y-4">
-                        {getImagesForPage(section)[0] && <div className="relative group w-fit"><img src={getImagesForPage(section)[0].image_url} alt={section} className="w-full max-w-md h-64 object-cover rounded-lg" /><button onClick={() => deleteImageMutation.mutate(getImagesForPage(section)[0].id)} className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button></div>}
-                        <div className="flex gap-2">
-                          <Button type="button" variant="outline" disabled={uploadingImage} onClick={() => document.getElementById(`${section}-upload`).click()}><Upload className="w-4 h-4 mr-2" />{getImagesForPage(section).length > 0 ? 'Replace' : 'Upload'}</Button>
-                          <input id={`${section}-upload`} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files[0]; if (f) handleFileUpload(section, f, 0); }} />
-                          <Button variant="outline" onClick={() => { setCurrentImagePage(section); setShowGallerySelector(true); }}><Image className="w-4 h-4 mr-2" />From Gallery</Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="space-y-4">
+                 {/* Home */}
+                 <Card>
+                   <CardHeader><CardTitle className="flex items-center gap-2"><Image className="w-5 h-5" />Home Page Images</CardTitle><p className="text-sm text-gray-600">Multiple images for the home page carousel</p></CardHeader>
+                   <CardContent className="space-y-4">
+                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                       {getImagesForPage('home').map(img => (
+                         <div key={img.id} className="relative group">
+                           <img src={img.image_url} alt="Home" className="w-full h-32 sm:h-48 object-cover rounded-lg" />
+                           <button onClick={() => deleteImageMutation.mutate(img.id)} className="absolute top-1.5 right-1.5 p-1.5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3.5 h-3.5" /></button>
+                         </div>
+                       ))}
+                     </div>
+                     <div className="flex gap-2 flex-wrap">
+                       <Button type="button" variant="outline" size="sm" disabled={uploadingImage} onClick={() => document.getElementById('home-upload').click()}><Upload className="w-3.5 h-3.5 mr-1.5" />Upload New</Button>
+                       <input id="home-upload" type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files[0]; if (f) handleFileUpload('home', f, getImagesForPage('home').length); }} />
+                       <Button variant="outline" size="sm" onClick={() => { setCurrentImagePage('home'); setShowGallerySelector(true); }}><Image className="w-3.5 h-3.5 mr-1.5" />From Gallery</Button>
+                     </div>
+                   </CardContent>
+                 </Card>
+                 {/* About + section images as compact slots */}
+                 <Card>
+                   <CardHeader><CardTitle>Other Page Images</CardTitle></CardHeader>
+                   <CardContent className="space-y-4">
+                     {['about', 'beavers', 'cubs', 'scouts'].map(page => {
+                       const img = getImagesForPage(page)[0];
+                       return (
+                         <div key={page} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                           {img
+                             ? <img src={img.image_url} alt={page} className="w-16 h-12 object-cover rounded-lg flex-shrink-0" />
+                             : <div className="w-16 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0"><Image className="w-5 h-5 text-gray-400" /></div>
+                           }
+                           <div className="flex-1 min-w-0">
+                             <p className="font-medium text-sm capitalize">{page} {page === 'about' ? 'page' : 'section'}</p>
+                             <p className="text-xs text-gray-400">{img ? 'Uploaded' : 'No image'}</p>
+                           </div>
+                           <div className="flex gap-1.5 flex-shrink-0">
+                             {img && <button onClick={() => deleteImageMutation.mutate(img.id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><X className="w-3.5 h-3.5" /></button>}
+                             <Button type="button" variant="outline" size="sm" disabled={uploadingImage} onClick={() => document.getElementById(`${page}-img-upload`).click()}><Upload className="w-3.5 h-3.5" /></Button>
+                             <input id={`${page}-img-upload`} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files[0]; if (f) handleFileUpload(page, f, 0); }} />
+                             <Button variant="outline" size="sm" onClick={() => { setCurrentImagePage(page); setShowGallerySelector(true); }}><Image className="w-3.5 h-3.5" /></Button>
+                           </div>
+                         </div>
+                       );
+                     })}
+                   </CardContent>
+                 </Card>
 
                   {/* Loading Screen GIF */}
                   <Card className="border-purple-200 bg-purple-50">

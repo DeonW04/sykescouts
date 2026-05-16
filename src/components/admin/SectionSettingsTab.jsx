@@ -78,19 +78,19 @@ export default function SectionSettingsTab({ sections, leaders, queryClient }) {
           {sections.map(section => {
             const sectionLeaders = leaders.filter(l => l.section_ids?.includes(section.id));
             return (
-              <div key={section.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+              <div key={section.id} className="p-4 border rounded-lg bg-gray-50 space-y-3">
                 <div>
                   <p className="font-semibold">{section.display_name}</p>
                   <p className="text-xs text-gray-500 capitalize">{section.name} · {sectionLeaders.length} leader{sectionLeaders.length !== 1 ? 's' : ''} assigned</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-xs text-gray-500 mr-1">Team Leader:</div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 flex-shrink-0">Team Leader:</span>
                   <Select
                     value={section.team_leader_id || '__none__'}
                     onValueChange={(val) => handleSetTeamLeader(section.id, val)}
                     disabled={saving[section.id]}
                   >
-                    <SelectTrigger className="w-52">
+                    <SelectTrigger className="flex-1">
                       <SelectValue placeholder="Select leader..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -103,7 +103,7 @@ export default function SectionSettingsTab({ sections, leaders, queryClient }) {
                       )}
                     </SelectContent>
                   </Select>
-                  {saving[section.id] && <span className="text-xs text-gray-400">Saving...</span>}
+                  {saving[section.id] && <span className="text-xs text-gray-400">Saving…</span>}
                 </div>
               </div>
             );
@@ -127,7 +127,7 @@ export default function SectionSettingsTab({ sections, leaders, queryClient }) {
             return (
               <div key={section.id} className="p-4 border rounded-lg bg-gray-50 space-y-3">
                 <p className="font-semibold text-sm">{section.display_name}</p>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <Label className="text-xs">Meeting Day</Label>
                     <Select value={edit.meeting_day} onValueChange={v => setMeetingField(section.id, 'meeting_day', v)}>

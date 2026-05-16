@@ -453,26 +453,25 @@ export default function LeaderManagement() {
                 <div
                   key={leader.id}
                   onClick={() => setSelectedLeaderId(leader.id)}
-                  className="flex items-center gap-4 p-4 bg-white border rounded-xl hover:border-[#004851] hover:shadow-sm cursor-pointer transition-all"
+                  className="flex items-center gap-3 p-4 bg-white border rounded-xl hover:border-[#004851] hover:shadow-sm cursor-pointer transition-all"
                 >
                   <div className="w-10 h-10 bg-[#004851] rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
                     {(leader.display_name || user?.full_name)?.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900">{leader.display_name || user?.full_name}</p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
+                    <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                     {leader.role_title && <p className="text-xs text-gray-400">{leader.role_title}</p>}
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {leaderSections.map(s => <Badge key={s.id} className="bg-teal-100 text-teal-800 text-xs">{s.display_name}</Badge>)}
+                    </div>
                   </div>
-                  <div className="hidden sm:flex flex-wrap gap-1">
-                    {leaderSections.map(s => <Badge key={s.id} className="bg-teal-100 text-teal-800 text-xs">{s.display_name}</Badge>)}
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     {issues.length === 0
-                      ? <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">✓ Compliant</span>
+                      ? <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">✓ OK</span>
                       : <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{issues.length} issue{issues.length > 1 ? 's' : ''}</span>
                     }
-                    {dbsExpired && <span className="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded-full">DBS Expired</span>}
-                    <span className="text-xs text-gray-400">{leader.phone || 'No phone'}</span>
+                    {dbsExpired && <span className="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded-full">DBS!</span>}
                   </div>
                 </div>
               );

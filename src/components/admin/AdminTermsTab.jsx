@@ -94,15 +94,15 @@ export default function AdminTermsTab() {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="flex-1 min-w-0">
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
                 Group Terms
               </CardTitle>
               <p className="text-sm text-gray-500 mt-1">Terms are shared across all sections. Each section sets its own meeting day and times in Section Settings.</p>
             </div>
-            <Button onClick={openNew} className="bg-[#004851] hover:bg-[#003840]">
+            <Button onClick={openNew} className="bg-[#004851] hover:bg-[#003840] flex-shrink-0">
               <Plus className="w-4 h-4 mr-2" />New Term
             </Button>
           </div>
@@ -114,27 +114,31 @@ export default function AdminTermsTab() {
           {terms.map(term => {
             const status = getTermStatus(term);
             return (
-              <div key={term.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold">{term.title}</p>
-                    <Badge className={`text-xs ${status.color}`}>{status.label}</Badge>
-                    {term.finance_closed && <Badge className="text-xs bg-red-100 text-red-700">Finance Locked</Badge>}
+              <div key={term.id} className="p-4 border rounded-lg bg-gray-50 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <p className="font-semibold">{term.title}</p>
+                      <Badge className={`text-xs ${status.color}`}>{status.label}</Badge>
+                      {term.finance_closed && <Badge className="text-xs bg-red-100 text-red-700">Finance Locked</Badge>}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {term.start_date && format(new Date(term.start_date), 'dd MMM yyyy')} — {term.end_date && format(new Date(term.end_date), 'dd MMM yyyy')}
+                    </p>
+                    {term.half_term_start && (
+                      <p className="text-xs text-gray-400 mt-0.5">Half term: {format(new Date(term.half_term_start), 'dd MMM')}–{term.half_term_end ? format(new Date(term.half_term_end), 'dd MMM') : '?'}</p>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-500">
-                    {term.start_date && format(new Date(term.start_date), 'dd MMM yyyy')} — {term.end_date && format(new Date(term.end_date), 'dd MMM yyyy')}
-                    {term.half_term_start && ` · Half term: ${format(new Date(term.half_term_start), 'dd MMM')}–${term.half_term_end ? format(new Date(term.half_term_end), 'dd MMM') : '?'}`}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => openEdit(term)}>
-                    <Edit className="w-3 h-3 mr-1" />Edit
-                  </Button>
-                  {!term.finance_closed && (
-                    <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(term.id)}>
-                      <Trash2 className="w-3 h-3" />
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button size="sm" variant="outline" onClick={() => openEdit(term)}>
+                      <Edit className="w-3 h-3 mr-1" />Edit
                     </Button>
-                  )}
+                    {!term.finance_closed && (
+                      <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(term.id)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             );

@@ -55,34 +55,40 @@ export default function NotificationLogTab() {
           </div>
         ) : (
           <div className="space-y-2">
-            <div className="grid grid-cols-5 gap-3 px-3 py-2 bg-gray-50 rounded text-xs font-semibold text-gray-600">
-              <div>Recipient</div>
-              <div>Email</div>
-              <div>Type</div>
-              <div>Subject / Member</div>
-              <div>Sent</div>
+            {/* Desktop header */}
+            <div className="hidden md:grid grid-cols-5 gap-3 px-3 py-2 bg-gray-50 rounded text-xs font-semibold text-gray-600">
+              <div>Recipient</div><div>Email</div><div>Type</div><div>Subject / Member</div><div>Sent</div>
             </div>
             {filtered.map(log => (
-              <div key={log.id} className="grid grid-cols-5 gap-3 px-3 py-3 border rounded-lg text-sm items-center hover:bg-gray-50">
-                <div className="font-medium truncate">{log.recipient_name || '—'}</div>
-                <div className="text-gray-600 truncate text-xs">{log.recipient_email}</div>
-                <div>
-                  {log.notification_type === 'email' ? (
-                    <Badge className="bg-blue-100 text-blue-700 text-xs">
-                      <Mail className="w-3 h-3 mr-1" />Email
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-purple-100 text-purple-700 text-xs">
-                      <Bell className="w-3 h-3 mr-1" />Push
-                    </Badge>
+              <div key={log.id}>
+                {/* Desktop row */}
+                <div className="hidden md:grid grid-cols-5 gap-3 px-3 py-3 border rounded-lg text-sm items-center hover:bg-gray-50">
+                  <div className="font-medium truncate">{log.recipient_name || '—'}</div>
+                  <div className="text-gray-600 truncate text-xs">{log.recipient_email}</div>
+                  <div>
+                    {log.notification_type === 'email'
+                      ? <Badge className="bg-blue-100 text-blue-700 text-xs"><Mail className="w-3 h-3 mr-1" />Email</Badge>
+                      : <Badge className="bg-purple-100 text-purple-700 text-xs"><Bell className="w-3 h-3 mr-1" />Push</Badge>}
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-700 font-medium truncate">{log.member_name || log.entity_name || '—'}</p>
+                    <p className="text-xs text-gray-400 truncate">{log.subject}</p>
+                  </div>
+                  <div className="text-xs text-gray-500">{log.sent_at ? format(new Date(log.sent_at), 'dd MMM yy HH:mm') : '—'}</div>
+                </div>
+                {/* Mobile card */}
+                <div className="md:hidden p-3 border rounded-xl bg-white space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-semibold text-sm text-gray-900 truncate">{log.recipient_name || '—'}</p>
+                    {log.notification_type === 'email'
+                      ? <Badge className="bg-blue-100 text-blue-700 text-xs flex-shrink-0"><Mail className="w-3 h-3 mr-1" />Email</Badge>
+                      : <Badge className="bg-purple-100 text-purple-700 text-xs flex-shrink-0"><Bell className="w-3 h-3 mr-1" />Push</Badge>}
+                  </div>
+                  <p className="text-xs text-gray-500 truncate">{log.recipient_email}</p>
+                  {(log.member_name || log.subject) && (
+                    <p className="text-xs text-gray-600 truncate">{log.member_name || log.entity_name || ''}{log.subject ? ` · ${log.subject}` : ''}</p>
                   )}
-                </div>
-                <div>
-                  <p className="text-xs text-gray-700 font-medium truncate">{log.member_name || log.entity_name || '—'}</p>
-                  <p className="text-xs text-gray-400 truncate">{log.subject}</p>
-                </div>
-                <div className="text-xs text-gray-500">
-                  {log.sent_at ? format(new Date(log.sent_at), 'dd MMM yy HH:mm') : '—'}
+                  <p className="text-xs text-gray-400">{log.sent_at ? format(new Date(log.sent_at), 'd MMM yy, HH:mm') : '—'}</p>
                 </div>
               </div>
             ))}
