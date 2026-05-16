@@ -119,31 +119,25 @@ export default function LeaderAttendance() {
   };
 
   const AttendanceButtons = ({ memberId, sectionId, currentStatus }) => (
-    <div className="flex gap-1">
-      <Button
-        size="sm"
-        variant={currentStatus === 'present' ? 'default' : 'outline'}
-        className={currentStatus === 'present' ? 'bg-green-600 hover:bg-green-700' : ''}
+    <div className="flex gap-2">
+      <button
         onClick={() => updateAttendanceMutation.mutate({ memberId, sectionId, status: 'present' })}
+        className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all ${currentStatus === 'present' ? 'bg-green-500 text-white shadow-md scale-110' : 'bg-gray-100 text-gray-400 hover:bg-green-100 hover:text-green-600'}`}
       >
         <Check className="w-4 h-4" />
-      </Button>
-      <Button
-        size="sm"
-        variant={currentStatus === 'absent' ? 'default' : 'outline'}
-        className={currentStatus === 'absent' ? 'bg-red-600 hover:bg-red-700' : ''}
-        onClick={() => updateAttendanceMutation.mutate({ memberId, sectionId, status: 'absent' })}
-      >
-        <X className="w-4 h-4" />
-      </Button>
-      <Button
-        size="sm"
-        variant={currentStatus === 'apologies' ? 'default' : 'outline'}
-        className={currentStatus === 'apologies' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
+      </button>
+      <button
         onClick={() => updateAttendanceMutation.mutate({ memberId, sectionId, status: 'apologies' })}
+        className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all ${currentStatus === 'apologies' ? 'bg-yellow-400 text-white shadow-md scale-110' : 'bg-gray-100 text-gray-400 hover:bg-yellow-100 hover:text-yellow-600'}`}
       >
         <Minus className="w-4 h-4" />
-      </Button>
+      </button>
+      <button
+        onClick={() => updateAttendanceMutation.mutate({ memberId, sectionId, status: 'absent' })}
+        className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all ${currentStatus === 'absent' ? 'bg-red-500 text-white shadow-md scale-110' : 'bg-gray-100 text-gray-400 hover:bg-red-100 hover:text-red-600'}`}
+      >
+        <X className="w-4 h-4" />
+      </button>
     </div>
   );
 
@@ -159,20 +153,21 @@ export default function LeaderAttendance() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Card className="mb-6 rounded-2xl border-gray-100 shadow-sm">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4">
+        <Card className="mb-4 rounded-2xl border-gray-100 shadow-sm">
           <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <div className="flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div>
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wider block mb-1.5">Date</label>
                 <Input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="max-w-xs"
+                  className="w-full sm:max-w-xs text-base"
                 />
               </div>
-              <div className="text-sm text-gray-600">
-                {format(new Date(selectedDate), 'EEEE, MMMM d, yyyy')}
+              <div className="text-sm text-gray-500 sm:mt-5">
+                {format(new Date(selectedDate), 'EEEE, d MMMM yyyy')}
               </div>
             </div>
           </CardContent>
@@ -216,12 +211,19 @@ export default function LeaderAttendance() {
                         const att = getMemberAttendance(member.id, section.id);
                         return (
                           <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                             <span className="font-medium">{member.full_name}</span>
-                             <AttendanceButtons 
-                               memberId={member.id} 
-                               sectionId={section.id}
-                               currentStatus={att?.status}
-                             />
+                            <div>
+                              <p className="font-medium text-sm text-gray-900">{member.full_name}</p>
+                              {att?.status && (
+                                <p className={`text-xs mt-0.5 ${att.status === 'present' ? 'text-green-600' : att.status === 'absent' ? 'text-red-500' : 'text-yellow-600'}`}>
+                                  {att.status}
+                                </p>
+                              )}
+                            </div>
+                            <AttendanceButtons 
+                              memberId={member.id} 
+                              sectionId={section.id}
+                              currentStatus={att?.status}
+                            />
                           </div>
                         );
                       })}
@@ -260,12 +262,19 @@ export default function LeaderAttendance() {
                           const att = getMemberAttendance(member.id, section.id);
                           return (
                             <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                                <span className="font-medium">{member.full_name}</span>
-                                <AttendanceButtons 
-                                  memberId={member.id} 
-                                  sectionId={section.id}
-                                  currentStatus={att?.status}
-                                />
+                               <div>
+                                 <p className="font-medium text-sm text-gray-900">{member.full_name}</p>
+                                 {att?.status && (
+                                   <p className={`text-xs mt-0.5 ${att.status === 'present' ? 'text-green-600' : att.status === 'absent' ? 'text-red-500' : 'text-yellow-600'}`}>
+                                     {att.status}
+                                   </p>
+                                 )}
+                               </div>
+                               <AttendanceButtons 
+                                 memberId={member.id} 
+                                 sectionId={section.id}
+                                 currentStatus={att?.status}
+                               />
                               </div>
                           );
                         })}

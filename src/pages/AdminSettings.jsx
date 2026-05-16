@@ -228,7 +228,7 @@ export default function AdminSettings() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4">
         <div className="flex gap-6">
 
           {/* Sidebar — desktop */}
@@ -256,23 +256,30 @@ export default function AdminSettings() {
             </div>
           </aside>
 
-          {/* Mobile tab strip */}
-          <div className="md:hidden w-full">
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {NAV_ITEMS.map(item => {
-                const Icon = item.icon;
-                const active = activeTab === item.key;
-                return (
-                  <button
-                    key={item.key}
-                    onClick={() => setActiveTab(item.key)}
-                    className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${active ? 'bg-[#7413dc] text-white' : 'bg-white text-gray-600 border border-gray-200'}`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    {item.label}
-                  </button>
-                );
-              })}
+          {/* Mobile: grouped accordion-style nav */}
+          <div className="md:hidden w-full mb-4">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              {GROUPS.map(group => (
+                <div key={group}>
+                  <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-50/60">{group}</p>
+                  <div className="flex flex-wrap gap-1.5 px-3 pb-3 pt-1">
+                    {NAV_ITEMS.filter(n => n.group === group).map(item => {
+                      const Icon = item.icon;
+                      const active = activeTab === item.key;
+                      return (
+                        <button
+                          key={item.key}
+                          onClick={() => setActiveTab(item.key)}
+                          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${active ? 'bg-[#7413dc] text-white' : 'bg-gray-100 text-gray-600'}`}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -290,19 +297,35 @@ export default function AdminSettings() {
                       <div className="text-center py-8"><div className="animate-spin w-8 h-8 border-4 border-[#004851] border-t-transparent rounded-full mx-auto mb-4" /><p className="text-gray-600">Loading users...</p></div>
                     ) : (
                       <div className="space-y-2">
-                        <div className="grid grid-cols-4 gap-4 px-4 py-2 bg-gray-50 rounded-lg font-semibold text-sm text-gray-700">
+                        {/* Desktop header */}
+                        <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-2 bg-gray-50 rounded-lg font-semibold text-sm text-gray-700">
                           <div>Display Name</div><div>Email</div><div>Type</div><div className="text-right">Actions</div>
                         </div>
                         {users.map(user => {
                           const userType = getUserType(user);
                           return (
-                            <div key={user.id} className="grid grid-cols-4 gap-4 px-4 py-3 bg-white border rounded-lg items-center">
-                              <div className="font-medium">{user.display_name || user.full_name}</div>
-                              <div className="text-sm text-gray-600 truncate">{user.email}</div>
-                              <div><Badge className={userType.color}>{user.role === 'admin' ? 'Admin' : userType.type}</Badge></div>
-                              <div className="flex justify-end gap-2">
-                                <Button size="sm" variant="outline" onClick={() => handleEditUser(user)}><Edit className="w-3 h-3 mr-1" />Edit</Button>
-                                <Button size="sm" variant="outline" onClick={() => sendPasswordResetMutation.mutate(user.email)} disabled={sendPasswordResetMutation.isPending}><Mail className="w-3 h-3 mr-1" />Reset</Button>
+                            <div key={user.id}>
+                              {/* Desktop row */}
+                              <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-3 bg-white border rounded-lg items-center">
+                                <div className="font-medium">{user.display_name || user.full_name}</div>
+                                <div className="text-sm text-gray-600 truncate">{user.email}</div>
+                                <div><Badge className={userType.color}>{user.role === 'admin' ? 'Admin' : userType.type}</Badge></div>
+                                <div className="flex justify-end gap-2">
+                                  <Button size="sm" variant="outline" onClick={() => handleEditUser(user)}><Edit className="w-3 h-3 mr-1" />Edit</Button>
+                                  <Button size="sm" variant="outline" onClick={() => sendPasswordResetMutation.mutate(user.email)} disabled={sendPasswordResetMutation.isPending}><Mail className="w-3 h-3 mr-1" />Reset</Button>
+                                </div>
+                              </div>
+                              {/* Mobile card */}
+                              <div className="md:hidden bg-white border border-gray-100 rounded-xl p-4 flex items-center justify-between gap-3">
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold text-sm text-gray-900 truncate">{user.display_name || user.full_name}</p>
+                                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                                  <Badge className={`${userType.color} text-xs mt-1`}>{user.role === 'admin' ? 'Admin' : userType.type}</Badge>
+                                </div>
+                                <div className="flex gap-2 flex-shrink-0">
+                                  <Button size="sm" variant="outline" onClick={() => handleEditUser(user)}><Edit className="w-3.5 h-3.5" /></Button>
+                                  <Button size="sm" variant="outline" onClick={() => sendPasswordResetMutation.mutate(user.email)} disabled={sendPasswordResetMutation.isPending}><Mail className="w-3.5 h-3.5" /></Button>
+                                </div>
                               </div>
                             </div>
                           );

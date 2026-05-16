@@ -250,94 +250,55 @@ export default function MemberDetail() {
       <FloatingNav />
       <NavBarSpacer />
       {/* Header */}
-      <div className="bg-[#7413dc] text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-            <div className="flex items-center gap-4 md:gap-6 flex-1">
-              <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full flex items-center justify-center text-[#7413dc] font-bold text-2xl md:text-3xl flex-shrink-0">
+      <div className="bg-white border-b border-gray-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          {/* Back button on mobile */}
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-3 md:hidden">
+            <span>←</span> Back
+          </button>
+          <div className="flex flex-col gap-3">
+            {/* Avatar + name row */}
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 bg-[#7413dc] rounded-2xl flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">
                 {member.full_name.charAt(0)}
               </div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-2xl md:text-3xl font-bold truncate">{member.full_name}</h1>
-                <div className="flex items-center gap-2 md:gap-4 mt-2 flex-wrap">
-                  <p className="text-white/80 text-sm md:text-base">{section?.display_name}</p>
-                  <Badge variant="secondary" className="bg-white/20 text-white text-xs md:text-sm">
-                    {age.years}y {age.months}m
-                  </Badge>
-                  {member.patrol && (
-                    <Badge variant="secondary" className="bg-white/20 text-white text-xs md:text-sm">
-                      {member.patrol}
-                    </Badge>
-                  )}
-                  {member.invested && (
-                    <Badge variant="secondary" className="bg-yellow-400/90 text-yellow-900 text-xs md:text-sm">
-                      <Star className="w-3 h-3 mr-1" />
-                      Invested
-                    </Badge>
-                  )}
-                  <div className={`flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium ${
-                    parentAccountExists ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                  }`}>
-                    {parentAccountExists ? (
-                      <>
-                        <CheckCircle className="w-3 h-3 md:w-4 md:h-4" />
-                        <span className="hidden sm:inline">Parent Portal Registered</span>
-                        <span className="sm:hidden">Registered</span>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="w-3 h-3 md:w-4 md:h-4" />
-                        <span className="hidden sm:inline">Not Registered</span>
-                        <span className="sm:hidden">No Account</span>
-                      </>
-                    )}
-                  </div>
+                <h1 className="text-xl font-bold text-gray-900 truncate">{member.full_name}</h1>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <span className="text-sm text-gray-500">{section?.display_name}</span>
+                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{age.years}y {age.months}m</span>
+                  {member.patrol && <span className="text-xs bg-purple-50 text-[#7413dc] px-2 py-0.5 rounded-full">{member.patrol}</span>}
+                  {member.invested && <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full flex items-center gap-1"><Star className="w-3 h-3" />Invested</span>}
+                  <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${parentAccountExists ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                    {parentAccountExists ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                    {parentAccountExists ? 'Portal ✓' : 'No Account'}
+                  </span>
                 </div>
               </div>
             </div>
-            <div className="flex gap-2 w-full md:w-auto flex-wrap">
-              {/* Invest Member button — only shows when not yet invested */}
+            {/* Action buttons row */}
+            <div className="flex gap-2 flex-wrap">
               {!member.invested && (
-                <Button
-                  onClick={performInvestment}
-                  disabled={isInvesting}
-                  className="bg-yellow-500 hover:bg-yellow-400 text-yellow-900 font-semibold flex-1 md:flex-none"
-                >
-                  {isInvesting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      <span className="hidden sm:inline">Investing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Star className="w-4 h-4 md:mr-2" />
-                      <span className="hidden sm:inline">Invest Member</span>
-                      <span className="sm:hidden">Invest</span>
-                    </>
-                  )}
+                <Button onClick={performInvestment} disabled={isInvesting} size="sm"
+                  className="bg-yellow-500 hover:bg-yellow-400 text-yellow-900 font-semibold">
+                  {isInvesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Star className="w-4 h-4" />}
+                  <span className="ml-1.5">Invest</span>
                 </Button>
               )}
-              <Button
-                onClick={() => setShowEditDialog(true)}
-                className="bg-white text-[#7413dc] hover:bg-gray-100 flex-1 md:flex-none"
-              >
-                <Edit className="w-4 h-4 md:mr-2" />
-                <span className="hidden sm:inline">Edit</span>
+              <Button onClick={() => setShowEditDialog(true)} size="sm" className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white">
+                <Edit className="w-4 h-4" /><span className="ml-1.5">Edit</span>
               </Button>
-              <Button
-                variant="outline"
+              <Button variant="outline" size="sm"
                 onClick={() => {
-                  if (confirm('Are you sure you want to archive this member? They will be hidden from the main list but their data will be kept.')) {
+                  if (confirm('Archive this member? Their data is kept but they\'ll be hidden from the main list.')) {
                     base44.entities.Member.update(memberId, { active: false }).then(() => {
                       toast.success('Member archived');
                       navigate(createPageUrl('LeaderMembers'));
                     });
                   }
                 }}
-                className="bg-white border-orange-300 text-orange-600 hover:bg-orange-50 flex-1 md:flex-none"
-              >
-                <span className="hidden sm:inline">Archive Member</span>
-                <span className="sm:hidden">Archive</span>
+                className="border-orange-200 text-orange-600 hover:bg-orange-50">
+                Archive
               </Button>
             </div>
           </div>
@@ -345,42 +306,30 @@ export default function MemberDetail() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-white border border-gray-200 rounded-xl shadow-sm grid grid-cols-7 md:inline-flex">
-            <TabsTrigger value="overview" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
-              <User className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline text-sm">Overview</span>
-            </TabsTrigger>
-            <TabsTrigger value="parents" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
-              <Users className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline text-sm">Parents</span>
-            </TabsTrigger>
-            <TabsTrigger value="medical" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
-              <Heart className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline text-sm">Medical</span>
-            </TabsTrigger>
-            <TabsTrigger value="badges" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
-              <Award className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline text-sm">Badges</span>
-            </TabsTrigger>
-            <TabsTrigger value="attendance" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
-              <Calendar className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline text-sm">Attendance</span>
-            </TabsTrigger>
-            <TabsTrigger value="notes" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
-              <FileText className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline text-sm">Notes</span>
-            </TabsTrigger>
-            <TabsTrigger value="payments" className="flex items-center justify-center md:gap-2 px-2 md:px-4">
-              <CreditCard className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline text-sm">Payments</span>
-            </TabsTrigger>
-          </TabsList>
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4">
+        <Tabs defaultValue="overview" className="space-y-4">
+          {/* Mobile: horizontal scrolling tabs with text labels */}
+          <div className="overflow-x-auto -mx-3 px-3 pb-0.5">
+            <TabsList className="bg-white border border-gray-100 shadow-sm rounded-xl flex w-max min-w-full gap-0">
+              {[
+                { value: 'overview', icon: User, label: 'Overview' },
+                { value: 'parents', icon: Users, label: 'Parents' },
+                { value: 'medical', icon: Heart, label: 'Medical' },
+                { value: 'badges', icon: Award, label: 'Badges' },
+                { value: 'attendance', icon: Calendar, label: 'Attendance' },
+                { value: 'notes', icon: FileText, label: 'Notes' },
+                { value: 'payments', icon: CreditCard, label: 'Payments' },
+              ].map(({ value, icon: Icon, label }) => (
+                <TabsTrigger key={value} value={value} className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap flex-shrink-0">
+                  <Icon className="w-3.5 h-3.5" />{label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
               <Card className="rounded-2xl border-gray-100 shadow-sm">
                 <CardHeader>
                   <CardTitle>Personal Information</CardTitle>
@@ -462,8 +411,8 @@ export default function MemberDetail() {
           </TabsContent>
 
           {/* Parents Tab */}
-          <TabsContent value="parents" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+          <TabsContent value="parents" className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <CardTitle>Parent One</CardTitle>
@@ -615,7 +564,7 @@ export default function MemberDetail() {
           </TabsContent>
 
           {/* Attendance Tab */}
-          <TabsContent value="attendance" className="space-y-6">
+          <TabsContent value="attendance" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Recent Attendance</CardTitle>
@@ -626,7 +575,7 @@ export default function MemberDetail() {
                 ) : (
                   <div className="space-y-2">
                     {attendance.map(record => (
-                      <div key={record.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <div key={record.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
                         <div>
                           <p className="font-medium">{new Date(record.date).toLocaleDateString()}</p>
                           {record.notes && <p className="text-sm text-gray-500">{record.notes}</p>}

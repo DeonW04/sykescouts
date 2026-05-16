@@ -160,7 +160,7 @@ export default function LeaderMembers() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4">
         {/* Filters */}
         <Card className="mb-6">
           <CardContent className="p-4 md:p-6">
@@ -198,33 +198,22 @@ export default function LeaderMembers() {
             </CardContent>
           </Card>
         ) : viewMode === 'tile' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             {filteredMembers.map(member => {
               const age = calculateAge(member.date_of_birth);
               const section = sections.find(s => s.id === member.section_id);
               return (
                 <Link key={member.id} to={createPageUrl(`MemberDetail?id=${member.id}`)}>
                   <Card className="hover:shadow-lg transition-all hover:-translate-y-0.5 h-full rounded-2xl border-gray-100 shadow-sm">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col items-center text-center space-y-4">
-                        <div className="w-20 h-20 bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                    <CardContent className="p-4">
+                      <div className="flex flex-col items-center text-center space-y-3">
+                        <div className="w-14 h-14 bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-sm">
                           {member.full_name.charAt(0)}
                         </div>
-                        <div>
-                          <p className="font-bold text-lg text-gray-900">{member.full_name}</p>
-                          <p className="text-sm text-gray-500 mt-1">{section?.display_name || 'No section'}</p>
-                        </div>
-                        <div className="w-full space-y-2 pt-2 border-t">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Age:</span>
-                            <span className="font-semibold text-gray-900">{age.years}y {age.months}m</span>
-                          </div>
-                          {member.patrol && (
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-600">Patrol:</span>
-                              <span className="font-semibold text-gray-900">{member.patrol}</span>
-                            </div>
-                          )}
+                        <div className="w-full">
+                          <p className="font-bold text-sm text-gray-900 leading-tight">{member.full_name}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">{section?.display_name || 'No section'}</p>
+                          <p className="text-xs text-gray-400 mt-1">{age.years}y {age.months}m{member.patrol ? ` · ${member.patrol}` : ''}</p>
                         </div>
                       </div>
                     </CardContent>

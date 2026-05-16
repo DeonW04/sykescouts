@@ -191,13 +191,13 @@ function ThisWeeksMeeting({ sections, selectedSection }) {
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
         <button
           onClick={e => { e.stopPropagation(); navigate(createPageUrl('LeaderProgramme')); }}
-          style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#7413dc', background: 'rgba(116,19,220,0.1)', border: 'none', cursor: 'pointer', padding: '6px 14px', borderRadius: '20px', fontWeight: 500, whiteSpace: 'nowrap' }}>
-          {meeting ? 'View Programme' : 'Add Meeting'}
+          style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#7413dc', background: 'rgba(116,19,220,0.1)', border: 'none', cursor: 'pointer', padding: '5px 12px', borderRadius: '20px', fontWeight: 500, whiteSpace: 'nowrap' }}>
+          {meeting ? 'View' : 'Add Meeting'}
         </button>
-        {meeting && <ArrowRight size={16} color="rgba(116,19,220,0.4)" />}
+        {meeting && <ArrowRight size={14} color="rgba(116,19,220,0.4)" />}
       </div>
     </div>
   );
@@ -446,7 +446,8 @@ function ActionsStatus({ sections, selectedSection }) {
           {stats.totalActions === 0 ? (
             <p style={{ color: 'rgba(26,26,46,0.4)', fontSize: '14px', fontFamily: 'DM Sans, sans-serif' }}>No active actions for upcoming sessions</p>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+
               {statCards.map(stat => (
                 <button key={stat.label}
                   onClick={() => stat.drilldownType ? setDrilldown(stat.drilldownType) : null}
@@ -539,17 +540,17 @@ function LeaderDashboardInner() {
       <div style={{
         background: '#ffffff',
         borderBottom: '1px solid rgba(116,19,220,0.1)',
-        padding: '28px 20px 24px',
+        padding: '20px 16px 18px',
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           {/* Top row: greeting + section selector */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
             <div>
-              <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', marginBottom: '6px', margin: '0 0 6px' }}>Leader Portal</p>
-              <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 36px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.15 }}>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
+              <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(20px, 4vw, 36px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.15 }}>
                 Welcome back, {user.display_name || user.full_name?.split(' ')[0]}
               </h1>
-              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>40th Rochdale (Syke) Scouts</p>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>40th Rochdale (Syke) Scouts</p>
             </div>
             <InlineSectionSelector />
           </div>
@@ -560,9 +561,9 @@ function LeaderDashboardInner() {
       </div>
 
       {/* ── Quick Actions ── */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 20px 0' }}>
-        <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,26,46,0.35)', marginBottom: '14px' }}>Quick access</p>
-        <div className="grid grid-cols-3 md:grid-cols-6" style={{ gap: '10px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '16px 16px 0' }}>
+        <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(26,26,46,0.35)', marginBottom: '10px' }}>Quick access</p>
+        <div className="grid grid-cols-3 md:grid-cols-6" style={{ gap: '8px' }}>
           {actions.map(action => (
             action.dropdown ? (
               <DropdownMenu key={action.label}>
@@ -578,12 +579,12 @@ function LeaderDashboardInner() {
                     onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 8px 20px ${action.accent}22`; }}
                     onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.04)'; }}
                   >
-                    <div style={{ width: '42px', height: '42px', background: `${action.accent}18`, borderRadius: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <action.icon size={20} color={action.accent} />
+                    <div style={{ width: '38px', height: '38px', background: `${action.accent}18`, borderRadius: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <action.icon size={18} color={action.accent} />
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                      <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '12px', color: '#1a1a2e' }}>{action.label}</span>
-                      <ChevronDown size={11} color="rgba(26,26,46,0.4)" />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '11px', color: '#1a1a2e', lineHeight: 1.2, textAlign: 'center' }}>{action.label}</span>
+                      <ChevronDown size={10} color="rgba(26,26,46,0.4)" />
                     </div>
                   </button>
                 </DropdownMenuTrigger>
@@ -604,19 +605,19 @@ function LeaderDashboardInner() {
               <Link key={action.label} to={createPageUrl(action.page)} style={{ textDecoration: 'none' }}>
                 <div style={{
                   background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(12px)',
-                  border: `1px solid ${action.accent}20`, borderRadius: '18px',
-                  padding: '18px 10px', cursor: 'pointer', textAlign: 'center',
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px',
+                  border: `1px solid ${action.accent}20`, borderRadius: '16px',
+                  padding: '14px 8px', cursor: 'pointer', textAlign: 'center',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
                   transition: 'transform 0.2s, box-shadow 0.2s',
                 }}
                   onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 8px 20px ${action.accent}22`; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.04)'; }}
                 >
-                  <div style={{ width: '42px', height: '42px', background: `${action.accent}18`, borderRadius: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <action.icon size={20} color={action.accent} />
+                  <div style={{ width: '38px', height: '38px', background: `${action.accent}18`, borderRadius: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <action.icon size={18} color={action.accent} />
                   </div>
-                  <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '12px', color: '#1a1a2e' }}>{action.label}</span>
+                  <span style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '11px', color: '#1a1a2e', lineHeight: 1.2, textAlign: 'center' }}>{action.label}</span>
                 </div>
               </Link>
             )
@@ -625,7 +626,7 @@ function LeaderDashboardInner() {
       </div>
 
       {/* ── Dashboard content ── */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '16px 20px 48px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '12px 16px 48px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <BadgesDue sections={sections} selectedSection={selectedSection} />
 
         <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '16px' }}>
