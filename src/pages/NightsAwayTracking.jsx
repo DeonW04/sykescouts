@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ export default function NightsAwayTracking() {
   const queryClient = useQueryClient();
   const [showDialog, setShowDialog] = useState(false);
   const [selectedMember, setSelectedMember] = useState('');
+  const [memberSearch, setMemberSearch] = useState('');
   const [formData, setFormData] = useState({
     nights_count: 1,
     start_date: '',
@@ -90,6 +91,7 @@ export default function NightsAwayTracking() {
       queryClient.invalidateQueries({ queryKey: ['awards'] });
       setShowDialog(false);
       setSelectedMember('');
+      setMemberSearch('');
       setFormData({
         nights_count: 1,
         start_date: '',
@@ -136,6 +138,12 @@ export default function NightsAwayTracking() {
       toast.success('Log deleted and totals recalculated');
     },
   });
+
+  const filteredMembers = useMemo(() => {
+    if (!memberSearch.trim()) return members.slice(0, 50);
+    const q = memberSearch.toLowerCase();
+    return members.filter(m => (m.full_name || '').toLowerCase().includes(q)).slice(0, 50);
+  }, [members, memberSearch]);
 
   const getMemberById = (id) => members.find(m => m.id === id);
   const getEventById = (id) => events.find(e => e.id === id);
@@ -252,16 +260,25 @@ export default function NightsAwayTracking() {
           <div className="space-y-4">
             <div>
               <Label>Member</Label>
+              <Input
+                placeholder="Search member..."
+                value={memberSearch}
+                onChange={e => setMemberSearch(e.target.value)}
+                className="mb-2"
+              />
               <Select value={selectedMember} onValueChange={setSelectedMember}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select member..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {members.map(member => (
+                  {filteredMembers.map(member => (
                     <SelectItem key={member.id} value={member.id}>
                       {member.full_name} (Total: {member.total_nights_away || 0} nights)
                     </SelectItem>
                   ))}
+                  {filteredMembers.length === 0 && (
+                    <div className="px-3 py-2 text-sm text-gray-500">No members found</div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
