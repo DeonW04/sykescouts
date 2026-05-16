@@ -172,10 +172,10 @@ export default function LeaderMembers() {
                 </div>
               </div>
               <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-                <button onClick={() => setViewMode('tile')} className={`p-2 rounded transition-colors ${viewMode === 'tile' ? 'bg-[#004851] text-white' : 'text-gray-500 hover:text-gray-700'}`} title="Tile view">
+                <button onClick={() => setViewMode('tile')} className={`p-2 rounded transition-colors ${viewMode === 'tile' ? 'bg-[#7413dc] text-white' : 'text-gray-500 hover:text-gray-700'}`} title="Tile view">
                   <Grid3x3 className="w-4 h-4" />
                 </button>
-                <button onClick={() => setViewMode('patrol')} className={`p-2 rounded transition-colors ${viewMode === 'patrol' ? 'bg-[#004851] text-white' : 'text-gray-500 hover:text-gray-700'}`} title="Patrol view">
+                <button onClick={() => setViewMode('patrol')} className={`p-2 rounded transition-colors ${viewMode === 'patrol' ? 'bg-[#7413dc] text-white' : 'text-gray-500 hover:text-gray-700'}`} title="Patrol view">
                   <List className="w-4 h-4" />
                 </button>
               </div>
@@ -186,7 +186,7 @@ export default function LeaderMembers() {
         {/* Members List */}
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="animate-spin w-8 h-8 border-4 border-[#004851] border-t-transparent rounded-full mx-auto mb-4" />
+            <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full mx-auto mb-4" />
             <p className="text-gray-600">Loading members...</p>
           </div>
         ) : filteredMembers.length === 0 ? (
@@ -204,10 +204,10 @@ export default function LeaderMembers() {
               const section = sections.find(s => s.id === member.section_id);
               return (
                 <Link key={member.id} to={createPageUrl(`MemberDetail?id=${member.id}`)}>
-                  <Card className="hover:shadow-xl transition-all hover:-translate-y-1 h-full">
+                  <Card className="hover:shadow-lg transition-all hover:-translate-y-0.5 h-full rounded-2xl border-gray-100 shadow-sm">
                     <CardContent className="p-6">
                       <div className="flex flex-col items-center text-center space-y-4">
-                        <div className="w-20 h-20 bg-gradient-to-br from-[#004851] to-[#7413dc] rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                        <div className="w-20 h-20 bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg">
                           {member.full_name.charAt(0)}
                         </div>
                         <div>
@@ -344,8 +344,8 @@ function PatrolView({ members, refetchMembers }) {
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
         {patrolNames.map(patrolName => (
-          <Card key={patrolName} className="flex flex-col">
-            <CardHeader className="bg-gradient-to-br from-blue-500 to-[#004851] text-white pb-3 rounded-t-xl">
+          <Card key={patrolName} className="flex flex-col rounded-2xl border-gray-100 shadow-sm overflow-hidden">
+          <CardHeader className="bg-[#7413dc] text-white pb-3 rounded-t-2xl">
               {editingPatrol === patrolName ? (
                 <div className="flex items-center gap-1">
                   <input
@@ -395,7 +395,7 @@ function PatrolView({ members, refetchMembers }) {
                               onClick={e => { if (dragSnapshot.isDragging) e.preventDefault(); }}
                             >
                               <div className="flex items-center gap-3">
-                                <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-[#004851] rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                <div className="w-9 h-9 bg-[#7413dc] rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                                   {member.full_name?.charAt(0)}
                                 </div>
                                 <div className="flex-1 min-w-0">

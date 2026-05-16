@@ -320,7 +320,7 @@ export default function BadgeStockManagement() {
   }, [badges, stockSearchQuery, categoryFilter, sortBy, badgesNeeded]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       <FloatingNav />
       <NavBarSpacer />
       <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
@@ -355,7 +355,7 @@ export default function BadgeStockManagement() {
 
         {/* Order Summary */}
         {orderList.length > 0 && (
-          <Card className="mb-6 border-orange-200 bg-orange-50">
+          <Card className="mb-6 rounded-2xl border-orange-100 bg-orange-50 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-orange-800">
                 <ShoppingCart className="w-5 h-5" />
@@ -397,7 +397,7 @@ export default function BadgeStockManagement() {
         )}
 
         {/* All Badges Stock */}
-        <Card>
+        <Card className="rounded-2xl border-gray-100 shadow-sm">
           <CardHeader>
             <CardTitle>All Badge Stock Levels</CardTitle>
             <CardDescription>View and manually adjust stock for each badge</CardDescription>

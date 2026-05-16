@@ -173,34 +173,20 @@ export default function NightsAwayTracking() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-gray-600">Total Logs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{logs.length}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-gray-600">Total Nights</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{logs.reduce((sum, log) => sum + log.nights_count, 0)}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-gray-600">Active Members</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{members.filter(m => m.total_nights_away > 0).length}</p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {[
+            { label: 'Total Logs', value: logs.length },
+            { label: 'Total Nights', value: logs.reduce((sum, log) => sum + log.nights_count, 0) },
+            { label: 'Active Members', value: members.filter(m => m.total_nights_away > 0).length },
+          ].map(({ label, value }) => (
+            <div key={label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <p className="text-sm text-gray-500 mb-1">{label}</p>
+              <p className="text-3xl font-bold text-gray-900">{value}</p>
+            </div>
+          ))}
         </div>
 
-        <Card>
+        <Card className="rounded-2xl border-gray-100 shadow-sm">
           <CardHeader>
             <CardTitle>Recent Logs</CardTitle>
           </CardHeader>

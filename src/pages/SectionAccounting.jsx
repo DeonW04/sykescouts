@@ -343,7 +343,7 @@ export default function SectionAccounting() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowReceiptDialog(false)}>Cancel</Button>
-            <Button onClick={handleSubmitReceipt} disabled={uploading} className="bg-[#004851] hover:bg-[#003840]">
+            <Button onClick={handleSubmitReceipt} disabled={uploading} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
               {uploading ? 'Submitting...' : <><Upload className="w-4 h-4 mr-2" />Submit Receipt</>}
             </Button>
           </DialogFooter>

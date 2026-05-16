@@ -160,7 +160,7 @@ export default function LeaderAttendance() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <Card className="mb-6">
+        <Card className="mb-6 rounded-2xl border-gray-100 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-4">
               <div className="flex-1">
@@ -197,8 +197,8 @@ export default function LeaderAttendance() {
               const presentCount = sectionMembers.filter(m => getMemberAttendance(m.id, section.id)?.status === 'present').length;
               
               return (
-                <Card key={programme.id}>
-                  <CardHeader>
+               <Card key={programme.id} className="rounded-2xl border-gray-100 shadow-sm">
+                 <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle className="text-xl">{programme.title}</CardTitle>
@@ -215,13 +215,13 @@ export default function LeaderAttendance() {
                       {sectionMembers.map(member => {
                         const att = getMemberAttendance(member.id, section.id);
                         return (
-                          <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <span className="font-medium">{member.full_name}</span>
-                            <AttendanceButtons 
-                              memberId={member.id} 
-                              sectionId={section.id}
-                              currentStatus={att?.status}
-                            />
+                          <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                             <span className="font-medium">{member.full_name}</span>
+                             <AttendanceButtons 
+                               memberId={member.id} 
+                               sectionId={section.id}
+                               currentStatus={att?.status}
+                             />
                           </div>
                         );
                       })}
@@ -241,7 +241,7 @@ export default function LeaderAttendance() {
                 const presentCount = sectionMembers.filter(m => getMemberAttendance(m.id, section.id)?.status === 'present').length;
                 
                 return (
-                  <Card key={`${event.id}-${section.id}`}>
+                 <Card key={`${event.id}-${section.id}`} className="rounded-2xl border-gray-100 shadow-sm">
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <div>
@@ -259,14 +259,14 @@ export default function LeaderAttendance() {
                         {sectionMembers.map(member => {
                           const att = getMemberAttendance(member.id, section.id);
                           return (
-                            <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <span className="font-medium">{member.full_name}</span>
-                              <AttendanceButtons 
-                                memberId={member.id} 
-                                sectionId={section.id}
-                                currentStatus={att?.status}
-                              />
-                            </div>
+                            <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                <span className="font-medium">{member.full_name}</span>
+                                <AttendanceButtons 
+                                  memberId={member.id} 
+                                  sectionId={section.id}
+                                  currentStatus={att?.status}
+                                />
+                              </div>
                           );
                         })}
                       </div>

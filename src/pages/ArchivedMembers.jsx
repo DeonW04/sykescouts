@@ -75,15 +75,11 @@ export default function ArchivedMembers() {
   return (
     <div className="min-h-screen bg-gray-50">
       <LeaderNav />
-      <div className="bg-orange-600 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Archive className="w-8 h-8" />
-            <div>
-              <h1 className="text-3xl font-bold">Archived Members</h1>
-              <p className="mt-2 text-white/80">{archivedMembers.length} archived members</p>
-            </div>
-          </div>
+      <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
+        <div className="max-w-7xl mx-auto">
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Admin</p>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Archived Members</h1>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>{archivedMembers.length} archived members</p>
         </div>
       </div>
 
@@ -123,7 +119,7 @@ export default function ArchivedMembers() {
         {/* Members List */}
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="animate-spin w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full mx-auto mb-4" />
+            <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full mx-auto mb-4" />
             <p className="text-gray-600">Loading archived members...</p>
           </div>
         ) : filteredMembers.length === 0 ? (
@@ -145,11 +141,11 @@ export default function ArchivedMembers() {
               const section = sections.find(s => s.id === member.section_id);
               
               return (
-                <Card key={member.id} className="border-l-4 border-l-orange-500">
-                  <CardContent className="p-6">
+                <Card key={member.id} className="rounded-2xl border border-gray-100 shadow-sm">
+                  <CardContent className="p-5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-6 flex-1">
-                        <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                        <div className="w-12 h-12 bg-[#7413dc]/10 rounded-full flex items-center justify-center text-[#7413dc] font-bold text-lg">
                           {member.full_name.charAt(0)}
                         </div>
                         <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">

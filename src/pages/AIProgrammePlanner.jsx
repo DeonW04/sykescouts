@@ -70,7 +70,7 @@ function MeetingCard({ meeting, index, onRemove, onReject, isPreFilled, allDates
         <div className="flex items-start gap-4">
           {/* Date badge */}
           <div className="flex-shrink-0 w-14 text-center">
-            <div className="bg-[#004851] text-white rounded-xl px-2 py-2">
+            <div className="bg-[#7413dc] text-white rounded-xl px-2 py-2">
               <p className="text-xs opacity-70">
                 {new Date(meeting.date).toLocaleDateString('en-GB', { weekday: 'short' })}
               </p>
@@ -280,7 +280,7 @@ export default function AIProgrammePlanner() {
           <div className="text-6xl mb-6">🤖</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-3">No Programme Plan Found</h2>
           <p className="text-gray-600 mb-8">Use the AI Programme Generator on the Programme Planning page to create a plan first.</p>
-          <Button onClick={() => navigate(createPageUrl('LeaderProgramme'))} className="bg-[#004851] hover:bg-[#003840]">
+          <Button onClick={() => navigate(createPageUrl('LeaderProgramme'))} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Programme
           </Button>
         </div>
@@ -441,12 +441,12 @@ export default function AIProgrammePlanner() {
   const scoreBg = engagementScore >= 8 ? 'bg-green-50 border-green-200' : engagementScore >= 6 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/30">
+    <div className="min-h-screen bg-gray-50">
       <FloatingNav />
       <NavBarSpacer />
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#004851] to-[#7413dc] text-white py-8 sticky top-20 z-30 shadow-xl">
+      <div className="bg-[#7413dc] text-white py-8 sticky top-20 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -661,7 +661,7 @@ export default function AIProgrammePlanner() {
               onClick={handlePublish}
               disabled={publishing}
               size="lg"
-              className="bg-gradient-to-r from-[#004851] to-[#7413dc] hover:opacity-90 text-white font-bold gap-2 shadow-xl px-8"
+              className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white font-bold gap-2 shadow-sm px-8"
             >
               {publishing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Globe className="w-5 h-5" />}
               Publish Full Programme

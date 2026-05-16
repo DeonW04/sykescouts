@@ -53,7 +53,7 @@ export default function LeaderEvents() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gray-50">
       <FloatingNav />
       <NavBarSpacer />
       <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
@@ -84,7 +84,7 @@ export default function LeaderEvents() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Card className="border-dashed border-2 border-gray-300 bg-white/50 backdrop-blur-sm">
+            <Card className="border-dashed border-2 border-gray-200 bg-white">
               <CardContent className="p-16 text-center">
                 <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <Calendar className="w-10 h-10 text-[#7413dc]" />
@@ -94,7 +94,7 @@ export default function LeaderEvents() {
                 <Button 
                   onClick={() => setShowNewDialog(true)} 
                   size="lg"
-                  className="bg-gradient-to-r from-[#7413dc] to-[#5c0fb0] hover:from-[#5c0fb0] hover:to-[#7413dc] shadow-lg"
+                  className="bg-[#7413dc] hover:bg-[#5c0fb0] shadow-sm"
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Create First Event
@@ -120,7 +120,7 @@ export default function LeaderEvents() {
                       transition={{ delay: index * 0.05 }}
                     >
                       <Card 
-                        className="group hover:shadow-2xl transition-all duration-300 cursor-pointer border-l-4 border-l-[#7413dc] bg-white/80 backdrop-blur-sm overflow-hidden"
+                        className="group hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-[#7413dc] bg-white overflow-hidden rounded-2xl"
                         onClick={() => navigate(createPageUrl('EventDetail') + `?id=${event.id}`)}
                       >
                         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/5 to-transparent rounded-bl-full"></div>
@@ -187,7 +187,7 @@ export default function LeaderEvents() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                     >
-                      <Card className="h-full bg-white/60 backdrop-blur-sm">
+                      <Card className="h-full bg-white rounded-2xl border-gray-100 shadow-sm">
                         <CardHeader>
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1 min-w-0">
