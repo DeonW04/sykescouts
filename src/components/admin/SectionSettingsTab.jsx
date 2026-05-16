@@ -5,14 +5,36 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Users, Clock } from 'lucide-react';
+import { Users, Clock, ToggleLeft } from 'lucide-react';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const SECTION_ORDER = ['squirrels', 'beavers', 'cubs', 'scouts', 'explorers'];
 
 export default function SectionSettingsTab({ sections, leaders, queryClient }) {
   const [saving, setSaving] = useState({});
   const [meetingEdits, setMeetingEdits] = useState({});
+
+  // Sort sections by canonical order
+  const sortedSections = [...sections].sort(
+    (a, b) => SECTION_ORDER.indexOf(a.name) - SECTION_ORDER.indexOf(b.name)
+  );
+
+  const handleToggleActive = async (sectionId, currentActive) => {
+    setSaving(s => ({ ...s, [`toggle_${sectionId}`]: true }));
+    try {
+      await base44.entities.Section.update(sectionId, { active: !currentActive });
+      queryClient.invalidateQueries({ queryKey: ['sections'] });
+      queryClient.invalidateQueries({ queryKey: ['all-sections-admin'] });
+      toast.success(`Section ${currentActive ? 'disabled' : 'enabled'}`);
+    } catch (e) {
+      toast.error('Failed: ' + e.message);
+    } finally {
+      setSaving(s => ({ ...s, [`toggle_${sectionId}`]: false }));
+    }
+  };
 
   const handleSetTeamLeader = async (sectionId, leaderId) => {
     setSaving(s => ({ ...s, [sectionId]: true }));
@@ -64,6 +86,34 @@ export default function SectionSettingsTab({ sections, leaders, queryClient }) {
 
   return (
     <div className="space-y-4">
+      {/* Enable / Disable Sections */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><ToggleLeft className="w-5 h-5" />Active Sections</CardTitle>
+          <p className="text-sm text-gray-500">Disable sections you're not using. Disabled sections are hidden from the leader portal and parent portal, but still appear on the public website.</p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {sortedSections.map(section => (
+            <div key={section.id} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50">
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold capitalize">{section.display_name}</p>
+                  <Badge className={section.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}>
+                    {section.active ? 'Active' : 'Disabled'}
+                  </Badge>
+                </div>
+                <p className="text-xs text-gray-500 capitalize">{section.name}</p>
+              </div>
+              <Switch
+                checked={!!section.active}
+                onCheckedChange={() => handleToggleActive(section.id, section.active)}
+                disabled={saving[`toggle_${section.id}`]}
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
       {/* Team Leaders */}
       <Card>
         <CardHeader>
@@ -74,8 +124,8 @@ export default function SectionSettingsTab({ sections, leaders, queryClient }) {
           <p className="text-sm text-gray-500">Set the Team Leader for each section. Team leaders receive section-level notifications and have access to section accounting.</p>
         </CardHeader>
         <CardContent className="space-y-4">
-          {sections.length === 0 && <p className="text-sm text-gray-400">No active sections found.</p>}
-          {sections.map(section => {
+          {sortedSections.filter(s => s.active).length === 0 && <p className="text-sm text-gray-400">No active sections found.</p>}
+          {sortedSections.filter(s => s.active).map(section => {
             const sectionLeaders = leaders.filter(l => l.section_ids?.includes(section.id));
             return (
               <div key={section.id} className="p-4 border rounded-lg bg-gray-50 space-y-3">
@@ -121,7 +171,7 @@ export default function SectionSettingsTab({ sections, leaders, queryClient }) {
           <p className="text-sm text-gray-500">Set each section's meeting day and usual start/end times. These are used when generating the weekly programme schedule.</p>
         </CardHeader>
         <CardContent className="space-y-4">
-          {sections.map(section => {
+          {sortedSections.filter(s => s.active).map(section => {
             const edit = getMeetingEdit(section);
             const isDirty = !!meetingEdits[section.id];
             return (

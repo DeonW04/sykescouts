@@ -37,12 +37,9 @@ const NAV_ITEMS = [
   { key: 'sections',       label: 'Section Settings',   icon: Users,    group: 'People' },
   { key: 'terms',          label: 'Terms',              icon: Calendar, group: 'People' },
   { key: 'website',        label: 'Public Website',     icon: Image,    group: 'Content' },
-  { key: 'images',         label: 'Website Images',     icon: Image,    group: 'Content' },
   { key: 'badges',         label: 'Badge System',       icon: Award,    group: 'Content' },
   { key: 'uniform',        label: 'Uniform Guide',      icon: Shield,   group: 'Content' },
   { key: 'gallery',        label: 'Gallery Stats',      icon: Camera,   group: 'Content' },
-
-  { key: 'export',         label: 'Data Import / Export', icon: Download, group: 'System' },
   { key: 'push',           label: 'Push Notifications', icon: Bell,     group: 'System' },
   { key: 'notif-log',      label: 'Notification Log',   icon: Mail,     group: 'System' },
   { key: 'osm-overview',   label: 'Overview',           icon: Award,    group: 'OSM Sync' },
@@ -76,6 +73,9 @@ export default function AdminSettings() {
   const { data: users = [], isLoading } = useQuery({ queryKey: ['all-users'], queryFn: () => base44.entities.User.list() });
   const { data: leaders = [] } = useQuery({ queryKey: ['all-leaders'], queryFn: () => base44.entities.Leader.filter({}) });
   const { data: parents = [] } = useQuery({ queryKey: ['all-parents'], queryFn: () => base44.entities.Parent.filter({}) });
+  const { data: members = [] } = useQuery({ queryKey: ['all-members-admin'], queryFn: () => base44.entities.Member.filter({ active: true }) });
+  const { data: pageViews = [] } = useQuery({ queryKey: ['page-views-admin'], queryFn: () => base44.entities.PageView.filter({}) });
+  const { data: allSections = [] } = useQuery({ queryKey: ['all-sections-admin'], queryFn: () => base44.entities.Section.filter({}) });
   const { data: sections = [] } = useQuery({ queryKey: ['sections'], queryFn: () => base44.entities.Section.filter({ active: true }) });
   const { data: websiteImages = [] } = useQuery({ queryKey: ['website-images'], queryFn: () => base44.entities.WebsiteImage.list() });
   const { data: uniformConfigs = [], refetch: refetchUniforms } = useQuery({ queryKey: ['uniform-configs'], queryFn: () => base44.entities.UniformConfig.filter({}) });
@@ -288,37 +288,53 @@ export default function AdminSettings() {
                   <CardHeader><CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" />User Management</CardTitle></CardHeader>
                   <CardContent>
                     {isLoading ? (
-                      <div className="text-center py-8"><div className="animate-spin w-8 h-8 border-4 border-[#004851] border-t-transparent rounded-full mx-auto mb-4" /><p className="text-gray-600">Loading users...</p></div>
+                      <div className="text-center py-8"><div className="animate-spin w-8 h-8 border-4 border-[#004851] border-t-transparent rounded-full mx-auto mb-4" /></div>
                     ) : (
                       <div className="space-y-2">
                         {/* Desktop header */}
                         <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-2 bg-gray-50 rounded-lg font-semibold text-sm text-gray-700">
-                          <div>Display Name</div><div>Email</div><div>Type</div><div className="text-right">Actions</div>
+                          <div>Name</div><div>Email</div><div>Type / Info</div><div className="text-right">Actions</div>
                         </div>
                         {users.map(user => {
                           const userType = getUserType(user);
+                          const parentRecord = parents.find(p => p.user_id === user.id);
+                          const linkedChildren = parentRecord ? members.filter(m => m.parent_ids?.includes(parentRecord.id)) : [];
+                          const lastView = pageViews.filter(v => v.user_email === user.email).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+                          const lastLogin = lastView ? new Date(lastView.timestamp) : null;
+                          const daysAgo = lastLogin ? Math.floor((Date.now() - lastLogin) / (1000*60*60*24)) : null;
+                          const lastLoginLabel = daysAgo === null ? 'Never' : daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo}d ago`;
                           return (
                             <div key={user.id}>
                               {/* Desktop row */}
                               <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-3 bg-white border rounded-lg items-center">
                                 <div className="font-medium">{user.display_name || user.full_name}</div>
                                 <div className="text-sm text-gray-600 truncate">{user.email}</div>
-                                <div><Badge className={userType.color}>{user.role === 'admin' ? 'Admin' : userType.type}</Badge></div>
+                                <div className="space-y-0.5">
+                                  <Badge className={userType.color}>{user.role === 'admin' ? 'Admin' : userType.type}</Badge>
+                                  {linkedChildren.length > 0 && <p className="text-xs text-gray-500">{linkedChildren.map(c => c.first_name).join(', ')}</p>}
+                                  <p className="text-xs text-gray-400">Last login: {lastLoginLabel}</p>
+                                </div>
                                 <div className="flex justify-end gap-2">
                                   <Button size="sm" variant="outline" onClick={() => handleEditUser(user)}><Edit className="w-3 h-3 mr-1" />Edit</Button>
-                                  <Button size="sm" variant="outline" onClick={() => sendPasswordResetMutation.mutate(user.email)} disabled={sendPasswordResetMutation.isPending}><Mail className="w-3 h-3 mr-1" />Reset</Button>
+                                  <Button size="sm" variant="outline" onClick={() => sendPasswordResetMutation.mutate(user.email)} disabled={sendPasswordResetMutation.isPending}><Mail className="w-3 h-3 mr-1" />Reset PW</Button>
                                 </div>
                               </div>
                               {/* Mobile card */}
-                              <div className="md:hidden bg-white border border-gray-100 rounded-xl p-4 flex items-center justify-between gap-3">
-                                <div className="min-w-0 flex-1">
-                                  <p className="font-semibold text-sm text-gray-900 truncate">{user.display_name || user.full_name}</p>
-                                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                                  <Badge className={`${userType.color} text-xs mt-1`}>{user.role === 'admin' ? 'Admin' : userType.type}</Badge>
+                              <div className="md:hidden bg-white border border-gray-100 rounded-xl p-4 space-y-3">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-semibold text-sm text-gray-900">{user.display_name || user.full_name}</p>
+                                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                      <Badge className={`${userType.color} text-xs`}>{user.role === 'admin' ? 'Admin' : userType.type}</Badge>
+                                      {linkedChildren.length > 0 && <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">👦 {linkedChildren.map(c => c.first_name).join(', ')}</span>}
+                                      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">🕐 {lastLoginLabel}</span>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="flex gap-2 flex-shrink-0">
-                                  <Button size="sm" variant="outline" onClick={() => handleEditUser(user)}><Edit className="w-3.5 h-3.5" /></Button>
-                                  <Button size="sm" variant="outline" onClick={() => sendPasswordResetMutation.mutate(user.email)} disabled={sendPasswordResetMutation.isPending}><Mail className="w-3.5 h-3.5" /></Button>
+                                <div className="flex gap-2">
+                                  <Button size="sm" variant="outline" className="flex-1" onClick={() => handleEditUser(user)}><Edit className="w-3.5 h-3.5 mr-1.5" />Edit User</Button>
+                                  <Button size="sm" variant="outline" className="flex-1" onClick={() => sendPasswordResetMutation.mutate(user.email)} disabled={sendPasswordResetMutation.isPending}><Mail className="w-3.5 h-3.5 mr-1.5" />Reset Password</Button>
                                 </div>
                               </div>
                             </div>
@@ -335,7 +351,7 @@ export default function AdminSettings() {
 
               {/* ── Sections ── */}
               <TabsContent value="sections">
-                <SectionSettingsTab sections={sections} leaders={leaders} queryClient={queryClient} />
+                <SectionSettingsTab sections={allSections} leaders={leaders} queryClient={queryClient} />
               </TabsContent>
 
               {/* ── Terms ── */}
@@ -343,177 +359,53 @@ export default function AdminSettings() {
                 <AdminTermsTab />
               </TabsContent>
 
-              {/* ── Public Website Settings ── */}
+              {/* ── Public Website Settings (now includes loading GIF) ── */}
               <TabsContent value="website">
-                <PublicWebsiteSettings />
-              </TabsContent>
-
-              {/* ── Website Images ── */}
-              <TabsContent value="images">
-                <div className="space-y-4">
-                 {/* Home */}
-                 <Card>
-                   <CardHeader><CardTitle className="flex items-center gap-2"><Image className="w-5 h-5" />Home Page Images</CardTitle><p className="text-sm text-gray-600">Multiple images for the home page carousel</p></CardHeader>
-                   <CardContent className="space-y-4">
-                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                       {getImagesForPage('home').map(img => (
-                         <div key={img.id} className="relative group">
-                           <img src={img.image_url} alt="Home" className="w-full h-32 sm:h-48 object-cover rounded-lg" />
-                           <button onClick={() => deleteImageMutation.mutate(img.id)} className="absolute top-1.5 right-1.5 p-1.5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3.5 h-3.5" /></button>
-                         </div>
-                       ))}
-                     </div>
-                     <div className="flex gap-2 flex-wrap">
-                       <Button type="button" variant="outline" size="sm" disabled={uploadingImage} onClick={() => document.getElementById('home-upload').click()}><Upload className="w-3.5 h-3.5 mr-1.5" />Upload New</Button>
-                       <input id="home-upload" type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files[0]; if (f) handleFileUpload('home', f, getImagesForPage('home').length); }} />
-                       <Button variant="outline" size="sm" onClick={() => { setCurrentImagePage('home'); setShowGallerySelector(true); }}><Image className="w-3.5 h-3.5 mr-1.5" />From Gallery</Button>
-                     </div>
-                   </CardContent>
-                 </Card>
-                 {/* About + section images as compact slots */}
-                 <Card>
-                   <CardHeader><CardTitle>Other Page Images</CardTitle></CardHeader>
-                   <CardContent className="space-y-4">
-                     {['about', 'beavers', 'cubs', 'scouts'].map(page => {
-                       const img = getImagesForPage(page)[0];
-                       return (
-                         <div key={page} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                           {img
-                             ? <img src={img.image_url} alt={page} className="w-16 h-12 object-cover rounded-lg flex-shrink-0" />
-                             : <div className="w-16 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0"><Image className="w-5 h-5 text-gray-400" /></div>
-                           }
-                           <div className="flex-1 min-w-0">
-                             <p className="font-medium text-sm capitalize">{page} {page === 'about' ? 'page' : 'section'}</p>
-                             <p className="text-xs text-gray-400">{img ? 'Uploaded' : 'No image'}</p>
-                           </div>
-                           <div className="flex gap-1.5 flex-shrink-0">
-                             {img && <button onClick={() => deleteImageMutation.mutate(img.id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg"><X className="w-3.5 h-3.5" /></button>}
-                             <Button type="button" variant="outline" size="sm" disabled={uploadingImage} onClick={() => document.getElementById(`${page}-img-upload`).click()}><Upload className="w-3.5 h-3.5" /></Button>
-                             <input id={`${page}-img-upload`} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files[0]; if (f) handleFileUpload(page, f, 0); }} />
-                             <Button variant="outline" size="sm" onClick={() => { setCurrentImagePage(page); setShowGallerySelector(true); }}><Image className="w-3.5 h-3.5" /></Button>
-                           </div>
-                         </div>
-                       );
-                     })}
-                   </CardContent>
-                 </Card>
-
+                <div className="space-y-6">
+                  <PublicWebsiteSettings />
                   {/* Loading Screen GIF */}
                   <Card className="border-purple-200 bg-purple-50">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-purple-900">
-                        <Upload className="w-5 h-5" />
-                        Loading Screen GIF
-                      </CardTitle>
-                      <p className="text-sm text-purple-700">This GIF plays as a loading animation on the Home page, Leader Portal, and Parent Portal on first visit per session.</p>
+                      <CardTitle className="flex items-center gap-2 text-purple-900"><Upload className="w-5 h-5" />Loading Screen GIF</CardTitle>
+                      <p className="text-sm text-purple-700">Plays as a loading animation on the Home page, Leader Portal, and Parent Portal on first visit per session.</p>
                     </CardHeader>
                     <CardContent className="space-y-5">
                       {getImagesForPage('loading_gif')[0] && (
                         <div className="relative group w-fit">
-                          <img
-                            src={getImagesForPage('loading_gif')[0].image_url}
-                            alt="Loading GIF"
-                            className="h-48 rounded-lg border border-purple-200 object-contain bg-white"
-                          />
-                          <button
-                            onClick={() => deleteImageMutation.mutate(getImagesForPage('loading_gif')[0].id)}
-                            className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
+                          <img src={getImagesForPage('loading_gif')[0].image_url} alt="Loading GIF" className="h-48 rounded-lg border border-purple-200 object-contain bg-white" />
+                          <button onClick={() => deleteImageMutation.mutate(getImagesForPage('loading_gif')[0].id)} className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button>
                         </div>
                       )}
-                      {!getImagesForPage('loading_gif')[0] && (
-                        <p className="text-sm text-purple-600 italic">No loading GIF uploaded yet. Upload one to enable the loading screen animation.</p>
-                      )}
-
-                      {/* Size Slider */}
+                      {!getImagesForPage('loading_gif')[0] && <p className="text-sm text-purple-600 italic">No loading GIF uploaded yet.</p>}
                       {getImagesForPage('loading_gif')[0] && (
                         <div className="space-y-3 p-4 bg-white rounded-lg border border-purple-200">
                           <div className="flex items-center justify-between">
                             <Label className="text-purple-900 font-semibold">Display Size: {gifSize}%</Label>
                             <span className="text-xs text-purple-600">of screen width</span>
                           </div>
-                          <Slider
-                            min={10}
-                            max={100}
-                            step={5}
-                            value={[gifSize]}
-                            onValueChange={([v]) => setGifSize(v)}
-                            className="w-full"
-                          />
-                          <div className="flex items-center justify-between text-xs text-purple-500">
-                            <span>Small (10%)</span>
-                            <span>Full screen (100%)</span>
-                          </div>
-                          <Button
-                            size="sm"
-                            disabled={savingGifSize}
-                            onClick={() => handleSaveGifSize(gifSize)}
-                            className="bg-purple-600 hover:bg-purple-700 text-white"
-                          >
-                            {savingGifSize ? 'Saving...' : 'Save Size'}
-                          </Button>
+                          <Slider min={10} max={100} step={5} value={[gifSize]} onValueChange={([v]) => setGifSize(v)} className="w-full" />
+                          <div className="flex items-center justify-between text-xs text-purple-500"><span>Small (10%)</span><span>Full (100%)</span></div>
+                          <Button size="sm" disabled={savingGifSize} onClick={() => handleSaveGifSize(gifSize)} className="bg-purple-600 hover:bg-purple-700 text-white">{savingGifSize ? 'Saving...' : 'Save Size'}</Button>
                         </div>
                       )}
-
                       <div className="flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled={uploadingImage}
-                          className="border-purple-300 text-purple-700 hover:bg-purple-100"
-                          onClick={() => document.getElementById('loading-gif-upload').click()}
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          {getImagesForPage('loading_gif').length > 0 ? 'Replace GIF' : 'Upload GIF'}
+                        <Button type="button" variant="outline" disabled={uploadingImage} className="border-purple-300 text-purple-700 hover:bg-purple-100" onClick={() => document.getElementById('loading-gif-upload').click()}>
+                          <Upload className="w-4 h-4 mr-2" />{getImagesForPage('loading_gif').length > 0 ? 'Replace GIF' : 'Upload GIF'}
                         </Button>
                         {getImagesForPage('loading_gif')[0] && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="border-purple-300 text-purple-700 hover:bg-purple-100"
-                            onClick={() => setGifPreviewOpen(true)}
-                          >
-                            <Play className="w-4 h-4 mr-2" />
-                            Preview
+                          <Button type="button" variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-100" onClick={() => setGifPreviewOpen(true)}>
+                            <Play className="w-4 h-4 mr-2" />Preview
                           </Button>
                         )}
-                        <input
-                          id="loading-gif-upload"
-                          type="file"
-                          accept="image/gif,image/*"
-                          className="hidden"
-                          onChange={async (e) => {
-                            const f = e.target.files[0];
-                            if (!f) return;
-                            const existing = getImagesForPage('loading_gif')[0];
-                            if (existing) await deleteImageMutation.mutateAsync(existing.id);
-                            handleFileUpload('loading_gif', f, 0);
-                          }}
-                        />
+                        <input id="loading-gif-upload" type="file" accept="image/gif,image/*" className="hidden" onChange={async (e) => { const f = e.target.files[0]; if (!f) return; const existing = getImagesForPage('loading_gif')[0]; if (existing) await deleteImageMutation.mutateAsync(existing.id); handleFileUpload('loading_gif', f, 0); }} />
                       </div>
                     </CardContent>
                   </Card>
-
-                  {/* GIF Preview Modal */}
                   {gifPreviewOpen && getImagesForPage('loading_gif')[0] && (
-                    <div
-                      className="fixed inset-0 z-[9999] flex items-center justify-center bg-white"
-                      onClick={() => setGifPreviewOpen(false)}
-                    >
-                      <img
-                        src={getImagesForPage('loading_gif')[0].image_url}
-                        alt="Preview"
-                        style={{ width: `${gifSize}%`, maxHeight: `${gifSize}vh`, objectFit: 'contain' }}
-                      />
-                      <button
-                        className="absolute top-4 right-4 p-2 bg-gray-900/70 text-white rounded-full hover:bg-gray-900"
-                        onClick={() => setGifPreviewOpen(false)}
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                      <p className="absolute bottom-6 text-gray-500 text-sm">Click anywhere to close preview</p>
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white" onClick={() => setGifPreviewOpen(false)}>
+                      <img src={getImagesForPage('loading_gif')[0].image_url} alt="Preview" style={{ width: `${gifSize}%`, maxHeight: `${gifSize}vh`, objectFit: 'contain' }} />
+                      <button className="absolute top-4 right-4 p-2 bg-gray-900/70 text-white rounded-full" onClick={() => setGifPreviewOpen(false)}><X className="w-5 h-5" /></button>
+                      <p className="absolute bottom-6 text-gray-500 text-sm">Click anywhere to close</p>
                     </div>
                   )}
                 </div>
@@ -599,6 +491,7 @@ export default function AdminSettings() {
               {/* ── Notification Log ── */}
               <TabsContent value="notif-log"><NotificationLogTab /></TabsContent>
 
+
               {/* ── OSM Overview ── */}
               <TabsContent value="osm-overview"><OSMOverview /></TabsContent>
 
@@ -616,61 +509,7 @@ export default function AdminSettings() {
               {/* ── OSM Badge Award Sync ── */}
               <TabsContent value="osm-awards"><OSMBadgeAwardSync /></TabsContent>
 
-              {/* ── Data Import / Export ── */}
-              <TabsContent value="export">
-                <div className="space-y-6">
-                  <Card>
-                    <CardHeader><CardTitle className="flex items-center gap-2"><Upload className="w-5 h-5" />Import Members</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-gray-600">Import member data from a CSV file. Download the template to see the required format.</p>
-                      <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg"><p className="text-sm text-amber-800"><strong>Important:</strong> Make sure your CSV matches the template format. For section_id, use the actual section ID from your system.</p></div>
-                      <div className="space-y-3">
-                        <Button variant="outline" onClick={() => {
-                          const template = 'first_name,surname,preferred_name,date_of_birth,gender,section_id,patrol,parent_one_first_name,parent_one_surname,parent_one_email,parent_one_phone,parent_two_first_name,parent_two_surname,parent_two_email,parent_two_phone,address,doctors_surgery,doctors_surgery_address,doctors_phone,medical_info,allergies,dietary_requirements,medications,emergency_contact_name,emergency_contact_phone,emergency_contact_relationship,photo_consent,invested,active,join_date,scouting_start_date,notes\n';
-                          const blob = new Blob([template], { type: 'text/csv' });
-                          const url = window.URL.createObjectURL(blob);
-                          const a = document.createElement('a'); a.href = url; a.download = 'member-import-template.csv'; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); a.remove();
-                        }}><Download className="w-4 h-4 mr-2" />Download CSV Template</Button>
-                        <div className="flex items-center gap-3">
-                          <input id="csv-upload" type="file" accept=".csv" className="hidden" onChange={(e) => setImportFile(e.target.files[0])} />
-                          <Button variant="outline" onClick={() => document.getElementById('csv-upload').click()}>{importFile ? 'Change File' : 'Select CSV File'}</Button>
-                          {importFile && <span className="text-sm text-gray-600">{importFile.name}</span>}
-                        </div>
-                        {importFile && (
-                          <Button onClick={async () => {
-                            setImporting(true);
-                            try {
-                              const response = await base44.functions.invoke('importMembers', { file: importFile });
-                              if (response.data.success) { toast.success(`Imported ${response.data.imported} members. ${response.data.failed} failed.`); setImportFile(null); queryClient.invalidateQueries({ queryKey: ['members'] }); }
-                              else { toast.error('Import failed: ' + response.data.error); }
-                            } catch (error) { toast.error('Import failed: ' + error.message); }
-                            finally { setImporting(false); }
-                          }} disabled={importing} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
-                            {importing ? <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />Importing...</> : <><Upload className="w-4 h-4 mr-2" />Import Members</>}
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader><CardTitle className="flex items-center gap-2"><Download className="w-5 h-5" />Data Export</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-gray-600">Export all your group's data including members, events, badges, and more. Downloaded as a ZIP file.</p>
-                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg"><p className="text-sm text-blue-800"><strong>Export includes:</strong> Members, Leaders, Sections, Events, Attendance, Badges, Badge Progress, Programme, Payments, and all other system data.</p></div>
-                      <Button onClick={handleExportData} disabled={exporting} className="bg-[#004851] hover:bg-[#003840]">
-                        {exporting ? <><div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />Exporting...</> : <><Download className="w-4 h-4 mr-2" />Export All Data</>}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-orange-200">
-                    <CardHeader><CardTitle className="flex items-center gap-2 text-orange-800"><Users className="w-5 h-5" />Archived Members</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-gray-600">View and manage members who have been archived. Their data is preserved.</p>
-                      <Button onClick={() => navigate(createPageUrl('ArchivedMembers'))} variant="outline" className="border-orange-300 text-orange-600 hover:bg-orange-50">View Archived Members</Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
+
             </Tabs>
           </div>
         </div>

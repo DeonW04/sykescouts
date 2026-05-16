@@ -369,28 +369,49 @@ export default function OSMSyncPanel({ defaultTab }) {
                     <span className="text-xs text-gray-400 ml-auto">{filteredOsmBadges.length} of {osmBadges.length}</span>
                   </div>
 
-                  <div className="space-y-1 max-h-[500px] overflow-y-auto">
-                    <div className="grid grid-cols-5 gap-3 px-3 py-2 bg-gray-100 rounded-lg font-semibold text-xs sticky top-0">
+                  <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                    {/* Desktop header */}
+                    <div className="hidden md:grid grid-cols-5 gap-3 px-3 py-2 bg-gray-100 rounded-lg font-semibold text-xs sticky top-0">
                       <div>OSM ID</div><div>Name</div><div>Type</div><div>Linked To</div><div>Actions</div>
                     </div>
                     {filteredOsmBadges.map(badge => {
                       const linkedBadge = badges.find(b => b.id === badge.linked_to_app_badge);
                       return (
-                        <div key={badge.id} className="grid grid-cols-5 gap-3 px-3 py-2.5 border rounded-lg items-center hover:bg-gray-50">
-                          <div className="text-xs font-mono text-gray-400">{badge.osm_id}</div>
-                          <div className="text-sm font-medium">{badge.name}</div>
-                          <div><Badge variant="outline" className="text-xs">{badge.badge_type}</Badge></div>
-                          <div className="text-xs">
-                            {linkedBadge
-                              ? <span className="text-green-700 font-medium">{linkedBadge.name}{linkedBadge.stage_number ? ` (Stage ${linkedBadge.stage_number})` : ''}</span>
-                              : <span className="text-gray-400">Not linked</span>}
+                        <div key={badge.id}>
+                          {/* Desktop row */}
+                          <div className="hidden md:grid grid-cols-5 gap-3 px-3 py-2.5 border rounded-lg items-center hover:bg-gray-50">
+                            <div className="text-xs font-mono text-gray-400">{badge.osm_id}</div>
+                            <div className="text-sm font-medium">{badge.name}</div>
+                            <div><Badge variant="outline" className="text-xs">{badge.badge_type}</Badge></div>
+                            <div className="text-xs">
+                              {linkedBadge ? <span className="text-green-700 font-medium">{linkedBadge.name}{linkedBadge.stage_number ? ` (Stage ${linkedBadge.stage_number})` : ''}</span> : <span className="text-gray-400">Not linked</span>}
+                            </div>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="outline" onClick={() => { setLinkDialogBadge(badge); setLinkingTo(badge.linked_to_app_badge || ''); setAiSuggestion(null); }}>
+                                {badge.linked_to_app_badge ? <><Edit className="w-3 h-3 mr-1" />Edit</> : <><Link className="w-3 h-3 mr-1" />Link</>}
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-red-600 hover:bg-red-50" onClick={() => handleDeleteOsmBadge(badge.id)}><Trash2 className="w-3 h-3" /></Button>
+                            </div>
                           </div>
-                          <div className="flex gap-1">
-                            <Button size="sm" variant="outline" onClick={() => { setLinkDialogBadge(badge); setLinkingTo(badge.linked_to_app_badge || ''); setAiSuggestion(null); }}>
-                              {badge.linked_to_app_badge ? <><Edit className="w-3 h-3 mr-1" />Edit</> : <><Link className="w-3 h-3 mr-1" />Link</>}
-                            </Button>
-                            <Button size="sm" variant="outline" className="text-red-600 hover:bg-red-50" onClick={() => handleDeleteOsmBadge(badge.id)}>
-                              <Trash2 className="w-3 h-3" />
+                          {/* Mobile card */}
+                          <div className="md:hidden border rounded-xl p-3 bg-white space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-sm text-gray-900">{badge.name}</p>
+                                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                  <Badge variant="outline" className="text-xs">{badge.badge_type}</Badge>
+                                  <span className="text-xs font-mono text-gray-400">{badge.osm_id}</span>
+                                </div>
+                                <p className="text-xs mt-1">
+                                  {linkedBadge
+                                    ? <span className="text-green-700 font-medium">✓ {linkedBadge.name}{linkedBadge.stage_number ? ` Stage ${linkedBadge.stage_number}` : ''}</span>
+                                    : <span className="text-gray-400">Not linked</span>}
+                                </p>
+                              </div>
+                              <Button size="sm" variant="ghost" className="text-red-400 hover:text-red-600 flex-shrink-0" onClick={() => handleDeleteOsmBadge(badge.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                            </div>
+                            <Button size="sm" variant="outline" className="w-full" onClick={() => { setLinkDialogBadge(badge); setLinkingTo(badge.linked_to_app_badge || ''); setAiSuggestion(null); }}>
+                              {badge.linked_to_app_badge ? <><Edit className="w-3.5 h-3.5 mr-1.5" />Edit Link</> : <><Link className="w-3.5 h-3.5 mr-1.5" />Link to App Badge</>}
                             </Button>
                           </div>
                         </div>
@@ -402,25 +423,36 @@ export default function OSMSyncPanel({ defaultTab }) {
 
             {/* ── My Badges View ── */}
             {badgeView === 'app' && (
-              <div className="space-y-1 max-h-[500px] overflow-y-auto">
-                <div className="grid grid-cols-5 gap-3 px-3 py-2 bg-gray-100 rounded-lg font-semibold text-xs sticky top-0">
+              <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                <div className="hidden md:grid grid-cols-5 gap-3 px-3 py-2 bg-gray-100 rounded-lg font-semibold text-xs sticky top-0">
                   <div>Name</div><div>Section</div><div>Category</div><div>OSM Link</div><div>Actions</div>
                 </div>
                 {badges.map(badge => {
                   const linked = osmBadges.find(ob => ob.linked_to_app_badge === badge.id);
                   return (
-                    <div key={badge.id} className={`grid grid-cols-5 gap-3 px-3 py-2.5 border rounded-lg items-center ${!linked ? 'border-amber-200 bg-amber-50' : 'hover:bg-gray-50'}`}>
-                      <div className="text-sm font-medium">{badge.name}{badge.stage_number ? <span className="ml-1 text-xs text-gray-500">Stage {badge.stage_number}</span> : ''}</div>
-                      <div className="text-xs capitalize text-gray-600">{badge.section}</div>
-                      <div><Badge variant="outline" className="text-xs">{badge.category}</Badge></div>
-                      <div className="text-xs">
-                        {linked
-                          ? <span className="text-green-700 font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" />{linked.name}</span>
-                          : <span className="text-amber-600 flex items-center gap-1"><XCircle className="w-3 h-3" />No OSM link</span>}
+                    <div key={badge.id}>
+                      {/* Desktop */}
+                      <div className={`hidden md:grid grid-cols-5 gap-3 px-3 py-2.5 border rounded-lg items-center ${!linked ? 'border-amber-200 bg-amber-50' : 'hover:bg-gray-50'}`}>
+                        <div className="text-sm font-medium">{badge.name}{badge.stage_number ? <span className="ml-1 text-xs text-gray-500">Stage {badge.stage_number}</span> : ''}</div>
+                        <div className="text-xs capitalize text-gray-600">{badge.section}</div>
+                        <div><Badge variant="outline" className="text-xs">{badge.category}</Badge></div>
+                        <div className="text-xs">{linked ? <span className="text-green-700 font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" />{linked.name}</span> : <span className="text-amber-600 flex items-center gap-1"><XCircle className="w-3 h-3" />No OSM link</span>}</div>
+                        <div><Button size="sm" variant="outline" onClick={() => { setAppLinkDialog(badge); setAppLinkingTo(linked?.id || ''); setAppAiSuggestion(null); }}>{linked ? <><Edit className="w-3 h-3 mr-1" />Edit</> : <><Link className="w-3 h-3 mr-1" />Link</>}</Button></div>
                       </div>
-                      <div>
-                        <Button size="sm" variant="outline" onClick={() => { setAppLinkDialog(badge); setAppLinkingTo(linked?.id || ''); setAppAiSuggestion(null); }}>
-                          {linked ? <><Edit className="w-3 h-3 mr-1" />Edit</> : <><Link className="w-3 h-3 mr-1" />Link</>}
+                      {/* Mobile card */}
+                      <div className={`md:hidden border rounded-xl p-3 space-y-2 ${!linked ? 'border-amber-200 bg-amber-50' : 'bg-white'}`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-gray-900">{badge.name}{badge.stage_number ? <span className="ml-1 text-xs text-gray-500">Stage {badge.stage_number}</span> : ''}</p>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              <span className="text-xs capitalize bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{badge.section}</span>
+                              <Badge variant="outline" className="text-xs">{badge.category}</Badge>
+                            </div>
+                            <p className="text-xs mt-1">{linked ? <span className="text-green-700 font-medium">✓ {linked.name}</span> : <span className="text-amber-600">No OSM link</span>}</p>
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline" className="w-full" onClick={() => { setAppLinkDialog(badge); setAppLinkingTo(linked?.id || ''); setAppAiSuggestion(null); }}>
+                          {linked ? <><Edit className="w-3.5 h-3.5 mr-1.5" />Edit Link</> : <><Link className="w-3.5 h-3.5 mr-1.5" />Link to OSM Badge</>}
                         </Button>
                       </div>
                     </div>

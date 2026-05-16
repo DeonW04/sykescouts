@@ -57,10 +57,13 @@ function LeaderProfile({ leader, user, sections, receipts, pageViews, onEdit, on
   const leaderSections = sections.filter(s => leader.section_ids?.includes(s.id));
 
   const now = new Date();
-  const signIns7 = pageViews.filter(v => v.user_email === user?.email && isAfter(new Date(v.timestamp), subDays(now, 7))).length;
-  const signIns30 = pageViews.filter(v => v.user_email === user?.email && isAfter(new Date(v.timestamp), subDays(now, 30))).length;
-  const signIns90 = pageViews.filter(v => v.user_email === user?.email && isAfter(new Date(v.timestamp), subDays(now, 90))).length;
-  const lastActivity = pageViews.filter(v => v.user_email === user?.email).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+  // PageView records use created_date (system field), not a custom timestamp field
+  const userViews = pageViews.filter(v => v.user_email === user?.email || v.created_by === user?.email);
+  const getViewDate = (v) => new Date(v.timestamp || v.created_date);
+  const signIns7 = userViews.filter(v => isAfter(getViewDate(v), subDays(now, 7))).length;
+  const signIns30 = userViews.filter(v => isAfter(getViewDate(v), subDays(now, 30))).length;
+  const signIns90 = userViews.filter(v => isAfter(getViewDate(v), subDays(now, 90))).length;
+  const lastActivity = userViews.sort((a, b) => getViewDate(b) - getViewDate(a))[0];
 
   const leaderReceipts = receipts.filter(r => r.submitted_by_email === user?.email || r.leader_id === leader.id);
   const pendingReceipts = leaderReceipts.filter(r => r.status === 'pending' || r.status === 'submitted');
