@@ -141,9 +141,11 @@ function ParentApp({ user, activeTab, onTabChange }) {
   });
 
   const handleOpenConsentForm = async (action, child) => {
-    // Load existing submission for this child
+    // Load existing submission for this child, scoped to the correct event/programme
     const subs = await base44.entities.ConsentFormSubmission.filter({ form_id: action.consent_form_id, member_id: child.id });
-    const submission = subs[0] || null;
+    const submission = subs.find(s =>
+      action.event_id ? s.event_id === action.event_id : s.programme_id === action.programme_id
+    ) || null;
     setConsentFlow({ action, child, submission });
   };
 

@@ -203,11 +203,17 @@ export default function MobileProgramme({ memberChildren = [] }) {
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
 
-  const relevantTerms = terms.filter(t => childSectionIds.includes(t.section_id));
-  const currentTerm = relevantTerms.find(t => now >= new Date(t.start_date) && now <= new Date(t.end_date))
-    || relevantTerms.filter(t => new Date(t.start_date) > now).sort((a, b) => new Date(a.start_date) - new Date(b.start_date))[0];
+  // Terms are section-agnostic (no section_id) — use all active terms
+  const currentTerm = terms.find(t => now >= new Date(t.start_date) && now <= new Date(t.end_date))
+    || terms.filter(t => new Date(t.start_date) > now).sort((a, b) => new Date(a.start_date) - new Date(b.start_date))[0];
 
-  const termMeetingTime = currentTerm?.meeting_start_time;
+  const { data: sections = [] } = useQuery({
+    queryKey: ['mobile-sections'],
+    queryFn: () => base44.entities.Section.filter({ active: true }),
+    enabled: childSectionIds.length > 0,
+  });
+  const childSection = sections.find(s => childSectionIds.includes(s.id));
+  const termMeetingTime = childSection?.meeting_start_time;
 
   // Build map: programmeId -> badge definitions
   const programmeBadgesMap = {};
