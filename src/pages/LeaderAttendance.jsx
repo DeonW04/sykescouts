@@ -103,7 +103,7 @@ function AttendanceRegister({ session, sections, members, onBack }) {
     if (!assignment) return null; // not assigned — show normally
     const response = responses.find(r => r.member_id === memberId);
     if (!response?.response_value) return 'not_responded';
-    return response.response_value.toLowerCase() === 'yes' ? 'attending' : 'not_attending';
+    return response.response_value.toLowerCase().startsWith('yes') ? 'attending' : 'not_attending';
   };
 
   // Split members into: main list (attending/not_responded/not in action) and hidden (not_attending)
