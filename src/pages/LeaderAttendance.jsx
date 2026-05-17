@@ -2,19 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Calendar, Users, Check, X, Minus, Radio, Clock, ChevronRight, ChevronLeft } from 'lucide-react';
-import { format, parseISO, subWeeks, addWeeks, startOfWeek, endOfWeek } from 'date-fns';
+import { Calendar, Users, Check, X, Minus, Radio, Tent } from 'lucide-react';
+import { format, subWeeks, addWeeks, startOfWeek, endOfWeek } from 'date-fns';
 import { toast } from 'sonner';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
 
 // ── UK time helpers ──────────────────────────────────────────────────────────
-// Returns the current date/time in Europe/London (handles BST/GMT automatically)
 function nowUK() {
-  // Get ISO string in UK timezone
   const ukStr = new Date().toLocaleString('en-GB', { timeZone: 'Europe/London' });
-  // en-GB gives "dd/mm/yyyy, hh:mm:ss"
   const [datePart, timePart] = ukStr.split(', ');
   const [d, m, y] = datePart.split('/');
   const [h, min, s] = timePart.split(':');
@@ -26,89 +22,240 @@ function todayUKString() {
   return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
 }
 
-// Parse "HH:MM" on a given UK date string "YYYY-MM-DD" into a local Date
 function parseTimeOnDate(dateStr, timeStr) {
   const [h, m] = timeStr.split(':').map(Number);
   const [y, mo, d] = dateStr.split('-').map(Number);
   return new Date(y, mo - 1, d, h, m, 0);
 }
 
-// Check if a meeting (programme) is currently ongoing in UK time
 function isMeetingOngoing(programme, section, now) {
   if (programme.date !== todayUKString()) return false;
-  const start = section?.meeting_start_time
-    ? parseTimeOnDate(programme.date, programme.optional_start_time || section.meeting_start_time)
-    : null;
-  const end = section?.meeting_end_time
-    ? parseTimeOnDate(programme.date, programme.optional_end_time || section.meeting_end_time)
-    : null;
-  if (!start || !end) return false;
-  return now >= start && now <= end;
+  const startT = programme.optional_start_time || section?.meeting_start_time;
+  const endT = programme.optional_end_time || section?.meeting_end_time;
+  if (!startT || !endT) return false;
+  return now >= parseTimeOnDate(programme.date, startT) && now <= parseTimeOnDate(programme.date, endT);
 }
 
-// Check if an event is currently ongoing
 function isEventOngoing(event, now) {
   if (!event.start_date || !event.end_date) return false;
   return now >= new Date(event.start_date) && now <= new Date(event.end_date);
 }
 
-export default function LeaderAttendance() {
+// ── Attendance Register ───────────────────────────────────────────────────────
+function AttendanceRegister({ session, sections, members, onBack }) {
   const queryClient = useQueryClient();
-  const [user, setUser] = useState(null);
+  const { title, subtitle, date, sectionId, isEvent, accentColor } = session;
 
-  // We track the selected session as { type: 'meeting'|'event', id, sectionId (for events), date }
+  const { data: attendance = [] } = useQuery({
+    queryKey: ['attendance-records-detail', sectionId, date],
+    queryFn: () => base44.entities.Attendance.filter({ section_id: sectionId, date }),
+    enabled: !!sectionId && !!date,
+  });
+
+  const user = session._user;
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ memberId, status }) => {
+      const existing = attendance.find(a => a.member_id === memberId && a.section_id === sectionId && a.date === date);
+      if (existing) return base44.entities.Attendance.update(existing.id, { status });
+      return base44.entities.Attendance.create({ member_id: memberId, section_id: sectionId, date, status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendance-records-detail'] });
+      toast.success('Attendance updated');
+    },
+  });
+
+  const sectionMembers = members
+    .filter(m => m.section_id === sectionId)
+    .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+
+  const getAtt = (memberId) => attendance.find(a => a.member_id === memberId);
+  const presentCount = sectionMembers.filter(m => getAtt(m.id)?.status === 'present').length;
+
+  const headerBg = isEvent
+    ? 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)'
+    : 'linear-gradient(135deg, #7413dc 0%, #004851 100%)';
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <FloatingNav />
+      <NavBarSpacer />
+
+      {/* Coloured header */}
+      <div style={{ background: headerBg, padding: '24px', color: '#fff' }}>
+        <div className="max-w-7xl mx-auto">
+          <button onClick={onBack} className="text-white/70 text-sm mb-4 flex items-center gap-1 hover:text-white transition-colors">
+            ← Back to list
+          </button>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                {isEvent
+                  ? <Tent className="w-5 h-5 text-white/80" />
+                  : <Calendar className="w-5 h-5 text-white/80" />}
+                <span className="text-white/70 text-xs font-semibold uppercase tracking-wider">
+                  {isEvent ? 'Event' : 'Meeting'}
+                </span>
+                {session.isOngoing && (
+                  <span className="flex items-center gap-1 text-xs font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                    <Radio className="w-2.5 h-2.5" /> Live
+                  </span>
+                )}
+              </div>
+              <h1 className="text-2xl font-bold">{title}</h1>
+              <p className="text-white/75 text-sm mt-1">{subtitle}</p>
+              <p className="text-white/60 text-sm mt-0.5">{format(new Date(date + 'T12:00:00'), 'EEEE, d MMMM yyyy')}</p>
+            </div>
+            <div className="text-right bg-white/15 rounded-2xl px-6 py-3">
+              <div className="text-3xl font-bold">{presentCount}/{sectionMembers.length}</div>
+              <div className="text-white/70 text-xs mt-0.5">Present</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4">
+        {sectionMembers.length === 0 ? (
+          <Card><CardContent className="p-12 text-center text-gray-400">No members in this section</CardContent></Card>
+        ) : (
+          <div className="space-y-2">
+            {sectionMembers.map(member => {
+              const att = getAtt(member.id);
+              const status = att?.status;
+              return (
+                <div key={member.id} className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+                  <div>
+                    <p className="font-medium text-sm text-gray-900">{member.full_name}</p>
+                    {status && (
+                      <p className={`text-xs mt-0.5 ${status === 'present' ? 'text-green-600' : status === 'absent' ? 'text-red-500' : 'text-yellow-600'}`}>
+                        {status}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    {[
+                      { s: 'present', Icon: Check, active: 'bg-green-500 text-white scale-110', idle: 'hover:bg-green-100 hover:text-green-600' },
+                      { s: 'apologies', Icon: Minus, active: 'bg-yellow-400 text-white scale-110', idle: 'hover:bg-yellow-100 hover:text-yellow-600' },
+                      { s: 'absent', Icon: X, active: 'bg-red-500 text-white scale-110', idle: 'hover:bg-red-100 hover:text-red-600' },
+                    ].map(({ s, Icon, active, idle }) => (
+                      <button
+                        key={s}
+                        onClick={() => updateMutation.mutate({ memberId: member.id, status: s })}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm ${status === s ? active : `bg-gray-100 text-gray-400 ${idle}`}`}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Session list row ──────────────────────────────────────────────────────────
+function SessionRow({ session, onClick }) {
+  const { title, subtitle, date, isEvent, isOngoing, isPast } = session;
+  const Icon = isEvent ? Tent : Calendar;
+
+  const meetingColors = isOngoing
+    ? 'border-green-300 bg-green-50'
+    : isPast ? 'border-gray-100 bg-white opacity-70' : 'border-purple-100 bg-purple-50';
+  const eventColors = isOngoing
+    ? 'border-green-300 bg-green-50'
+    : isPast ? 'border-gray-100 bg-white opacity-70' : 'border-sky-100 bg-sky-50';
+  const cardColors = isEvent ? eventColors : meetingColors;
+
+  const iconBg = isEvent
+    ? (isOngoing ? 'bg-green-200' : isPast ? 'bg-gray-100' : 'bg-sky-200')
+    : (isOngoing ? 'bg-green-200' : isPast ? 'bg-gray-100' : 'bg-purple-200');
+  const iconColor = isEvent
+    ? (isOngoing ? 'text-green-700' : isPast ? 'text-gray-400' : 'text-sky-700')
+    : (isOngoing ? 'text-green-700' : isPast ? 'text-gray-400' : 'text-purple-700');
+
+  const typePill = isEvent
+    ? 'bg-sky-100 text-sky-700'
+    : 'bg-purple-100 text-purple-700';
+
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full border rounded-2xl p-4 flex items-center gap-4 text-left transition-all hover:shadow-md active:scale-[0.99] ${cardColors}`}
+    >
+      <div className={`rounded-xl p-3 flex-shrink-0 ${iconBg}`}>
+        <Icon className={`w-5 h-5 ${iconColor}`} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <p className="font-semibold text-sm text-gray-900">{title}</p>
+          {isOngoing && (
+            <span className="flex items-center gap-1 text-xs font-bold text-green-700 bg-green-200 px-2 py-0.5 rounded-full">
+              <Radio className="w-2.5 h-2.5" /> Live
+            </span>
+          )}
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${typePill}`}>
+            {isEvent ? 'Event' : 'Meeting'}
+          </span>
+        </div>
+        <p className="text-xs text-gray-500 mt-0.5">
+          {subtitle} · {format(new Date(date + 'T12:00:00'), 'd MMM yyyy')}
+        </p>
+      </div>
+      <span className="text-gray-400 text-sm flex-shrink-0">→</span>
+    </button>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+export default function LeaderAttendance() {
+  const [user, setUser] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
 
-  // For the "browse" mode (when nothing is ongoing), which date are we viewing?
-  const [browseDate, setBrowseDate] = useState(todayUKString());
-
-  useEffect(() => { loadUser(); }, []);
-  const loadUser = async () => {
-    const currentUser = await base44.auth.me();
-    setUser(currentUser);
-  };
+  useEffect(() => { base44.auth.me().then(setUser); }, []);
 
   const { data: sections = [] } = useQuery({
     queryKey: ['sections', user?.id],
     queryFn: async () => {
-      if (!user) return [];
       if (user.role === 'admin') return base44.entities.Section.filter({ active: true });
       const leaders = await base44.entities.Leader.filter({ user_id: user.id });
-      if (leaders.length === 0) return [];
-      const allSections = await base44.entities.Section.filter({ active: true });
-      return allSections.filter(s => leaders[0].section_ids?.includes(s.id));
+      if (!leaders.length) return [];
+      const all = await base44.entities.Section.filter({ active: true });
+      return all.filter(s => leaders[0].section_ids?.includes(s.id));
     },
     enabled: !!user,
-    refetchInterval: 60000,
   });
 
-  const { data: allProgrammes = [] } = useQuery({
-    queryKey: ['attendance-programmes', sections.map(s => s.id).join(',')],
+  const sectionIds = sections.map(s => s.id);
+  const from = subWeeks(new Date(), 4);
+  const to = addWeeks(new Date(), 2);
+
+  const { data: allProgrammes = [], isLoading: loadingP } = useQuery({
+    queryKey: ['attendance-programmes', sectionIds.join(',')],
     queryFn: async () => {
-      const sectionIds = sections.map(s => s.id);
       const all = await base44.entities.Programme.filter({});
-      const from = subWeeks(new Date(), 4);
-      const to = addWeeks(new Date(), 2);
-      return all.filter(p => sectionIds.includes(p.section_id) && new Date(p.date) >= from && new Date(p.date) <= to);
+      return all.filter(p => sectionIds.includes(p.section_id) && new Date(p.date) >= from && new Date(p.date) <= to)
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
     },
-    enabled: sections.length > 0,
+    enabled: sectionIds.length > 0,
     refetchInterval: 60000,
   });
 
-  const { data: allEvents = [] } = useQuery({
-    queryKey: ['attendance-events', sections.map(s => s.id).join(',')],
+  const { data: allEvents = [], isLoading: loadingE } = useQuery({
+    queryKey: ['attendance-events', sectionIds.join(',')],
     queryFn: async () => {
-      const sectionIds = sections.map(s => s.id);
       const all = await base44.entities.Event.filter({});
-      const from = subWeeks(new Date(), 4);
-      const to = addWeeks(new Date(), 2);
       return all.filter(e =>
         e.section_ids?.some(sid => sectionIds.includes(sid)) &&
         new Date(e.start_date) <= to &&
         new Date(e.end_date || e.start_date) >= from
-      );
+      ).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
     },
-    enabled: sections.length > 0,
+    enabled: sectionIds.length > 0,
     refetchInterval: 60000,
   });
 
@@ -117,277 +264,112 @@ export default function LeaderAttendance() {
     queryFn: () => base44.entities.Member.filter({ active: true }),
   });
 
-  // Attendance for browse date
-  const { data: attendance = [] } = useQuery({
-    queryKey: ['attendance-records', browseDate],
-    queryFn: () => base44.entities.Attendance.filter({ date: browseDate }),
-  });
+  if (!user) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full" />
+    </div>
+  );
 
-  const updateAttendanceMutation = useMutation({
-    mutationFn: async ({ memberId, sectionId, status, date }) => {
-      const existing = attendance.find(a => a.member_id === memberId && a.section_id === sectionId && a.date === date);
-      if (existing) {
-        return base44.entities.Attendance.update(existing.id, { status });
-      }
-      return base44.entities.Attendance.create({ member_id: memberId, section_id: sectionId, date, status, recorded_by: user.email });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['attendance-records'] });
-      toast.success('Attendance updated');
-    },
-  });
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full" />
-      </div>
-    );
+  if (selectedSession) {
+    return <AttendanceRegister session={selectedSession} sections={sections} members={members} onBack={() => setSelectedSession(null)} />;
   }
 
   const now = nowUK();
-  const sectionIds = sections.map(s => s.id);
+  const today = todayUKString();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
 
-  // ── Detect ongoing sessions ──────────────────────────────────────────────
-  const ongoingMeetings = allProgrammes.filter(p => {
+  // Build unified session list
+  const meetingSessions = allProgrammes.map(p => {
     const section = sections.find(s => s.id === p.section_id);
-    return isMeetingOngoing(p, section, now);
+    const ongoing = isMeetingOngoing(p, section, now);
+    const past = new Date(p.date) < new Date(today);
+    const thisWeek = new Date(p.date) >= weekStart && new Date(p.date) <= weekEnd;
+    return {
+      key: p.id, title: p.title, subtitle: section?.display_name || '',
+      date: p.date, sectionId: p.section_id, isEvent: false,
+      isOngoing: ongoing, isPast: past, isThisWeek: thisWeek,
+      sortDate: new Date(p.date),
+    };
   });
 
-  const ongoingEvents = allEvents.filter(e => isEventOngoing(e, now));
-
-  const hasOngoing = ongoingMeetings.length > 0 || ongoingEvents.length > 0;
-
-  // ── Browse mode: sessions on browseDate ─────────────────────────────────
-  const meetingsOnDate = allProgrammes.filter(p => p.date === browseDate && sectionIds.includes(p.section_id));
-  const eventsOnDate = allEvents.filter(e => {
-    const start = new Date(e.start_date);
-    const end = e.end_date ? new Date(e.end_date) : start;
-    const bd = new Date(browseDate);
-    return e.section_ids?.some(sid => sectionIds.includes(sid)) &&
-      bd >= new Date(start.toDateString()) && bd <= new Date(end.toDateString());
+  const eventSessions = allEvents.flatMap(e => {
+    const evSections = sections.filter(s => e.section_ids?.includes(s.id));
+    return evSections.map(section => {
+      const ongoing = isEventOngoing(e, now);
+      const past = new Date(e.end_date || e.start_date) < now;
+      const startD = new Date(e.start_date);
+      const endD = new Date(e.end_date || e.start_date);
+      const thisWeek = startD <= weekEnd && endD >= weekStart;
+      return {
+        key: `${e.id}-${section.id}`, title: e.title,
+        subtitle: `${section.display_name} · ${e.type}`,
+        date: e.start_date.split('T')[0], sectionId: section.id,
+        isEvent: true, isOngoing: ongoing, isPast: past, isThisWeek: thisWeek,
+        sortDate: new Date(e.start_date),
+      };
+    });
   });
-  const sessionsOnDate = [...meetingsOnDate, ...eventsOnDate];
 
-  // ── Attendance register for a specific session ───────────────────────────
-  const AttendanceButtons = ({ memberId, sectionId, date }) => {
-    const att = attendance.find(a => a.member_id === memberId && a.section_id === sectionId && a.date === date);
-    const currentStatus = att?.status;
-    return (
-      <div className="flex gap-2">
-        {[
-          { status: 'present', icon: Check, active: 'bg-green-500 text-white shadow-md scale-110', hover: 'hover:bg-green-100 hover:text-green-600' },
-          { status: 'apologies', icon: Minus, active: 'bg-yellow-400 text-white shadow-md scale-110', hover: 'hover:bg-yellow-100 hover:text-yellow-600' },
-          { status: 'absent', icon: X, active: 'bg-red-500 text-white shadow-md scale-110', hover: 'hover:bg-red-100 hover:text-red-600' },
-        ].map(({ status, icon: Icon, active, hover }) => (
-          <button
-            key={status}
-            onClick={() => updateAttendanceMutation.mutate({ memberId, sectionId, status, date })}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${currentStatus === status ? active : `bg-gray-100 text-gray-400 ${hover}`}`}
-          >
-            <Icon className="w-4 h-4" />
-          </button>
-        ))}
-      </div>
-    );
-  };
+  const allSessions = [...meetingSessions, ...eventSessions];
 
-  const SessionCard = ({ title, subtitle, date, sectionId, sectionObj, isEvent = false, eventId }) => {
-    const sectionMembers = members
-      .filter(m => m.section_id === sectionId)
-      .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
-    const presentCount = sectionMembers.filter(m =>
-      attendance.find(a => a.member_id === m.id && a.section_id === sectionId && a.date === date)?.status === 'present'
-    ).length;
+  const ongoing = allSessions.filter(s => s.isOngoing);
+  const thisWeek = allSessions.filter(s => s.isThisWeek && !s.isOngoing).sort((a, b) => b.sortDate - a.sortDate);
+  const upcoming = allSessions.filter(s => !s.isThisWeek && !s.isOngoing && !s.isPast).sort((a, b) => a.sortDate - b.sortDate);
+  const past = allSessions.filter(s => s.isPast && !s.isOngoing).sort((a, b) => b.sortDate - a.sortDate);
 
-    return (
-      <Card className="rounded-2xl border-gray-100 shadow-sm">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-xl">{title}</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">{subtitle}</p>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-[#7413dc]">{presentCount}/{sectionMembers.length}</div>
-              <div className="text-xs text-gray-500">Present</div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {sectionMembers.map(member => {
-              const att = attendance.find(a => a.member_id === member.id && a.section_id === sectionId && a.date === date);
-              return (
-                <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                  <div>
-                    <p className="font-medium text-sm text-gray-900">{member.full_name}</p>
-                    {att?.status && (
-                      <p className={`text-xs mt-0.5 ${att.status === 'present' ? 'text-green-600' : att.status === 'absent' ? 'text-red-500' : 'text-yellow-600'}`}>
-                        {att.status}
-                      </p>
-                    )}
-                  </div>
-                  <AttendanceButtons memberId={member.id} sectionId={sectionId} date={date} />
-                </div>
-              );
-            })}
-            {sectionMembers.length === 0 && (
-              <p className="text-sm text-gray-400 text-center py-4">No members in this section</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  // Prev/next day for browse navigation
-  const shiftDay = (delta) => {
-    const d = new Date(browseDate);
-    d.setDate(d.getDate() + delta);
-    setBrowseDate(d.toISOString().split('T')[0]);
-  };
+  const isLoading = loadingP || loadingE;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <FloatingNav />
       <NavBarSpacer />
 
-      {/* Header */}
       <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
         <div className="max-w-7xl mx-auto">
           <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
           <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Attendance Register</h1>
-          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>
-            {hasOngoing ? 'Session in progress — marking attendance now' : 'No active session — browse by date'}
-          </p>
+          <div className="flex items-center gap-4 mt-2">
+            <span className="flex items-center gap-1.5 text-xs font-semibold bg-purple-100 text-purple-700 px-3 py-1 rounded-full"><Calendar className="w-3 h-3" /> Meetings</span>
+            <span className="flex items-center gap-1.5 text-xs font-semibold bg-sky-100 text-sky-700 px-3 py-1 rounded-full"><Tent className="w-3 h-3" /> Events</span>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 space-y-4">
-
-        {hasOngoing ? (
-          /* ── ONGOING SESSION MODE ── */
-          <>
-            <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-2xl">
-              <Radio className="w-4 h-4 text-green-600 animate-pulse" />
-              <p className="text-sm font-semibold text-green-800">
-                Live session · {format(now, 'HH:mm, EEEE d MMMM')}
-              </p>
-            </div>
-
-            {ongoingMeetings.map(programme => {
-              const section = sections.find(s => s.id === programme.section_id);
-              return (
-                <SessionCard
-                  key={programme.id}
-                  title={programme.title}
-                  subtitle={section?.display_name || ''}
-                  date={programme.date}
-                  sectionId={programme.section_id}
-                  sectionObj={section}
-                />
-              );
-            })}
-
-            {ongoingEvents.map(event => {
-              const eventSections = sections.filter(s => event.section_ids?.includes(s.id));
-              const date = todayUKString();
-              return eventSections.map(section => (
-                <SessionCard
-                  key={`${event.id}-${section.id}`}
-                  title={event.title}
-                  subtitle={`${section.display_name} · ${event.type}`}
-                  date={date}
-                  sectionId={section.id}
-                  sectionObj={section}
-                  isEvent
-                />
-              ));
-            })}
-          </>
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 space-y-6">
+        {isLoading ? (
+          <div className="flex justify-center py-16"><div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full" /></div>
+        ) : allSessions.length === 0 ? (
+          <Card><CardContent className="p-12 text-center">
+            <Users className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+            <p className="text-gray-500">No meetings or events in the last 4 weeks or next 2 weeks</p>
+          </CardContent></Card>
         ) : (
-          /* ── BROWSE MODE ── */
           <>
-            {/* Date navigator */}
-            <Card className="rounded-2xl border-gray-100 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <Button variant="outline" size="icon" onClick={() => shiftDay(-1)}>
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <div className="flex-1 text-center">
-                    <input
-                      type="date"
-                      value={browseDate}
-                      onChange={e => setBrowseDate(e.target.value)}
-                      className="sr-only"
-                      id="browse-date"
-                    />
-                    <label htmlFor="browse-date" className="cursor-pointer">
-                      <p className="font-semibold text-gray-900">{format(parseISO(browseDate), 'EEEE, d MMMM yyyy')}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">Click to pick a date</p>
-                    </label>
-                    {/* Visible date input below for accessibility */}
-                    <input
-                      type="date"
-                      value={browseDate}
-                      onChange={e => setBrowseDate(e.target.value)}
-                      className="mt-1 block mx-auto text-sm border border-gray-200 rounded-lg px-2 py-1"
-                    />
-                  </div>
-                  <Button variant="outline" size="icon" onClick={() => shiftDay(1)}>
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-                {browseDate !== todayUKString() && (
-                  <div className="mt-3 text-center">
-                    <Button size="sm" variant="ghost" onClick={() => setBrowseDate(todayUKString())} className="text-[#7413dc]">
-                      <Clock className="w-3.5 h-3.5 mr-1.5" />Jump to today
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {sessionsOnDate.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-600 font-medium">No meetings or events on this date</p>
-                  <p className="text-sm text-gray-400 mt-1">Use the arrows to navigate to a different day</p>
-                </CardContent>
-              </Card>
-            ) : (
-              meetingsOnDate.map(programme => {
-                const section = sections.find(s => s.id === programme.section_id);
-                return (
-                  <SessionCard
-                    key={programme.id}
-                    title={programme.title}
-                    subtitle={section?.display_name || ''}
-                    date={programme.date}
-                    sectionId={programme.section_id}
-                    sectionObj={section}
-                  />
-                );
-              })
+            {ongoing.length > 0 && (
+              <section>
+                <h2 className="text-xs font-bold text-green-700 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Radio className="w-3 h-3" /> Live Now</h2>
+                <div className="space-y-2">{ongoing.map(s => <SessionRow key={s.key} session={s} onClick={() => setSelectedSession(s)} />)}</div>
+              </section>
             )}
-
-            {eventsOnDate.map(event => {
-              const eventSections = sections.filter(s => event.section_ids?.includes(s.id));
-              return eventSections.map(section => (
-                <SessionCard
-                  key={`${event.id}-${section.id}`}
-                  title={event.title}
-                  subtitle={`${section.display_name} · ${event.type}`}
-                  date={browseDate}
-                  sectionId={section.id}
-                  sectionObj={section}
-                  isEvent
-                />
-              ));
-            })}
+            {thisWeek.length > 0 && (
+              <section>
+                <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">This Week</h2>
+                <div className="space-y-2">{thisWeek.map(s => <SessionRow key={s.key} session={s} onClick={() => setSelectedSession(s)} />)}</div>
+              </section>
+            )}
+            {upcoming.length > 0 && (
+              <section>
+                <h2 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Upcoming</h2>
+                <div className="space-y-2">{upcoming.map(s => <SessionRow key={s.key} session={s} onClick={() => setSelectedSession(s)} />)}</div>
+              </section>
+            )}
+            {past.length > 0 && (
+              <section>
+                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Past Sessions</h2>
+                <div className="space-y-2">{past.map(s => <SessionRow key={s.key} session={s} onClick={() => setSelectedSession(s)} />)}</div>
+              </section>
+            )}
           </>
         )}
       </div>
