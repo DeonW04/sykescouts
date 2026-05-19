@@ -7,6 +7,15 @@ const VAPID_PRIVATE_KEY = 'Ul5ZJEMl_8DcNMiB-tNwhDcxEq2Oenf2uX9jFcJm4Pk';
 
 webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
+function formatPhone(phone) {
+  if (!phone) return null;
+  let p = phone.replace(/[\s\-\(\)\.]/g, '');
+  if (p.startsWith('+')) p = p.slice(1);
+  if (p.startsWith('07') && p.length === 11) p = '44' + p.slice(1);
+  if (p.startsWith('00')) p = p.slice(2);
+  return /^\d{10,15}$/.test(p) ? p : null;
+}
+
 // Called by ActionAssignment create automation
 // Finds parent push subscriptions for the member and notifies them
 Deno.serve(async (req) => {
@@ -61,6 +70,28 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.entities.PushSubscription.delete(sub.id).catch(() => {});
         }
       }
+    }
+
+    // WhatsApp notifications
+    for (const parentEmail of parentEmails) {
+      const isParentOne = parentEmail === member.parent_one_email;
+      const phone = isParentOne ? member.parent_one_phone : member.parent_two_phone;
+      const formatted = formatPhone(phone);
+      if (!formatted) continue;
+      try {
+        const users = await base44.asServiceRole.entities.User.filter({ email: parentEmail });
+        if (users[0]?.whatsapp_notifications === false) continue;
+        const message = `🔔 *${title}*\n\n${action.action_text || action.column_title} for *${member.first_name}*\n\nOpen the SykeScouts app to respond:\nhttps://sykescouts.base44.app/app`;
+        await base44.asServiceRole.entities.WhatsAppSchedule.create({
+          schedule_type: 'direct_message',
+          target_group_jid: formatted,
+          target_group_name: parentEmail,
+          recipient_phone: formatted,
+          send_at: new Date().toISOString(),
+          status: 'scheduled',
+          message_text: message
+        });
+      } catch (_) { /* Don't fail the whole function if WhatsApp scheduling fails */ }
     }
 
     return Response.json({ sent });

@@ -3,33 +3,38 @@
   "type": "object",
   "properties": {
     "linked_meeting_id": {
-      "type": "string",
-      "description": "Programme ID if linked to a meeting"
+      "type": "string"
     },
     "linked_event_id": {
-      "type": "string",
-      "description": "Event ID if linked to an event"
+      "type": "string"
     },
     "schedule_type": {
       "type": "string",
       "enum": [
         "risk_assessment_leaders",
-        "parent_reminder"
+        "parent_reminder",
+        "direct_message"
       ],
       "description": "Type of message to send"
     },
     "target_group_jid": {
       "type": "string",
-      "description": "WhatsApp group JID (e.g. 123456789@g.us)"
+      "description": "WhatsApp JID (group @g.us or individual @s.whatsapp.net)"
     },
     "target_group_name": {
+      "type": "string"
+    },
+    "recipient_phone": {
       "type": "string",
-      "description": "Display name of the target group"
+      "description": "Formatted phone number for direct_message type"
+    },
+    "message_text": {
+      "type": "string",
+      "description": "Pre-built message text for direct_message type"
     },
     "send_at": {
       "type": "string",
-      "format": "date-time",
-      "description": "Scheduled send time (UTC)"
+      "format": "date-time"
     },
     "status": {
       "type": "string",
@@ -45,25 +50,21 @@
       "type": "array",
       "items": {
         "type": "object"
-      },
-      "description": "Array of message block definitions for parent_reminder type"
+      }
     },
     "ra_link_url": {
-      "type": "string",
-      "description": "Full public URL to the risk assessment viewer"
+      "type": "string"
     },
     "sent_at": {
       "type": "string",
       "format": "date-time"
     },
     "error": {
-      "type": "string",
-      "description": "Error message if failed"
+      "type": "string"
     }
   },
   "required": [
     "schedule_type",
-    "target_group_jid",
     "send_at"
   ]
 }

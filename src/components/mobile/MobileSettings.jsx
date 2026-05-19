@@ -211,7 +211,7 @@ function LeaderAccountSection({ user, leader }) {
       {/* Disclosure & Compliance — view only */}
       {leader && (
         <div>
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-1">Disclosure & Compliance</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-1">Disclosure {'&'} Compliance</p>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
             <div className="flex flex-wrap gap-2">
               <StatusBadge ok={leader.first_aid_certified} label="First Aid" />

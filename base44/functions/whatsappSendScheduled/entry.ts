@@ -54,6 +54,10 @@ function buildAuthState(stored) {
 }
 
 async function buildMessage(schedule, base44) {
+  if (schedule.schedule_type === 'direct_message') {
+    return schedule.message_text || '';
+  }
+
   if (schedule.schedule_type === 'risk_assessment_leaders') {
     let title = 'Upcoming Session';
     if (schedule.linked_meeting_id) {
@@ -190,7 +194,11 @@ Deno.serve(async (req) => {
         if (connection === 'open') {
           for (const { schedule, message } of toSend) {
             try {
-              const jid = schedule.target_group_jid.includes('@') ? schedule.target_group_jid : `${schedule.target_group_jid}@g.us`;
+              const isDirectMsg = schedule.schedule_type === 'direct_message';
+              const phone = schedule.recipient_phone || schedule.target_group_jid;
+              const jid = isDirectMsg
+                ? (phone.includes('@') ? phone : `${phone}@s.whatsapp.net`)
+                : (schedule.target_group_jid.includes('@') ? schedule.target_group_jid : `${schedule.target_group_jid}@g.us`);
               await sock.sendMessage(jid, { text: message });
               await base44.asServiceRole.entities.WhatsAppSchedule.update(schedule.id, {
                 status: 'sent',
@@ -199,7 +207,7 @@ Deno.serve(async (req) => {
               await base44.asServiceRole.entities.WhatsAppMessage.create({
                 direction: 'outbound',
                 to_number: jid,
-                is_group: true,
+                is_group: schedule.schedule_type !== 'direct_message',
                 group_id: jid,
                 group_name: schedule.target_group_name,
                 message_text: message,

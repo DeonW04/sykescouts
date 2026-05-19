@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Trash2, Plus, MessageSquare, Link2, Users, MapPin, ChevronUp, ChevronDown, RefreshCw } from 'lucide-react';
+import { Trash2, Plus, MessageSquare, Link2, Users, MapPin, ChevronUp, ChevronDown, RefreshCw, Wand2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import moment from 'moment';
 
@@ -80,6 +81,102 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
   const [groups, setGroups] = useState([]);
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [meetingInfo, setMeetingInfo] = useState(null);
+
+  const loadTemplates = async () => {
+    const all = await base44.entities.WhatsAppTemplate.filter({});
+    setTemplates(all);
+  };
+
+  const loadMeetingInfo = async () => {
+    if (meetingId) {
+      const [meetings, sections] = await Promise.all([
+        base44.entities.Programme.filter({ id: meetingId }),
+        base44.entities.Section.filter({})
+      ]);
+      const mtg = meetings[0];
+      if (mtg) {
+        const sec = sections.find(s => s.id === mtg.section_id);
+        setMeetingInfo({
+          title: mtg.title || 'Meeting', date: mtg.date,
+          startTime: mtg.optional_start_time || sec?.meeting_start_time || '18:00',
+          section: sec?.display_name || '', location: mtg.optional_location || 'usual venue',
+          endTime: mtg.optional_end_time || sec?.meeting_end_time || ''
+        });
+      }
+    } else if (eventId) {
+      const events = await base44.entities.Event.filter({ id: eventId });
+      const evt = events[0];
+      if (evt) {
+        setMeetingInfo({
+          title: evt.title || 'Event', date: evt.start_date?.split('T')[0] || '',
+          startTime: evt.start_date?.split('T')[1]?.slice(0, 5) || '',
+          section: '', location: evt.location || '', endTime: ''
+        });
+      }
+    }
+  };
+
+  const calculateSendAt = (timing, info) => {
+    if (!timing || !info?.date) return null;
+    const fullStart = `${info.date}T${info.startTime || '18:00'}:00`;
+    const start = new Date(fullStart);
+    if (isNaN(start.getTime())) return null;
+    if (timing.type === 'hours_before') return new Date(start.getTime() - (timing.hours || 1) * 3600000);
+    const d = new Date(start);
+    if (timing.type === 'day_before_at') d.setDate(d.getDate() - 1);
+    else if (timing.type === 'days_before_at') d.setDate(d.getDate() - (timing.days || 1));
+    else if (timing.type === 'week_before_on') {
+      const back = ((d.getDay() - (timing.day ?? 0) + 7) % 7) || 7;
+      d.setDate(d.getDate() - back);
+    } else return null;
+    const [h, m] = (timing.time || '18:00').split(':');
+    d.setHours(parseInt(h), parseInt(m), 0, 0);
+    return d;
+  };
+
+  const fillPlaceholders = (text, info) => {
+    if (!text || !info) return text || '';
+    const dateStr = info.date ? moment(info.date).format('dddd Do MMMM') : '{{date}}';
+    return text
+      .replace(/{{title}}/g, info.title || '{{title}}')
+      .replace(/{{date}}/g, dateStr)
+      .replace(/{{section}}/g, info.section || '{{section}}')
+      .replace(/{{start_time}}/g, info.startTime || '{{start_time}}')
+      .replace(/{{end_time}}/g, info.endTime || '{{end_time}}')
+      .replace(/{{location}}/g, info.location || 'usual venue');
+  };
+
+  const formatTiming = (timing) => {
+    if (!timing) return 'Custom';
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    if (timing.type === 'hours_before') return `${timing.hours}h before meeting start`;
+    if (timing.type === 'day_before_at') return `Day before at ${timing.time}`;
+    if (timing.type === 'days_before_at') return `${timing.days} days before at ${timing.time}`;
+    if (timing.type === 'week_before_on') return `${days[timing.day ?? 0]} before at ${timing.time}`;
+    return 'Custom';
+  };
+
+  const applyTemplate = (tmpl) => {
+    const sendAtDate = calculateSendAt(tmpl.send_timing, meetingInfo);
+    const sendAtLocal = sendAtDate
+      ? new Date(sendAtDate.getTime() - sendAtDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+      : '';
+    const blocks = tmpl.schedule_type === 'parent_reminder'
+      ? (tmpl.message_blocks || []).map(b => ({
+          ...b, id: crypto.randomUUID(),
+          content: b.type === 'text' ? fillPlaceholders(b.content || '', meetingInfo) : b.content
+        }))
+      : [];
+    setForm(f => ({
+      ...f,
+      send_at: sendAtLocal || f.send_at,
+      ...(tmpl.schedule_type === 'parent_reminder' && { message_blocks: blocks })
+    }));
+    setShowTemplates(false);
+  };
 
   const linkedField = meetingId ? 'linked_meeting_id' : 'linked_event_id';
   const linkedId = meetingId || eventId;
@@ -109,6 +206,8 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
       : { schedule_type: 'parent_reminder', target_group_jid: '', target_group_name: '', send_at: '', message_blocks: [{ id: crypto.randomUUID(), type: 'text', content: '' }] }
     );
     fetchGroups();
+    loadTemplates();
+    loadMeetingInfo();
     setOpen(true);
   };
 
@@ -205,6 +304,38 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
         )}
       </CardContent>
 
+      {/* Template Picker Dialog */}
+      <Dialog open={showTemplates} onOpenChange={setShowTemplates}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base flex items-center gap-2">
+              <Wand2 className="w-4 h-4 text-[#7413dc]" /> Apply a Template
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-72 overflow-y-auto py-1">
+            {templates.filter(t => t.schedule_type === form.schedule_type).map(tmpl => {
+              const sendAtDate = calculateSendAt(tmpl.send_timing, meetingInfo);
+              return (
+                <button key={tmpl.id} type="button"
+                  className="w-full text-left border border-gray-200 rounded-lg p-3 hover:border-[#7413dc] hover:bg-purple-50 transition-all"
+                  onClick={() => applyTemplate(tmpl)}>
+                  <p className="text-sm font-semibold text-gray-800">{tmpl.template_name}</p>
+                  <p className="text-xs text-gray-500">{formatTiming(tmpl.send_timing)}</p>
+                  {sendAtDate && meetingInfo ? (
+                    <p className="text-xs text-[#7413dc] mt-0.5">→ Sends: {moment(sendAtDate).format('ddd D MMM [at] HH:mm')}</p>
+                  ) : !meetingInfo && (
+                    <p className="text-xs text-amber-600 mt-0.5">Open from meeting detail to see calculated time</p>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <div className="pt-1">
+            <Link to="/WhatsAppTemplates" className="text-xs text-gray-400 hover:text-[#7413dc]">Manage templates →</Link>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -215,6 +346,17 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
           </DialogHeader>
 
           <div className="space-y-4 pt-1">
+            {/* Template Picker */}
+            {templates.filter(t => t.schedule_type === form.schedule_type).length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowTemplates(true)}
+                className="w-full flex items-center justify-center gap-2 border border-dashed border-[#7413dc] text-[#7413dc] rounded-lg py-2 text-xs font-medium hover:bg-purple-50 transition-colors"
+              >
+                <Wand2 className="w-3.5 h-3.5" /> Apply a Template
+              </button>
+            )}
+
             {/* Group */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">

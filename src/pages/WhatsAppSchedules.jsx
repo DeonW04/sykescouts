@@ -4,7 +4,8 @@ import WhatsAppScheduleManager from '@/components/whatsapp/WhatsAppScheduleManag
 import FloatingNav from '@/components/public/FloatingNav';
 import NavBarSpacer from '@/components/public/NavBarSpacer';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Calendar, ChevronDown, ChevronRight, Tent } from 'lucide-react';
+import { MessageSquare, Calendar, ChevronDown, ChevronRight, Tent, Wand2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import moment from 'moment';
 
 export default function WhatsAppSchedules() {
@@ -93,14 +94,21 @@ export default function WhatsAppSchedules() {
 
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 bg-[#25D366] rounded-xl flex items-center justify-center shadow-sm">
-            <MessageSquare className="w-5 h-5 text-white" />
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#25D366] rounded-xl flex items-center justify-center shadow-sm">
+              <MessageSquare className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">WhatsApp Schedules</h1>
+              <p className="text-sm text-gray-500">Schedule automated messages to group chats</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">WhatsApp Schedules</h1>
-            <p className="text-sm text-gray-500">Schedule automated messages to group chats</p>
-          </div>
+          <Link to="/WhatsAppTemplates">
+            <button className="flex items-center gap-1.5 text-sm text-[#7413dc] border border-[#7413dc] rounded-lg px-3 py-1.5 hover:bg-purple-50 transition-colors">
+              <Wand2 className="w-4 h-4" /> Templates
+            </button>
+          </Link>
         </div>
 
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 mb-6">

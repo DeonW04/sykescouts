@@ -13,6 +13,12 @@
       ],
       "default": "user",
       "description": "User role: admin, user (parent), treasurer, glv (Group Lead Volunteer), team_leader"
+    },
+    "whatsapp_notifications": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to receive WhatsApp notifications for action required items"
     }
-  }
+  },
+  "required": []
 }

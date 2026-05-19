@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Save, Calendar, Users, Award, Eye, EyeOff, Plus, Trash2,
   ListTodo, Shield, AlertCircle, Image, ArrowLeftRight, Zap, FileText,
-  Menu, X, FolderOpen, RefreshCw
+  Menu, X, FolderOpen, RefreshCw, MessageSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
 import TodoSection from '../components/meeting/TodoSection';
@@ -28,6 +28,7 @@ import NavBarSpacer from '../components/public/NavBarSpacer';
 import IScoutSection from '../components/meeting/IScoutSection';
 import MeetingFinancesTab from '../components/meeting/MeetingFinancesTab';
 import MeetingOSMSyncModal from '../components/osm/MeetingOSMSyncModal';
+import WhatsAppScheduleManager from '../components/whatsapp/WhatsAppScheduleManager';
 
 export default function MeetingDetail() {
   const navigate = useNavigate();
@@ -298,6 +299,7 @@ export default function MeetingDetail() {
     { id: 'finances', label: 'Finances', icon: FileText },
     { id: 'documents', label: 'Documents', icon: FolderOpen },
     { id: 'iscout', label: 'iScout', icon: Zap },
+    { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare },
   ];
 
   const getSectionTitle = () => navigationItems.find(i => i.id === activeSection)?.label || 'Meeting Plan';
@@ -809,6 +811,22 @@ export default function MeetingDetail() {
             {/* ── iScout ── */}
             {activeSection === 'iscout' && (
               <IScoutSection programmeId={existingProgramme?.id} />
+            )}
+
+            {/* ── WhatsApp ── */}
+            {activeSection === 'whatsapp' && (
+              existingProgramme?.id ? (
+                <WhatsAppScheduleManager
+                  meetingId={existingProgramme.id}
+                  title={existingProgramme.title || formData.title}
+                  startDateTime={date}
+                />
+              ) : (
+                <div className="text-center py-12 text-gray-400">
+                  <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p>Save the meeting first to schedule WhatsApp messages.</p>
+                </div>
+              )
             )}
           </main>
         </div>

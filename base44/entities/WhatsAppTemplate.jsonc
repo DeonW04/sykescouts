@@ -1,0 +1,34 @@
+{
+  "name": "WhatsAppTemplate",
+  "type": "object",
+  "properties": {
+    "template_name": {
+      "type": "string",
+      "description": "Display name for this template"
+    },
+    "schedule_type": {
+      "type": "string",
+      "enum": [
+        "risk_assessment_leaders",
+        "parent_reminder"
+      ],
+      "description": "Type of message this template creates"
+    },
+    "send_timing": {
+      "type": "object",
+      "description": "Timing config: { type: 'hours_before'|'day_before_at'|'days_before_at'|'week_before_on', hours?, days?, day?, time? }"
+    },
+    "message_blocks": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Message blocks with {{placeholder}} support for parent_reminder type"
+    }
+  },
+  "required": [
+    "template_name",
+    "schedule_type",
+    "send_timing"
+  ]
+}

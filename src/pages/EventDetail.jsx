@@ -639,7 +639,7 @@ export default function EventDetail() {
 
                     <Card className="shadow-sm border-gray-200">
                       <CardHeader className="border-b border-gray-100">
-                        <CardTitle className="text-xl">Instructions & Notes</CardTitle>
+                        <CardTitle className="text-xl">Instructions {'&'} Notes</CardTitle>
                       </CardHeader>
                       <CardContent className="pt-6">
                         <Textarea

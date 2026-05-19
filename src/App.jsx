@@ -40,6 +40,7 @@ import MobileDashboardDemo from './pages/MobileDashboardDemo';
 import PWAInstallBanner from '@/components/pwa/PWAInstallBanner';
 import WhatsAppSchedules from './pages/WhatsAppSchedules';
 import PublicRiskAssessment from './pages/PublicRiskAssessment';
+import WhatsAppTemplates from './pages/WhatsAppTemplates';
 
 // Public-only pages that should never be shown in PWA mode
 const PUBLIC_PAGES = ['/', '/Home', '/About', '/Contact', '/Gallery', '/Join', '/Sections', '/Parents', '/Volunteer', '/SharedPage'];
@@ -157,6 +158,7 @@ const AuthenticatedApp = () => {
       <Route path="/receipt-submit" element={<QRReceiptSubmit />} />
       <Route path="/MobileDashboardDemo" element={<MobileDashboardDemo />} />
       <Route path="/WhatsAppSchedules" element={<LayoutWrapper currentPageName="WhatsAppSchedules"><WhatsAppSchedules /></LayoutWrapper>} />
+      <Route path="/WhatsAppTemplates" element={<LayoutWrapper currentPageName="WhatsAppTemplates"><WhatsAppTemplates /></LayoutWrapper>} />
       <Route path="/public-ra" element={<PublicRiskAssessment />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>

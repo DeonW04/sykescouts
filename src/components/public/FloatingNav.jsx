@@ -4,7 +4,7 @@ import { createPageUrl } from '../../utils';
 import {
   Menu, X, ChevronDown, ChevronRight, Users, Calendar, Award, Mail, Settings,
   Image, ShieldAlert, CalendarDays, Lightbulb, Package, TrendingUp,
-  FileText, Landmark, BookOpen, LogOut, LayoutDashboard, UserCheck, Home, UserCircle,
+  FileText, Landmark, BookOpen, LogOut, LayoutDashboard, UserCheck, Home, UserCircle, MessageSquare,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import {
@@ -53,8 +53,9 @@ const portalGroups = [
       { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark },
       { label: 'Gallery', page: 'LeaderGallery', icon: Image },
       { label: 'Treasurer Portal', page: 'TreasurerDashboard', icon: Landmark, separator: true },
-    ],
-  },
+      { label: 'WhatsApp Schedules', page: 'WhatsAppSchedules', icon: MessageSquare, separator: true },
+      ],
+      },
 ];
 
 const STRIP_RADIUS = '24px';
@@ -72,7 +73,7 @@ const PORTAL_PAGES = [
   '/AIProgrammePlanner', '/ParentPortal', '/RiskAssessmentHistory',
   '/ManageStagedBadge', '/EditBadgeStructure', '/PORHelper',
   '/StagedBadgeDetail', '/GoldAwardDetail', '/HikesAwayBadgeDetail', '/NightsAwayBadgeDetail',
-  '/JoiningInBadgeDetail',
+  '/JoiningInBadgeDetail', '/WhatsAppSchedules', '/WhatsAppTemplates',
 ];
 
 // ── Mobile Sidebar Drawer ──────────────────────────────────────────────────────
