@@ -1,0 +1,69 @@
+{
+  "name": "WhatsAppSchedule",
+  "type": "object",
+  "properties": {
+    "linked_meeting_id": {
+      "type": "string",
+      "description": "Programme ID if linked to a meeting"
+    },
+    "linked_event_id": {
+      "type": "string",
+      "description": "Event ID if linked to an event"
+    },
+    "schedule_type": {
+      "type": "string",
+      "enum": [
+        "risk_assessment_leaders",
+        "parent_reminder"
+      ],
+      "description": "Type of message to send"
+    },
+    "target_group_jid": {
+      "type": "string",
+      "description": "WhatsApp group JID (e.g. 123456789@g.us)"
+    },
+    "target_group_name": {
+      "type": "string",
+      "description": "Display name of the target group"
+    },
+    "send_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Scheduled send time (UTC)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "sent",
+        "cancelled",
+        "failed"
+      ],
+      "default": "scheduled"
+    },
+    "message_blocks": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Array of message block definitions for parent_reminder type"
+    },
+    "ra_link_url": {
+      "type": "string",
+      "description": "Full public URL to the risk assessment viewer"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if failed"
+    }
+  },
+  "required": [
+    "schedule_type",
+    "target_group_jid",
+    "send_at"
+  ]
+}

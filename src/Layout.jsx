@@ -46,7 +46,7 @@ const SELF_CONTAINED_PUBLIC_PAGES = [
   'ParentEventDetail', 'ParentBadges', 'ParentGoldAward', 'ParentPortal',
   'ParentPortalAnalytics', 'PORHelper', 'RiskAssessments',
   'JoiningInBadgeDetail', 'NightsAwayBadgeDetail', 'HikesAwayBadgeDetail',
-  'StagedBadgeDetail', 'GoldAwardDetail',
+  'StagedBadgeDetail', 'GoldAwardDetail', 'WhatsAppSchedules',
 ];
 
 export default function Layout({ children, currentPageName }) {
@@ -126,7 +126,7 @@ export default function Layout({ children, currentPageName }) {
     }
   };
 
-  const leaderPages = ['LeaderDashboard', 'LeaderMembers', 'LeaderProgramme', 'ParentPortalAnalytics', 'MeetingDetail', 'MemberDetail', 'LeaderGallery', 'LeaderEvents', 'EventDetail', 'LeaderAttendance', 'LeaderBadges', 'BadgeDetail', 'AwardBadges', 'ManageBadges', 'EditBadgeStructure', 'StagedBadgeDetail', 'ManageStagedBadge', 'NightsAwayBadgeDetail', 'HikesAwayBadgeDetail', 'BadgeStockManagement', 'NightsAwayTracking', 'RiskAssessments', 'RiskAssessmentDetail', 'RiskAssessmentHistory', 'Communications', 'WeeklyMessage', 'WeeklyMessageList', 'MonthlyNewsletter', 'MonthlyNewsletterList', 'EventUpdate', 'EventUpdateList', 'JoinEnquiries', 'ArchivedMembers', 'GoldAwardDetail', 'IdeasBoard', 'AIProgrammePlanner', 'ConsentForms', 'ConsentFormBuilder', 'SectionAccounting'];
+  const leaderPages = ['LeaderDashboard', 'LeaderMembers', 'LeaderProgramme', 'ParentPortalAnalytics', 'MeetingDetail', 'MemberDetail', 'LeaderGallery', 'LeaderEvents', 'EventDetail', 'LeaderAttendance', 'LeaderBadges', 'BadgeDetail', 'AwardBadges', 'ManageBadges', 'EditBadgeStructure', 'StagedBadgeDetail', 'ManageStagedBadge', 'NightsAwayBadgeDetail', 'HikesAwayBadgeDetail', 'BadgeStockManagement', 'NightsAwayTracking', 'RiskAssessments', 'RiskAssessmentDetail', 'RiskAssessmentHistory', 'Communications', 'WeeklyMessage', 'WeeklyMessageList', 'MonthlyNewsletter', 'MonthlyNewsletterList', 'EventUpdate', 'EventUpdateList', 'JoinEnquiries', 'ArchivedMembers', 'GoldAwardDetail', 'IdeasBoard', 'AIProgrammePlanner', 'ConsentForms', 'ConsentFormBuilder', 'SectionAccounting', 'WhatsAppSchedules'];
   const adminPages = ['AdminSettings'];
   const parentPages = ['ParentDashboard', 'MyChild', 'ParentProgramme', 'ParentEvents', 'ParentEventDetail', 'ParentBadges', 'ParentGoldAward', 'CompleteRegistration'];
   const protectedPages = [...leaderPages, ...adminPages, ...parentPages];
