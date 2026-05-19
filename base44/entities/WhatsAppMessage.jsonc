@@ -1,0 +1,57 @@
+{
+  "name": "WhatsAppMessage",
+  "type": "object",
+  "properties": {
+    "direction": {
+      "type": "string",
+      "enum": [
+        "inbound",
+        "outbound"
+      ]
+    },
+    "from_number": {
+      "type": "string",
+      "description": "Sender JID or phone number"
+    },
+    "to_number": {
+      "type": "string",
+      "description": "Recipient JID or phone number"
+    },
+    "group_id": {
+      "type": "string",
+      "description": "Group JID if this is a group message"
+    },
+    "group_name": {
+      "type": "string"
+    },
+    "is_group": {
+      "type": "boolean",
+      "default": false
+    },
+    "message_text": {
+      "type": "string"
+    },
+    "parsed_response": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no",
+        "unknown"
+      ],
+      "description": "For inbound messages \u2014 parsed yes/no intent"
+    },
+    "wa_message_id": {
+      "type": "string",
+      "description": "WhatsApp message ID to avoid duplicate logging"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "direction",
+    "message_text",
+    "timestamp"
+  ]
+}

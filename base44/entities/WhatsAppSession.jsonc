@@ -1,0 +1,35 @@
+{
+  "name": "WhatsAppSession",
+  "type": "object",
+  "properties": {
+    "auth_state": {
+      "type": "string",
+      "description": "Serialised Baileys auth state JSON (creds + keys)"
+    },
+    "phone_number": {
+      "type": "string",
+      "description": "The WhatsApp Business number linked to this session"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "disconnected",
+        "connected",
+        "error"
+      ],
+      "default": "disconnected"
+    },
+    "last_connected": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_poll": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_poll_error": {
+      "type": "string"
+    }
+  },
+  "required": []
+}
