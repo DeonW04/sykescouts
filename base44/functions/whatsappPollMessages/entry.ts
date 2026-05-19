@@ -1,7 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import sodium from 'npm:libsodium-wrappers';
-import makeWASocket, { fetchLatestBaileysVersion, Browsers } from 'npm:baileys';
 import { createHash } from 'node:crypto';
+
+// Sequential dynamic imports: patch sodium BEFORE baileys loads so it picks up the fix
+const sodium = (await import('npm:libsodium-wrappers')).default;
+await sodium.ready;
+if (!sodium.crypto_hash_sha256) {
+  sodium.crypto_hash_sha256_BYTES = 32;
+  sodium.crypto_hash_sha256 = (output, input) => {
+    const hash = createHash('sha256').update(Buffer.from(input)).digest();
+    output.set(new Uint8Array(hash));
+  };
+}
+const { default: makeWASocket, fetchLatestBaileysVersion, Browsers } = await import('npm:baileys');
 
 function parseYesNo(text) {
   const lower = (text || '').toLowerCase().trim();
@@ -53,131 +63,120 @@ function buildAuthState(stored) {
 }
 
 Deno.serve(async (req) => {
-  const base44 = createClientFromRequest(req);
-
-  // Allow scheduled calls (no user) or admin user calls
-  let isAdmin = false;
   try {
-    const user = await base44.auth.me();
-    isAdmin = user?.role === 'admin';
-  } catch (_) {
-    // Called from scheduled automation — allow
-    isAdmin = true;
-  }
-  if (!isAdmin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+    const base44 = createClientFromRequest(req);
 
-  const sessions = await base44.asServiceRole.entities.WhatsAppSession.filter({});
-  if (!sessions[0]?.auth_state) {
-    return Response.json({ skipped: true, reason: 'No session configured' });
-  }
+    // Allow scheduled calls (no user) or admin user calls
+    let isAdmin = false;
+    try {
+      const user = await base44.auth.me();
+      isAdmin = user?.role === 'admin';
+    } catch (_) {
+      isAdmin = true; // Called from scheduled automation — allow
+    }
+    if (!isAdmin) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
-  const session = sessions[0];
-  // Ensure sodium WASM is ready before Baileys uses it
-  await sodium.ready;
-  // libsodium-wrappers (non-sumo) is missing SHA-256 — patch it using Node's built-in crypto
-  if (!sodium.crypto_hash_sha256) {
-    sodium.crypto_hash_sha256_BYTES = 32;
-    sodium.crypto_hash_sha256 = (output, input) => {
-      const hash = createHash('sha256').update(Buffer.from(input)).digest();
-      output.set(new Uint8Array(hash));
-    };
-  }
+    const sessions = await base44.asServiceRole.entities.WhatsAppSession.filter({});
+    if (!sessions[0]?.auth_state) {
+      return Response.json({ skipped: true, reason: 'No session configured' });
+    }
 
-  const stored = JSON.parse(session.auth_state);
-  const { state, export: exportState } = buildAuthState(stored);
-  const { version } = await fetchLatestBaileysVersion();
+    const session = sessions[0];
+    const stored = JSON.parse(session.auth_state);
+    const { state, export: exportState } = buildAuthState(stored);
+    const { version } = await fetchLatestBaileysVersion();
 
-  // Get existing message IDs to avoid duplicates
-  const recentMessages = await base44.asServiceRole.entities.WhatsAppMessage.filter({ direction: 'inbound' });
-  const seenIds = new Set(recentMessages.map(m => m.wa_message_id).filter(Boolean));
+    // Get existing message IDs to avoid duplicates
+    const recentMessages = await base44.asServiceRole.entities.WhatsAppMessage.filter({ direction: 'inbound' });
+    const seenIds = new Set(recentMessages.map(m => m.wa_message_id).filter(Boolean));
 
-  return await new Promise((resolve) => {
-    let done = false;
-    const collectedMessages = [];
+    return await new Promise((resolve) => {
+      let done = false;
+      const collectedMessages = [];
 
-    const sock = makeWASocket({
-      version,
-      auth: state,
-      printQRInTerminal: false,
-      browser: Browsers.ubuntu('Chrome'),
-      syncFullHistory: false,
-      connectTimeoutMs: 20000
-    });
+      const sock = makeWASocket({
+        version,
+        auth: state,
+        printQRInTerminal: false,
+        browser: Browsers.ubuntu('Chrome'),
+        syncFullHistory: false,
+        connectTimeoutMs: 20000
+      });
 
-    const finish = async (error) => {
-      if (done) return;
-      done = true;
-      try { sock.end(); } catch (_) {}
+      const finish = async (error) => {
+        if (done) return;
+        done = true;
+        try { sock.end(); } catch (_) {}
 
-      try {
-        // Save collected messages
-        for (const msg of collectedMessages) {
-          await base44.asServiceRole.entities.WhatsAppMessage.create(msg);
+        try {
+          for (const msg of collectedMessages) {
+            await base44.asServiceRole.entities.WhatsAppMessage.create(msg);
+          }
+
+          await base44.asServiceRole.entities.WhatsAppSession.update(session.id, {
+            auth_state: JSON.stringify(exportState()),
+            last_poll: new Date().toISOString(),
+            status: error ? 'error' : 'connected',
+            last_poll_error: error || null
+          });
+
+          resolve(Response.json({
+            success: !error,
+            messages_received: collectedMessages.length,
+            error: error || null
+          }));
+        } catch (saveErr) {
+          resolve(Response.json({ error: saveErr.message }, { status: 500 }));
         }
+      };
 
-        // Save updated auth state
-        await base44.asServiceRole.entities.WhatsAppSession.update(session.id, {
-          auth_state: JSON.stringify(exportState()),
-          last_poll: new Date().toISOString(),
-          status: error ? 'error' : 'connected',
-          last_poll_error: error || null
-        });
+      const pollTimeout = setTimeout(() => finish(null), 10000);
+      const hardTimeout = setTimeout(() => finish('Timeout'), 30000);
 
-        resolve(Response.json({
-          success: !error,
-          messages_received: collectedMessages.length,
-          error: error || null
-        }));
-      } catch (saveErr) {
-        resolve(Response.json({ error: saveErr.message }, { status: 500 }));
-      }
-    };
+      sock.ev.on('connection.update', async (update) => {
+        const { connection } = update;
+        if (connection === 'close') {
+          clearTimeout(pollTimeout);
+          clearTimeout(hardTimeout);
+          await finish(null);
+        }
+      });
 
-    // Collect messages for 10 seconds then disconnect
-    const pollTimeout = setTimeout(() => finish(null), 10000);
-    const hardTimeout = setTimeout(() => finish('Timeout'), 30000);
+      sock.ev.on('messages.upsert', async ({ messages, type }) => {
+        if (type !== 'notify') return;
 
-    sock.ev.on('connection.update', async (update) => {
-      const { connection } = update;
-      if (connection === 'close') {
-        clearTimeout(pollTimeout);
-        clearTimeout(hardTimeout);
-        await finish(null);
-      }
+        for (const msg of messages) {
+          if (msg.key.fromMe) continue;
+          const msgId = msg.key.id;
+          if (seenIds.has(msgId)) continue;
+          seenIds.add(msgId);
+
+          const text = msg.message?.conversation
+            || msg.message?.extendedTextMessage?.text
+            || '';
+          if (!text) continue;
+
+          const isGroup = msg.key.remoteJid?.endsWith('@g.us') || false;
+          const from = isGroup
+            ? (msg.key.participant || '').replace('@s.whatsapp.net', '')
+            : (msg.key.remoteJid || '').replace('@s.whatsapp.net', '');
+          const groupId = isGroup ? msg.key.remoteJid : null;
+
+          collectedMessages.push({
+            direction: 'inbound',
+            from_number: from,
+            group_id: groupId,
+            is_group: isGroup,
+            message_text: text,
+            parsed_response: isGroup ? null : parseYesNo(text),
+            wa_message_id: msgId,
+            timestamp: new Date((msg.messageTimestamp || Date.now() / 1000) * 1000).toISOString()
+          });
+        }
+      });
     });
-
-    sock.ev.on('messages.upsert', async ({ messages, type }) => {
-      // Only process new messages (not historical)
-      if (type !== 'notify') return;
-
-      for (const msg of messages) {
-        if (msg.key.fromMe) continue; // Skip outbound
-        const msgId = msg.key.id;
-        if (seenIds.has(msgId)) continue;
-        seenIds.add(msgId);
-
-        const text = msg.message?.conversation
-          || msg.message?.extendedTextMessage?.text
-          || '';
-        if (!text) continue;
-
-        const isGroup = msg.key.remoteJid?.endsWith('@g.us') || false;
-        const from = isGroup
-          ? (msg.key.participant || '').replace('@s.whatsapp.net', '')
-          : (msg.key.remoteJid || '').replace('@s.whatsapp.net', '');
-        const groupId = isGroup ? msg.key.remoteJid : null;
-
-        collectedMessages.push({
-          direction: 'inbound',
-          from_number: from,
-          group_id: groupId,
-          is_group: isGroup,
-          message_text: text,
-          parsed_response: isGroup ? null : parseYesNo(text),
-          wa_message_id: msgId,
-          timestamp: new Date((msg.messageTimestamp || Date.now() / 1000) * 1000).toISOString()
-        });
-      }
-    });
-  });
+  } catch (err) {
+    console.error('whatsappPollMessages error:', err.message);
+    return Response.json({ error: err.message }, { status: 500 });
+  }
 });
