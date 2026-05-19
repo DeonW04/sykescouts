@@ -1,11 +1,22 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import sodium from 'npm:libsodium-wrappers';
-await sodium.ready; // Force sodium WASM init before any Baileys code runs
 import makeWASocket, { fetchLatestBaileysVersion, Browsers } from 'npm:baileys';
+import { createHash } from 'node:crypto';
+
+// Recursively convert { type: 'Buffer', data: [...] } objects back into real Buffers
+function restoreBuffers(obj) {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
+  if (obj.type === 'Buffer' && Array.isArray(obj.data)) return Buffer.from(obj.data);
+  if (Array.isArray(obj)) return obj.map(restoreBuffers);
+  const result = {};
+  for (const [key, val] of Object.entries(obj)) result[key] = restoreBuffers(val);
+  return result;
+}
 
 function buildAuthState(stored) {
-  const creds = stored.creds;
-  const keyStore = stored.keys || {};
+  const creds = restoreBuffers(stored.creds);
+  const keyStore = restoreBuffers(stored.keys || {});
 
   return {
     state: {
@@ -44,12 +55,23 @@ Deno.serve(async (req) => {
   const sessions = await base44.asServiceRole.entities.WhatsAppSession.filter({});
   if (!sessions[0]?.auth_state) return Response.json({ error: 'No WhatsApp session configured. Please set up the session first.' }, { status: 400 });
 
+  // Ensure sodium WASM is ready before Baileys uses it
+  await sodium.ready;
+  // libsodium-wrappers (non-sumo) is missing SHA-256 — patch it using Node's built-in crypto
+  if (!sodium.crypto_hash_sha256) {
+    sodium.crypto_hash_sha256_BYTES = 32;
+    sodium.crypto_hash_sha256 = (output, input) => {
+      const hash = createHash('sha256').update(Buffer.from(input)).digest();
+      output.set(new Uint8Array(hash));
+    };
+  }
+
   const stored = JSON.parse(sessions[0].auth_state);
   const { state, export: exportState } = buildAuthState(stored);
 
   const { version } = await fetchLatestBaileysVersion();
 
-  return new Promise((resolve) => {
+  return await new Promise((resolve) => {
     let done = false;
 
     const sock = makeWASocket({
