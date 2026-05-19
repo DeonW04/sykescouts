@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import makeWASocket, { fetchLatestBaileysVersion, Browsers } from 'npm:baileys';
 import sodium from 'npm:libsodium-wrappers';
+await sodium.ready; // Force sodium WASM init before any Baileys code runs
+import makeWASocket, { fetchLatestBaileysVersion, Browsers } from 'npm:baileys';
 
 function buildAuthState(stored) {
   const creds = stored.creds;
@@ -46,7 +47,6 @@ Deno.serve(async (req) => {
   const stored = JSON.parse(sessions[0].auth_state);
   const { state, export: exportState } = buildAuthState(stored);
 
-  await sodium.ready;
   const { version } = await fetchLatestBaileysVersion();
 
   return new Promise((resolve) => {

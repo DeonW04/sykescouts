@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
-import makeWASocket, { fetchLatestBaileysVersion, Browsers } from 'npm:baileys';
 import sodium from 'npm:libsodium-wrappers';
+await sodium.ready; // Force sodium WASM init before any Baileys code runs
+import makeWASocket, { fetchLatestBaileysVersion, Browsers } from 'npm:baileys';
 
 function parseYesNo(text) {
   const lower = (text || '').toLowerCase().trim();
@@ -62,7 +63,6 @@ Deno.serve(async (req) => {
   const session = sessions[0];
   const stored = JSON.parse(session.auth_state);
   const { state, export: exportState } = buildAuthState(stored);
-  await sodium.ready;
   const { version } = await fetchLatestBaileysVersion();
 
   // Get existing message IDs to avoid duplicates
