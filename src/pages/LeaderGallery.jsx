@@ -230,27 +230,27 @@ export default function LeaderGallery() {
   const displayPhotos = getDisplayPhotos();
 
   const getItemPhoto = (item, type) => {
-    if (type === 'meeting') {
-      return approvedPhotos.find(p => p.programme_id === item.id)?.file_url;
-    }
     if (item.isManual) {
       return approvedPhotos.find(p =>
         p.manual_event_name === item.title &&
         (p.manual_date || 'no-date') === (item.date || 'no-date')
       )?.file_url;
     }
+    if (type === 'meeting') {
+      return approvedPhotos.find(p => p.programme_id === item.id)?.file_url;
+    }
     return approvedPhotos.find(p => p.event_id === item.id)?.file_url;
   };
 
   const getItemPhotoCount = (item, type) => {
-    if (type === 'meeting') {
-      return approvedPhotos.filter(p => p.programme_id === item.id).length;
-    }
     if (item.isManual) {
       return approvedPhotos.filter(p =>
         p.manual_event_name === item.title &&
         (p.manual_date || 'no-date') === (item.date || 'no-date')
       ).length;
+    }
+    if (type === 'meeting') {
+      return approvedPhotos.filter(p => p.programme_id === item.id).length;
     }
     return approvedPhotos.filter(p => p.event_id === item.id).length;
   };
