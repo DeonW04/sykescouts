@@ -670,7 +670,7 @@ export default function LeaderGallery() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="leaders">Leaders Only</SelectItem>
-                  <SelectItem value="parents">Parents & Leaders</SelectItem>
+                  <SelectItem value="parents">Parents {'&'} Leaders</SelectItem>
                   <SelectItem value="public">Public Gallery</SelectItem>
                 </SelectContent>
               </Select>
@@ -840,7 +840,7 @@ export default function LeaderGallery() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="leaders">Leaders Only</SelectItem>
-                  <SelectItem value="parents">Parents & Leaders</SelectItem>
+                  <SelectItem value="parents">Parents {'&'} Leaders</SelectItem>
                   <SelectItem value="public">Public Gallery</SelectItem>
                 </SelectContent>
               </Select>
