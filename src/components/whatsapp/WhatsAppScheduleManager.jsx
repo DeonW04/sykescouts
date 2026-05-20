@@ -8,8 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Trash2, Plus, MessageSquare, Link2, Users, MapPin, ChevronUp, ChevronDown, RefreshCw, Wand2, Send } from 'lucide-react';
-import TestMessageDialog, { buildTestMessage } from './TestMessageDialog';
+import { Trash2, Plus, MessageSquare, Link2, Users, MapPin, ChevronUp, ChevronDown, RefreshCw, Wand2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import moment from 'moment';
@@ -28,7 +27,7 @@ function toLocalInputValue(isoString) {
 }
 
 function BlockEditor({ block, onUpdate, onDelete, onMoveUp, onMoveDown, isFirst, isLast }) {
-  const labels = { text: '📝 Text', volunteers: '🙋 Volunteer List', location_time: '📍 Location / Time Change', risk_assessments: '📋 Risk Assessments', attendance: '✅ Attendance' };
+  const labels = { text: '📝 Text', volunteers: '🙋 Volunteer List', location_time: '📍 Location / Time', risk_assessments: '📋 Risk Assessments', attendance: '✅ Attendance' };
   return (
     <div className="border border-gray-200 rounded-lg p-3 bg-white space-y-2">
       <div className="flex items-center justify-between">
@@ -53,15 +52,15 @@ function BlockEditor({ block, onUpdate, onDelete, onMoveUp, onMoveDown, isFirst,
         <p className="text-xs text-gray-500 italic bg-gray-50 rounded p-2">This section appears automatically only if the meeting has an unusual location, time, or no-meeting notice. Nothing to configure.</p>
       )}
       {block.type === 'risk_assessments' && (
-        <div className="space-y-2">
-          <Input value={block.intro || ''} onChange={e => onUpdate({ intro: e.target.value })} placeholder="Heading (e.g. 📋 *Risk Assessments:*)" className="text-sm" />
-          <p className="text-xs text-gray-500 italic bg-gray-50 rounded p-2">The risk assessment link for this meeting is automatically included. No leader sign-in required.</p>
+        <div className="space-y-1.5">
+          <Input value={block.intro || ''} onChange={e => onUpdate({ intro: e.target.value })} placeholder="Heading (e.g. 📋 *Risk Assessments to review:*)" className="text-sm" />
+          <p className="text-xs text-gray-400 bg-gray-50 rounded p-2">The public RA link for this meeting is auto-included. Only shown if RAs are attached.</p>
         </div>
       )}
       {block.type === 'attendance' && (
-        <div className="space-y-2">
-          <Input value={block.intro || ''} onChange={e => onUpdate({ intro: e.target.value })} placeholder="Heading (e.g. ✅ *Attendance:*)" className="text-sm" />
-          <p className="text-xs text-gray-500 italic bg-gray-50 rounded p-2">Attending and not-attending lists are fetched from the attendance column when the message is sent.</p>
+        <div className="space-y-1.5">
+          <Input value={block.intro || ''} onChange={e => onUpdate({ intro: e.target.value })} placeholder="Heading (e.g. 📋 *Attendance for this week:*)" className="text-sm" />
+          <p className="text-xs text-gray-400 bg-gray-50 rounded p-2">Attending and not-attending lists are auto-built from parent responses at send time.</p>
         </div>
       )}
     </div>
@@ -75,6 +74,8 @@ function MessagePreview({ blocks, isRa, raLink }) {
         if (b.type === 'text') return b.content?.trim() || '_[Empty text block]_';
         if (b.type === 'volunteers') return `${b.intro || '🙋 *Parent helpers this week:*'}\n• Jane Smith _(auto-filled)_\n• Sarah Jones _(auto-filled)_`;
         if (b.type === 'location_time') return `⚠️ *Change of Details:*\n📌 *Location:* [if changed]\n🕐 *Time:* [if changed]\n_(only shown if different from usual)_`;
+        if (b.type === 'risk_assessments') return `${b.intro || '\ud83d\udccb *Risk Assessments:*'}\n\ud83d\udd17 https://...public-ra?id=...\n_No sign-in required_`;
+        if (b.type === 'attendance') return `${b.intro || '\ud83d\udccb *Attendance:*'}\n\u2705 *Attending (8):*\n\u2022 Alice, Bob\u2026 _(auto-filled)_\n\n\u274c *Not Attending (2):*\n\u2022 Dave, Eve _(auto-filled)_`;
         return '';
       }).filter(Boolean);
 
@@ -97,7 +98,9 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
   const [templates, setTemplates] = useState([]);
   const [showTemplates, setShowTemplates] = useState(false);
   const [meetingInfo, setMeetingInfo] = useState(null);
-  const [showTest, setShowTest] = useState(false);
+  const [testOpen, setTestOpen] = useState(false);
+  const [testOpts, setTestOpts] = useState({ unusual_place: false, unusual_time: false, parent_volunteers: false, has_risk_assessments: false, has_attendance: false });
+  const [testSending, setTestSending] = useState(false);
 
   const loadTemplates = async () => {
     const all = await base44.entities.WhatsAppTemplate.filter({});
@@ -114,10 +117,14 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
       if (mtg) {
         const sec = sections.find(s => s.id === mtg.section_id);
         setMeetingInfo({
-          title: mtg.title || 'Meeting', date: mtg.date,
+          meetingId, title: mtg.title || 'Meeting', date: mtg.date,
           startTime: mtg.optional_start_time || sec?.meeting_start_time || '18:00',
           section: sec?.display_name || '', location: mtg.optional_location || 'usual venue',
-          endTime: mtg.optional_end_time || sec?.meeting_end_time || ''
+          endTime: mtg.optional_end_time || sec?.meeting_end_time || '',
+          description: mtg.description || '',
+          equipment: mtg.equipment_needed || '',
+          cost: mtg.cost || null,
+          raIds: mtg.risk_assessment_ids || []
         });
       }
     } else if (eventId) {
@@ -154,13 +161,23 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
   const fillPlaceholders = (text, info) => {
     if (!text || !info) return text || '';
     const dateStr = info.date ? moment(info.date).format('dddd Do MMMM') : '{{date}}';
+    const dayStr = info.date ? moment(info.date).format('dddd') : '{{meeting_day}}';
+    const origin = window.location.origin;
+    const galleryLink = info.meetingId ? `${origin}/Gallery?view=meeting&id=${info.meetingId}` : '{{gallery_link}}';
+    const uploadLink = info.meetingId ? `${origin}/gallery-upload?meeting_id=${info.meetingId}` : '{{gallery_upload_link}}';
     return text
       .replace(/{{title}}/g, info.title || '{{title}}')
       .replace(/{{date}}/g, dateStr)
+      .replace(/{{meeting_day}}/g, dayStr)
       .replace(/{{section}}/g, info.section || '{{section}}')
       .replace(/{{start_time}}/g, info.startTime || '{{start_time}}')
       .replace(/{{end_time}}/g, info.endTime || '{{end_time}}')
-      .replace(/{{location}}/g, info.location || 'usual venue');
+      .replace(/{{location}}/g, info.location || 'usual venue')
+      .replace(/{{description}}/g, info.description || '')
+      .replace(/{{equipment}}/g, info.equipment || '')
+      .replace(/{{cost}}/g, info.cost ? `£${info.cost}` : '')
+      .replace(/{{gallery_link}}/g, galleryLink)
+      .replace(/{{gallery_upload_link}}/g, uploadLink);
   };
 
   const formatTiming = (timing) => {
@@ -215,13 +232,64 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
 
   const openForm = (type) => {
     setFormType(type);
-    if (type === 'ra') setForm({ schedule_type: 'risk_assessment_leaders', target_group_jid: '', target_group_name: '', send_at: '', ra_link_url: raUrl });
-    else if (type === 'leader') setForm({ schedule_type: 'leader_group_chat', target_group_jid: '', target_group_name: '', send_at: '', message_blocks: [{ id: crypto.randomUUID(), type: 'text', content: '' }], ra_link_url: raUrl });
-    else setForm({ schedule_type: 'parent_reminder', target_group_jid: '', target_group_name: '', send_at: '', message_blocks: [{ id: crypto.randomUUID(), type: 'text', content: '' }] });
+    if (type === 'ra') {
+      setForm({ schedule_type: 'risk_assessment_leaders', target_group_jid: '', target_group_name: '', send_at: '', ra_link_url: raUrl });
+    } else if (type === 'leader') {
+      setForm({ schedule_type: 'leader_reminder', target_group_jid: '', target_group_name: '', send_at: '', ra_link_url: raUrl, message_blocks: [{ id: crypto.randomUUID(), type: 'text', content: '' }] });
+    } else {
+      setForm({ schedule_type: 'parent_reminder', target_group_jid: '', target_group_name: '', send_at: '', message_blocks: [{ id: crypto.randomUUID(), type: 'text', content: '' }] });
+    }
     fetchGroups();
     loadTemplates();
     loadMeetingInfo();
+    setTestOpts({ unusual_place: false, unusual_time: false, parent_volunteers: false, has_risk_assessments: false, has_attendance: false });
+    setTestOpen(false);
     setOpen(true);
+  };
+
+  const handleSendTest = async () => {
+    setTestSending(true);
+    try {
+      const user = await base44.auth.me();
+      const leaders = await base44.entities.Leader.filter({ user_id: user.id });
+      if (!leaders[0]?.phone) { toast.error('No phone number found in your Leader profile'); return; }
+      const rawDigits = leaders[0].phone.replace(/\D/g, '');
+      const phone = rawDigits.startsWith('07') && rawDigits.length === 11 ? '44' + rawDigits.slice(1) : rawDigits;
+
+      const info = meetingInfo || {};
+      const raLink = `${window.location.origin}/public-ra?id=${meetingId || eventId}&type=${meetingId ? 'meeting' : 'event'}`;
+      const parts = [];
+
+      for (const block of (form.message_blocks || [])) {
+        if (block.type === 'text') { const t = fillPlaceholders(block.content || '', info).trim(); if (t) parts.push(t); }
+        else if (block.type === 'location_time') {
+          if (testOpts.unusual_place || testOpts.unusual_time) {
+            const ls = ['⚠️ *Change of Details (TEST):*'];
+            if (testOpts.unusual_place) ls.push('📌 *Location:* Test Hall, Manchester');
+            if (testOpts.unusual_time) ls.push('🕐 *Time:* 19:00 – 20:30');
+            parts.push(ls.join('\n'));
+          }
+        } else if (block.type === 'volunteers') {
+          if (testOpts.parent_volunteers) parts.push(`${block.intro || '🙋 *Parent helpers this week:*'}\n• Jane Smith _(test)_\n• Sarah Jones _(test)_`);
+          else if (block.fallback_text?.trim()) parts.push(block.fallback_text.trim());
+        } else if (block.type === 'risk_assessments' && testOpts.has_risk_assessments) {
+          parts.push(`${block.intro || '📋 *Risk Assessments:*'}\n🔗 ${raLink}\n_No sign-in required_`);
+        } else if (block.type === 'attendance' && testOpts.has_attendance) {
+          parts.push(`${block.intro || '📋 *Attendance:*'}\n✅ *Attending (5):*\n• Alice\n• Bob\n• Charlie\n• Dave\n• Eve\n\n❌ *Not Attending (2):*\n• Frank\n• Grace _(test data)_`);
+        }
+      }
+
+      const message = parts.filter(Boolean).join('\n\n');
+      if (!message.trim()) { toast.error('No content to send — add blocks first'); return; }
+
+      await base44.functions.invoke('whatsappSendMessage', { to: phone, message, is_group: false });
+      toast.success('Test sent to your phone!');
+      setTestOpen(false);
+    } catch (err) {
+      toast.error('Test failed: ' + err.message);
+    } finally {
+      setTestSending(false);
+    }
   };
 
   const handleGroupSelect = (jid) => {
@@ -277,15 +345,15 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
             <MessageSquare className="w-4 h-4 text-[#25D366]" />
             WhatsApp Schedules
           </CardTitle>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 flex-wrap">
             <Button size="sm" variant="outline" onClick={() => openForm('ra')} className="text-xs h-7 px-2 gap-1">
               <Link2 className="w-3 h-3" /> RA Link
             </Button>
             <Button size="sm" variant="outline" onClick={() => openForm('reminder')} className="text-xs h-7 px-2 gap-1">
               <Plus className="w-3 h-3" /> Reminder
             </Button>
-            <Button size="sm" variant="outline" onClick={() => openForm('leader')} className="text-xs h-7 px-2 gap-1 border-blue-300 text-blue-600 hover:bg-blue-50">
-              <Users className="w-3 h-3" /> Leaders
+            <Button size="sm" variant="outline" onClick={() => openForm('leader')} className="text-xs h-7 px-2 gap-1">
+              <Users className="w-3 h-3" /> Leader Msg
             </Button>
           </div>
         </div>
@@ -434,8 +502,8 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
                 ))}
                 <div className="flex gap-2 flex-wrap">
                   <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => addBlock('text')}><Plus className="w-3 h-3" /> Text</Button>
-                  <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => addBlock('location_time')}><MapPin className="w-3 h-3" /> Location/Time</Button>
                   <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => addBlock('volunteers')}><Users className="w-3 h-3" /> Volunteers</Button>
+                  <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => addBlock('location_time')}><MapPin className="w-3 h-3" /> Location/Time</Button>
                   {formType === 'leader' && (
                     <>
                       <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => addBlock('risk_assessments')}>📋 Risk Assessments</Button>
@@ -450,6 +518,41 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
               </div>
             )}
 
+            {/* Test panel */}
+            {(formType === 'reminder' || formType === 'leader') && (form.message_blocks || []).length > 0 && (
+              <div className="border border-dashed border-amber-300 bg-amber-50 rounded-lg p-3 space-y-2">
+                <button type="button" onClick={() => setTestOpen(o => !o)}
+                  className="w-full flex items-center justify-between text-xs font-semibold text-amber-700 hover:text-amber-900">
+                  <span>🧪 Send Test to My Phone</span>
+                  <span>{testOpen ? '▲' : '▼'}</span>
+                </button>
+                {testOpen && (
+                  <div className="space-y-2 pt-1">
+                    <p className="text-xs text-amber-600">Sends the current blocks to your mobile number using this meeting's real data.</p>
+                    <div className="space-y-1.5">
+                      {[
+                        { key: 'unusual_place', label: 'Unusual location this week' },
+                        { key: 'unusual_time', label: 'Unusual time this week' },
+                        { key: 'parent_volunteers', label: 'Parent volunteers signed up' },
+                        ...(formType === 'leader' ? [
+                          { key: 'has_risk_assessments', label: 'Risk assessments attached' },
+                          { key: 'has_attendance', label: 'Attendance responses in' },
+                        ] : [])
+                      ].map(({ key, label }) => (
+                        <label key={key} className="flex items-center gap-2 text-xs cursor-pointer">
+                          <input type="checkbox" checked={testOpts[key]} onChange={e => setTestOpts(o => ({ ...o, [key]: e.target.checked }))} className="rounded" />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                    <Button size="sm" onClick={handleSendTest} disabled={testSending} className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs">
+                      {testSending ? 'Sending…' : '📱 Send Test'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {formType === 'ra' && (
               <div>
                 <p className="text-xs text-gray-500 mb-1.5 font-medium">Preview</p>
@@ -457,26 +560,12 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
               </div>
             )}
 
-            <div className="flex gap-2">
-              {(formType === 'reminder' || formType === 'leader') && (
-                <Button variant="outline" onClick={() => setShowTest(true)} className="gap-1 shrink-0">
-                  <Send className="w-3.5 h-3.5" /> Test
-                </Button>
-              )}
-              <Button onClick={handleSave} disabled={saving} className="flex-1 bg-[#7413dc] hover:bg-[#5c0fb0] text-white">
-                {saving ? 'Saving...' : 'Schedule Message'}
-              </Button>
-            </div>
+            <Button onClick={handleSave} disabled={saving} className="w-full bg-[#7413dc] hover:bg-[#5c0fb0] text-white">
+              {saving ? 'Saving...' : 'Schedule Message'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
-      <TestMessageDialog
-        open={showTest}
-        onClose={() => setShowTest(false)}
-        blocks={form.message_blocks || []}
-        scheduleType={form.schedule_type}
-        raUrl={form.ra_link_url}
-      />
     </Card>
   );
 }
