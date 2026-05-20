@@ -26,8 +26,10 @@ Deno.serve(async (req) => {
 
     let risk_assessments = [];
     if (raIds.length > 0) {
-      const all = await base44.asServiceRole.entities.RiskAssessment.filter({});
-      risk_assessments = all.filter(ra => raIds.includes(ra.id));
+      const fetched = await Promise.all(
+        raIds.map(raId => base44.asServiceRole.entities.RiskAssessment.get(raId).catch(() => null))
+      );
+      risk_assessments = fetched.filter(Boolean);
     }
 
     return Response.json({ title, date, type: type || 'meeting', risk_assessments });

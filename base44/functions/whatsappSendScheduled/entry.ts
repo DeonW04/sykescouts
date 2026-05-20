@@ -125,6 +125,79 @@ async function buildMessage(schedule, base44) {
     return parts.join('\n\n');
   }
 
+  if (schedule.schedule_type === 'leader_reminder') {
+    const blocks = schedule.message_blocks || [];
+    const parts = [];
+    let meeting = null;
+
+    if (schedule.linked_meeting_id) {
+      const [m] = await base44.asServiceRole.entities.Programme.filter({ id: schedule.linked_meeting_id });
+      meeting = m;
+    }
+
+    const raLink = schedule.ra_link_url || (schedule.linked_meeting_id
+      ? `${schedule._origin || 'https://app.sykescouts.co.uk'}/public-ra?id=${schedule.linked_meeting_id}&type=meeting`
+      : '');
+
+    for (const block of blocks) {
+      if (block.type === 'text' && block.content?.trim()) {
+        parts.push(block.content.trim());
+
+      } else if (block.type === 'location_time' && meeting) {
+        const lines = [];
+        if (meeting.optional_location) lines.push(`📌 *Location:* ${meeting.optional_location}`);
+        if (meeting.optional_start_time || meeting.optional_end_time) {
+          const time = [meeting.optional_start_time, meeting.optional_end_time].filter(Boolean).join(' – ');
+          lines.push(`🕐 *Time:* ${time}`);
+        }
+        if (meeting.no_meeting) lines.push(`❌ *No meeting this week*${meeting.no_meeting_reason ? ` – ${meeting.no_meeting_reason}` : ''}`);
+        if (lines.length > 0) parts.push(`⚠️ *Change of Details:*\n${lines.join('\n')}`);
+
+      } else if (block.type === 'volunteers' && schedule.linked_meeting_id) {
+        const volunteerNames = [];
+        const actions = await base44.asServiceRole.entities.ActionRequired.filter({ programme_id: schedule.linked_meeting_id, action_purpose: 'volunteer' });
+        for (const action of actions) {
+          const assignments = await base44.asServiceRole.entities.ActionAssignment.filter({ action_required_id: action.id });
+          for (const asgn of assignments) {
+            const responses = await base44.asServiceRole.entities.ActionResponse.filter({ action_required_id: action.id, member_id: asgn.member_id, response_value: 'yes' });
+            if (responses.length > 0) {
+              const [member] = await base44.asServiceRole.entities.Member.filter({ id: asgn.member_id });
+              if (member) volunteerNames.push(member.parent_one_name || member.parent_two_name || 'A parent');
+            }
+          }
+        }
+        if (volunteerNames.length > 0) parts.push(`${block.intro || '🙋 *Parent helpers this week:*'}\n${volunteerNames.map(n => `• ${n}`).join('\n')}`);
+        else if (block.fallback_text?.trim()) parts.push(block.fallback_text.trim());
+
+      } else if (block.type === 'risk_assessments') {
+        if (raLink && meeting?.risk_assessment_ids?.length > 0) {
+          parts.push(`${block.intro || '📋 *Risk Assessments:*'}\n🔗 ${raLink}\n_No sign-in required_`);
+        }
+
+      } else if (block.type === 'attendance' && schedule.linked_meeting_id) {
+        const actions = await base44.asServiceRole.entities.ActionRequired.filter({ programme_id: schedule.linked_meeting_id, action_purpose: 'attendance' });
+        if (actions.length > 0) {
+          const action = actions[0];
+          const assignments = await base44.asServiceRole.entities.ActionAssignment.filter({ action_required_id: action.id });
+          const attending = [], notAttending = [];
+          for (const asgn of assignments) {
+            const [member] = await base44.asServiceRole.entities.Member.filter({ id: asgn.member_id });
+            if (!member) continue;
+            const responses = await base44.asServiceRole.entities.ActionResponse.filter({ action_required_id: action.id, member_id: asgn.member_id });
+            const resp = responses[0];
+            if (!resp || resp.response_value === 'yes') attending.push(member.preferred_name || member.first_name);
+            else if (resp.response_value === 'no') notAttending.push(member.preferred_name || member.first_name);
+          }
+          const ls = [];
+          if (attending.length > 0) ls.push(`✅ *Attending (${attending.length}):*\n${attending.map(n => `• ${n}`).join('\n')}`);
+          if (notAttending.length > 0) ls.push(`❌ *Not Attending (${notAttending.length}):*\n${notAttending.map(n => `• ${n}`).join('\n')}`);
+          if (ls.length > 0) parts.push(ls.join('\n\n'));
+        }
+      }
+    }
+    return parts.join('\n\n');
+  }
+
   return '';
 }
 

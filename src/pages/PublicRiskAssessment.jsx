@@ -92,57 +92,43 @@ export default function PublicRiskAssessment() {
             {risk_assessments.map((ra, i) => (
               <div key={ra.id || i} className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-100">
-                  <h2 className="text-base font-semibold text-slate-900">{ra.title || `Risk Assessment ${i + 1}`}</h2>
-                  {ra.activity && <p className="text-sm text-slate-500 mt-0.5">{ra.activity}</p>}
-                  {ra.status && (
-                    <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium capitalize">
-                      {ra.status}
+                  <h2 className="text-base font-semibold text-slate-900">{ra.activity_name || `Risk Assessment ${i + 1}`}</h2>
+                  {ra.activity_description && <p className="text-sm text-slate-500 mt-0.5">{ra.activity_description}</p>}
+                  {ra.assessment_date && (
+                    <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">
+                      Assessed: {new Date(ra.assessment_date).toLocaleDateString('en-GB')}
                     </span>
                   )}
                 </div>
 
-                {ra.hazards?.length > 0 && (
+                {ra.risks?.length > 0 && (
                   <div className="px-5 py-4">
                     <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-1.5">
                       <AlertTriangle className="w-4 h-4 text-amber-500" />
                       Hazards and Controls
                     </h3>
                     <div className="space-y-3">
-                      {ra.hazards.map((h, j) => (
-                        <div key={j} className={`rounded-lg border p-3 text-sm ${RISK_COLORS[h.risk_level?.toLowerCase()] || 'bg-slate-50 border-slate-200'}`}>
+                      {ra.risks.map((h, j) => (
+                        <div key={j} className="rounded-lg border p-3 text-sm bg-slate-50 border-slate-200">
                           <p className="font-medium">{'⚠️'} {h.hazard}</p>
-                          {h.who_affected && <p className="text-xs mt-0.5 opacity-75">Who: {h.who_affected}</p>}
+                          {h.who_at_risk && <p className="text-xs mt-0.5 opacity-75">Who: {h.who_at_risk}</p>}
                           {h.controls && (
                             <div className="mt-2 flex items-start gap-1.5">
                               <CheckCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-green-600" />
                               <p className="text-xs">{h.controls}</p>
                             </div>
                           )}
-                          {(h.likelihood || h.severity || h.risk_level) && (
-                            <p className="text-xs mt-1.5 opacity-60">
-                              {[
-                                h.likelihood && `Likelihood: ${h.likelihood}`,
-                                h.severity && `Severity: ${h.severity}`,
-                                h.risk_level && `Risk: ${h.risk_level}`
-                              ].filter(Boolean).join(' · ')}
-                            </p>
-                          )}
+                          {h.review_notes && <p className="text-xs mt-1.5 italic opacity-60">Review: {h.review_notes}</p>}
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {ra.notes && (
-                  <div className="px-5 pb-4">
-                    <p className="text-sm text-slate-600 italic">{ra.notes}</p>
-                  </div>
-                )}
-
-                {ra.signed_off_by && (
+                {ra.assessor_name && (
                   <div className="px-5 pb-4 text-xs text-slate-400">
-                    Signed off by {ra.signed_off_by}
-                    {ra.signed_off_date && ` on ${new Date(ra.signed_off_date).toLocaleDateString('en-GB')}`}
+                    Assessed by {ra.assessor_name}
+                    {ra.next_review_date && ` — next review ${new Date(ra.next_review_date).toLocaleDateString('en-GB')}`}
                   </div>
                 )}
               </div>

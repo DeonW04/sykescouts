@@ -11,11 +11,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Trash2, Wand2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Wand2, ChevronUp, ChevronDown, Send } from 'lucide-react';
+import TestMessageDialog, { buildTestMessage } from '../components/whatsapp/TestMessageDialog';
 import { toast } from 'sonner';
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const PLACEHOLDERS = ['{{title}}', '{{date}}', '{{section}}', '{{start_time}}', '{{end_time}}', '{{location}}'];
+const PLACEHOLDERS = [
+  '{{title}}', '{{date}}', '{{section}}', '{{start_time}}', '{{end_time}}', '{{location}}',
+  '{{description}}', '{{gallery_link}}', '{{upload_link}}', '{{cost}}', '{{payment_deadline}}'
+];
 
 export function formatTiming(timing) {
   if (!timing) return 'No timing set';
@@ -27,7 +31,7 @@ export function formatTiming(timing) {
 }
 
 function BlockEditor({ block, onUpdate, onDelete, onMoveUp, onMoveDown, isFirst, isLast }) {
-  const labels = { text: '📝 Text', volunteers: '🙋 Volunteer List', location_time: '📍 Location/Time' };
+  const labels = { text: '📝 Text', volunteers: '🙋 Volunteer List', location_time: '📍 Location/Time', risk_assessments: '📋 Risk Assessments', attendance: '✅ Attendance' };
   return (
     <div className="border border-gray-200 rounded-lg p-3 bg-white space-y-2">
       <div className="flex items-center justify-between">
@@ -62,11 +66,23 @@ function BlockEditor({ block, onUpdate, onDelete, onMoveUp, onMoveDown, isFirst,
       {block.type === 'location_time' && (
         <p className="text-xs text-gray-500 italic bg-gray-50 rounded p-2">Auto-shown only if the meeting has an unusual location, time, or no-meeting notice. Nothing to configure.</p>
       )}
+      {block.type === 'risk_assessments' && (
+        <div className="space-y-2">
+          <Input value={block.intro || ''} onChange={e => onUpdate({ intro: e.target.value })} placeholder="Heading (e.g. 📋 *Risk Assessments:*)" className="text-sm" />
+          <p className="text-xs text-gray-500 italic bg-gray-50 rounded p-2">The RA link for the linked meeting is automatically included. No sign-in required for leaders to view.</p>
+        </div>
+      )}
+      {block.type === 'attendance' && (
+        <div className="space-y-2">
+          <Input value={block.intro || ''} onChange={e => onUpdate({ intro: e.target.value })} placeholder="Heading (e.g. ✅ *Attendance:*)" className="text-sm" />
+          <p className="text-xs text-gray-500 italic bg-gray-50 rounded p-2">Attending and not-attending member lists are fetched live from the attendance column when the message is sent.</p>
+        </div>
+      )}
     </div>
   );
 }
 
-function TemplateForm({ initial, onSave, onCancel }) {
+function TemplateForm({ initial, onSave, onCancel, onTest }) {
   const [form, setForm] = useState(initial || {
     template_name: '',
     schedule_type: 'parent_reminder',
@@ -101,7 +117,8 @@ function TemplateForm({ initial, onSave, onCancel }) {
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="parent_reminder">💬 Parent Group Reminder</SelectItem>
-            <SelectItem value="risk_assessment_leaders">📋 Leaders Risk Assessment Link</SelectItem>
+            <SelectItem value="leader_group_chat">👥 Leader Group Chat</SelectItem>
+            <SelectItem value="risk_assessment_leaders">📋 Leaders RA Link (legacy)</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -151,7 +168,7 @@ function TemplateForm({ initial, onSave, onCancel }) {
         <p className="text-xs text-[#7413dc] font-medium">→ {formatTiming(timing)}</p>
       </div>
 
-      {form.schedule_type === 'parent_reminder' && (
+      {(form.schedule_type === 'parent_reminder' || form.schedule_type === 'leader_group_chat') && (
         <div className="space-y-2">
           <Label>Message Blocks</Label>
           <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-700">
@@ -169,14 +186,23 @@ function TemplateForm({ initial, onSave, onCancel }) {
           ))}
           <div className="flex gap-2 flex-wrap">
             <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => addBlock('text')}><Plus className="w-3 h-3" /> Text</Button>
-            <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => addBlock('volunteers')}>🙋 Volunteers</Button>
             <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => addBlock('location_time')}>📍 Location/Time</Button>
+            <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => addBlock('volunteers')}>🙋 Volunteers</Button>
+            {form.schedule_type === 'leader_group_chat' && (
+              <>
+                <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => addBlock('risk_assessments')}>📋 Risk Assessments</Button>
+                <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => addBlock('attendance')}>✅ Attendance</Button>
+              </>
+            )}
           </div>
         </div>
       )}
 
-      <div className="flex gap-2 pt-2">
+      <div className="flex gap-2 pt-2 flex-wrap">
         <Button onClick={() => onSave(form)} className="flex-1 bg-[#7413dc] hover:bg-[#5c0fb0] text-white">Save Template</Button>
+        {(form.schedule_type === 'parent_reminder' || form.schedule_type === 'leader_group_chat') && (
+          <Button variant="outline" onClick={() => onTest?.(form)} className="gap-1"><Send className="w-3 h-3" /> Test</Button>
+        )}
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
       </div>
     </div>
@@ -187,6 +213,7 @@ export default function WhatsAppTemplates() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
+  const [testTemplate, setTestTemplate] = useState(null);
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['whatsapp-templates'],
@@ -238,7 +265,7 @@ export default function WhatsAppTemplates() {
         </div>
 
         <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-800 mb-6">
-          💡 When you apply a template to a meeting, placeholders like <code className="bg-blue-100 px-1 rounded">{'{{title}}'}</code> and <code className="bg-blue-100 px-1 rounded">{'{{date}}'}</code> are auto-filled, and the send time is calculated automatically.
+          💡 Placeholders auto-fill when applied to a meeting: <code className="bg-blue-100 px-1 rounded">{'{{'}<span>title</span>{'}}'}</code>, <code className="bg-blue-100 px-1 rounded">{'{{'}<span>date</span>{'}}'}</code>, <code className="bg-blue-100 px-1 rounded">{'{{'}<span>gallery_link</span>{'}}'}</code> and more.
         </div>
 
         {isLoading ? (
@@ -260,8 +287,8 @@ export default function WhatsAppTemplates() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <p className="font-semibold text-gray-900">{t.template_name}</p>
-                        <Badge className={t.schedule_type === 'risk_assessment_leaders' ? 'bg-blue-100 text-blue-700 text-xs' : 'bg-purple-100 text-purple-700 text-xs'}>
-                          {t.schedule_type === 'risk_assessment_leaders' ? '📋 RA Link' : '💬 Reminder'}
+                        <Badge className={t.schedule_type === 'risk_assessment_leaders' ? 'bg-blue-100 text-blue-700 text-xs' : t.schedule_type === 'leader_group_chat' ? 'bg-blue-100 text-blue-700 text-xs' : 'bg-purple-100 text-purple-700 text-xs'}>
+                          {t.schedule_type === 'risk_assessment_leaders' ? '📋 RA Link' : t.schedule_type === 'leader_group_chat' ? '👥 Leaders' : '💬 Reminder'}
                         </Badge>
                       </div>
                       <p className="text-sm text-[#7413dc] font-medium">{formatTiming(t.send_timing)}</p>
@@ -269,7 +296,10 @@ export default function WhatsAppTemplates() {
                         <p className="text-xs text-gray-400 mt-1">{t.message_blocks.length} message block{t.message_blocks.length !== 1 ? 's' : ''}</p>
                       )}
                     </div>
-                    <div className="flex gap-2 flex-shrink-0">
+                    <div className="flex gap-2 flex-shrink-0 flex-wrap justify-end">
+                      {(t.schedule_type === 'parent_reminder' || t.schedule_type === 'leader_group_chat') && (
+                        <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => setTestTemplate(t)}><Send className="w-3 h-3" /> Test</Button>
+                      )}
                       <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => { setEditingTemplate(t); setShowForm(true); }}>Edit</Button>
                       <Button size="icon" variant="ghost" className="h-7 w-7 text-red-400 hover:text-red-600" onClick={() => deleteMutation.mutate(t.id)}>
                         <Trash2 className="w-3.5 h-3.5" />
@@ -296,9 +326,17 @@ export default function WhatsAppTemplates() {
             } : undefined}
             onSave={(data) => saveMutation.mutate(editingTemplate ? { ...data, id: editingTemplate.id } : data)}
             onCancel={() => { setShowForm(false); setEditingTemplate(null); }}
+            onTest={(formData) => setTestTemplate(formData)}
           />
         </DialogContent>
       </Dialog>
+
+      <TestMessageDialog
+        open={!!testTemplate}
+        onClose={() => setTestTemplate(null)}
+        blocks={testTemplate?.message_blocks || []}
+        scheduleType={testTemplate?.schedule_type}
+      />
     </div>
   );
 }
