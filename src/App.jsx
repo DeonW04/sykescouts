@@ -159,7 +159,7 @@ const AuthenticatedApp = () => {
       <Route path="/WhatsAppSchedules" element={<LayoutWrapper currentPageName="WhatsAppSchedules"><WhatsAppSchedules /></LayoutWrapper>} />
       <Route path="/WhatsAppTemplates" element={<LayoutWrapper currentPageName="WhatsAppTemplates"><WhatsAppTemplates /></LayoutWrapper>} />
       <Route path="/public-ra" element={<PublicRiskAssessment />} />
-      <Route path="/gallery-upload" element={<GalleryUpload />} />
+      <Route path="/GalleryUpload" element={<GalleryUpload />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </PWAGate>

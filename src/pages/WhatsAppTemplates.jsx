@@ -27,6 +27,8 @@ export function formatTiming(timing) {
   if (timing.type === 'day_before_at') return `Day before at ${timing.time}`;
   if (timing.type === 'days_before_at') return `${timing.days} day${timing.days !== 1 ? 's' : ''} before at ${timing.time}`;
   if (timing.type === 'week_before_on') return `${DAY_NAMES[timing.day ?? 0]} before at ${timing.time}`;
+  if (timing.type === 'hours_after') return `${timing.hours}h after meeting start`;
+  if (timing.type === 'day_after_at') return `Day after at ${timing.time}`;
   return 'Custom';
 }
 
@@ -132,6 +134,8 @@ function TemplateForm({ initial, onSave, onCancel, onTest }) {
             <SelectItem value="day_before_at">Day before at a specific time</SelectItem>
             <SelectItem value="days_before_at">X days before at a specific time</SelectItem>
             <SelectItem value="week_before_on">A specific day of the week before</SelectItem>
+            <SelectItem value="hours_after">X hours after meeting start</SelectItem>
+            <SelectItem value="day_after_at">Day after at a specific time</SelectItem>
           </SelectContent>
         </Select>
 
@@ -139,6 +143,12 @@ function TemplateForm({ initial, onSave, onCancel, onTest }) {
           <div className="flex items-center gap-2">
             <Input type="number" min="0.5" step="0.5" value={timing.hours ?? 2} onChange={e => updateTiming({ hours: parseFloat(e.target.value) })} className="w-24" />
             <span className="text-sm text-gray-500">hours before meeting start</span>
+          </div>
+        )}
+        {timing.type === 'hours_after' && (
+          <div className="flex items-center gap-2">
+            <Input type="number" min="0.5" step="0.5" value={timing.hours ?? 2} onChange={e => updateTiming({ hours: parseFloat(e.target.value) })} className="w-24" />
+            <span className="text-sm text-gray-500">hours after meeting start</span>
           </div>
         )}
         {(timing.type === 'day_before_at' || timing.type === 'days_before_at') && (
@@ -162,6 +172,12 @@ function TemplateForm({ initial, onSave, onCancel, onTest }) {
               </SelectContent>
             </Select>
             <span className="text-sm text-gray-500">before at</span>
+            <Input type="time" value={timing.time || '20:00'} onChange={e => updateTiming({ time: e.target.value })} className="w-32" />
+          </div>
+        )}
+        {timing.type === 'day_after_at' && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">Day after at</span>
             <Input type="time" value={timing.time || '20:00'} onChange={e => updateTiming({ time: e.target.value })} className="w-32" />
           </div>
         )}

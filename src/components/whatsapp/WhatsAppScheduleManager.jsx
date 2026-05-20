@@ -132,9 +132,10 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
       const evt = events[0];
       if (evt) {
         setMeetingInfo({
-          title: evt.title || 'Event', date: evt.start_date?.split('T')[0] || '',
+          eventId, title: evt.title || 'Event', date: evt.start_date?.split('T')[0] || '',
           startTime: evt.start_date?.split('T')[1]?.slice(0, 5) || '',
-          section: '', location: evt.location || '', endTime: ''
+          section: '', location: evt.location || '', endTime: '',
+          description: evt.description || '', equipment: '', cost: evt.cost || null
         });
       }
     }
@@ -146,8 +147,10 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
     const start = new Date(fullStart);
     if (isNaN(start.getTime())) return null;
     if (timing.type === 'hours_before') return new Date(start.getTime() - (timing.hours || 1) * 3600000);
+    if (timing.type === 'hours_after') return new Date(start.getTime() + (timing.hours || 2) * 3600000);
     const d = new Date(start);
     if (timing.type === 'day_before_at') d.setDate(d.getDate() - 1);
+    else if (timing.type === 'day_after_at') d.setDate(d.getDate() + 1);
     else if (timing.type === 'days_before_at') d.setDate(d.getDate() - (timing.days || 1));
     else if (timing.type === 'week_before_on') {
       const back = ((d.getDay() - (timing.day ?? 0) + 7) % 7) || 7;
@@ -164,7 +167,7 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
     const dayStr = info.date ? moment(info.date).format('dddd') : '{{meeting_day}}';
     const origin = window.location.origin;
     const galleryLink = info.meetingId ? `${origin}/Gallery?view=meeting&id=${info.meetingId}` : '{{gallery_link}}';
-    const uploadLink = info.meetingId ? `${origin}/gallery-upload?meeting_id=${info.meetingId}` : '{{gallery_upload_link}}';
+    const uploadLink = info.meetingId ? `${origin}/GalleryUpload?meeting=${info.meetingId}` : info.eventId ? `${origin}/GalleryUpload?event=${info.eventId}` : '{{gallery_upload_link}}';
     return text
       .replace(/{{title}}/g, info.title || '{{title}}')
       .replace(/{{date}}/g, dateStr)
@@ -187,6 +190,8 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
     if (timing.type === 'day_before_at') return `Day before at ${timing.time}`;
     if (timing.type === 'days_before_at') return `${timing.days} days before at ${timing.time}`;
     if (timing.type === 'week_before_on') return `${days[timing.day ?? 0]} before at ${timing.time}`;
+    if (timing.type === 'hours_after') return `${timing.hours}h after meeting start`;
+    if (timing.type === 'day_after_at') return `Day after at ${timing.time}`;
     return 'Custom';
   };
 
@@ -195,7 +200,8 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
     const sendAtLocal = sendAtDate
       ? new Date(sendAtDate.getTime() - sendAtDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
       : '';
-    const blocks = tmpl.schedule_type === 'parent_reminder'
+    const hasBlocks = tmpl.schedule_type === 'parent_reminder' || tmpl.schedule_type === 'leader_reminder';
+    const blocks = hasBlocks
       ? (tmpl.message_blocks || []).map(b => ({
           ...b, id: crypto.randomUUID(),
           content: b.type === 'text' ? fillPlaceholders(b.content || '', meetingInfo) : b.content
@@ -204,7 +210,7 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
     setForm(f => ({
       ...f,
       send_at: sendAtLocal || f.send_at,
-      ...(tmpl.schedule_type === 'parent_reminder' && { message_blocks: blocks })
+      ...(hasBlocks && { message_blocks: blocks })
     }));
     setShowTemplates(false);
   };
@@ -332,10 +338,16 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
 
   // Quick time presets (only if startDateTime includes a time)
   const hasTime = startDateTime?.includes('T');
-  const timePresets = hasTime ? [2, 4, 12, 24].map(h => {
-    const t = new Date(new Date(startDateTime).getTime() - h * 3600000);
-    return { label: `${h}h before (${moment(t).format('HH:mm')})`, value: toLocalInputValue(t.toISOString()) };
-  }) : [];
+  const timePresets = hasTime ? [
+    ...[2, 4, 12, 24].map(h => {
+      const t = new Date(new Date(startDateTime).getTime() - h * 3600000);
+      return { label: `${h}h before (${moment(t).format('HH:mm')})`, value: toLocalInputValue(t.toISOString()) };
+    }),
+    ...[1, 2, 24].map(h => {
+      const t = new Date(new Date(startDateTime).getTime() + h * 3600000);
+      return { label: `${h}h after (${moment(t).format('HH:mm')})`, value: toLocalInputValue(t.toISOString()) };
+    })
+  ] : [];
 
   return (
     <Card>

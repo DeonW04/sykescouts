@@ -6,8 +6,8 @@ import { toast } from 'sonner';
 
 export default function GalleryUpload() {
   const params = new URLSearchParams(window.location.search);
-  const meetingId = params.get('meeting_id');
-  const eventId = params.get('event_id');
+  const meetingId = params.get('meeting');
+  const eventId = params.get('event');
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
