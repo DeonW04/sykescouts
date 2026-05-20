@@ -87,6 +87,11 @@
   }
 }
 
+/* Ensure Radix UI popper content (Select, DropdownMenu, Popover, Tooltip) appears above the floating nav bar */
+[data-radix-popper-content-wrapper] {
+  z-index: 2000 !important;
+}
+
 /* Hide scrollbar on overflow-x-auto nav bars */
 .scrollbar-hide {
   -ms-overflow-style: none;

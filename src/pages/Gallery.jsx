@@ -57,19 +57,43 @@ export default function Gallery() {
     }
   }, [itemId, viewParam, events, programmes]);
 
-  const camps = [...new Map(allPhotos.filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp')).map(p => [p.event_id, events.find(e => e.id === p.event_id)])).values()].filter(Boolean);
-  const regularEvents = [...new Map(allPhotos.filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'Camp')).map(p => [p.event_id, events.find(e => e.id === p.event_id)])).values()].filter(Boolean);
-  const meetings = [...new Map(allPhotos.filter(p => p.programme_id).map(p => [p.programme_id, programmes.find(pr => pr.id === p.programme_id)])).values()].filter(Boolean);
+  const linkedCamps = [...new Map(allPhotos.filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp')).map(p => [p.event_id, events.find(e => e.id === p.event_id)])).values()].filter(Boolean);
+  const linkedEvents = [...new Map(allPhotos.filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'Camp')).map(p => [p.event_id, events.find(e => e.id === p.event_id)])).values()].filter(Boolean);
+  const linkedMeetings = [...new Map(allPhotos.filter(p => p.programme_id).map(p => [p.programme_id, programmes.find(pr => pr.id === p.programme_id)])).values()].filter(Boolean);
+
+  const manualAlbums = [...new Map(
+    allPhotos.filter(p => p.manual_event_name)
+      .map(p => [`${p.manual_event_name}-${p.manual_date || ''}-${p.manual_type || ''}`, {
+        id: `${p.manual_event_name}-${p.manual_date || ''}`,
+        title: p.manual_event_name,
+        date: p.manual_date,
+        manual_type: p.manual_type,
+        isManual: true,
+      }])
+  ).values()];
+
+  const camps = [...linkedCamps, ...manualAlbums.filter(m => m.manual_type === 'Camp')];
+  const regularEvents = [...linkedEvents, ...manualAlbums.filter(m => m.manual_type === 'Event' || !m.manual_type)];
+  const meetings = [...linkedMeetings, ...manualAlbums.filter(m => m.manual_type === 'Meeting')];
 
   const getDisplayPhotos = () => {
-    if (selectedItem) return allPhotos.filter(p => p.event_id === selectedItem.id || p.programme_id === selectedItem.id);
+    if (selectedItem) {
+      if (selectedItem.isManual) return allPhotos.filter(p => p.manual_event_name === selectedItem.title && (p.manual_date || '') === (selectedItem.date || ''));
+      return allPhotos.filter(p => p.event_id === selectedItem.id || p.programme_id === selectedItem.id);
+    }
     return [...allPhotos].sort(() => Math.random() - 0.5);
   };
   const allDisplayPhotos = getDisplayPhotos();
   const displayPhotos = allDisplayPhotos.slice(0, displayCount);
   const hasMore = allDisplayPhotos.length > displayCount;
-  const getItemPhoto = (item, type) => type === 'meeting' ? allPhotos.find(p => p.programme_id === item.id)?.file_url : allPhotos.find(p => p.event_id === item.id)?.file_url;
-  const getItemPhotoCount = (item, type) => type === 'meeting' ? allPhotos.filter(p => p.programme_id === item.id).length : allPhotos.filter(p => p.event_id === item.id).length;
+  const getItemPhoto = (item, type) => {
+    if (item.isManual) return allPhotos.find(p => p.manual_event_name === item.title && (p.manual_date || '') === (item.date || ''))?.file_url;
+    return type === 'meeting' ? allPhotos.find(p => p.programme_id === item.id)?.file_url : allPhotos.find(p => p.event_id === item.id)?.file_url;
+  };
+  const getItemPhotoCount = (item, type) => {
+    if (item.isManual) return allPhotos.filter(p => p.manual_event_name === item.title && (p.manual_date || '') === (item.date || '')).length;
+    return type === 'meeting' ? allPhotos.filter(p => p.programme_id === item.id).length : allPhotos.filter(p => p.event_id === item.id).length;
+  };
 
   const tabBtn = (label, active, onClick) => (
     <button onClick={onClick} style={{ padding: '8px 20px', borderRadius: '25px', border: '1px solid', borderColor: active ? 'transparent' : 'rgba(26,26,46,0.2)', background: active ? '#7413dc' : 'transparent', color: active ? '#fff' : 'rgba(26,26,46,0.65)', fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s' }}>{label}</button>
@@ -154,7 +178,7 @@ export default function Gallery() {
               const count = getItemPhotoCount(item, type);
               return (
                 <motion.div key={item.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                  onClick={() => { setSelectedItem(item); window.history.pushState({}, '', createPageUrl('Gallery') + `?view=${view === 'camps' ? 'camp' : view === 'events' ? 'event' : 'meeting'}&id=${item.id}`); }}
+                  onClick={() => { setSelectedItem(item); if (!item.isManual) window.history.pushState({}, '', createPageUrl('Gallery') + `?view=${view === 'camps' ? 'camp' : view === 'events' ? 'event' : 'meeting'}&id=${item.id}`); }}
                   style={{ position: 'relative', aspectRatio: '1', borderRadius: '16px', overflow: 'hidden', cursor: 'pointer' }}
                 >
                   {photo ? <img src={photo} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', background: 'rgba(116,19,220,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ImageIcon size={40} color="rgba(255,255,255,0.3)" /></div>}

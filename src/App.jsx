@@ -87,8 +87,6 @@ const AuthenticatedApp = () => {
   const getSessionKey = () => {
     const path = location.pathname;
     if (path === '/' || path === '/Home') return 'home';
-    if (path === '/LeaderDashboard') return 'leader_portal';
-    if (path === '/ParentDashboard') return 'parent_portal';
     return null;
   };
 
