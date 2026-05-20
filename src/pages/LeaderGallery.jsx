@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Upload, Trash2, Loader2, ImageIcon, Pencil } from 'lucide-react';
+import { Upload, Trash2, Loader2, ImageIcon, Pencil, Bell, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import SearchableEventSelect from '../components/gallery/SearchableEventSelect';
@@ -41,6 +41,7 @@ export default function LeaderGallery() {
   const [editAlbumDialog, setEditAlbumDialog] = useState(false);
   const [editAlbumItem, setEditAlbumItem] = useState(null);
   const [editAlbumForm, setEditAlbumForm] = useState({ section_id: '', visible_to: '' });
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -87,6 +88,24 @@ export default function LeaderGallery() {
       queryClient.invalidateQueries(['all-photos']);
       toast.success('Album updated');
       setEditAlbumDialog(false);
+    },
+  });
+
+  const approvePhotoMutation = useMutation({
+    mutationFn: (photoId) => base44.entities.EventPhoto.update(photoId, { approval_status: 'approved' }),
+    onSuccess: () => queryClient.invalidateQueries(['all-photos']),
+  });
+
+  const approveAllMutation = useMutation({
+    mutationFn: async (photosToApprove) => {
+      for (const photo of photosToApprove) {
+        await base44.entities.EventPhoto.update(photo.id, { approval_status: 'approved' });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['all-photos']);
+      toast.success('All photos approved! ✅');
+      setShowApprovalModal(false);
     },
   });
 
@@ -139,31 +158,16 @@ export default function LeaderGallery() {
     deleteAlbumMutation.mutate(photos);
   };
 
-  // Filter photos by selected section (include 'all' section photos in every section's view)
+  // Approved vs pending photos
+  const approvedPhotos = allPhotos.filter(p => !p.approval_status || p.approval_status === 'approved');
+  const pendingPhotos = allPhotos.filter(p => p.approval_status === 'pending');
+
+  // Filter approved photos by selected section
   const sectionFilteredPhotos = selectedSection === 'all'
-    ? allPhotos
-    : allPhotos.filter(p => p.section_id === selectedSection || p.section_id === 'all');
+    ? approvedPhotos
+    : approvedPhotos.filter(p => p.section_id === selectedSection || p.section_id === 'all');
 
-  // Get unique camps, events, and meetings - sorted by date
-  const camps = [...new Map(
-    sectionFilteredPhotos
-      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp'))
-      .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
-  ).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
-
-  const regularEvents = [...new Map(
-    sectionFilteredPhotos
-      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'Camp'))
-      .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
-  ).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
-
-  const meetings = [...new Map(
-    sectionFilteredPhotos
-      .filter(p => p.programme_id)
-      .map(p => [p.programme_id, programmes.find(pr => pr.id === p.programme_id)])
-  ).values()].filter(Boolean).sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  // Manual entries grouped by name+date
+  // Manual entries grouped by name+date (include manual_type)
   const manualEntries = [...new Map(
     sectionFilteredPhotos
       .filter(p => p.manual_event_name)
@@ -171,6 +175,7 @@ export default function LeaderGallery() {
         id: `${p.manual_event_name}-${p.manual_date || 'no-date'}`,
         title: p.manual_event_name,
         date: p.manual_date,
+        manual_type: p.manual_type,
         section_id: p.section_id,
         isManual: true
       }])
@@ -180,6 +185,31 @@ export default function LeaderGallery() {
     if (!b.date) return -1;
     return new Date(b.date) - new Date(a.date);
   });
+
+  // Linked albums from real events/meetings
+  const linkedCamps = [...new Map(
+    sectionFilteredPhotos
+      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp'))
+      .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
+  ).values()].filter(Boolean);
+  const linkedRegularEvents = [...new Map(
+    sectionFilteredPhotos
+      .filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'Camp'))
+      .map(p => [p.event_id, events.find(e => e.id === p.event_id)])
+  ).values()].filter(Boolean);
+  const linkedMeetings = [...new Map(
+    sectionFilteredPhotos
+      .filter(p => p.programme_id)
+      .map(p => [p.programme_id, programmes.find(pr => pr.id === p.programme_id)])
+  ).values()].filter(Boolean);
+
+  // Merge linked + manual albums
+  const camps = [...linkedCamps, ...manualEntries.filter(m => m.manual_type === 'Camp')]
+    .sort((a, b) => new Date(b.start_date || b.date || 0) - new Date(a.start_date || a.date || 0));
+  const regularEvents = [...linkedRegularEvents, ...manualEntries.filter(m => m.manual_type === 'Event' || (m.isManual && !['Camp', 'Meeting'].includes(m.manual_type)))]
+    .sort((a, b) => new Date(b.start_date || b.date || 0) - new Date(a.start_date || a.date || 0));
+  const meetings = [...linkedMeetings, ...manualEntries.filter(m => m.manual_type === 'Meeting')]
+    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
   const getDisplayPhotos = () => {
     if (selectedItem) {
@@ -201,28 +231,28 @@ export default function LeaderGallery() {
 
   const getItemPhoto = (item, type) => {
     if (type === 'meeting') {
-      return allPhotos.find(p => p.programme_id === item.id)?.file_url;
+      return approvedPhotos.find(p => p.programme_id === item.id)?.file_url;
     }
     if (item.isManual) {
-      return allPhotos.find(p => 
-        p.manual_event_name === item.title && 
+      return approvedPhotos.find(p =>
+        p.manual_event_name === item.title &&
         (p.manual_date || 'no-date') === (item.date || 'no-date')
       )?.file_url;
     }
-    return allPhotos.find(p => p.event_id === item.id)?.file_url;
+    return approvedPhotos.find(p => p.event_id === item.id)?.file_url;
   };
 
   const getItemPhotoCount = (item, type) => {
     if (type === 'meeting') {
-      return allPhotos.filter(p => p.programme_id === item.id).length;
+      return approvedPhotos.filter(p => p.programme_id === item.id).length;
     }
     if (item.isManual) {
-      return allPhotos.filter(p => 
-        p.manual_event_name === item.title && 
+      return approvedPhotos.filter(p =>
+        p.manual_event_name === item.title &&
         (p.manual_date || 'no-date') === (item.date || 'no-date')
       ).length;
     }
-    return allPhotos.filter(p => p.event_id === item.id).length;
+    return approvedPhotos.filter(p => p.event_id === item.id).length;
   };
 
   const handlePhotoSelect = (photoId) => {
@@ -390,6 +420,19 @@ export default function LeaderGallery() {
           <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Upload and manage event photos</p>
         </div>
       </div>
+
+      {user?.role === 'admin' && pendingPhotos.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 pt-4">
+          <button
+            onClick={() => setShowApprovalModal(true)}
+            className="flex items-center gap-2 bg-amber-50 border border-amber-300 text-amber-800 px-4 py-3 rounded-xl text-sm font-medium hover:bg-amber-100 transition-colors"
+          >
+            <Bell className="w-4 h-4" />
+            <span className="font-bold">{pendingPhotos.length}</span>
+            <span>photo{pendingPhotos.length !== 1 ? 's' : ''} awaiting approval</span>
+          </button>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <input
@@ -641,6 +684,47 @@ export default function LeaderGallery() {
           </div>
         )}
       </div>
+
+      {/* Approval Modal */}
+      <Dialog open={showApprovalModal} onOpenChange={setShowApprovalModal}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>📸 Photos Awaiting Approval ({pendingPhotos.length})</DialogTitle>
+          </DialogHeader>
+          {pendingPhotos.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">No photos awaiting approval.</p>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 py-2">
+                {pendingPhotos.map(photo => (
+                  <div key={photo.id} className="relative">
+                    <img src={photo.file_url} alt="" className="w-full aspect-square object-cover rounded-lg" />
+                    <button
+                      onClick={() => deletePhotoMutation.mutate(photo.id)}
+                      className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow"
+                      title="Reject & delete"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                    <p className="text-xs text-gray-400 mt-1 truncate">{getPhotoLabel(photo)}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between items-center pt-3 border-t">
+                <Button variant="outline" onClick={() => setShowApprovalModal(false)}>Close</Button>
+                <Button
+                  onClick={() => approveAllMutation.mutate(pendingPhotos)}
+                  disabled={approveAllMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700 text-white gap-2"
+                >
+                  {approveAllMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : '✅'}
+                  Approve All ({pendingPhotos.length})
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Album Dialog */}
       <Dialog open={editAlbumDialog} onOpenChange={setEditAlbumDialog}>

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Upload, CheckCircle, ImagePlus, Loader2 } from 'lucide-react';
@@ -8,11 +8,24 @@ export default function GalleryUpload() {
   const params = new URLSearchParams(window.location.search);
   const meetingId = params.get('meeting');
   const eventId = params.get('event');
+
+  const [authChecking, setAuthChecking] = useState(true);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [done, setDone] = useState(false);
+  const [uploadedCount, setUploadedCount] = useState(0);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    base44.auth.isAuthenticated().then(isAuth => {
+      if (!isAuth) {
+        base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+      } else {
+        setAuthChecking(false);
+      }
+    });
+  }, []);
 
   if (!meetingId && !eventId) {
     return (
@@ -24,30 +37,43 @@ export default function GalleryUpload() {
     );
   }
 
+  if (authChecking) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#7413dc] animate-spin" />
+      </div>
+    );
+  }
+
   const handleFiles = async (files) => {
-    if (!files.length) return;
+    const fileArr = Array.from(files).filter(f => f.type.startsWith('image/'));
+    if (!fileArr.length) return;
     setUploading(true);
     setDone(false);
-    setProgress({ done: 0, total: files.length });
-    let uploadedCount = 0;
+    setProgress({ done: 0, total: fileArr.length });
+    let count = 0;
 
-    for (const file of Array.from(files)) {
+    for (const file of fileArr) {
       try {
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
-        await base44.functions.invoke('createPublicGalleryPhoto', {
+        const res = await base44.functions.invoke('createPublicGalleryPhoto', {
           file_url,
           meeting_id: meetingId || undefined,
           event_id: eventId || undefined,
         });
-        uploadedCount++;
-        setProgress(p => ({ ...p, done: uploadedCount }));
+        if (res.data?.error) throw new Error(res.data.error);
+        count++;
+        setProgress(p => ({ ...p, done: count }));
       } catch (err) {
-        toast.error(`Failed to upload ${file.name}`);
+        toast.error(`Failed: ${err.message}`);
       }
     }
 
     setUploading(false);
-    if (uploadedCount > 0) setDone(true);
+    if (count > 0) {
+      setUploadedCount(count);
+      setDone(true);
+    }
   };
 
   const onDrop = (e) => {
@@ -73,19 +99,25 @@ export default function GalleryUpload() {
       </div>
 
       <div className="max-w-lg mx-auto w-full px-4 py-8 flex-1 flex flex-col gap-6">
-        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-800">
-          📸 Upload your photos below — they'll be added to the gallery for this session. No sign-in needed!
-        </div>
-
         {done ? (
           <div className="text-center py-12 space-y-4">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
             <div>
-              <h2 className="text-xl font-bold text-slate-800">Photos Uploaded!</h2>
-              <p className="text-slate-500 mt-1">Thank you — your photos have been added to the gallery.</p>
+              <h2 className="text-xl font-bold text-slate-800">
+                {uploadedCount} photo{uploadedCount !== 1 ? 's' : ''} uploaded!
+              </h2>
+              <p className="text-slate-500 mt-1">Thank you — your photos are awaiting approval by a leader.</p>
             </div>
-            <Button onClick={() => { setDone(false); setProgress({ done: 0, total: 0 }); }} variant="outline">
-              Upload More
+            <Button
+              onClick={() => {
+                setDone(false);
+                setProgress({ done: 0, total: 0 });
+                setUploadedCount(0);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+              }}
+              className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white"
+            >
+              Upload More Photos
             </Button>
           </div>
         ) : uploading ? (
@@ -95,15 +127,19 @@ export default function GalleryUpload() {
               <h2 className="text-lg font-semibold text-slate-700">Uploading photos…</h2>
               <p className="text-slate-500 mt-1">{progress.done} of {progress.total} done</p>
             </div>
-            <div className="w-full bg-slate-200 rounded-full h-2 max-w-xs mx-auto">
+            <div className="w-full bg-slate-200 rounded-full h-3 max-w-xs mx-auto overflow-hidden">
               <div
-                className="bg-[#7413dc] h-2 rounded-full transition-all"
+                className="bg-[#7413dc] h-3 rounded-full transition-all duration-300"
                 style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 0}%` }}
               />
             </div>
           </div>
         ) : (
           <>
+            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-800">
+              📸 Upload photos from today's session — they'll be reviewed before appearing in the gallery.
+            </div>
+
             <div
               onDragOver={e => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
@@ -137,7 +173,7 @@ export default function GalleryUpload() {
         )}
 
         <p className="text-center text-xs text-slate-400 mt-auto pt-4">
-          Photos are reviewed before appearing in the public gallery. · 40th Rochdale (Syke) Scouts
+          Photos are reviewed by a leader before appearing in the gallery. · 40th Rochdale (Syke) Scouts
         </p>
       </div>
     </div>

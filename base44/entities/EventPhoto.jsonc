@@ -1,0 +1,80 @@
+{
+  "name": "EventPhoto",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "Event ID if tagged to an event"
+    },
+    "programme_id": {
+      "type": "string",
+      "description": "Programme ID if tagged to a meeting"
+    },
+    "manual_event_name": {
+      "type": "string",
+      "description": "Manual event name if not tagged to event/programme"
+    },
+    "manual_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date for manual entry photos"
+    },
+    "manual_type": {
+      "type": "string",
+      "enum": [
+        "Camp",
+        "Event",
+        "Meeting"
+      ],
+      "description": "Type for manual entry (Camp/Event/Meeting)"
+    },
+    "section_id": {
+      "type": "string",
+      "description": "Section ID, or 'all' for group-wide photos visible in all sections"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "Uploaded photo URL"
+    },
+    "thumbnail_url": {
+      "type": "string",
+      "description": "Thumbnail URL for optimized loading"
+    },
+    "caption": {
+      "type": "string",
+      "description": "Photo caption"
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": false,
+      "description": "Visible on public gallery"
+    },
+    "visible_to": {
+      "type": "string",
+      "enum": [
+        "leaders",
+        "parents",
+        "public"
+      ],
+      "default": "parents",
+      "description": "Who can view this photo"
+    },
+    "uploaded_by": {
+      "type": "string",
+      "description": "User ID who uploaded"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved"
+      ],
+      "default": "approved",
+      "description": "Approval status \u2014 pending awaits leader review before appearing in galleries"
+    }
+  },
+  "required": [
+    "file_url",
+    "section_id"
+  ]
+}

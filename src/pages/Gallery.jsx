@@ -35,7 +35,10 @@ export default function Gallery() {
     queryKey: ['public-photos'],
     queryFn: async () => {
       const photos = await base44.entities.EventPhoto.filter({});
-      return photos.filter(p => p.is_public === true || p.visible_to === 'parents' || p.visible_to === 'public');
+      return photos.filter(p =>
+        (p.is_public === true || p.visible_to === 'parents' || p.visible_to === 'public') &&
+        (!p.approval_status || p.approval_status === 'approved')
+      );
     },
   });
   const { data: sections = [] } = useQuery({ queryKey: ['active-sections'], queryFn: () => base44.entities.Section.filter({ active: true }) });
