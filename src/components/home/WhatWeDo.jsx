@@ -122,7 +122,7 @@ export default function WhatWeDo() {
         }
       `}</style>
 
-      <section ref={sectionRef} style={{ background: '#ffffffff', height: sectionScrollHeight, position: 'relative' }}>
+      <section ref={sectionRef} style={{ background: '#000000ff', height: sectionScrollHeight, position: 'relative' }}>
         <div style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'hidden', display: 'flex' }}>
 
           {/* LEFT: navigation + description */}
