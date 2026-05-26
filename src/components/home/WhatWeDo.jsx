@@ -2,12 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 
 const DEFAULT_ACTIVITIES = [
-  { title: 'Rock Climbing', description: 'Scaling real rock faces and indoor walls — pushing limits, building trust.', image_url: '' },
-  { title: 'Watersports', description: 'Kayaking, canoeing, and open water adventures on rivers and lakes.', image_url: '' },
-  { title: 'Drone Racing', description: 'Building and flying FPV drones. Coding, engineering, and adrenaline.', image_url: '' },
-  { title: 'Wild Camping', description: 'Nights under the stars, fire-lighting, foraging, and real outdoor skills.', image_url: '' },
-  { title: 'Coding & Robotics', description: 'Programming robots, building circuits, and creating digital projects.', image_url: '' },
-  { title: 'Wildlife Handling', description: 'Hands-on encounters with live animals and learning about the natural world.', image_url: '' },
+  { title: 'DATA ERROR', description: 'A data error has occured! Please come back later!', image_url: '' },
 ];
 
 export default function WhatWeDo() {
@@ -61,7 +56,7 @@ export default function WhatWeDo() {
 
   if (isMobile) {
     return (
-      <section style={{ background: '#0d0d1a', padding: '80px 0' }}>
+      <section style={{ background: '#ffffff', padding: '80px 0' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
           <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#a855f7', marginBottom: '12px', textAlign: 'center' }}>
             What we actually do
