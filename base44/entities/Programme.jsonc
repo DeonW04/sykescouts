@@ -58,6 +58,11 @@
       "default": false,
       "description": "Visible to parents"
     },
+    "has_cost": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this meeting has a cost for members"
+    },
     "cost": {
       "type": "number",
       "description": "Cost per member for this meeting (\u00a3)"

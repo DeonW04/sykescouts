@@ -200,6 +200,50 @@
     "last_subs_months_paid": {
       "type": "number",
       "description": "Number of months covered by last subs payment"
+    },
+    "stripe_customer_id": {
+      "type": "string",
+      "description": "Stripe Customer ID for this member's parent"
+    },
+    "stripe_payment_methods": {
+      "type": "array",
+      "description": "Cached list of payment methods from Stripe",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pm_id": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "last4": {
+            "type": "string"
+          },
+          "exp_month": {
+            "type": "number"
+          },
+          "exp_year": {
+            "type": "number"
+          },
+          "is_default": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "stripe_subscription_id": {
+      "type": "string",
+      "description": "Active Stripe Subscription ID for recurring subs"
+    },
+    "subs_interval": {
+      "type": "string",
+      "enum": [
+        "4_months",
+        "6_months",
+        "yearly"
+      ],
+      "description": "Subscription billing interval"
     }
   },
   "required": [

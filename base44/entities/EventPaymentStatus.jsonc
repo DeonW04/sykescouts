@@ -1,0 +1,46 @@
+{
+  "name": "EventPaymentStatus",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "Event ID this payment status relates to"
+    },
+    "member_id": {
+      "type": "string",
+      "description": "Member ID this payment status relates to"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "unpaid",
+        "paid",
+        "waived",
+        "overdue"
+      ],
+      "default": "unpaid",
+      "description": "Payment status for this member/event combination"
+    },
+    "stripe_payment_intent_id": {
+      "type": "string",
+      "description": "Stripe Payment Intent ID once payment is initiated"
+    },
+    "paid_at": {
+      "type": "string",
+      "format": "date",
+      "description": "Date payment was confirmed"
+    },
+    "card_last4": {
+      "type": "string",
+      "description": "Last 4 digits of card used"
+    },
+    "card_brand": {
+      "type": "string",
+      "description": "Card brand used (e.g. visa, mastercard)"
+    }
+  },
+  "required": [
+    "event_id",
+    "member_id"
+  ]
+}
