@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Upload, X, Plus, GripVertical, Image, AlertTriangle, Trash2 } from 'lucide-react';
+import { Upload, X, Plus, GripVertical, Image, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function UploadButton({ onUpload, uploading, label = 'Upload image', id }) {
   return (
@@ -20,7 +18,7 @@ function UploadButton({ onUpload, uploading, label = 'Upload image', id }) {
         className="border-purple-300 text-purple-700 hover:bg-purple-50"
       >
         <Upload className="w-3.5 h-3.5 mr-1.5" />
-        {uploading ? 'Uploading…' : label}
+        {uploading ? 'Uploading...' : label}
       </Button>
       <input
         id={id}
@@ -33,11 +31,9 @@ function UploadButton({ onUpload, uploading, label = 'Upload image', id }) {
   );
 }
 
-// ── Section 1: Hero slideshow ──────────────────────────────────────────────────
-
+// Hero slideshow
 function HeroImages({ images, onUpload, onDelete, onReorder, uploading }) {
   const [dragIdx, setDragIdx] = useState(null);
-
   const sorted = [...images].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   const handleDragStart = (idx) => setDragIdx(idx);
@@ -55,10 +51,10 @@ function HeroImages({ images, onUpload, onDelete, onReorder, uploading }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-purple-900">
           <Image className="w-5 h-5" />
-          Hero — Slideshow Images
+          Hero Slideshow Images
         </CardTitle>
         <p className="text-sm text-gray-500">
-          These photos crossfade behind the hero headline. Drag to reorder — the slideshow plays in the order shown. Minimum 1 image required.
+          These photos crossfade behind the hero headline. Drag to reorder. Minimum 1 image required.
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -88,14 +84,12 @@ function HeroImages({ images, onUpload, onDelete, onReorder, uploading }) {
             </button>
           </div>
         ))}
-
         {sorted.length === 0 && (
           <div className="border-2 border-dashed border-purple-200 rounded-lg p-8 text-center">
             <Image className="w-8 h-8 text-purple-200 mx-auto mb-2" />
             <p className="text-sm text-gray-400">No hero images yet. Upload at least one.</p>
           </div>
         )}
-
         <UploadButton
           id="hero-upload"
           onUpload={(f) => onUpload('hero', f, sorted.length)}
@@ -107,11 +101,15 @@ function HeroImages({ images, onUpload, onDelete, onReorder, uploading }) {
   );
 }
 
-// ── Section 2: Sticky scroll activities ───────────────────────────────────────
-
+// Activity row — uses local state, saves onBlur
 function ActivityRow({ activity, idx, total, onUpdate, onDelete, onReorder, uploading, onUploadImage }) {
   const [open, setOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [localTitle, setLocalTitle] = useState(activity.title || '');
+  const [localDesc, setLocalDesc] = useState(activity.description || '');
+
+  useEffect(() => { setLocalTitle(activity.title || ''); }, [activity.title]);
+  useEffect(() => { setLocalDesc(activity.description || ''); }, [activity.description]);
 
   return (
     <div
@@ -142,29 +140,31 @@ function ActivityRow({ activity, idx, total, onUpdate, onDelete, onReorder, uplo
         <div className="px-4 pb-4 border-t border-gray-100 pt-4 space-y-4">
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              Activity title <span className="text-gray-400">(1–4 words recommended, max 30 chars)</span>
+              Activity title <span className="text-gray-400">(1-4 words recommended, max 30 chars)</span>
             </label>
             <input
               maxLength={30}
-              value={activity.title || ''}
-              onChange={(e) => onUpdate({ title: e.target.value })}
+              value={localTitle}
+              onChange={(e) => setLocalTitle(e.target.value)}
+              onBlur={() => { if (localTitle !== activity.title) onUpdate({ title: localTitle }); }}
               placeholder="e.g. Rock climbing"
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-purple-400"
             />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">
-              Short description <span className="text-gray-400">(2–3 sentences, max 200 chars)</span>
+              Short description <span className="text-gray-400">(2-3 sentences, max 200 chars)</span>
             </label>
             <textarea
               maxLength={200}
               rows={3}
-              value={activity.description || ''}
-              onChange={(e) => onUpdate({ description: e.target.value })}
-              placeholder="Speak directly to a parent about what their child experiences…"
+              value={localDesc}
+              onChange={(e) => setLocalDesc(e.target.value)}
+              onBlur={() => { if (localDesc !== activity.description) onUpdate({ description: localDesc }); }}
+              placeholder="Speak directly to a parent about what their child experiences..."
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-purple-400"
             />
-            <p className="text-xs text-gray-400 mt-0.5">{(activity.description || '').length}/200</p>
+            <p className="text-xs text-gray-400 mt-0.5">{localDesc.length}/200</p>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-2">
@@ -201,10 +201,10 @@ function ActivitiesConfig({ activities, onUpdateActivity, onDeleteActivity, onAd
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-purple-900">
           <Image className="w-5 h-5" />
-          Sticky Scroll — Activities List
+          Sticky Scroll Activities List
         </CardTitle>
         <p className="text-sm text-gray-500">
-          Controls the scrolling section on the home page — the activity titles, descriptions, and photos. Drag to reorder. Min 1 activity required.
+          Controls the scrolling section on the home page. Drag to reorder. Min 1 activity required.
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -221,13 +221,11 @@ function ActivitiesConfig({ activities, onUpdateActivity, onDeleteActivity, onAd
             onUploadImage={(f) => onUploadActivityImage(act.id, f)}
           />
         ))}
-
         {activities.length === 0 && (
           <div className="border-2 border-dashed border-purple-200 rounded-lg p-8 text-center">
             <p className="text-sm text-gray-400">No activities configured. Add one below.</p>
           </div>
         )}
-
         <Button
           type="button"
           variant="outline"
@@ -242,8 +240,6 @@ function ActivitiesConfig({ activities, onUpdateActivity, onDeleteActivity, onAd
     </Card>
   );
 }
-
-// ── Section 3 & 4: Fixed image slots ──────────────────────────────────────────
 
 function FixedImageSlot({ label, hint, image, onUpload, onDelete, uploading, uploadId }) {
   return (
@@ -264,7 +260,7 @@ function FixedImageSlot({ label, hint, image, onUpload, onDelete, uploading, upl
         </div>
       ) : (
         <div className="h-32 w-48 flex items-center justify-center rounded-lg border-2 border-dashed border-gray-200 bg-gray-50">
-          <p className="text-xs text-gray-400 text-center px-3">No image — upload one</p>
+          <p className="text-xs text-gray-400 text-center px-3">No image, upload one</p>
         </div>
       )}
       <UploadButton
@@ -277,8 +273,6 @@ function FixedImageSlot({ label, hint, image, onUpload, onDelete, uploading, upl
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────────
-
 export default function PublicWebsiteSettings() {
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
@@ -288,7 +282,6 @@ export default function PublicWebsiteSettings() {
     queryFn: () => base44.entities.WebsiteImage.list(),
   });
 
-  // Filtered sets
   const heroImages = allImages.filter(i => i.page === 'hero').sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const activityImages = allImages.filter(i => i.page === 'activities').sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const getFixed = (page, label) => allImages.find(i => i.page === page && (label ? i.label === label : true));
@@ -298,13 +291,11 @@ export default function PublicWebsiteSettings() {
     queryClient.invalidateQueries({ queryKey: ['website-images'] });
   };
 
-  // ── Generic upload helper ─────────────────────────────────────────────────
   const uploadFile = async (file) => {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     return file_url;
   };
 
-  // ── Hero ──────────────────────────────────────────────────────────────────
   const handleHeroUpload = async (page, file, order) => {
     setUploading(true);
     try {
@@ -327,7 +318,6 @@ export default function PublicWebsiteSettings() {
     invalidate();
   };
 
-  // ── Activities ────────────────────────────────────────────────────────────
   const handleAddActivity = async () => {
     await base44.entities.WebsiteImage.create({ page: 'activities', image_url: '', title: '', description: '', order: activityImages.length });
     invalidate();
@@ -364,7 +354,6 @@ export default function PublicWebsiteSettings() {
     finally { setUploading(false); }
   };
 
-  // ── Fixed slots ───────────────────────────────────────────────────────────
   const handleFixedUpload = async (page, label, file) => {
     setUploading(true);
     try {
@@ -386,17 +375,15 @@ export default function PublicWebsiteSettings() {
     toast.success('Image removed');
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-8">
       <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
         <h2 className="text-lg font-bold text-purple-900 mb-1">Public Website Settings</h2>
         <p className="text-sm text-purple-700">
-          Everything in this section controls what visitors see on the public-facing website. Changes take effect immediately — no code changes required.
+          Everything here controls what visitors see on the public website. Changes take effect immediately.
         </p>
       </div>
 
-      {/* Section 1 */}
       <HeroImages
         images={heroImages}
         onUpload={handleHeroUpload}
@@ -405,7 +392,6 @@ export default function PublicWebsiteSettings() {
         uploading={uploading}
       />
 
-      {/* Section 2 */}
       <ActivitiesConfig
         activities={activityImages}
         onUpdateActivity={handleUpdateActivity}
@@ -416,15 +402,14 @@ export default function PublicWebsiteSettings() {
         onUploadActivityImage={handleUploadActivityImage}
       />
 
-      {/* Section 3 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-purple-900">
             <Image className="w-5 h-5" />
-            Sections — Background Images
+            Sections Background Images
           </CardTitle>
           <p className="text-sm text-gray-500">
-            The background photo inside each section hover-panel on the home page. A colour tint is applied on top automatically.
+            The background photo inside each section hover-panel on the home page.
           </p>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -447,12 +432,11 @@ export default function PublicWebsiteSettings() {
         </CardContent>
       </Card>
 
-      {/* Section 4 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-purple-900">
             <Image className="w-5 h-5" />
-            Join & Volunteer CTA — Background Images
+            Join and Volunteer CTA Background Images
           </CardTitle>
           <p className="text-sm text-gray-500">
             Background photos for the split Join/Volunteer panel near the bottom of the home page.
@@ -460,7 +444,7 @@ export default function PublicWebsiteSettings() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FixedImageSlot
-            label="Join CTA — background image"
+            label="Join CTA background image"
             hint="Left half, purple tint overlay."
             image={getFixed('cta', 'join')}
             onUpload={(f) => handleFixedUpload('cta', 'join', f)}
@@ -469,7 +453,7 @@ export default function PublicWebsiteSettings() {
             uploadId="cta-join-upload"
           />
           <FixedImageSlot
-            label="Volunteer CTA — background image"
+            label="Volunteer CTA background image"
             hint="Right half, teal tint overlay."
             image={getFixed('cta', 'volunteer')}
             onUpload={(f) => handleFixedUpload('cta', 'volunteer', f)}
@@ -480,21 +464,20 @@ export default function PublicWebsiteSettings() {
         </CardContent>
       </Card>
 
-      {/* Section 5 — Info pages */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-purple-900">
             <Image className="w-5 h-5" />
-            About & Contact Pages — Hero Images
+            About and Contact Pages Hero Images
           </CardTitle>
           <p className="text-sm text-gray-500">
-            Full-bleed hero banner photos for the About and Contact pages. A dark overlay is applied automatically so the white text stays readable.
+            Full-bleed hero banner photos for the About and Contact pages.
           </p>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FixedImageSlot
-            label="About page — hero banner"
-            hint="Shown full-width behind 'Who we are.' headline."
+            label="About page hero banner"
+            hint="Shown full-width behind the headline."
             image={getFixed('about', 'hero')}
             onUpload={(f) => handleFixedUpload('about', 'hero', f)}
             onDelete={handleFixedDelete}
@@ -502,8 +485,8 @@ export default function PublicWebsiteSettings() {
             uploadId="about-hero-upload"
           />
           <FixedImageSlot
-            label="About page — group photo"
-            hint="Shown in the two-column welcome section alongside the text."
+            label="About page group photo"
+            hint="Shown in the two-column welcome section."
             image={getFixed('about', 'main')}
             onUpload={(f) => handleFixedUpload('about', 'main', f)}
             onDelete={handleFixedDelete}
@@ -511,8 +494,8 @@ export default function PublicWebsiteSettings() {
             uploadId="about-main-upload"
           />
           <FixedImageSlot
-            label="Contact page — hero banner"
-            hint="Shown full-width behind 'Say hello.' headline."
+            label="Contact page hero banner"
+            hint="Shown full-width behind the headline."
             image={getFixed('contact', null)}
             onUpload={(f) => handleFixedUpload('contact', null, f)}
             onDelete={handleFixedDelete}
