@@ -66,7 +66,7 @@ export default function WhatWeDo() {
           </h2>
 
           {activities[activeIdx]?.image_url ? (
-            <div style={{ borderRadius: '20px', overflow: 'hidden', marginBottom: '24px', aspectRatio: '3/4', boxShadow: '0 40px 80px rgba(116,19,220,0.4), 0 20px 40px rgba(0,0,0,0.8)' }}>
+            <div style={{ borderRadius: '20px', overflow: 'hidden', marginBottom: '24px', aspectRatio: '3/4', boxShadow: '0 40px 80px rgba(116,19,220,0.4), 0 20px 40px rgba(255, 0, 0, 0.8)' }}>
               <img src={activities[activeIdx].image_url} alt={activities[activeIdx].title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           ) : (
