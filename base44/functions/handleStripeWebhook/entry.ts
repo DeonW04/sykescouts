@@ -95,6 +95,20 @@ Deno.serve(async (req) => {
       } else {
         await base44.asServiceRole.entities.EventPaymentStatus.create({ event_id, member_id, ...statusPayload });
       }
+
+      // Auto-mark attending: if member hasn't responded to the attendance ActionRequired, do it now
+      const attendanceActions = await base44.asServiceRole.entities.ActionRequired.filter({ event_id, action_purpose: 'attendance' });
+      for (const action of attendanceActions) {
+        const existing = await base44.asServiceRole.entities.ActionResponse.filter({ action_required_id: action.id, member_id });
+        if (!existing.length) {
+          await base44.asServiceRole.entities.ActionResponse.create({
+            action_required_id: action.id,
+            member_id,
+            response_value: 'yes',
+            responded_at: new Date().toISOString(),
+          });
+        }
+      }
     } else if (meeting_id) {
       const statusRecords = await base44.asServiceRole.entities.MeetingPaymentStatus.filter({ meeting_id, member_id });
       const statusPayload = { status: 'paid', paid_at: today, stripe_payment_intent_id: pi.id, card_last4, card_brand };
@@ -102,6 +116,20 @@ Deno.serve(async (req) => {
         await base44.asServiceRole.entities.MeetingPaymentStatus.update(statusRecords[0].id, statusPayload);
       } else {
         await base44.asServiceRole.entities.MeetingPaymentStatus.create({ meeting_id, member_id, ...statusPayload });
+      }
+
+      // Auto-mark attending: if member hasn't responded to the attendance ActionRequired, do it now
+      const attendanceActions = await base44.asServiceRole.entities.ActionRequired.filter({ programme_id: meeting_id, action_purpose: 'attendance' });
+      for (const action of attendanceActions) {
+        const existing = await base44.asServiceRole.entities.ActionResponse.filter({ action_required_id: action.id, member_id });
+        if (!existing.length) {
+          await base44.asServiceRole.entities.ActionResponse.create({
+            action_required_id: action.id,
+            member_id,
+            response_value: 'yes',
+            responded_at: new Date().toISOString(),
+          });
+        }
       }
     }
   }

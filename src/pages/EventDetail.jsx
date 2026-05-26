@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Trash2, Save, Eye, Plus, Calendar, Users, Award, ListTodo, Shield, Menu, X, DollarSign, TrendingUp, TrendingDown, Image, FolderOpen } from 'lucide-react';
+import { FileText, Trash2, Save, Eye, Plus, Calendar, Users, Award, ListTodo, Shield, Menu, X, DollarSign, TrendingUp, TrendingDown, Image, FolderOpen, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
@@ -35,6 +35,7 @@ export default function EventDetail() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showAttendanceGateModal, setShowAttendanceGateModal] = useState(false);
   const [showAwardNightsDialog, setShowAwardNightsDialog] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -61,6 +62,12 @@ export default function EventDetail() {
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
     queryFn: () => base44.entities.Section.filter({ active: true }),
+  });
+
+  const { data: attendanceActions = [] } = useQuery({
+    queryKey: ['event-attendance-actions', eventId],
+    queryFn: () => base44.entities.ActionRequired.filter({ event_id: eventId, action_purpose: 'attendance' }),
+    enabled: !!eventId,
   });
 
   useEffect(() => {
@@ -155,7 +162,15 @@ export default function EventDetail() {
     setFormData({ ...formData, schedule_by_day: newSchedule });
   };
 
+  const hasCost = (event?.cost ?? 0) > 0;
+  const hasAttendanceAction = attendanceActions.length > 0;
+
   const togglePublished = async () => {
+    // Gate: if trying to publish a paid event with no attendance action, block it
+    if (!event.published && hasCost && !hasAttendanceAction) {
+      setShowAttendanceGateModal(true);
+      return;
+    }
     await updateEventMutation.mutateAsync({ published: !event.published });
   };
 
@@ -239,14 +254,17 @@ export default function EventDetail() {
             </div>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               {!isPastEvent() ? (
-                <Button
-                  variant="outline"
-                  onClick={togglePublished}
-                  className="bg-white/10 text-white border-white/30 hover:bg-white/20 min-h-[44px]"
-                >
-                  <Eye className="w-4 h-4 sm:mr-2" />
-                  <span className="hidden sm:inline">{event.published ? 'Published' : 'Draft'}</span>
-                </Button>
+                // Hide publish button entirely when there's a cost but no attendance action and not yet published
+                !(hasCost && !hasAttendanceAction && !event.published) && (
+                  <Button
+                    variant="outline"
+                    onClick={togglePublished}
+                    className="bg-white/10 text-white border-white/30 hover:bg-white/20 min-h-[44px]"
+                  >
+                    <Eye className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">{event.published ? 'Published' : 'Draft'}</span>
+                  </Button>
+                )
               ) : (
                 <Button
                   variant="outline"
@@ -276,6 +294,26 @@ export default function EventDetail() {
           </div>
         </div>
       </div>
+
+      {/* Attendance Gate Banner */}
+      {hasCost && !hasAttendanceAction && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-800">Attendance action required before publishing</p>
+              <p className="text-xs text-amber-700 mt-0.5">This event has a cost of £{event.cost?.toFixed(2)} but no attendance action has been created. Attendance tracking is required for payment tracking to work. Please create an attendance action before publishing.</p>
+            </div>
+            <Button
+              size="sm"
+              className="bg-amber-600 hover:bg-amber-700 text-white whitespace-nowrap flex-shrink-0"
+              onClick={() => setActiveSection('parent')}
+            >
+              Create attendance action
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
@@ -728,6 +766,34 @@ export default function EventDetail() {
           </main>
         </div>
       </div>
+
+      {/* Attendance Gate Modal */}
+      <Dialog open={showAttendanceGateModal} onOpenChange={setShowAttendanceGateModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-amber-700 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Attendance action required
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-700">
+              This event has a cost of <strong>£{event?.cost?.toFixed(2)}</strong>. You must create an attendance action so parents can confirm attendance before payment tracking can work. Would you like to create one now?
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowAttendanceGateModal(false)} className="min-h-[44px]">
+              Cancel
+            </Button>
+            <Button
+              className="bg-amber-600 hover:bg-amber-700 text-white min-h-[44px]"
+              onClick={() => { setShowAttendanceGateModal(false); setActiveSection('parent'); }}
+            >
+              Create attendance action
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AwardNightsAwayDialog
         open={showAwardNightsDialog}

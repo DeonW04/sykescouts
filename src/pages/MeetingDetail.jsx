@@ -45,6 +45,7 @@ export default function MeetingDetail() {
   const [swapDialogOpen, setSwapDialogOpen] = useState(false);
   const [swapTargetDate, setSwapTargetDate] = useState('');
   const [osmSyncOpen, setOsmSyncOpen] = useState(false);
+  const [showAttendanceGateModal, setShowAttendanceGateModal] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -57,6 +58,7 @@ export default function MeetingDetail() {
     optional_start_time: '',
     optional_end_time: '',
     home_contact: '',
+    has_cost: false,
     cost: '',
     payment_deadline: '',
   });
@@ -166,11 +168,16 @@ export default function MeetingDetail() {
         optional_start_time: existingProgramme.optional_start_time || '',
         optional_end_time: existingProgramme.optional_end_time || '',
         home_contact: existingProgramme.home_contact || '',
+        has_cost: existingProgramme.has_cost || false,
         cost: existingProgramme.cost != null ? String(existingProgramme.cost) : '',
         payment_deadline: existingProgramme.payment_deadline || '',
       });
     }
   }, [existingProgramme]);
+
+  // Payment gate computed values
+  const hasCost = formData.has_cost && parseFloat(formData.cost || 0) > 0;
+  const hasAttendanceAction = actionsRequired.some(a => a.action_purpose === 'attendance');
 
   const saveProgrammeMutation = useMutation({
     mutationFn: async (data) => {
@@ -248,7 +255,8 @@ export default function MeetingDetail() {
   const handleSave = () => {
     const saveData = {
       ...formData,
-      cost: formData.cost !== '' ? parseFloat(formData.cost) : null,
+      has_cost: !!formData.has_cost,
+      cost: formData.has_cost && formData.cost !== '' ? parseFloat(formData.cost) : null,
     };
     saveProgrammeMutation.mutate(saveData);
   };
@@ -344,17 +352,26 @@ export default function MeetingDetail() {
                   <span className="hidden sm:inline">Gallery</span>
                 </Button>
               )}
-              <Button
-                variant="outline"
-                onClick={() => setFormData({ ...formData, published: !formData.published })}
-                className="bg-white/10 text-white border-white/30 hover:bg-white/20 min-h-[44px]"
-              >
-                {formData.published ? (
-                  <><Eye className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Published</span></>
-                ) : (
-                  <><EyeOff className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Draft</span></>
-                )}
-              </Button>
+              {/* Publish button — hidden when unpublished + has cost + no attendance action */}
+              {!(hasCost && !hasAttendanceAction && !formData.published) && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (!formData.published && hasCost && !hasAttendanceAction) {
+                      setShowAttendanceGateModal(true);
+                      return;
+                    }
+                    setFormData({ ...formData, published: !formData.published });
+                  }}
+                  className="bg-white/10 text-white border-white/30 hover:bg-white/20 min-h-[44px]"
+                >
+                  {formData.published ? (
+                    <><Eye className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Published</span></>
+                  ) : (
+                    <><EyeOff className="w-4 h-4 sm:mr-2" /><span className="hidden sm:inline">Draft</span></>
+                  )}
+                </Button>
+              )}
               <Button
                 variant="outline"
                 onClick={() => setOsmSyncOpen(true)}
@@ -438,6 +455,20 @@ export default function MeetingDetail() {
 
           {/* Main Content */}
           <main className="flex-1 min-w-0">
+
+            {/* Attendance Gate Banner */}
+            {hasCost && !hasAttendanceAction && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-amber-800">Attendance action required before publishing</p>
+                  <p className="text-xs text-amber-700 mt-0.5">This meeting has a cost of £{parseFloat(formData.cost || 0).toFixed(2)} but no attendance action has been created. Attendance tracking is required for payment tracking to work.</p>
+                </div>
+                <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white whitespace-nowrap flex-shrink-0" onClick={() => handleSectionChange('parent')}>
+                  Create attendance action
+                </Button>
+              </div>
+            )}
 
             {/* ── Meeting Plan ── */}
             {activeSection === 'plan' && (
@@ -547,15 +578,20 @@ export default function MeetingDetail() {
                   </CardContent>
                 </Card>
 
-                {/* Meeting Cost */}
+                {/* Meeting Cost — has_cost checkbox properly controls field visibility */}
                 <Card className="shadow-sm border-blue-200 bg-blue-50">
                   <CardHeader className="border-b border-blue-100">
                     <div className="flex items-center gap-3">
                       <input
                         type="checkbox"
                         id="has_cost"
-                        checked={formData.cost !== '' && formData.cost !== null}
-                        onChange={(e) => setFormData({ ...formData, cost: e.target.checked ? '' : null, payment_deadline: e.target.checked ? formData.payment_deadline : '' })}
+                        checked={!!formData.has_cost}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          has_cost: e.target.checked,
+                          cost: e.target.checked ? formData.cost : '',
+                          payment_deadline: e.target.checked ? formData.payment_deadline : '',
+                        })}
                         className="w-4 h-4 rounded border-gray-300 text-blue-600"
                       />
                       <label htmlFor="has_cost" className="text-blue-800 text-xl font-semibold cursor-pointer">
@@ -563,7 +599,7 @@ export default function MeetingDetail() {
                       </label>
                     </div>
                   </CardHeader>
-                  {(formData.cost !== '' && formData.cost !== null) && (
+                  {formData.has_cost && (
                     <CardContent className="pt-4 space-y-3">
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -840,6 +876,32 @@ export default function MeetingDetail() {
           queryClient.invalidateQueries({ queryKey: ['programme', sectionId, date] });
         }}
       />
+
+      {/* Attendance Gate Modal */}
+      <Dialog open={showAttendanceGateModal} onOpenChange={setShowAttendanceGateModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-amber-700 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              Attendance action required
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-700">
+              This meeting has a cost of <strong>£{parseFloat(formData.cost || 0).toFixed(2)}</strong>. You must create an attendance action so parents can confirm attendance before payment tracking can work. Would you like to create one now?
+            </p>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowAttendanceGateModal(false)} className="min-h-[44px]">Cancel</Button>
+            <Button
+              className="bg-amber-600 hover:bg-amber-700 text-white min-h-[44px]"
+              onClick={() => { setShowAttendanceGateModal(false); handleSectionChange('parent'); }}
+            >
+              Create attendance action
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Swap Dialog */}
       <Dialog open={swapDialogOpen} onOpenChange={setSwapDialogOpen}>
