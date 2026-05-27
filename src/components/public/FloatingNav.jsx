@@ -5,6 +5,7 @@ import {
   Menu, X, ChevronDown, ChevronRight, Users, Calendar, Award, Mail, Settings,
   Image, ShieldAlert, CalendarDays, Lightbulb, Package, TrendingUp,
   FileText, Landmark, BookOpen, LogOut, LayoutDashboard, UserCheck, Home, UserCircle, MessageSquare,
+  Baby,
 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import {
@@ -12,7 +13,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// Portal nav groups
+// Portal nav groups (leader)
 const portalGroups = [
   {
     label: 'Members', icon: Users,
@@ -54,8 +55,16 @@ const portalGroups = [
       { label: 'Gallery', page: 'LeaderGallery', icon: Image },
       { label: 'Treasurer Portal', page: 'TreasurerDashboard', icon: Landmark, separator: true },
       { label: 'WhatsApp Schedules', page: 'WhatsAppSchedules', icon: MessageSquare, separator: true },
-      ],
-      },
+    ],
+  },
+];
+
+// Parent portal nav links (flat — no dropdowns)
+const parentNavLinks = [
+  { label: 'My Child', page: 'MyChild', icon: Baby },
+  { label: 'Programme', page: 'ParentProgramme', icon: Calendar },
+  { label: 'Events', page: 'ParentEvents', icon: CalendarDays },
+  { label: 'Badges', page: 'ParentBadges', icon: Award },
 ];
 
 const STRIP_RADIUS = '24px';
@@ -77,19 +86,17 @@ const PORTAL_PAGES = [
 ];
 
 // ── Mobile Sidebar Drawer ──────────────────────────────────────────────────────
-function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, portalUrl, isPortalPage }) {
+function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, user, portalLabel, portalUrl, isPortalPage }) {
   const location = useLocation();
   const [expandedGroup, setExpandedGroup] = useState(null);
-  // showPortal: true = show portal nav, false = show public nav
   const [showPortal, setShowPortal] = useState(isPortalPage);
 
-  // Sync showPortal when location changes (e.g. navigating to a portal page)
   useEffect(() => {
     setShowPortal(isPortalPage);
     setExpandedGroup(null);
   }, [isPortalPage, open]);
 
-  const hasPortal = !!(portalLabel && (isLeader || user));
+  const hasPortal = !!(portalLabel && (isLeader || isParent || user));
 
   const navLinks = [
     { label: 'Home', to: '/' },
@@ -113,7 +120,6 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, po
 
   return (
     <>
-      {/* Overlay */}
       {open && (
         <div
           onClick={onClose}
@@ -121,7 +127,6 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, po
         />
       )}
 
-      {/* Drawer */}
       <div style={{
         position: 'fixed', top: 0, left: 0, bottom: 0, width: '280px',
         background: '#1a1a2e', zIndex: 1060,
@@ -133,7 +138,6 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, po
         {/* Drawer header */}
         <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* Back arrow — only shown in portal view */}
             {showPortal && hasPortal && (
               <button
                 onClick={() => { setShowPortal(false); setExpandedGroup(null); }}
@@ -158,7 +162,6 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, po
 
         {/* Nav content */}
         <div style={{ flex: 1, padding: '12px 10px', overflowY: 'auto' }}>
-
           {!showPortal ? (
             /* ── PUBLIC VIEW ── */
             <>
@@ -170,7 +173,6 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, po
 
               <div style={{ marginTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '14px' }}>
                 {user && hasPortal ? (
-                  /* Logged in — show portal button */
                   <button
                     onClick={() => { setShowPortal(true); setExpandedGroup(null); }}
                     style={{
@@ -205,12 +207,10 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, po
             <>
               {isLeader ? (
                 <>
-                  {/* Dashboard */}
                   <Link to={createPageUrl('LeaderDashboard')} onClick={onClose} style={linkStyle(location.pathname === '/LeaderDashboard')}>
                     <LayoutDashboard size={15} /> Dashboard
                   </Link>
 
-                  {/* Groups */}
                   {portalGroups.map(group => {
                     const isGroupActive = group.links.some(({ page }) => location.pathname === '/' + page || location.pathname.startsWith('/' + page));
                     return (
@@ -259,8 +259,22 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, user, portalLabel, po
                     </Link>
                   )}
                 </>
+              ) : isParent ? (
+                /* ── PARENT PORTAL MOBILE ── */
+                <>
+                  <Link to={createPageUrl('ParentDashboard')} onClick={onClose} style={linkStyle(location.pathname === '/ParentDashboard')}>
+                    <LayoutDashboard size={15} /> Dashboard
+                  </Link>
+                  {parentNavLinks.map(({ label, page, icon: Icon }) => {
+                    const active = location.pathname === '/' + page || location.pathname.startsWith('/' + page);
+                    return (
+                      <Link key={page} to={createPageUrl(page)} onClick={onClose} style={linkStyle(active)}>
+                        <Icon size={15} /> {label}
+                      </Link>
+                    );
+                  })}
+                </>
               ) : (
-                /* Parent portal — simple link list */
                 <Link to={portalUrl} onClick={onClose} style={linkStyle(true)}>
                   <LayoutDashboard size={15} /> {portalLabel}
                 </Link>
@@ -292,6 +306,7 @@ export default function FloatingNav() {
   const [user, setUser] = useState(null);
   const [isLeader, setIsLeader] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isParent, setIsParent] = useState(false);
   const [portalLabel, setPortalLabel] = useState(null);
   const [portalUrl, setPortalUrl] = useState(null);
   const [portalOpen, setPortalOpen] = useState(false);
@@ -322,6 +337,7 @@ export default function FloatingNav() {
           setPortalLabel('Leader Portal');
           setPortalUrl(createPageUrl('LeaderDashboard'));
         } else {
+          setIsParent(true);
           setPortalLabel('Parent Portal');
           setPortalUrl(createPageUrl('ParentDashboard'));
         }
@@ -364,6 +380,46 @@ export default function FloatingNav() {
     whiteSpace: 'nowrap', transition: 'background 0.2s, color 0.2s',
   };
 
+  // Shared account dropdown (used in both leader and parent strips)
+  const AccountDropdown = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '13px',
+            color: 'rgba(26,26,46,0.6)', background: 'rgba(116,19,220,0.04)',
+            border: '0.5px solid rgba(116,19,220,0.12)', borderRadius: '20px',
+            cursor: 'pointer', padding: '5px 12px 5px 10px',
+            whiteSpace: 'nowrap', transition: 'background 0.2s, color 0.2s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.08)'; e.currentTarget.style.color = '#7413dc'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.04)'; e.currentTarget.style.color = 'rgba(26,26,46,0.6)'; }}
+        >
+          <UserCircle size={14} />
+          {(() => {
+            const name = user?.display_name || user?.full_name || 'Account';
+            return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase().split(' ')[0];
+          })()}
+          <ChevronDown size={11} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" style={{ zIndex: 1100 }}>
+        <div style={{ padding: '8px 12px 6px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '13px', color: '#1a1a2e', margin: 0 }}>
+            {(() => { const n = user?.display_name || user?.full_name || ''; return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase(); })()}
+          </p>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(26,26,46,0.4)', margin: '2px 0 0' }}>{user?.email}</p>
+        </div>
+        <DropdownMenuItem onClick={() => base44.auth.logout()} className="cursor-pointer text-red-600 focus:text-red-600">
+          <LogOut className="w-4 h-4 mr-2" /> Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  const showStrip = isLeader || isParent;
+
   return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');`}</style>
@@ -373,6 +429,7 @@ export default function FloatingNav() {
         onClose={() => setMobileDrawerOpen(false)}
         isLeader={isLeader}
         isAdmin={isAdmin}
+        isParent={isParent}
         user={user}
         portalLabel={portalLabel}
         portalUrl={portalUrl}
@@ -411,7 +468,7 @@ export default function FloatingNav() {
             <Menu size={22} />
           </button>
 
-          {/* Logo — centred on mobile, left on desktop */}
+          {/* Logo */}
           <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
             <img
               src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png"
@@ -450,6 +507,23 @@ export default function FloatingNav() {
                 Leader Portal
                 <ChevronDown size={14} style={{ transform: (isPortalPage || portalOpen) ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }} />
               </button>
+            ) : isParent ? (
+              <button
+                onClick={() => setPortalOpen(v => !v)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  background: (isPortalPage || portalOpen) ? '#7413dc' : 'rgba(116,19,220,0.08)',
+                  color: (isPortalPage || portalOpen) ? '#fff' : '#7413dc',
+                  border: 'none', borderRadius: '25px',
+                  padding: '8px 18px', fontSize: '14px', fontWeight: 500,
+                  cursor: 'pointer', transition: 'all 0.25s ease',
+                  fontFamily: 'DM Sans, sans-serif',
+                }}
+              >
+                <LayoutDashboard size={15} />
+                Parent Portal
+                <ChevronDown size={14} style={{ transform: (isPortalPage || portalOpen) ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }} />
+              </button>
             ) : portalLabel ? (
               <Link to={portalUrl} style={{
                 fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
@@ -476,12 +550,12 @@ export default function FloatingNav() {
             )}
           </div>
 
-          {/* Mobile right — logo placeholder for centering balance (empty) */}
+          {/* Mobile right balance */}
           <div className="md:hidden" style={{ width: '30px' }} />
         </div>
 
-        {/* ── Expandable portal strip (desktop leaders only) ── */}
-        {isLeader && (
+        {/* ── Expandable portal strip (desktop) ── */}
+        {showStrip && (
           <div className="hidden md:block" style={{
             overflow: 'hidden',
             maxHeight: (isPortalPage || portalOpen) ? '56px' : '0',
@@ -494,8 +568,10 @@ export default function FloatingNav() {
               display: 'flex', alignItems: 'center',
               background: 'rgba(116,19,220,0.025)',
             }}>
+
+              {/* Dashboard button */}
               <Link
-                to={createPageUrl('LeaderDashboard')}
+                to={createPageUrl(isLeader ? 'LeaderDashboard' : 'ParentDashboard')}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '5px',
                   fontWeight: 600, fontSize: '12px', color: '#7413dc',
@@ -509,51 +585,79 @@ export default function FloatingNav() {
 
               <div style={{ width: '1px', height: '18px', background: 'rgba(116,19,220,0.15)', flexShrink: 0, marginRight: '8px' }} />
 
+              {/* Centre nav */}
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
-                {portalGroups.map((group) => {
-                  const isGroupActive = group.links.some(({ page }) => location.pathname === '/' + page || location.pathname.startsWith('/' + page));
-                  return (
-                  <DropdownMenu key={group.label}>
-                    <DropdownMenuTrigger asChild>
-                      <button
+                {isLeader ? (
+                  /* Leader groups with dropdowns */
+                  portalGroups.map((group) => {
+                    const isGroupActive = group.links.some(({ page }) => location.pathname === '/' + page || location.pathname.startsWith('/' + page));
+                    return (
+                      <DropdownMenu key={group.label}>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            style={{
+                              ...stripBtnStyle,
+                              background: isGroupActive ? 'rgba(116,19,220,0.1)' : 'none',
+                              color: isGroupActive ? '#7413dc' : 'rgba(26,26,46,0.65)',
+                              fontWeight: isGroupActive ? 600 : 500,
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.07)'; e.currentTarget.style.color = '#7413dc'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = isGroupActive ? 'rgba(116,19,220,0.1)' : 'none'; e.currentTarget.style.color = isGroupActive ? '#7413dc' : 'rgba(26,26,46,0.65)'; }}
+                          >
+                            <group.icon size={13} />
+                            {group.label}
+                            <ChevronDown size={11} />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="center" style={{ zIndex: 1100 }}>
+                          {group.links.map(({ label, page, icon: Icon, separator, adminOnly }) => {
+                            if (adminOnly && !isAdmin) return null;
+                            return (
+                              <React.Fragment key={page}>
+                                {separator && <DropdownMenuSeparator />}
+                                <DropdownMenuItem asChild>
+                                  <Link to={createPageUrl(page)} className="flex items-center gap-2 cursor-pointer">
+                                    <Icon className="w-4 h-4" /> {label}
+                                  </Link>
+                                </DropdownMenuItem>
+                              </React.Fragment>
+                            );
+                          })}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    );
+                  })
+                ) : (
+                  /* Parent flat links — no dropdowns */
+                  parentNavLinks.map(({ label, page, icon: Icon }) => {
+                    const active = location.pathname === '/' + page || location.pathname.startsWith('/' + page);
+                    return (
+                      <Link
+                        key={page}
+                        to={createPageUrl(page)}
                         style={{
                           ...stripBtnStyle,
-                          background: isGroupActive ? 'rgba(116,19,220,0.1)' : 'none',
-                          color: isGroupActive ? '#7413dc' : 'rgba(26,26,46,0.65)',
-                          fontWeight: isGroupActive ? 600 : 500,
+                          textDecoration: 'none',
+                          background: active ? 'rgba(116,19,220,0.1)' : 'none',
+                          color: active ? '#7413dc' : 'rgba(26,26,46,0.65)',
+                          fontWeight: active ? 600 : 500,
                         }}
                         onMouseEnter={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.07)'; e.currentTarget.style.color = '#7413dc'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = isGroupActive ? 'rgba(116,19,220,0.1)' : 'none'; e.currentTarget.style.color = isGroupActive ? '#7413dc' : 'rgba(26,26,46,0.65)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = active ? 'rgba(116,19,220,0.1)' : 'none'; e.currentTarget.style.color = active ? '#7413dc' : 'rgba(26,26,46,0.65)'; }}
                       >
-                        <group.icon size={13} />
-                        {group.label}
-                        <ChevronDown size={11} />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="center" style={{ zIndex: 1100 }}>
-                     {group.links.map(({ label, page, icon: Icon, separator, adminOnly }) => {
-                       if (adminOnly && !isAdmin) return null;
-                       return (
-                         <React.Fragment key={page}>
-                           {separator && <DropdownMenuSeparator />}
-                           <DropdownMenuItem asChild>
-                             <Link to={createPageUrl(page)} className="flex items-center gap-2 cursor-pointer">
-                               <Icon className="w-4 h-4" /> {label}
-                             </Link>
-                           </DropdownMenuItem>
-                         </React.Fragment>
-                       );
-                     })}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  );
-                })}
+                        <Icon size={13} />
+                        {label}
+                      </Link>
+                    );
+                  })
+                )}
               </div>
 
               <div style={{ width: '1px', height: '18px', background: 'rgba(116,19,220,0.15)', flexShrink: 0, marginLeft: '8px', marginRight: '8px' }} />
 
+              {/* Right side */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                {isAdmin && (
+                {isLeader && isAdmin && (
                   <Link
                     to={createPageUrl('AdminSettings')}
                     style={{ ...stripBtnStyle, textDecoration: 'none', color: 'rgba(26,26,46,0.65)' }}
@@ -563,47 +667,13 @@ export default function FloatingNav() {
                     <Settings size={13} /> Admin Settings
                   </Link>
                 )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '6px',
-                        fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '13px',
-                        color: 'rgba(26,26,46,0.6)', background: 'rgba(116,19,220,0.04)',
-                        border: '0.5px solid rgba(116,19,220,0.12)', borderRadius: '20px',
-                        cursor: 'pointer', padding: '5px 12px 5px 10px',
-                        whiteSpace: 'nowrap', transition: 'background 0.2s, color 0.2s',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.08)'; e.currentTarget.style.color = '#7413dc'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.04)'; e.currentTarget.style.color = 'rgba(26,26,46,0.6)'; }}
-                    >
-                      <UserCircle size={14} />
-                      {(() => {
-                        const name = user?.display_name || user?.full_name || 'Account';
-                        return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase().split(' ')[0];
-                      })()}
-                      <ChevronDown size={11} />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" style={{ zIndex: 1100 }}>
-                    <div style={{ padding: '8px 12px 6px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                      <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '13px', color: '#1a1a2e', margin: 0 }}>
-                        {(() => { const n = user?.display_name || user?.full_name || ''; return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase(); })()}
-                      </p>
-                      <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(26,26,46,0.4)', margin: '2px 0 0' }}>{user?.email}</p>
-                    </div>
-                    <DropdownMenuItem onClick={() => base44.auth.logout()} className="cursor-pointer text-red-600 focus:text-red-600">
-                      <LogOut className="w-4 h-4 mr-2" /> Sign out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <AccountDropdown />
               </div>
+
             </div>
           </div>
         )}
       </div>
-
-
     </>
   );
 }
