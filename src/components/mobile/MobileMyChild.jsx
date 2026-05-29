@@ -104,6 +104,12 @@ function SubscriptionsSection({ child, onRefresh }) {
   const [changingDate, setChangingDate] = useState(false);
   const [dateChangeMsg, setDateChangeMsg] = useState('');
 
+  const { data: subsConfig } = useQuery({
+    queryKey: ['subs-config', child?.section_id],
+    queryFn: () => base44.entities.SectionSubsConfig.filter({ section_id: child.section_id }).then(r => r[0] || null),
+    enabled: !!child?.section_id,
+  });
+
   useEffect(() => {
     getStripePromise().then(p => { if (p) setStripePromise(p); });
   }, []);
@@ -112,8 +118,22 @@ function SubscriptionsSection({ child, onRefresh }) {
   const defaultPm = paymentMethods.find(pm => pm.is_default) || paymentMethods[0];
   const hasSubscription = !!child.stripe_subscription_id;
   const currentInterval = child.subs_interval || '4_months';
-
   const intervalLabel = INTERVAL_OPTIONS.find(o => o.value === currentInterval)?.label || 'Every 4 months';
+
+  // Legacy
+  const hasLegacy = !!child.legacy_subs_expiry && !hasSubscription;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const legacyExpiry = hasLegacy ? new Date(child.legacy_subs_expiry) : null;
+  if (legacyExpiry) legacyExpiry.setHours(0, 0, 0, 0);
+  const daysUntilLegacy = legacyExpiry ? Math.ceil((legacyExpiry - today) / (1000 * 60 * 60 * 24)) : null;
+  const legacyWithin30 = daysUntilLegacy !== null && daysUntilLegacy <= 30 && daysUntilLegacy >= 0;
+  const legacyExpired = daysUntilLegacy !== null && daysUntilLegacy < 0;
+
+  // Subscription amount
+  const INTERVAL_SHORT = { '4_months': 'every 4 months', '6_months': 'every 6 months', 'yearly': 'per year' };
+  const amountLabel = subsConfig?.price_pence
+    ? `£${(subsConfig.price_pence / 100).toFixed(2)} ${INTERVAL_SHORT[currentInterval] || 'per period'}`
+    : null;
 
   const handleActivateSubscription = async () => {
     setActivatingSubscription(true);
@@ -132,25 +152,17 @@ function SubscriptionsSection({ child, onRefresh }) {
     if (!newAnchorDate) return;
     setChangingDate(true);
     try {
-      const res = await base44.functions.invoke('updateSubscriptionAnchorDate', {
-        member_id: child.id,
-        new_anchor_date: newAnchorDate,
-      });
-      if (res?.data?.error) {
-        toast.error(res.data.error);
-      } else {
+      const res = await base44.functions.invoke('updateSubscriptionAnchorDate', { member_id: child.id, new_anchor_date: newAnchorDate });
+      if (res?.data?.error) { toast.error(res.data.error); } else {
         setDateChangeMsg(`Next payment date updated to ${format(new Date(newAnchorDate), 'd MMMM yyyy')}`);
         setShowDatePicker(false);
         onRefresh();
       }
-    } catch (err) {
-      toast.error(err.message || 'Failed to update date');
-    } finally {
-      setChangingDate(false);
-    }
+    } catch (err) { toast.error(err.message || 'Failed to update date'); }
+    finally { setChangingDate(false); }
   };
 
-  const handleIntervalChange = async (newInterval) => {
+  const handleIntervalChange = (newInterval) => {
     if (newInterval === currentInterval || !hasSubscription) return;
     setPendingInterval(newInterval);
   };
@@ -164,11 +176,7 @@ function SubscriptionsSection({ child, onRefresh }) {
     setConfirmingInterval(false);
   };
 
-  const handleCardSaved = () => {
-    setShowSetupForm(false);
-    setShowChangeCard(false);
-    onRefresh();
-  };
+  const handleCardSaved = () => { setShowSetupForm(false); setShowChangeCard(false); onRefresh(); };
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -182,8 +190,52 @@ function SubscriptionsSection({ child, onRefresh }) {
       </div>
 
       <div className="p-4 space-y-4">
-        {/* Payment method status */}
-        {paymentMethods.length === 0 ? (
+        {/* LEGACY: paid until date, not expired */}
+        {hasLegacy && !legacyExpired && (
+          <div className="space-y-3">
+            <div className={`rounded-xl p-3 border ${legacyWithin30 ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200'}`}>
+              <p className={`text-xs font-bold uppercase tracking-wide mb-1 ${legacyWithin30 ? 'text-amber-700' : 'text-blue-700'}`}>Current membership</p>
+              <p className={`text-sm font-semibold ${legacyWithin30 ? 'text-amber-900' : 'text-blue-900'}`}>
+                Paid until {format(new Date(child.legacy_subs_expiry), 'd MMMM yyyy')}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">From that date you will need a payment method set up to continue your child's membership.</p>
+            </div>
+            <button
+              onClick={legacyWithin30 ? () => setShowSetupForm(true) : undefined}
+              disabled={!legacyWithin30}
+              className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all ${
+                legacyWithin30 ? 'bg-amber-500 text-white active:scale-95' : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}>
+              {legacyWithin30
+                ? `Set up subscription — due by ${format(new Date(child.legacy_subs_expiry), 'd MMM yyyy')}`
+                : 'Set up subscription (available 30 days before expiry)'}
+            </button>
+            {showSetupForm && stripePromise && (
+              <Elements stripe={stripePromise}>
+                <SetupCardForm memberId={child.id} onSuccess={handleCardSaved} onCancel={() => setShowSetupForm(false)} />
+              </Elements>
+            )}
+          </div>
+        )}
+
+        {/* LEGACY EXPIRED → overdue */}
+        {legacyExpired && !hasSubscription && (
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-red-500">No payment method — subscription overdue</p>
+            {!showSetupForm ? (
+              <button onClick={() => setShowSetupForm(true)} className="w-full py-2.5 bg-[#7413dc] text-white rounded-xl text-sm font-bold">Set up payments</button>
+            ) : (
+              stripePromise ? (
+                <Elements stripe={stripePromise}>
+                  <SetupCardForm memberId={child.id} onSuccess={handleCardSaved} onCancel={() => setShowSetupForm(false)} />
+                </Elements>
+              ) : <div className="flex justify-center py-3"><Loader2 className="w-5 h-5 animate-spin text-[#7413dc]" /></div>
+            )}
+          </div>
+        )}
+
+        {/* NO CARD (non-legacy) */}
+        {!hasLegacy && !legacyExpired && paymentMethods.length === 0 && (
           <div className="space-y-3">
             <p className="text-sm font-semibold text-red-500">No payment method connected</p>
             {!showSetupForm ? (
@@ -196,114 +248,106 @@ function SubscriptionsSection({ child, onRefresh }) {
               ) : <div className="flex justify-center py-3"><Loader2 className="w-5 h-5 animate-spin text-[#7413dc]" /></div>
             )}
           </div>
-        ) : (
+        )}
+
+        {/* CARD, NO SUBSCRIPTION */}
+        {!hasLegacy && !legacyExpired && paymentMethods.length > 0 && !hasSubscription && (
+          <div className="space-y-3">
+            {defaultPm && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Saved card</span>
+                <span className="font-semibold text-gray-800 capitalize">{defaultPm.brand} ending {defaultPm.last4}</span>
+              </div>
+            )}
+            <p className="text-xs text-gray-400">No active subscription</p>
+            <button onClick={handleActivateSubscription} disabled={activatingSubscription}
+              className="w-full py-2.5 bg-green-600 text-white rounded-xl text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-1.5">
+              {activatingSubscription ? <><Loader2 className="w-4 h-4 animate-spin" />Activating...</> : 'Activate subscription'}
+            </button>
+          </div>
+        )}
+
+        {/* ACTIVE SUBSCRIPTION */}
+        {!hasLegacy && !legacyExpired && paymentMethods.length > 0 && hasSubscription && (
           <div className="space-y-4">
-            {/* Subscription info */}
-            {hasSubscription ? (
-              <div className="space-y-2">
-                {child.last_subs_payment_date && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Last payment</span>
-                    <span className="font-semibold text-gray-800">{format(new Date(child.last_subs_payment_date), 'd MMM yyyy')}</span>
-                  </div>
-                )}
-                {child.next_subs_due && (() => {
-                  const isOverdue = new Date(child.next_subs_due) < new Date();
-                  return (
-                    <div>
-                      <div className={`rounded-xl p-3 border ${isOverdue ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
-                        <p className={`text-xs font-bold uppercase tracking-wide mb-0.5 ${isOverdue ? 'text-red-500' : 'text-green-600'}`}>
-                          {isOverdue ? 'Payment overdue' : 'Next payment'}
-                        </p>
-                        <p className={`font-bold ${isOverdue ? 'text-red-700' : 'text-green-800'}`}>
-                          {format(new Date(child.next_subs_due), 'd MMMM yyyy')}
-                        </p>
-                        {hasSubscription && (
-                          <button
-                            onClick={() => { setShowDatePicker(!showDatePicker); setDateChangeMsg(''); setNewAnchorDate(''); }}
-                            className="text-xs text-[#7413dc] mt-1 font-medium underline">
-                            Change payment date
-                          </button>
-                        )}
-                      </div>
-                      {dateChangeMsg && <p className="text-xs text-green-700 font-medium mt-1">{dateChangeMsg}</p>}
-                      {showDatePicker && (
-                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mt-2 space-y-2">
-                          <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">Select new payment date</p>
-                          <input type="date" value={newAnchorDate} onChange={e => setNewAnchorDate(e.target.value)} min={tomorrowStr}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7413dc]" />
-                          <div className="flex gap-2">
-                            <button onClick={() => setShowDatePicker(false)} className="flex-1 py-1.5 border border-gray-200 rounded-lg text-xs font-semibold text-gray-600">Cancel</button>
-                            <button onClick={handleDateChange} disabled={changingDate || !newAnchorDate}
-                              className="flex-1 py-1.5 bg-[#7413dc] text-white rounded-lg text-xs font-bold disabled:opacity-60">
-                              {changingDate ? 'Updating...' : 'Confirm'}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Frequency</span>
-                  <span className="font-semibold text-gray-800">{intervalLabel}</span>
-                </div>
-                {defaultPm && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Card</span>
-                    <span className="font-semibold text-gray-800 capitalize">{defaultPm.brand} ending {defaultPm.last4}</span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {defaultPm && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Saved card</span>
-                    <span className="font-semibold text-gray-800 capitalize">{defaultPm.brand} ending {defaultPm.last4}</span>
-                  </div>
-                )}
-                <p className="text-xs text-gray-400">No active subscription</p>
-                <button onClick={handleActivateSubscription} disabled={activatingSubscription} className="w-full py-2.5 bg-green-600 text-white rounded-xl text-sm font-bold disabled:opacity-60 flex items-center justify-center gap-1.5">
-                  {activatingSubscription ? <><Loader2 className="w-4 h-4 animate-spin" /> Activating...</> : 'Activate subscription'}
-                </button>
+            {amountLabel && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Subscription</span>
+                <span className="font-semibold text-[#7413dc]">{amountLabel}</span>
               </div>
             )}
-
-            {/* Interval selector — shown always when there's a subscription */}
-            {hasSubscription && (
-              <div className="space-y-2">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Billing interval</p>
-                <div className="flex rounded-xl border border-gray-200 overflow-hidden">
-                  {INTERVAL_OPTIONS.map((opt, i) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => handleIntervalChange(opt.value)}
-                      className={`flex-1 py-2 text-xs font-semibold transition-all ${
-                        currentInterval === opt.value ? 'bg-[#7413dc] text-white' : 'bg-white text-gray-600 active:bg-gray-50'
-                      } ${i > 0 ? 'border-l border-gray-200' : ''}`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-                {pendingInterval && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
-                    <p className="text-xs font-semibold text-amber-800">
-                      Change to {INTERVAL_OPTIONS.find(o => o.value === pendingInterval)?.label}? Your next payment date will be adjusted.
+            {child.last_subs_payment_date && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Last payment</span>
+                <span className="font-semibold text-gray-800">{format(new Date(child.last_subs_payment_date), 'd MMM yyyy')}</span>
+              </div>
+            )}
+            {child.next_subs_due && (() => {
+              const isOverdue = new Date(child.next_subs_due) < new Date();
+              return (
+                <div>
+                  <div className={`rounded-xl p-3 border ${isOverdue ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+                    <p className={`text-xs font-bold uppercase tracking-wide mb-0.5 ${isOverdue ? 'text-red-500' : 'text-green-600'}`}>
+                      {isOverdue ? 'Payment overdue' : 'Next payment'}
                     </p>
-                    <div className="flex gap-2">
-                      <button onClick={() => setPendingInterval(null)} className="flex-1 py-1.5 border border-gray-200 rounded-lg text-xs font-semibold text-gray-600">Cancel</button>
-                      <button onClick={confirmIntervalChange} disabled={confirmingInterval} className="flex-1 py-1.5 bg-[#7413dc] text-white rounded-lg text-xs font-bold disabled:opacity-60">
-                        {confirmingInterval ? 'Updating...' : 'Confirm'}
-                      </button>
-                    </div>
+                    <p className={`font-bold ${isOverdue ? 'text-red-700' : 'text-green-800'}`}>
+                      {format(new Date(child.next_subs_due), 'd MMMM yyyy')}
+                    </p>
+                    <button onClick={() => { setShowDatePicker(!showDatePicker); setDateChangeMsg(''); setNewAnchorDate(''); }}
+                      className="text-xs text-[#7413dc] mt-1 font-medium underline">
+                      Change payment date
+                    </button>
                   </div>
-                )}
+                  {dateChangeMsg && <p className="text-xs text-green-700 font-medium mt-1">{dateChangeMsg}</p>}
+                  {showDatePicker && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mt-2 space-y-2">
+                      <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">Select new payment date</p>
+                      <input type="date" value={newAnchorDate} onChange={e => setNewAnchorDate(e.target.value)} min={tomorrowStr}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7413dc]" />
+                      <div className="flex gap-2">
+                        <button onClick={() => setShowDatePicker(false)} className="flex-1 py-1.5 border border-gray-200 rounded-lg text-xs font-semibold text-gray-600">Cancel</button>
+                        <button onClick={handleDateChange} disabled={changingDate || !newAnchorDate}
+                          className="flex-1 py-1.5 bg-[#7413dc] text-white rounded-lg text-xs font-bold disabled:opacity-60">
+                          {changingDate ? 'Updating...' : 'Confirm'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Billing interval</p>
+              <div className="flex rounded-xl border border-gray-200 overflow-hidden">
+                {INTERVAL_OPTIONS.map((opt, i) => (
+                  <button key={opt.value} onClick={() => handleIntervalChange(opt.value)}
+                    className={`flex-1 py-2 text-xs font-semibold transition-all ${
+                      currentInterval === opt.value ? 'bg-[#7413dc] text-white' : 'bg-white text-gray-600 active:bg-gray-50'
+                    } ${i > 0 ? 'border-l border-gray-200' : ''}`}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {pendingInterval && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
+                  <p className="text-xs font-semibold text-amber-800">
+                    Change to {INTERVAL_OPTIONS.find(o => o.value === pendingInterval)?.label}? Your next payment date will be adjusted.
+                  </p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setPendingInterval(null)} className="flex-1 py-1.5 border border-gray-200 rounded-lg text-xs font-semibold text-gray-600">Cancel</button>
+                    <button onClick={confirmIntervalChange} disabled={confirmingInterval} className="flex-1 py-1.5 bg-[#7413dc] text-white rounded-lg text-xs font-bold disabled:opacity-60">
+                      {confirmingInterval ? 'Updating...' : 'Confirm'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            {defaultPm && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Card</span>
+                <span className="font-semibold text-gray-800 capitalize">{defaultPm.brand} ending {defaultPm.last4}</span>
               </div>
             )}
-
-            {/* Change payment method */}
             <div className="space-y-2">
               {!showChangeCard ? (
                 <button onClick={() => setShowChangeCard(true)} className="w-full py-2.5 border border-[#7413dc] text-[#7413dc] rounded-xl text-sm font-semibold">Change payment method</button>

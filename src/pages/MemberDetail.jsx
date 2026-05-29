@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, AlertCircle, Star, Loader2, CreditCard } from 'lucide-react';
+import { Edit, User, Users, Heart, Award, Calendar, FileText, CheckCircle, XCircle, AlertCircle, Star, Loader2, CreditCard, Lock } from 'lucide-react';
 import EditMemberDialog from '../components/EditMemberDialog';
 import OSMLinkSection from '../components/member/OSMLinkSection';
 import BadgesTab from '../components/member/BadgesTab';
@@ -70,6 +70,8 @@ export default function MemberDetail() {
     },
     enabled: !!memberId,
   });
+
+  const { data: currentUser } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
   const parentAccountExists = member && (
     (member.parent_one_email && parentRegistration[member.parent_one_email]) ||
@@ -220,6 +222,8 @@ export default function MemberDetail() {
   };
 
   const [sendingInvite, setSendingInvite] = useState(false);
+  const [legacyEditValue, setLegacyEditValue] = useState('');
+  const [legacySaving, setLegacySaving] = useState(false);
 
   if (isLoading) {
     return (
@@ -622,6 +626,45 @@ export default function MemberDetail() {
                         <p className="font-medium text-sm mt-0.5 text-red-500">No payment method</p>
                       )}
                     </div>
+                  </div>
+
+                  {/* Legacy subs expiry */}
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-xs text-gray-500 font-medium">Legacy Membership Expiry</p>
+                      {member.stripe_subscription_id ? (
+                        <span className="flex items-center gap-1 text-xs text-gray-400"><Lock className="w-3 h-3" />Locked — Stripe subscription active</span>
+                      ) : currentUser?.role !== 'admin' ? (
+                        <span className="flex items-center gap-1 text-xs text-gray-400"><Lock className="w-3 h-3" />Only admins can edit</span>
+                      ) : null}
+                    </div>
+                    {member.stripe_subscription_id ? (
+                      <p className="text-sm font-medium text-gray-500">{member.legacy_subs_expiry || 'Not set'} <span className="text-xs text-gray-400">(read-only)</span></p>
+                    ) : currentUser?.role === 'admin' ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="date"
+                          value={legacyEditValue || member.legacy_subs_expiry || ''}
+                          onChange={e => setLegacyEditValue(e.target.value)}
+                          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-[#7413dc]"
+                        />
+                        <button
+                          onClick={async () => {
+                            setLegacySaving(true);
+                            await base44.entities.Member.update(memberId, { legacy_subs_expiry: legacyEditValue || null });
+                            queryClient.invalidateQueries({ queryKey: ['member', memberId] });
+                            setLegacySaving(false);
+                            toast.success('Legacy expiry saved');
+                          }}
+                          disabled={legacySaving}
+                          className="px-3 py-1.5 bg-[#7413dc] text-white rounded-lg text-xs font-bold disabled:opacity-60"
+                        >
+                          {legacySaving ? 'Saving...' : 'Save'}
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-sm font-medium text-gray-700">{member.legacy_subs_expiry || 'Not set'}</p>
+                    )}
                   </div>
                 </div>
               </div>

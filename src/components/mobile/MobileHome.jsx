@@ -224,6 +224,14 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
       outstandingItems.push(`Subscription due ${daysUntilSubs === 0 ? 'today' : daysUntilSubs === 1 ? 'tomorrow' : `in ${daysUntilSubs} days`}`);
     }
   }
+  if (primaryChild?.legacy_subs_expiry && !primaryChild?.stripe_subscription_id) {
+    const legacyExpiry = new Date(primaryChild.legacy_subs_expiry);
+    legacyExpiry.setHours(0, 0, 0, 0);
+    const daysUntilLegacy = Math.ceil((legacyExpiry - today) / (1000 * 60 * 60 * 24));
+    if (daysUntilLegacy >= 0 && daysUntilLegacy <= 30) {
+      outstandingItems.push(`Subscription due by ${legacyExpiry.toLocaleDateString('en-GB')} — set up now`);
+    }
+  }
 
   const showBanner = outstandingItems.length > 0 && !bannerDismissed;
 

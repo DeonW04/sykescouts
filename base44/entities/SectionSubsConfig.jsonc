@@ -1,0 +1,41 @@
+{
+  "name": "SectionSubsConfig",
+  "type": "object",
+  "properties": {
+    "section_id": {
+      "type": "string",
+      "description": "Section ID this config applies to"
+    },
+    "price_pence": {
+      "type": "number",
+      "description": "Subscription price in pence (e.g. 1500 = \u00a315.00)"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Display name for the subscription product, e.g. 'Scout Membership'"
+    },
+    "stripe_price_id_4m": {
+      "type": "string",
+      "description": "Stripe Price ID for the 4-month billing interval \u2014 auto-created on first use"
+    },
+    "stripe_price_id_6m": {
+      "type": "string",
+      "description": "Stripe Price ID for the 6-month billing interval \u2014 auto-created on first use"
+    },
+    "stripe_price_id_yearly": {
+      "type": "string",
+      "description": "Stripe Price ID for the yearly billing interval \u2014 auto-created on first use"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "section_id"
+  ]
+}

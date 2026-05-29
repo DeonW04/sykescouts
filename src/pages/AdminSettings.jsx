@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Users, Shield, Mail, Edit, Image, Upload, X, Award, Download, Camera, PieChart, Bell, BarChart2, Calendar, Play, MessageCircle, Send, TestTube } from 'lucide-react';
+import { Settings, Users, Shield, Mail, Edit, Image, Upload, X, Award, Download, Camera, PieChart, Bell, BarChart2, Calendar, Play, MessageCircle, Send, TestTube, CreditCard as CreditCardIcon } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useNavigate } from 'react-router-dom';
@@ -32,6 +32,7 @@ import AdminTermsTab from '../components/admin/AdminTermsTab';
 import PublicWebsiteSettings from '../components/admin/PublicWebsiteSettings';
 import WhatsAppSetupTab from '../components/whatsapp/WhatsAppSetupTab';
 import WhatsAppTestTab from '../components/whatsapp/WhatsAppTestTab';
+import SubscriptionPricingTab from '../components/admin/SubscriptionPricingTab';
 
 const NAV_ITEMS = [
   { key: 'users',          label: 'User Management',    icon: Users,    group: 'People' },
@@ -49,6 +50,7 @@ const NAV_ITEMS = [
   { key: 'osm-programme',  label: 'Programme Sync',     icon: Calendar, group: 'OSM Sync' },
   { key: 'osm-badge-ids',  label: 'Badge ID Sync',      icon: Award,    group: 'OSM Sync' },
   { key: 'osm-awards',     label: 'Badge Award Sync',   icon: Award,    group: 'OSM Sync' },
+  { key: 'subs-pricing',    label: 'Subscription Pricing', icon: CreditCardIcon, group: 'System' },
   { key: 'wa-setup',        label: 'Setup',              icon: MessageCircle, group: 'WhatsApp' },
   { key: 'wa-test',         label: 'Test Console',       icon: TestTube,  group: 'WhatsApp' },
 ];
@@ -512,6 +514,9 @@ export default function AdminSettings() {
 
               {/* ── OSM Badge Award Sync ── */}
               <TabsContent value="osm-awards"><OSMBadgeAwardSync /></TabsContent>
+
+              {/* ── Subscription Pricing ── */}
+              <TabsContent value="subs-pricing"><SubscriptionPricingTab /></TabsContent>
 
               {/* ── WhatsApp Setup ── */}
               <TabsContent value="wa-setup"><WhatsAppSetupTab /></TabsContent>

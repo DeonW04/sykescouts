@@ -222,6 +222,13 @@ export default function ParentDashboard() {
       outstandingItems.push(`Subscription due${d === 0 ? ' today' : d === 1 ? ' tomorrow' : ` in ${d} days`}`);
     }
   }
+  if (child0?.legacy_subs_expiry && !child0?.stripe_subscription_id) {
+    const legacyExpiry = new Date(child0.legacy_subs_expiry);
+    const in30Days = new Date(now_b.getTime() + 30 * 24 * 60 * 60 * 1000);
+    if (legacyExpiry <= in30Days && legacyExpiry >= now_b) {
+      outstandingItems.push(`Subscription due by ${legacyExpiry.toLocaleDateString('en-GB')} — set up now`);
+    }
+  }
 
   const { data: badgeProgress = [] } = useQuery({
     queryKey: ['badge-progress', children],
