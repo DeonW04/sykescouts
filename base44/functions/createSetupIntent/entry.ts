@@ -10,9 +10,23 @@ Deno.serve(async (req) => {
   const { member_id } = await req.json();
   if (!member_id) return Response.json({ error: 'member_id required' }, { status: 400 });
 
-  // Ensure customer exists
-  const customerRes = await base44.asServiceRole.functions.invoke('createStripeCustomer', { member_id });
-  const customer_id = customerRes.customer_id;
+  // Look up member directly — do NOT invoke createStripeCustomer via service role,
+  // as that call arrives without a user token and fails auth inside the target function.
+  const members = await base44.asServiceRole.entities.Member.filter({ id: member_id });
+  if (!members.length) return Response.json({ error: 'Member not found' }, { status: 404 });
+  const member = members[0];
+
+  // Ensure a Stripe customer exists for this member
+  let customer_id = member.stripe_customer_id;
+  if (!customer_id) {
+    const customer = await stripe.customers.create({
+      name: member.full_name || `${member.first_name} ${member.surname}`,
+      email: member.parent_one_email || undefined,
+      metadata: { member_id: member.id },
+    });
+    customer_id = customer.id;
+    await base44.asServiceRole.entities.Member.update(member.id, { stripe_customer_id: customer_id });
+  }
 
   const setupIntent = await stripe.setupIntents.create({
     customer: customer_id,
