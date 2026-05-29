@@ -14,6 +14,28 @@
       "default": "user",
       "description": "User role: admin, user (parent), treasurer, glv (Group Lead Volunteer), team_leader"
     },
+    "display_name": {
+      "type": "string",
+      "description": "Preferred display name shown in the app (set during onboarding or account settings)"
+    },
+    "onboarding_complete": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the parent has completed the mobile onboarding flow. Set to true to skip onboarding, false to re-run it."
+    },
+    "default_section_id": {
+      "type": "string",
+      "description": "The section ID that loads by default when the leader logs in"
+    },
+    "account_type": {
+      "type": "string",
+      "enum": [
+        "ipad",
+        "leader",
+        "parent"
+      ],
+      "description": "Special account type \u2014 'ipad' redirects to the kiosk view on login"
+    },
     "whatsapp_notifications": {
       "type": "boolean",
       "default": true,
