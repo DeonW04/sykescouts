@@ -100,6 +100,10 @@ export default function ParentDashboard() {
 
   const loadUserData = async () => {
     const currentUser = await base44.auth.me();
+    if (!currentUser.onboarding_complete) {
+      window.location.href = createPageUrl('CompleteRegistration');
+      return;
+    }
     setUser(currentUser);
   };
 

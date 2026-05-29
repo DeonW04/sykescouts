@@ -493,6 +493,10 @@ function LeaderDashboardInner() {
 
   const loadUserData = async () => {
     const currentUser = await base44.auth.me();
+    if (!currentUser.onboarding_complete) {
+      window.location.href = createPageUrl('CompleteRegistration');
+      return;
+    }
     setUser(currentUser);
     if (currentUser.role !== 'admin') {
       const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
