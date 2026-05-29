@@ -8,22 +8,16 @@ Deno.serve(async (req) => {
 
   const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
   const { member_id } = await req.json();
-
   if (!member_id) return Response.json({ error: 'member_id required' }, { status: 400 });
 
-  // Ensure Stripe customer exists
+  // Ensure customer exists
   const customerRes = await base44.asServiceRole.functions.invoke('createStripeCustomer', { member_id });
   const customer_id = customerRes.customer_id;
-  if (!customer_id) return Response.json({ error: 'Could not create/find Stripe customer' }, { status: 500 });
 
   const setupIntent = await stripe.setupIntents.create({
     customer: customer_id,
-    payment_method_types: ['card'],
-    usage: 'off_session',
+    automatic_payment_methods: { enabled: true },
   });
 
-  return Response.json({
-    client_secret: setupIntent.client_secret,
-    setup_intent_id: setupIntent.id,
-  });
+  return Response.json({ client_secret: setupIntent.client_secret });
 });
