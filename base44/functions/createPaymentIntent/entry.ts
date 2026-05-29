@@ -21,12 +21,13 @@ Deno.serve(async (req) => {
     if (existing.length) return Response.json({ error: 'Already paid' }, { status: 400 });
   }
 
-  // Fetch member directly — avoids cross-function auth issue with createStripeCustomer
+  // Look up member directly — do NOT invoke createStripeCustomer via service role,
+  // as that call arrives without a user token and fails auth inside the target function.
   const members = await base44.asServiceRole.entities.Member.filter({ id: member_id });
   if (!members.length) return Response.json({ error: 'Member not found' }, { status: 404 });
   const member = members[0];
 
-  // Ensure Stripe customer exists on the member
+  // Ensure a Stripe customer exists for this member
   let customer_id = member.stripe_customer_id;
   if (!customer_id) {
     const customer = await stripe.customers.create({
@@ -38,21 +39,16 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.Member.update(member.id, { stripe_customer_id: customer_id });
   }
 
-  if (!customer_id) {
-    return Response.json({ error: 'Could not create or retrieve Stripe customer' }, { status: 500 });
-  }
-
   const metadata = { member_id };
   if (event_id) metadata.event_id = event_id;
   if (meeting_id) metadata.meeting_id = meeting_id;
 
-  // customer must always be set so that saved payment methods (which belong to a customer) can be used
   const paymentIntent = await stripe.paymentIntents.create({
     amount: Math.round(amount),
     currency: 'gbp',
     customer: customer_id,
-    payment_method_types: ['card'],
     metadata,
+    payment_method_types: ['card'],
   });
 
   return Response.json({ client_secret: paymentIntent.client_secret, payment_intent_id: paymentIntent.id });

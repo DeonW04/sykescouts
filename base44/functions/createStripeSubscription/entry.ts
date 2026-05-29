@@ -2,18 +2,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import Stripe from 'npm:stripe@14.21.0';
 
 const INTERVAL_MAP = {
-  '4_months': { interval: 'month', interval_count: 4 },
-  '6_months': { interval: 'month', interval_count: 6 },
-  'yearly':   { interval: 'year',  interval_count: 1 },
-};
-
-// Per-interval env var names — add these to platform secrets after first run to avoid
-// creating duplicate Stripe products/prices on every activation.
-// e.g. SUBS_PRICE_ID_4M=price_xxx, SUBS_PRICE_ID_6M=price_xxx, SUBS_PRICE_ID_YEARLY=price_xxx
-const PRICE_ID_ENV = {
-  '4_months': 'SUBS_PRICE_ID_4M',
-  '6_months': 'SUBS_PRICE_ID_6M',
-  'yearly':   'SUBS_PRICE_ID_YEARLY',
+  '4_months':  { interval: 'month', interval_count: 4 },
+  '6_months':  { interval: 'month', interval_count: 6 },
+  'yearly':    { interval: 'year',  interval_count: 1 }
 };
 
 Deno.serve(async (req) => {
@@ -31,7 +22,8 @@ Deno.serve(async (req) => {
   if (!members.length) return Response.json({ error: 'Member not found' }, { status: 404 });
   const member = members[0];
 
-  // Ensure Stripe customer exists (inline — avoids cross-function auth issue)
+  // Ensure customer exists inline — invoking createStripeCustomer via service role
+  // fails auth inside that function, so we do it directly here.
   let customer_id = member.stripe_customer_id;
   if (!customer_id) {
     const customer = await stripe.customers.create({
@@ -43,20 +35,16 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.Member.update(member.id, { stripe_customer_id: customer_id });
   }
 
-  if (!customer_id) {
-    return Response.json({ error: 'Could not create or retrieve Stripe customer' }, { status: 500 });
-  }
+  const interval = member.subs_interval || '4_months';
+  const intervalConfig = INTERVAL_MAP[interval] || INTERVAL_MAP['4_months'];
 
-  const intervalKey = member.subs_interval || '4_months';
-  const intervalConfig = INTERVAL_MAP[intervalKey] || INTERVAL_MAP['4_months'];
-
-  // Use a pre-created price ID if available (avoids duplicates across activations)
-  let priceId = Deno.env.get(PRICE_ID_ENV[intervalKey]);
+  // Build or reuse a Stripe Price for this interval.
+  // After first run, save the logged price ID as SUBS_PRICE_ID_4M / SUBS_PRICE_ID_6M /
+  // SUBS_PRICE_ID_YEARLY in platform secrets to avoid recreating on every subscription.
+  const intervalKey = interval === '4_months' ? '4M' : interval === '6_months' ? '6M' : 'YEARLY';
+  let priceId = Deno.env.get(`SUBS_PRICE_ID_${intervalKey}`) || Deno.env.get('SUBS_PRICE_ID');
 
   if (!priceId) {
-    // First time for this interval — create product + price once.
-    // IMPORTANT: After this runs, copy the logged price ID into platform secrets as
-    // SUBS_PRICE_ID_4M / SUBS_PRICE_ID_6M / SUBS_PRICE_ID_YEARLY so it is reused in future.
     const product = await stripe.products.create({
       name: 'Scout Group Membership Subscription',
     });
@@ -70,7 +58,7 @@ Deno.serve(async (req) => {
       product: product.id,
     });
     priceId = price.id;
-    console.log(`[createStripeSubscription] Created Stripe price for ${intervalKey}: ${priceId}. Save as ${PRICE_ID_ENV[intervalKey]} in platform secrets.`);
+    console.log(`Created Stripe price ${priceId} for interval ${interval} — save as SUBS_PRICE_ID_${intervalKey} in platform secrets to avoid recreating on every subscription.`);
   }
 
   const subscription = await stripe.subscriptions.create({
@@ -82,7 +70,7 @@ Deno.serve(async (req) => {
   });
 
   await base44.asServiceRole.entities.Member.update(member.id, {
-    stripe_subscription_id: subscription.id,
+    stripe_subscription_id: subscription.id
   });
 
   return Response.json({ subscription_id: subscription.id });
