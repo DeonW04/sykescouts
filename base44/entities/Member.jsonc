@@ -244,6 +244,11 @@
         "yearly"
       ],
       "description": "Subscription billing interval"
+    },
+    "legacy_subs_expiry": {
+      "type": "string",
+      "format": "date",
+      "description": "Manual subscription expiry date for members on legacy/cash payment arrangements (not Stripe)"
     }
   },
   "required": [
