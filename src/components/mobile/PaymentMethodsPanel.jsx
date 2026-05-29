@@ -28,7 +28,7 @@ function PaymentMethodsSection({ child }) {
   const handleSetDefault = async (pmId) => {
     setSettingDefault(pmId);
     try {
-      await base44.functions.invoke('setDefaultPaymentMethod', { member_id: child.id, payment_method_id: pmId });
+      await base44.functions.invoke('setDefaultPaymentMethod', { member_id: child.id, pm_id: pmId });
       toast.success('Default card updated');
       refetch();
       queryClient.invalidateQueries({ queryKey: ['settings-children'] });
