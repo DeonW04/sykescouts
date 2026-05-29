@@ -14,9 +14,14 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'stripe_payment_intent_id and member_id required' }, { status: 400 });
   }
 
-  const pi = await stripe.paymentIntents.retrieve(stripe_payment_intent_id, {
-    expand: ['payment_method']
-  });
+  let pi;
+  try {
+    pi = await stripe.paymentIntents.retrieve(stripe_payment_intent_id, {
+      expand: ['payment_method']
+    });
+  } catch (err) {
+    return Response.json({ error: `Payment intent not found or invalid: ${err.message}` }, { status: 400 });
+  }
 
   if (pi.status !== 'succeeded') {
     return Response.json({ error: `Payment not succeeded — status is: ${pi.status}` }, { status: 400 });

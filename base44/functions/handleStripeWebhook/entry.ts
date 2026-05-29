@@ -176,23 +176,23 @@ Deno.serve(async (req) => {
     const member = members[0];
     const member_name = member.full_name || `${member.first_name} ${member.surname}`;
 
-    // Send email to parent
-    if (member.parent_one_email) {
+    // Send email and push to both parents
+    const failedEmails = [member.parent_one_email, member.parent_two_email].filter(Boolean);
+    for (const email of failedEmails) {
       await base44.asServiceRole.integrations.Core.SendEmail({
-        to: member.parent_one_email,
-        subject: `⚠️ Scout subscription payment failed for ${member_name}`,
+        to: email,
+        subject: `\u26a0\ufe0f Scout subscription payment failed for ${member_name}`,
         body: `Hi,\n\nWe were unable to collect the Scout membership subscription payment for ${member_name}.\n\nPlease log in to your SykeScouts account and update your payment method as soon as possible to avoid any disruption to their membership.\n\nIf you need help, please contact us.\n\nThank you,\n40th Rochdale (Syke) Scouts`
-      });
-    }
+      }).catch(() => {});
 
-    // Send push notification
-    const pushSubs = await base44.asServiceRole.entities.PushSubscription.filter({ user_email: member.parent_one_email });
-    for (const sub of pushSubs) {
-      await base44.asServiceRole.functions.invoke('sendPushNotification', {
-        subscription: sub.subscription_data,
-        title: 'Payment Failed',
-        body: `Your Scout subscription payment for ${member_name} failed. Please update your payment method.`
-      });
+      const pushSubs = await base44.asServiceRole.entities.PushSubscription.filter({ user_email: email });
+      for (const sub of pushSubs) {
+        await base44.asServiceRole.functions.invoke('sendPushNotification', {
+          subscription: sub.subscription_data,
+          title: 'Payment Failed',
+          body: `Your Scout subscription payment for ${member_name} failed. Please update your payment method.`
+        }).catch(() => {});
+      }
     }
   }
 
