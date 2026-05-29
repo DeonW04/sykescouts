@@ -33,15 +33,30 @@ function SetupForm({ memberId, onSuccess, onCancel }) {
     try {
       const res = await base44.functions.invoke('createSetupIntent', { member_id: memberId });
       const { client_secret } = res.data;
-      const result = await stripe.confirmCardSetup(client_secret, {
-        payment_method: { card: elements.getElement(CardElement) },
-      });
-      if (result.error) {
-        toast.error(result.error.message);
+      if (!client_secret) {
+        toast.error('Could not initialise card setup. Please try again.');
+        setLoading(false);
         return;
       }
-      // Set new card as default and refresh the list
-      const newPmId = result.setupIntent?.payment_method;
+
+      const { setupIntent, error } = await stripe.confirmCardSetup(client_secret, {
+        payment_method: { card: elements.getElement(CardElement) },
+      });
+
+      if (error) {
+        toast.error(error.message || 'Card setup failed. Please check your card details.');
+        setLoading(false);
+        return;
+      }
+
+      if (setupIntent?.status !== 'succeeded') {
+        toast.error(`Card setup did not complete (status: ${setupIntent?.status || 'unknown'}). Please try again.`);
+        setLoading(false);
+        return;
+      }
+
+      // Card confirmed and attached to customer — set as default and refresh list
+      const newPmId = setupIntent.payment_method;
       if (newPmId) {
         await base44.functions.invoke('setDefaultPaymentMethod', { member_id: memberId, payment_method_id: newPmId }).catch(() => {});
       }
@@ -49,6 +64,7 @@ function SetupForm({ memberId, onSuccess, onCancel }) {
       queryClient.invalidateQueries({ queryKey: ['mobile-children'] });
       queryClient.invalidateQueries({ queryKey: ['settings-children'] });
       queryClient.invalidateQueries({ queryKey: ['parent-payment-methods'] });
+      queryClient.invalidateQueries({ queryKey: ['account-settings-children'] });
       toast.success('Card saved!');
       onSuccess();
     } catch (err) {
