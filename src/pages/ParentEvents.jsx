@@ -196,28 +196,23 @@ export default function ParentEvents() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gray-50">
       <FloatingNav />
       <NavBarSpacer />
-      <div className="relative bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] text-white py-16 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">Events &amp; Camps</h1>
-              <p className="text-purple-100 text-lg">Adventures await!</p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant={viewMode === 'list' ? 'secondary' : 'outline'} onClick={() => setViewMode('list')} className={viewMode === 'list' ? 'bg-white text-[#7413dc] font-semibold' : 'bg-white/10 text-white border-white/30 hover:bg-white/20'}>
-                <List className="w-4 h-4 mr-2" />List
-              </Button>
-              <Button variant={viewMode === 'calendar' ? 'secondary' : 'outline'} onClick={() => setViewMode('calendar')} className={viewMode === 'calendar' ? 'bg-white text-[#7413dc] font-semibold' : 'bg-white/10 text-white border-white/30 hover:bg-white/20'}>
-                <CalendarViewIcon className="w-4 h-4 mr-2" />Calendar
-              </Button>
-            </div>
+      <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Parent Portal</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Events &amp; Camps</h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Upcoming and past events for your section</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant={viewMode === 'list' ? 'default' : 'outline'} onClick={() => setViewMode('list')} className={viewMode === 'list' ? 'bg-[#7413dc] text-white' : ''}>
+              <List className="w-4 h-4 mr-2" />List
+            </Button>
+            <Button variant={viewMode === 'calendar' ? 'default' : 'outline'} onClick={() => setViewMode('calendar')} className={viewMode === 'calendar' ? 'bg-[#7413dc] text-white' : ''}>
+              <CalendarViewIcon className="w-4 h-4 mr-2" />Calendar
+            </Button>
           </div>
         </div>
       </div>

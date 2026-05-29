@@ -155,64 +155,24 @@ export default function ParentGoldAward() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50">
+    <div className="min-h-screen bg-gray-50">
       <FloatingNav />
       <NavBarSpacer />
-      
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-white py-20 overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center">
-            <motion.div 
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", duration: 0.8 }}
-              className="w-40 h-40 mx-auto mb-6 relative"
-            >
-              <div className="absolute inset-0 bg-white rounded-full opacity-20 animate-pulse"></div>
-              <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center shadow-2xl">
-                {goldAward?.image_url ? (
-                  <img src={goldAward.image_url} alt="Gold Award" className="w-32 h-32 rounded-full" />
-                ) : (
-                  <Trophy className="w-24 h-24 text-amber-500" />
-                )}
-              </div>
-            </motion.div>
-            
-            <motion.h1 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-5xl font-bold mb-3"
-            >
-              Chief Scout's Gold Award
-            </motion.h1>
-            
-            <motion.p 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="text-2xl text-yellow-100 mb-6"
-            >
-              The Highest Award in Scouts
-            </motion.p>
-
-            {hasGoldAward && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.5, type: "spring" }}
-                className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full text-xl"
-              >
-                <Trophy className="w-6 h-6" />
-                <span className="font-bold">Gold Award Achieved!</span>
-              </motion.div>
-            )}
+      <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-amber-50 border-2 border-amber-200 rounded-xl flex items-center justify-center flex-shrink-0">
+              {goldAward?.image_url ? (
+                <img src={goldAward.image_url} alt="Gold Award" className="w-10 h-10 rounded-lg" />
+              ) : (
+                <Trophy className="w-8 h-8 text-amber-500" />
+              )}
+            </div>
+            <div>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Parent Portal</p>
+              <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Chief Scout's Gold Award</h1>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>The highest award in Scouts{hasGoldAward ? ' · 🏆 Achieved!' : ''}</p>
+            </div>
           </div>
         </div>
       </div>

@@ -122,9 +122,9 @@ export default function ParentProgramme() {
   };
 
   const now = new Date();
-  const relevantTerms = terms.filter(t => childSectionIds.includes(t.section_id));
-  const currentTerm = relevantTerms.find(t => now >= new Date(t.start_date) && now <= new Date(t.end_date))
-    || relevantTerms.filter(t => new Date(t.start_date) > now).sort((a, b) => new Date(a.start_date) - new Date(b.start_date))[0];
+  // Terms are group-wide (no section_id) — find current or next term from all active terms
+  const currentTerm = terms.find(t => now >= new Date(t.start_date) && now <= new Date(t.end_date))
+    || terms.filter(t => new Date(t.start_date) > now).sort((a, b) => new Date(a.start_date) - new Date(b.start_date))[0];
 
   const allTermProgrammes = currentTerm
     ? programmes.filter(p => {
@@ -245,7 +245,7 @@ export default function ParentProgramme() {
       <div className="min-h-screen bg-gray-50">
         <FloatingNav />
         <NavBarSpacer />
-        <div className="bg-[#7413dc] text-white py-8"><div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8"><h1 className="text-3xl font-bold">Term Programme</h1></div></div>
+        <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}><div className="max-w-5xl mx-auto"><p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Parent Portal</p><h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: 0 }}>Weekly Programme</h1></div></div>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card><CardContent className="p-12 text-center"><Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" /><p className="text-gray-600">No upcoming term at the moment</p></CardContent></Card>
         </div>
@@ -254,17 +254,14 @@ export default function ParentProgramme() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gray-50">
       <FloatingNav />
       <NavBarSpacer />
-      <div className="relative bg-gradient-to-br from-green-600 to-[#004851] text-white py-16 overflow-hidden">
-        <div className="absolute inset-0 opacity-10"><div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div></div>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="flex items-center gap-3 mb-2 flex-wrap">
-            <h1 className="text-4xl font-bold">Weekly Programme</h1>
-            {new Date(currentTerm.start_date) > now && <span className="bg-white/20 text-white text-sm font-bold px-3 py-1 rounded-full">Upcoming Term</span>}
-          </div>
-          <p className="text-green-100 text-lg">{currentTerm.title} • {format(new Date(currentTerm.start_date), 'MMM d')} - {format(new Date(currentTerm.end_date), 'MMM d, yyyy')}</p>
+      <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
+        <div className="max-w-5xl mx-auto">
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Parent Portal</p>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Weekly Programme</h1>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>{currentTerm.title} · {format(new Date(currentTerm.start_date), 'MMM d')} – {format(new Date(currentTerm.end_date), 'MMM d, yyyy')}{new Date(currentTerm.start_date) > now ? ' · Upcoming Term' : ''}</p>
         </div>
       </div>
 

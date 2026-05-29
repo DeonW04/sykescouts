@@ -129,9 +129,10 @@ export default function MyChild() {
       <div className="min-h-screen bg-gray-50">
         <FloatingNav />
         <NavBarSpacer />
-        <div className="bg-[#7413dc] text-white py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold">My Child</h1>
+        <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
+          <div className="max-w-7xl mx-auto">
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Parent Portal</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: 0 }}>My Child</h1>
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -149,73 +150,35 @@ export default function MyChild() {
   const section = sections.find(s => s.id === child.section_id);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       <FloatingNav />
       <NavBarSpacer />
-      {/* Header */}
-      <div className="relative bg-gradient-to-br from-blue-600 to-[#7413dc] text-white py-16 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(createPageUrl('ParentDashboard'))}
-            className="text-white hover:bg-white/20 mb-6 -ml-2"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          
-          <div className="flex flex-col md:flex-row justify-between items-start gap-4">
-            <div className="flex items-center gap-4 md:gap-6 flex-1">
-              <div className="w-16 h-16 md:w-24 md:h-24 bg-white rounded-2xl flex items-center justify-center text-[#7413dc] font-bold text-2xl md:text-4xl shadow-2xl flex-shrink-0">
-                {child.full_name.charAt(0)}
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-2xl md:text-4xl font-bold mb-2 truncate">{child.full_name}</h1>
-                <div className="flex items-center gap-2 md:gap-4 flex-wrap">
-                  <p className="text-blue-100 text-sm md:text-lg font-medium">{section?.display_name}</p>
-                  <Badge variant="secondary" className="bg-white/20 text-white text-xs md:text-sm">
-                    {age.years}y {age.months}m
-                  </Badge>
-                </div>
-              </div>
+      <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-[#7413dc] rounded-xl flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+              {child.full_name.charAt(0)}
             </div>
-            {!editMode ? (
-              <Button 
-                onClick={() => handleEdit(child)}
-                size="default"
-                className="bg-white text-[#7413dc] hover:bg-blue-50 font-semibold shadow-xl w-full md:w-auto"
-              >
-                <Edit className="w-4 h-4 md:w-5 md:h-5 md:mr-2" />
-                <span className="hidden sm:inline">Edit Details</span>
-                <span className="sm:hidden">Edit</span>
-              </Button>
-            ) : (
-              <div className="flex gap-2 md:gap-3 w-full md:w-auto">
-                <Button 
-                  onClick={handleSave}
-                  disabled={updateMemberMutation.isPending}
-                  size="default"
-                  className="bg-white text-[#7413dc] hover:bg-blue-50 font-semibold shadow-xl flex-1 md:flex-none"
-                >
-                  <Save className="w-4 h-4 md:w-5 md:h-5 md:mr-2" />
-                  Save
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => setEditMode(false)}
-                  size="default"
-                  className="bg-white/10 text-white border-white/30 hover:bg-white/20 flex-1 md:flex-none"
-                >
-                  <X className="w-4 h-4 md:w-5 md:h-5 md:mr-2" />
-                  Cancel
-                </Button>
-              </div>
-            )}
+            <div>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 2px' }}>Parent Portal</p>
+              <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(20px, 3vw, 30px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>{child.full_name}</h1>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>{section?.display_name} · {age.years}y {age.months}m</p>
+            </div>
           </div>
+          {!editMode ? (
+            <Button onClick={() => handleEdit(child)} className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white">
+              <Edit className="w-4 h-4 mr-2" />Edit Details
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button onClick={handleSave} disabled={updateMemberMutation.isPending} className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white">
+                <Save className="w-4 h-4 mr-2" />Save
+              </Button>
+              <Button variant="outline" onClick={() => setEditMode(false)}>
+                <X className="w-4 h-4 mr-2" />Cancel
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

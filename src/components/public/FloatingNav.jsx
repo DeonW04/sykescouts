@@ -65,7 +65,6 @@ const parentNavLinks = [
   { label: 'Programme', page: 'ParentProgramme', icon: Calendar },
   { label: 'Events', page: 'ParentEvents', icon: CalendarDays },
   { label: 'Badges', page: 'ParentBadges', icon: Award },
-  { label: 'Account', page: 'AccountSettings', icon: Settings },
 ];
 
 const STRIP_RADIUS = '24px';

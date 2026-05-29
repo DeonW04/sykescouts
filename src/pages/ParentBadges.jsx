@@ -237,9 +237,10 @@ export default function ParentBadges() {
       <div className="min-h-screen bg-gray-50">
         <FloatingNav />
         <NavBarSpacer />
-        <div className="bg-[#7413dc] text-white py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold">Badges &amp; Awards</h1>
+        <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
+          <div className="max-w-7xl mx-auto">
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Parent Portal</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: 0 }}>Badges &amp; Awards</h1>
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -565,33 +566,19 @@ export default function ParentBadges() {
   const goldAward = badges.find(b => b.is_chief_scout_award && b.section === 'scouts');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       <FloatingNav />
       <NavBarSpacer />
-      <div className="relative bg-gradient-to-br from-yellow-600 to-[#7413dc] text-white py-16 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 mb-3">
-              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                <Award className="w-8 h-8" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold">Badges &amp; Awards</h1>
-                <p className="text-yellow-100 text-lg">{child.full_name}'s progress</p>
-              </div>
-            </div>
-            <Button
-              onClick={() => setUniformDialog(true)}
-              className="bg-white/20 hover:bg-white/30 text-white border border-white/30 gap-2"
-            >
-              <Shirt className="w-4 h-4" />
-              Uniform Guide
-            </Button>
+      <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Parent Portal</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Badges &amp; Awards</h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>{child.full_name}'s progress</p>
           </div>
+          <Button onClick={() => setUniformDialog(true)} variant="outline" className="border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white gap-2">
+            <Shirt className="w-4 h-4" />Uniform Guide
+          </Button>
         </div>
       </div>
 

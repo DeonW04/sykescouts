@@ -30,11 +30,17 @@ export default function AccountSettings() {
   });
 
   useEffect(() => {
-    base44.auth.me().then(u => {
+    (async () => {
+      const u = await base44.auth.me();
       setUser(u);
       setDisplayName(u?.display_name || u?.full_name || '');
-      setRole(u?.role === 'admin' ? 'leader' : 'parent');
-    });
+      if (u?.role === 'admin') {
+        setRole('leader');
+      } else {
+        const leaders = await base44.entities.Leader.filter({ user_id: u.id });
+        setRole(leaders.length > 0 ? 'leader' : 'parent');
+      }
+    })();
   }, []);
 
   const { data: children = [] } = useQuery({
@@ -113,17 +119,15 @@ export default function AccountSettings() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+    <div className="min-h-screen bg-gray-50">
       <FloatingNav />
       <NavBarSpacer />
 
-      <div className="relative bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] text-white py-12 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <h1 className="text-3xl font-bold">Account Settings</h1>
-          <p className="text-purple-100 mt-1">Manage your account and {role === 'parent' ? 'payment' : 'leader'} information</p>
+      <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
+        <div className="max-w-4xl mx-auto">
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Parent Portal</p>
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Account Settings</h1>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Manage your {role === 'parent' ? 'account and payment' : 'account and leader profile'} information</p>
         </div>
       </div>
 

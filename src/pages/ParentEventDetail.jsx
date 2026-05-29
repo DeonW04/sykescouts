@@ -279,58 +279,28 @@ export default function ParentEventDetail() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+      <div className="min-h-screen bg-gray-50">
         <FloatingNav />
         <NavBarSpacer />
-        {/* Hero Header */}
-        <div className="relative bg-gradient-to-br from-[#7413dc] via-[#8b32eb] to-[#5c0fb0] text-white overflow-hidden">
-          <div className="absolute inset-0">
-            <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute top-20 right-20 w-96 h-96 bg-gradient-to-br from-pink-400/20 to-purple-400/20 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-10 left-1/3 w-80 h-80 bg-gradient-to-br from-cyan-400/15 to-blue-400/15 rounded-full blur-3xl"></div>
-          </div>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]"></div>
-          
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative">            
-            <div className="flex flex-col lg:flex-row items-start justify-between gap-6">
-              <div className="flex-1">
-                <Badge className="bg-white/20 backdrop-blur text-white mb-3 border-0">{event.type}</Badge>
-                <h1 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg">{event.title}</h1>
-                <div className="flex flex-wrap items-center gap-3 md:gap-6 text-purple-100">
-                  <span className="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full">
-                    <Calendar className="w-5 h-5" />
-                    <span className="font-medium">{format(new Date(event.start_date), 'MMMM d, yyyy')}</span>
-                    {event.end_date && event.end_date !== event.start_date && (
-                      <span>→ {format(new Date(event.end_date), 'MMM d')}</span>
-                    )}
-                  </span>
-                  {event.meeting_time && (
-                    <span className="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full">
-                      <Clock className="w-5 h-5" />
-                      <span>Meet: {event.meeting_time}</span>
-                    </span>
-                  )}
-                  {event.pickup_time && (
-                    <span className="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full">
-                      <Clock className="w-5 h-5" />
-                      <span>Pickup: {event.pickup_time}</span>
-                    </span>
-                  )}
-                  {event.location && (
-                    <span className="flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full">
-                      <MapPin className="w-5 h-5" />
-                      <span>{event.location}</span>
-                    </span>
-                  )}
-                </div>
+        <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
+          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex-1">
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Parent Portal · Events</p>
+              <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(20px, 3vw, 30px)', color: '#1a1a2e', margin: '0 0 6px', lineHeight: 1.2 }}>{event.title}</h1>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                <Badge variant="outline" className="border-[#7413dc] text-[#7413dc]">{event.type}</Badge>
+                <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{format(new Date(event.start_date), 'MMMM d, yyyy')}{event.end_date && event.end_date !== event.start_date ? ` → ${format(new Date(event.end_date), 'MMM d')}` : ''}</span>
+                {event.meeting_time && <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />Meet: {event.meeting_time}</span>}
+                {event.pickup_time && <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />Pickup: {event.pickup_time}</span>}
+                {event.location && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{event.location}</span>}
               </div>
-              {event.cost > 0 && (
-                <div className="bg-white/20 backdrop-blur border border-white/30 rounded-2xl p-4 md:p-6 text-center lg:min-w-[140px]">
-                  <p className="text-purple-100 text-sm mb-1">Cost</p>
-                  <p className="text-3xl md:text-4xl font-bold">£{event.cost.toFixed(2)}</p>
-                </div>
-              )}
             </div>
+            {event.cost > 0 && (
+              <div className="flex-shrink-0 text-center px-5 py-3 bg-[#7413dc]/5 border border-[#7413dc]/20 rounded-xl">
+                <p className="text-xs text-gray-500 mb-0.5">Cost</p>
+                <p className="text-2xl font-bold text-[#7413dc]">£{event.cost.toFixed(2)}</p>
+              </div>
+            )}
           </div>
         </div>
 
