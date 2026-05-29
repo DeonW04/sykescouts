@@ -59,6 +59,14 @@ export default function SectionAccounting() {
   const { data: allocations = [] } = useQuery({ queryKey: ['receipt-allocations'], queryFn: () => base44.entities.ReceiptAllocation.filter({}) });
   const { data: ledgerEntries = [] } = useQuery({ queryKey: ['ledger-entries'], queryFn: () => base44.entities.LedgerEntry.list('-date', 200) });
   const { data: memberPayments = [] } = useQuery({ queryKey: ['member-payments'], queryFn: () => base44.entities.MemberPayment.list('-date', 200) });
+  const { data: sectionMembersAll = [] } = useQuery({
+    queryKey: ['section-members-subs', selectedSectionId],
+    queryFn: () => selectedSectionId ? base44.entities.Member.filter({ section_id: selectedSectionId, active: true }) : [],
+    enabled: !!selectedSectionId,
+  });
+  const todaySubs = new Date().toISOString().split('T')[0];
+  const in7Days = new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0];
+  const INTERVAL_LABELS_SA = { '4_months': 'Every 4 months', '6_months': 'Every 6 months', 'yearly': 'Yearly' };
 
   const sectionSection = sections.find(s => s.id === selectedSectionId);
   const sectionAllocations = allocations.filter(a => {
@@ -164,6 +172,7 @@ export default function SectionAccounting() {
             <TabsTrigger value="receipts">My Receipts</TabsTrigger>
             <TabsTrigger value="ledger">Section Ledger</TabsTrigger>
             <TabsTrigger value="payments">Event Payments</TabsTrigger>
+            <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
           </TabsList>
 
           <TabsContent value="receipts" className="mt-4">
@@ -252,23 +261,72 @@ export default function SectionAccounting() {
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
+                      <thead><tr className="border-b bg-gray-50"><th className="text-left py-2 px-2 text-gray-500">Date</th><th className="text-left py-2 px-2 text-gray-500">Type</th><th className="text-left py-2 px-2 text-gray-500">Notes</th><th className="text-right py-2 px-2 text-gray-500">Amount</th></tr></thead>
+                      <tbody>
+                        {sectionPayments.map(p => (
+                          <tr key={p.id} className="border-b hover:bg-gray-50"><td className="py-2 px-2 text-gray-500">{p.date}</td><td className="py-2 px-2 capitalize">{p.payment_type}</td><td className="py-2 px-2 text-gray-500 text-xs">{p.notes || '\u2014'}</td><td className="py-2 px-2 text-right font-medium text-green-600">{fmt(p.amount)}</td></tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="subscriptions" className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Subscriptions</CardTitle>
+                {sectionMembersAll.length > 0 && (() => {
+                  const upToDate = sectionMembersAll.filter(m => m.next_subs_due && m.next_subs_due >= in7Days).length;
+                  const dueSoon = sectionMembersAll.filter(m => m.next_subs_due && m.next_subs_due >= todaySubs && m.next_subs_due < in7Days).length;
+                  const overdue = sectionMembersAll.filter(m => m.next_subs_due && m.next_subs_due < todaySubs).length;
+                  return (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{sectionMembersAll.length} total</span>
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">{upToDate} up to date</span>
+                      <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{dueSoon} due within 7 days</span>
+                      <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">{overdue} overdue</span>
+                    </div>
+                  );
+                })()}
+              </CardHeader>
+              <CardContent>
+                {sectionMembersAll.length === 0 ? (
+                  <p className="text-center text-gray-400 py-8">No members in this section</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b bg-gray-50">
-                          <th className="text-left py-2 px-2 text-gray-500">Date</th>
-                          <th className="text-left py-2 px-2 text-gray-500">Type</th>
-                          <th className="text-left py-2 px-2 text-gray-500">Notes</th>
-                          <th className="text-right py-2 px-2 text-gray-500">Amount</th>
+                          <th className="text-left py-2 px-3 text-gray-500 font-medium">Member</th>
+                          <th className="text-left py-2 px-3 text-gray-500 font-medium">Last Paid</th>
+                          <th className="text-left py-2 px-3 text-gray-500 font-medium cursor-pointer">Next Due</th>
+                          <th className="text-left py-2 px-3 text-gray-500 font-medium">Frequency</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {sectionPayments.map(p => (
-                          <tr key={p.id} className="border-b hover:bg-gray-50">
-                            <td className="py-2 px-2 text-gray-500">{p.date}</td>
-                            <td className="py-2 px-2 capitalize">{p.payment_type}</td>
-                            <td className="py-2 px-2 text-gray-500 text-xs">{p.notes || '—'}</td>
-                            <td className="py-2 px-2 text-right font-medium text-green-600">{fmt(p.amount)}</td>
-                          </tr>
-                        ))}
+                        {[...sectionMembersAll]
+                          .sort((a, b) => {
+                            if (!a.next_subs_due) return 1;
+                            if (!b.next_subs_due) return -1;
+                            return a.next_subs_due.localeCompare(b.next_subs_due);
+                          })
+                          .map(m => {
+                            const isOverdue = m.next_subs_due && m.next_subs_due < todaySubs;
+                            const isDueSoon = !isOverdue && m.next_subs_due && m.next_subs_due < in7Days;
+                            const rowClass = isOverdue ? 'bg-red-50' : isDueSoon ? 'bg-amber-50' : '';
+                            return (
+                              <tr key={m.id} className={`border-b hover:opacity-90 ${rowClass}`}>
+                                <td className="py-2 px-3 font-medium">{m.full_name}</td>
+                                <td className="py-2 px-3 text-gray-500">{m.last_subs_payment_date || '\u2014'}</td>
+                                <td className={`py-2 px-3 font-medium ${isOverdue ? 'text-red-600' : isDueSoon ? 'text-amber-600' : 'text-gray-700'}`}>{m.next_subs_due || '\u2014'}</td>
+                                <td className="py-2 px-3 text-gray-500">{INTERVAL_LABELS_SA[m.subs_interval] || '\u2014'}</td>
+                              </tr>
+                            );
+                          })
+                        }
                       </tbody>
                     </table>
                   </div>

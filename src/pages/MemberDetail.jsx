@@ -597,6 +597,35 @@ export default function MemberDetail() {
 
           {/* Payments Tab */}
           <TabsContent value="payments">
+            {member && (
+              <div className="mb-4">
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2"><CreditCard className="w-4 h-4 text-[#7413dc]" />Subscriptions</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-500">Last Paid</p>
+                      <p className="font-medium text-sm mt-0.5">{member.last_subs_payment_date ? new Date(member.last_subs_payment_date).toLocaleDateString() : 'Not set'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Next Due</p>
+                      <p className={`font-medium text-sm mt-0.5 ${member.next_subs_due && member.next_subs_due < new Date().toISOString().split('T')[0] ? 'text-red-600' : 'text-gray-900'}`}>{member.next_subs_due ? new Date(member.next_subs_due).toLocaleDateString() : 'Not set'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Billing Frequency</p>
+                      <p className="font-medium text-sm mt-0.5">{{ '4_months': 'Every 4 months', '6_months': 'Every 6 months', 'yearly': 'Yearly' }[member.subs_interval] || 'Not set'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Payment Method</p>
+                      {member.stripe_payment_methods?.length > 0 ? (
+                        (() => { const def = member.stripe_payment_methods.find(p => p.is_default) || member.stripe_payment_methods[0]; return <p className="font-medium text-sm mt-0.5 capitalize">{def.brand} ···· {def.last4}</p>; })()
+                      ) : (
+                        <p className="font-medium text-sm mt-0.5 text-red-500">No payment method</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             <MemberPaymentsTab memberId={memberId} />
           </TabsContent>
 

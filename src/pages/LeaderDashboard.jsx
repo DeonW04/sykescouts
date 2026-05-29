@@ -10,6 +10,7 @@ import {
   Lightbulb, Package, TrendingUp, FileText, Landmark, BookOpen, Zap, Star,
 } from 'lucide-react';
 import ActionsDrilldownModal from '../components/leader/ActionsDrilldownModal';
+import PaymentAlerts from '../components/leader/PaymentAlerts';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -439,7 +440,7 @@ function ActionsStatus({ sections, selectedSection }) {
           </div>
           <div>
             <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '16px', color: '#1a1a2e', margin: 0 }}>Actions Required</h3>
-            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.4)', margin: '2px 0 0' }}>Active actions for upcoming meetings & events · click a card for details</p>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.4)', margin: '2px 0 0' }}>Active actions for upcoming meetings and events &middot; click a card for details</p>
           </div>
         </div>
         <div style={{ padding: '14px 24px 20px' }}>
@@ -627,6 +628,7 @@ function LeaderDashboardInner() {
 
       {/* ── Dashboard content ── */}
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '12px 16px 48px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <PaymentAlerts sections={sections} selectedSection={selectedSection} />
         <BadgesDue sections={sections} selectedSection={selectedSection} />
 
         <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '16px' }}>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TrendingDown, TrendingUp, Receipt, QrCode, ExternalLink, Users, CheckCircle, AlertTriangle, XCircle, MinusCircle, Slash, Clock, Plus, Trash2 } from 'lucide-react';
+import MeetingAttendingMembersStripe from '../leader/MeetingAttendingMembersStripe';
 import { toast } from 'sonner';
 
 const fmt = (n) => `£${(n || 0).toFixed(2)}`;
@@ -407,23 +408,19 @@ export default function MeetingFinancesTab({ programmeId, sectionId, date, secti
         </Card>
       )}
 
+      {/* Attending Members — Stripe Payments */}
+      <MeetingAttendingMembersStripe programmeId={programmeId} programme={programme} />
+
       {/* QR Receipt Submission */}
       <Card className="border-teal-200 bg-teal-50">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <QrCode className="w-4 h-4 text-teal-700" />
-              <CardTitle className="text-sm text-teal-800">QR Receipt Submission</CardTitle>
-            </div>
-            <Button size="sm" variant="outline" className="border-teal-300 text-teal-700 hover:bg-teal-100 text-xs" onClick={() => window.open(qrUrl, '_blank')}>
-              <ExternalLink className="w-3 h-3 mr-1" />Open Link
-            </Button>
+            <div className="flex items-center gap-2"><QrCode className="w-4 h-4 text-teal-700" /><CardTitle className="text-sm text-teal-800">QR Receipt Submission</CardTitle></div>
+            <Button size="sm" variant="outline" className="border-teal-300 text-teal-700 hover:bg-teal-100 text-xs" onClick={() => window.open(qrUrl, '_blank')}><ExternalLink className="w-3 h-3 mr-1" />Open Link</Button>
           </div>
         </CardHeader>
         <CardContent className="pb-4">
-          <div className="bg-white border border-teal-200 rounded-lg px-3 py-2 text-xs font-mono text-gray-600 break-all select-all">
-            {qrUrl}
-          </div>
+          <div className="bg-white border border-teal-200 rounded-lg px-3 py-2 text-xs font-mono text-gray-600 break-all select-all">{qrUrl}</div>
         </CardContent>
       </Card>
     </div>

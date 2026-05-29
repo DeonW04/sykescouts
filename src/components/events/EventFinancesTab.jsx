@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TrendingUp, TrendingDown, Receipt, Users, QrCode, ExternalLink, CheckCircle, AlertTriangle, XCircle, MinusCircle, Slash, Clock, Plus, Trash2 } from 'lucide-react';
+import EventAttendingMembersStripe from '../leader/EventAttendingMembersStripe';
 import { toast } from 'sonner';
 
 const fmt = (n) => `£${(n || 0).toFixed(2)}`;
@@ -295,7 +296,7 @@ export default function EventFinancesTab({ eventId, event }) {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Receipt className="w-4 h-4" />
-              <CardTitle className="text-base">Receipts & Allocations ({allocations.length})</CardTitle>
+              <CardTitle className="text-base">Receipts &amp; Allocations ({allocations.length})</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -333,24 +334,13 @@ export default function EventFinancesTab({ eventId, event }) {
       {attendingMemberIds.length > 0 && cost > 0 && (
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              <CardTitle className="text-base">Attending Members — Payments ({attendingMemberIds.length})</CardTitle>
-            </div>
+            <div className="flex items-center gap-2"><Users className="w-4 h-4" /><CardTitle className="text-base">Attending Members — Payments ({attendingMemberIds.length})</CardTitle></div>
             {paymentDeadline && <p className="text-xs text-gray-400 mt-0.5">Payment deadline: {paymentDeadline}{isDeadlinePassed ? ' — PASSED' : ''}</p>}
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-gray-50">
-                    <th className="text-left py-2 px-2 text-gray-500 font-medium">Member</th>
-                    <th className="text-right py-2 px-2 text-gray-500 font-medium">Cost</th>
-                    <th className="text-right py-2 px-2 text-gray-500 font-medium">Paid</th>
-                    <th className="text-center py-2 px-2 text-gray-500 font-medium">Status</th>
-                    <th className="text-center py-2 px-2 text-gray-500 font-medium">Override</th>
-                  </tr>
-                </thead>
+                <thead><tr className="border-b bg-gray-50"><th className="text-left py-2 px-2 text-gray-500 font-medium">Member</th><th className="text-right py-2 px-2 text-gray-500 font-medium">Cost</th><th className="text-right py-2 px-2 text-gray-500 font-medium">Paid</th><th className="text-center py-2 px-2 text-gray-500 font-medium">Status</th><th className="text-center py-2 px-2 text-gray-500 font-medium">Override</th></tr></thead>
                 <tbody>
                   {attendingMemberIds.map(memberId => {
                     const member = members.find(m => m.id === memberId);
@@ -368,21 +358,11 @@ export default function EventFinancesTab({ eventId, event }) {
                         <td className="py-2 px-2 text-center">
                           {!isPaid && !isWaived && (
                             <div className="flex items-center justify-center gap-1">
-                              <Button size="sm" variant={isNotAttending ? 'default' : 'outline'}
-                                className={`text-xs h-6 px-2 ${isNotAttending ? 'bg-gray-500 text-white' : 'border-gray-300 text-gray-600'}`}
-                                onClick={() => handleSetOverride(memberId, 'not_attending')}>
-                                {isNotAttending ? 'Clear' : 'Not Attending'}
-                              </Button>
-                              {!isNotAttending && (
-                                <Button size="sm" variant="outline" className="text-xs h-6 px-2 border-blue-300 text-blue-600" onClick={() => handleSetOverride(memberId, 'waived')}>
-                                  Waive
-                                </Button>
-                              )}
+                              <Button size="sm" variant={isNotAttending ? 'default' : 'outline'} className={`text-xs h-6 px-2 ${isNotAttending ? 'bg-gray-500 text-white' : 'border-gray-300 text-gray-600'}`} onClick={() => handleSetOverride(memberId, 'not_attending')}>{isNotAttending ? 'Clear' : 'Not Attending'}</Button>
+                              {!isNotAttending && (<Button size="sm" variant="outline" className="text-xs h-6 px-2 border-blue-300 text-blue-600" onClick={() => handleSetOverride(memberId, 'waived')}>Waive</Button>)}
                             </div>
                           )}
-                          {(isPaid || isWaived) && ov && (
-                            <Button size="sm" variant="ghost" className="text-xs h-6 text-gray-400" onClick={() => handleSetOverride(memberId, ov.override_type)}>Clear</Button>
-                          )}
+                          {(isPaid || isWaived) && ov && (<Button size="sm" variant="ghost" className="text-xs h-6 text-gray-400" onClick={() => handleSetOverride(memberId, ov.override_type)}>Clear</Button>)}
                         </td>
                       </tr>
                     );
@@ -393,6 +373,9 @@ export default function EventFinancesTab({ eventId, event }) {
           </CardContent>
         </Card>
       )}
+
+      {/* Attending Members — Stripe Payments */}
+      <EventAttendingMembersStripe eventId={eventId} event={eventData} />
 
       {/* Ledger Entries */}
       {ledgerEntries.length > 0 && (

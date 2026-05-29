@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Search, User, ChevronDown, ChevronUp, Heart, Phone, Mail, Grid3x3, List } from 'lucide-react';
+import { Search, User, ChevronDown, ChevronUp, Heart, Phone, Mail, Grid3x3, List, ExternalLink, CreditCard } from 'lucide-react';
+
+const INTERVAL_LABELS_MOB = { '4_months': 'Every 4 months', '6_months': 'Every 6 months', 'yearly': 'Yearly' };
 
 function MemberCard({ member }) {
   const [open, setOpen] = useState(false);
@@ -117,6 +119,38 @@ function MemberCard({ member }) {
               )}
             </div>
           )}
+
+          {/* Subscriptions */}
+          <div className="bg-purple-50 border border-purple-100 rounded-xl p-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <CreditCard className="w-3.5 h-3.5 text-purple-600" />
+              <p className="text-xs font-bold text-purple-700 uppercase tracking-wide">Subscriptions</p>
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-bold text-gray-500 uppercase">Last Paid</p>
+                <p className="text-xs text-gray-700 font-medium">{member.last_subs_payment_date ? new Date(member.last_subs_payment_date).toLocaleDateString('en-GB') : '\u2014'}</p>
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-bold text-gray-500 uppercase">Next Due</p>
+                <p className={`text-xs font-medium ${member.next_subs_due && member.next_subs_due < new Date().toISOString().split('T')[0] ? 'text-red-600' : 'text-gray-700'}`}>
+                  {member.next_subs_due ? new Date(member.next_subs_due).toLocaleDateString('en-GB') : '\u2014'}
+                </p>
+              </div>
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-bold text-gray-500 uppercase">Frequency</p>
+                <p className="text-xs text-gray-700 font-medium">{INTERVAL_LABELS_MOB[member.subs_interval] || '\u2014'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* More info button */}
+          <button
+            onClick={() => { window.location.href = `/MemberDetail?id=${member.id}`; }}
+            className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-[#004851] text-white rounded-xl text-sm font-semibold"
+          >
+            <ExternalLink className="w-4 h-4" /> More info
+          </button>
         </div>
       )}
     </div>

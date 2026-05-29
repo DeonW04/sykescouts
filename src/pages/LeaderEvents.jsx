@@ -37,6 +37,39 @@ export default function LeaderEvents() {
     enabled: !!selectedSection,
   });
 
+  const costEvents = events.filter(e => (e.cost || 0) > 0);
+
+  const { data: allPaymentStatuses = [] } = useQuery({
+    queryKey: ['leader-events-payment-statuses', costEvents.map(e => e.id).join(',')],
+    queryFn: () => base44.entities.EventPaymentStatus.filter({}),
+    enabled: costEvents.length > 0,
+  });
+
+  const { data: attendanceData = { actions: [], responses: [] } } = useQuery({
+    queryKey: ['leader-events-attendance', costEvents.map(e => e.id).join(',')],
+    queryFn: async () => {
+      const actions = await base44.entities.ActionRequired.filter({});
+      const relevantActions = actions.filter(a => a.action_purpose === 'attendance' && costEvents.some(e => e.id === a.event_id));
+      if (!relevantActions.length) return { actions: [], responses: [] };
+      const all = await base44.entities.ActionResponse.filter({});
+      const actionIds = new Set(relevantActions.map(a => a.id));
+      const responses = all.filter(r => actionIds.has(r.action_required_id) && ['yes', 'Yes, attending', 'attending'].includes(r.response_value));
+      return { actions: relevantActions, responses };
+    },
+    enabled: costEvents.length > 0,
+  });
+
+  const getPaymentPill = (event) => {
+    if (!(event.cost > 0)) return null;
+    const action = attendanceData.actions.find(a => a.event_id === event.id);
+    if (!action) return null;
+    const attending = attendanceData.responses.filter(r => r.action_required_id === action.id).length;
+    if (attending === 0) return null;
+    const paid = allPaymentStatuses.filter(ps => ps.event_id === event.id && ps.status === 'paid').length;
+    const color = paid === attending ? 'bg-green-100 text-green-700' : paid > 0 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
+    return { paid, attending, color };
+  };
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   
@@ -60,7 +93,7 @@ export default function LeaderEvents() {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
           <div>
             <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Events & Camps</h1>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Events &amp; Camps</h1>
             <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Plan and manage your upcoming adventures</p>
           </div>
           <Button
@@ -131,6 +164,7 @@ export default function LeaderEvents() {
                                 <Badge className={event.type === 'Camp' ? 'bg-green-600' : event.type === 'Day Event' ? 'bg-blue-600' : 'bg-gray-600'}>
                                   {event.type}
                                 </Badge>
+                                {(() => { const pill = getPaymentPill(event); return pill ? (<span className={`text-xs font-bold px-2 py-0.5 rounded-full ${pill.color}`}>{pill.paid}/{pill.attending} Paid</span>) : null; })()}
                                 {event.published ? (
                                   <Badge className="bg-emerald-600 gap-1">
                                     <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
