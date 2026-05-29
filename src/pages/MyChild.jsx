@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import ParentNav from '../components/parent/ParentNav';
+import WebSubscriptionSection from '../components/parent/WebSubscriptionSection';
 
 export default function MyChild() {
   const navigate = useNavigate();
@@ -540,7 +541,7 @@ export default function MyChild() {
           <TabsContent value="consent">
             <Card>
               <CardHeader>
-                <CardTitle>Photo & Media Consent</CardTitle>
+                <CardTitle>Photo &amp; Media Consent</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-start justify-between p-4 bg-blue-50 rounded-lg">
@@ -567,6 +568,11 @@ export default function MyChild() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Subscriptions section */}
+        <div className="mt-8">
+          <WebSubscriptionSection child={child} />
+        </div>
       </div>
     </div>
   );

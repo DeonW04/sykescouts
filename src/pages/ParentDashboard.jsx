@@ -5,7 +5,7 @@ import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, AlertCircle, Clock, Check, X, Tent } from 'lucide-react';
+import { Users, Calendar, Award, AlertCircle, Clock, Check, X, Tent, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -67,6 +67,7 @@ export default function ParentDashboard() {
   const [consentDialog, setConsentDialog] = useState(null);
   const [textInputs, setTextInputs] = useState({});
   const [dropdownValues, setDropdownValues] = useState({});
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -143,6 +144,80 @@ export default function ParentDashboard() {
     },
     enabled: children.length > 0,
   });
+
+  const childIds = children.map(c => c.id);
+
+  const { data: eventPaymentStatuses = [] } = useQuery({
+    queryKey: ['dashboard-event-payment-statuses', childIds.join(',')],
+    queryFn: async () => {
+      const all = await base44.entities.EventPaymentStatus.filter({});
+      return all.filter(ps => childIds.includes(ps.member_id));
+    },
+    enabled: childIds.length > 0,
+  });
+
+  const { data: meetingPaymentStatus } = useQuery({
+    queryKey: ['dashboard-meeting-payment-status', childIds.join(','), nextMeeting?.id],
+    queryFn: async () => {
+      if (!childIds.length || !nextMeeting?.id) return null;
+      const records = await base44.entities.MeetingPaymentStatus.filter({ meeting_id: nextMeeting.id, member_id: childIds[0] });
+      return records[0] || null;
+    },
+    enabled: childIds.length > 0 && !!nextMeeting?.id && nextMeeting?.has_cost && nextMeeting?.cost > 0,
+  });
+
+  const { data: dashAttendanceActions = [] } = useQuery({
+    queryKey: ['dashboard-attendance-actions', upcomingEvents.map(e => e.id).join(',')],
+    queryFn: async () => {
+      if (!upcomingEvents.length) return [];
+      const all = await base44.entities.ActionRequired.filter({});
+      return all.filter(a => a.action_purpose === 'attendance' && upcomingEvents.some(e => e.id === a.event_id));
+    },
+    enabled: upcomingEvents.length > 0,
+  });
+
+  const { data: dashAttendanceResponses = [] } = useQuery({
+    queryKey: ['dashboard-attendance-responses', childIds.join(',')],
+    queryFn: async () => {
+      const all = await base44.entities.ActionResponse.filter({});
+      return all.filter(r => childIds.includes(r.member_id) || childIds.includes(r.child_member_id));
+    },
+    enabled: childIds.length > 0,
+  });
+
+  const isAttendingEvent = (eventId) => {
+    const action = dashAttendanceActions.find(a => a.event_id === eventId);
+    if (!action) return false;
+    const resp = dashAttendanceResponses.find(r =>
+      r.action_required_id === action.id &&
+      (childIds.includes(r.member_id) || childIds.includes(r.child_member_id))
+    );
+    return !!(resp && ['yes', 'yes, attending', 'attending'].includes((resp.response_value || resp.response || '').toLowerCase()));
+  };
+
+  const getEventPayStatus = (eventId) => eventPaymentStatuses.find(ps => ps.event_id === eventId && childIds.includes(ps.member_id));
+
+  // Banner items
+  const now_b = new Date();
+  const in7Days = new Date(now_b.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const outstandingItems = [];
+  for (const event of upcomingEvents) {
+    if (!(event.cost > 0)) continue;
+    const start = new Date(event.start_date);
+    if (start > in7Days) continue;
+    if (!isAttendingEvent(event.id)) continue;
+    if (getEventPayStatus(event.id)?.status === 'paid') continue;
+    const daysLeft = Math.ceil((start - now_b) / (1000 * 60 * 60 * 24));
+    outstandingItems.push(`Payment due: ${event.title} — £${event.cost.toFixed(2)}${daysLeft <= 0 ? ' (today)' : daysLeft === 1 ? ' (tomorrow)' : ` (${daysLeft} days)`}`);
+  }
+  const child0 = children[0];
+  if (child0?.next_subs_due) {
+    const subsDue = new Date(child0.next_subs_due);
+    if (subsDue <= in7Days && subsDue >= now_b) {
+      const d = Math.ceil((subsDue - now_b) / (1000 * 60 * 60 * 24));
+      outstandingItems.push(`Subscription due${d === 0 ? ' today' : d === 1 ? ' tomorrow' : ` in ${d} days`}`);
+    }
+  }
 
   const { data: badgeProgress = [] } = useQuery({
     queryKey: ['badge-progress', children],
@@ -235,6 +310,20 @@ export default function ParentDashboard() {
     <>
     <FloatingNav />
     <NavBarSpacer />
+    {/* Outstanding payments banner */}
+    {outstandingItems.length > 0 && !bannerDismissed && (
+      <div className="bg-red-600 px-4 py-3">
+        <div className="max-w-7xl mx-auto flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-white flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            {outstandingItems.map((item, i) => <p key={i} className="text-sm text-white font-medium">{item}</p>)}
+          </div>
+          <button onClick={() => setBannerDismissed(true)} className="text-white/70 hover:text-white flex-shrink-0">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    )}
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       {/* Header */}
       <div className="relative bg-gradient-to-br from-[#7413dc] via-[#8b32eb] to-[#5c0fb0] text-white py-20 overflow-hidden">
@@ -469,7 +558,14 @@ export default function ParentDashboard() {
                     animate={{ opacity: 1, y: 0 }}
                     className="p-5 bg-gradient-to-br from-white to-green-50/30 border-2 border-green-200 rounded-xl hover:shadow-lg hover:border-green-300 transition-all"
                   >
-                    <h3 className="font-bold text-gray-900 text-lg mb-2">{nextMeeting.title}</h3>
+                    <div className="flex items-center gap-2 flex-wrap mb-2">
+                      <h3 className="font-bold text-gray-900 text-lg">{nextMeeting.title}</h3>
+                      {nextMeeting.has_cost && nextMeeting.cost > 0 && (
+                        meetingPaymentStatus?.status === 'paid'
+                          ? <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle className="w-3 h-3" />Paid</span>
+                          : <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Not paid</span>
+                      )}
+                    </div>
                     <p className="text-gray-700 font-medium mb-2">
                       {new Date(nextMeeting.date).toLocaleDateString('en-GB', { 
                         weekday: 'long', 
@@ -518,7 +614,14 @@ export default function ParentDashboard() {
                         className="p-4 bg-gradient-to-br from-white to-purple-50/30 border border-purple-100 rounded-xl hover:shadow-xl hover:border-purple-300 transition-all cursor-pointer"
                         onClick={() => navigate(createPageUrl('ParentEvents'))}
                       >
-                        <p className="font-bold text-gray-900 mb-1">{event.title}</p>
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <p className="font-bold text-gray-900">{event.title}</p>
+                          {event.cost > 0 && isAttendingEvent(event.id) && (
+                            getEventPayStatus(event.id)?.status === 'paid'
+                              ? <span className="text-xs font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle className="w-3 h-3" />Paid</span>
+                              : <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">Not paid</span>
+                          )}
+                        </div>
                         <p className="text-sm text-gray-600 font-medium">
                           {new Date(event.start_date).toLocaleDateString('en-GB', { 
                             month: 'short', 

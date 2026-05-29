@@ -19,26 +19,11 @@ export default function LeaderNav() {
   }, []);
 
   const navItems = [
-    { 
-      icon: Users, 
-      label: 'Members', 
-      color: 'bg-blue-500'
-    },
-    { 
-      icon: Calendar, 
-      label: 'Programme', 
-      color: 'bg-purple-500'
-    },
-    { 
-      icon: ShieldAlert, 
-      label: 'Events', 
-      color: 'bg-orange-500'
-    },
-    { 
-      icon: Award, 
-      label: 'Badges', 
-      color: 'bg-green-500'
-    }
+    { icon: Users, label: 'Members', color: 'bg-blue-500' },
+    { icon: Calendar, label: 'Programme', color: 'bg-purple-500' },
+    { icon: ShieldAlert, label: 'Events', color: 'bg-orange-500' },
+    { icon: Award, label: 'Badges', color: 'bg-green-500' },
+    { icon: Settings, label: 'Account', page: 'AccountSettings', color: 'bg-gray-500' },
   ];
 
   const currentPage = location.pathname.split('/').pop();

@@ -1,0 +1,173 @@
+import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { CreditCard, RefreshCw, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { format } from 'date-fns';
+import InlineCardSetup from '../mobile/InlineCardSetup';
+
+const INTERVAL_LABELS = { '4_months': 'Every 4 months', '6_months': 'Every 6 months', yearly: 'Yearly' };
+const INTERVAL_OPTIONS = ['4_months', '6_months', 'yearly'];
+
+export default function WebSubscriptionSection({ child }) {
+  const queryClient = useQueryClient();
+  const [showCardSetup, setShowCardSetup] = useState(false);
+  const [showChangeCard, setShowChangeCard] = useState(false);
+  const [activating, setActivating] = useState(false);
+  const [pendingInterval, setPendingInterval] = useState(null);
+  const [savingInterval, setSavingInterval] = useState(false);
+
+  if (!child) return null;
+
+  const paymentMethods = child.stripe_payment_methods || [];
+  const defaultCard = paymentMethods.find(pm => pm.is_default) || paymentMethods[0];
+  const hasCard = paymentMethods.length > 0;
+  const hasSubscription = !!child.stripe_subscription_id;
+  const currentInterval = child.subs_interval || '4_months';
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['children'] });
+    queryClient.invalidateQueries({ queryKey: ['account-settings-children'] });
+  };
+
+  const handleActivate = async () => {
+    setActivating(true);
+    try {
+      await base44.functions.invoke('createStripeSubscription', { member_id: child.id });
+      toast.success('Subscription activated!');
+      refresh();
+    } catch (err) {
+      toast.error('Failed to activate: ' + err.message);
+    } finally {
+      setActivating(false);
+    }
+  };
+
+  const handleIntervalConfirm = async () => {
+    if (!pendingInterval) return;
+    setSavingInterval(true);
+    try {
+      await base44.functions.invoke('updateSubscriptionInterval', { member_id: child.id, interval: pendingInterval });
+      toast.success('Billing interval updated!');
+      refresh();
+      setPendingInterval(null);
+    } catch (err) {
+      toast.error('Failed to update interval: ' + err.message);
+    } finally {
+      setSavingInterval(false);
+    }
+  };
+
+  return (
+    <Card className="shadow-xl bg-white/90 backdrop-blur-sm">
+      <CardHeader>
+        <CardTitle className="text-2xl flex items-center gap-3">
+          <CreditCard className="w-6 h-6 text-[#7413dc]" />
+          Subscriptions
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+
+        {/* No card state */}
+        {!hasCard ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
+              <CreditCard className="w-5 h-5 text-red-500 flex-shrink-0" />
+              <p className="text-red-700 font-medium">No payment method connected</p>
+            </div>
+            {!showCardSetup ? (
+              <Button onClick={() => setShowCardSetup(true)} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
+                Set up payments
+              </Button>
+            ) : (
+              <div className="border rounded-xl p-5">
+                <InlineCardSetup memberId={child.id} onSuccess={() => { setShowCardSetup(false); refresh(); }} onCancel={() => setShowCardSetup(false)} />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {/* Card info */}
+            <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+              <CreditCard className="w-5 h-5 text-gray-400 flex-shrink-0" />
+              <span className="font-medium text-gray-800 capitalize flex-1">{defaultCard?.brand} ending {defaultCard?.last4}</span>
+              <Badge className="bg-green-600">Active card</Badge>
+            </div>
+
+            {/* Subscription details or activate button */}
+            {hasSubscription ? (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {child.last_subs_payment_date && (
+                  <div className="p-4 bg-gray-50 rounded-xl">
+                    <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wide">Last Payment</p>
+                    <p className="font-semibold text-gray-900">{format(new Date(child.last_subs_payment_date), 'd MMMM yyyy')}</p>
+                  </div>
+                )}
+                {child.next_subs_due && (
+                  <div className="p-4 bg-gray-50 rounded-xl">
+                    <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wide">Next Payment</p>
+                    <p className="font-semibold text-gray-900">{format(new Date(child.next_subs_due), 'd MMMM yyyy')}</p>
+                  </div>
+                )}
+                <div className="p-4 bg-gray-50 rounded-xl">
+                  <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wide">Billing Frequency</p>
+                  <p className="font-semibold text-gray-900">{INTERVAL_LABELS[currentInterval]}</p>
+                </div>
+              </div>
+            ) : (
+              <Button onClick={handleActivate} disabled={activating} className="bg-green-600 hover:bg-green-700">
+                {activating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Activate subscription
+              </Button>
+            )}
+
+            {/* Interval selector (subscription active only) */}
+            {hasSubscription && (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-700">Billing Interval</p>
+                <div className="flex rounded-xl border border-gray-200 overflow-hidden w-fit">
+                  {INTERVAL_OPTIONS.map((opt, i) => (
+                    <button
+                      key={opt}
+                      onClick={() => { if (opt !== currentInterval) setPendingInterval(opt); }}
+                      className={`px-5 py-2.5 text-sm font-semibold transition-colors ${(pendingInterval || currentInterval) === opt ? 'bg-[#7413dc] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} ${i > 0 ? 'border-l border-gray-200' : ''}`}
+                    >
+                      {INTERVAL_LABELS[opt]}
+                    </button>
+                  ))}
+                </div>
+                {pendingInterval && pendingInterval !== currentInterval && (
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3 max-w-md">
+                    <p className="text-sm text-amber-800 font-medium">Change to {INTERVAL_LABELS[pendingInterval]}? Your next payment date will be adjusted.</p>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setPendingInterval(null)}>Cancel</Button>
+                      <Button size="sm" onClick={handleIntervalConfirm} disabled={savingInterval} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
+                        {savingInterval ? 'Saving...' : 'Confirm change'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Change payment method */}
+            {!showChangeCard ? (
+              <Button variant="outline" onClick={() => setShowChangeCard(true)} className="flex items-center gap-2">
+                <RefreshCw className="w-4 h-4" />
+                Change payment method
+              </Button>
+            ) : (
+              <div className="border rounded-xl p-5 space-y-3">
+                <p className="text-sm font-semibold text-gray-700">Enter new card details:</p>
+                <InlineCardSetup memberId={child.id} onSuccess={() => { setShowChangeCard(false); refresh(); }} onCancel={() => setShowChangeCard(false)} />
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

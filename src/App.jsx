@@ -42,6 +42,7 @@ import WhatsAppSchedules from './pages/WhatsAppSchedules';
 import PublicRiskAssessment from './pages/PublicRiskAssessment';
 import WhatsAppTemplates from './pages/WhatsAppTemplates';
 import GalleryUpload from './pages/GalleryUpload';
+import AccountSettings from './pages/AccountSettings';
 
 // Public-only pages that should never be shown in PWA mode
 const PUBLIC_PAGES = ['/', '/Home', '/About', '/Contact', '/Gallery', '/Join', '/Sections', '/Parents', '/Volunteer', '/SharedPage'];
@@ -160,6 +161,7 @@ const AuthenticatedApp = () => {
       <Route path="/WhatsAppTemplates" element={<LayoutWrapper currentPageName="WhatsAppTemplates"><WhatsAppTemplates /></LayoutWrapper>} />
       <Route path="/public-ra" element={<PublicRiskAssessment />} />
       <Route path="/GalleryUpload" element={<GalleryUpload />} />
+      <Route path="/AccountSettings" element={<AccountSettings />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </PWAGate>

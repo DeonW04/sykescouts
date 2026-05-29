@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import InlinePayment from '../components/mobile/InlinePayment';
 import { ArrowLeft, Calendar, MapPin, Download, FileText, Award, AlertCircle, Check, X, CheckCircle, Clock, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
@@ -23,8 +24,10 @@ export default function ParentEventDetail() {
   const [consentDialog, setConsentDialog] = useState(null);
   const [textInputs, setTextInputs] = useState({});
   const [dropdownValues, setDropdownValues] = useState({});
-  const [editDialog, setEditDialog] = useState(null); // { action, child, existingResponse }
+  const [editDialog, setEditDialog] = useState(null);
   const [editValue, setEditValue] = useState('');
+  const [payDetailOpen, setPayDetailOpen] = useState(false);
+  const paymentRef = useRef(null);
 
   useEffect(() => {
     loadUser();
@@ -107,6 +110,26 @@ export default function ParentEventDetail() {
       return criteria.filter(c => c.event_id === eventId);
     },
     enabled: !!eventId,
+  });
+
+  const primaryChild = myChildrenInEvent[0] || children[0];
+
+  const { data: eventPaymentStatus } = useQuery({
+    queryKey: ['event-payment-status-detail', eventId, primaryChild?.id],
+    queryFn: async () => {
+      const records = await base44.entities.EventPaymentStatus.filter({ event_id: eventId, member_id: primaryChild.id });
+      return records[0] || null;
+    },
+    enabled: !!eventId && !!primaryChild?.id && (event?.cost || 0) > 0,
+  });
+
+  const { data: paymentOverride } = useQuery({
+    queryKey: ['payment-override-detail', eventId, primaryChild?.id],
+    queryFn: async () => {
+      const records = await base44.entities.MeetingPaymentOverride.filter({ event_id: eventId, member_id: primaryChild.id, override_type: 'waived' });
+      return records[0] || null;
+    },
+    enabled: !!eventId && !!primaryChild?.id,
   });
 
   const { data: badges = [] } = useQuery({
@@ -196,6 +219,21 @@ export default function ParentEventDetail() {
     }
     return responseValue;
   };
+
+  const attendanceActionsForEvent = actionsRequired.filter(a => a.action_purpose === 'attendance');
+  const isAttendingEvent = attendanceActionsForEvent.some(action =>
+    myChildrenInEvent.some(child => {
+      const r = getChildResponse(action.id, child.id);
+      return r && ['yes', 'attending', 'yes, attending'].includes((r.response || r.response_value || '').toLowerCase());
+    })
+  );
+  const paymentState = (() => {
+    if (!event || (event.cost || 0) === 0) return null;
+    if (paymentOverride) return 'waived';
+    if (eventPaymentStatus?.status === 'paid') return 'paid';
+    if (isAttendingEvent) return 'unpaid';
+    return null;
+  })();
 
   const unresolvedActions = actionsRequired.filter(action => {
     return myChildrenInEvent.some(child => !getChildResponse(action.id, child.id));
@@ -290,6 +328,19 @@ export default function ParentEventDetail() {
         </div>
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+          {/* Amber payment banner */}
+          {paymentState === 'unpaid' && (
+            <div className="mb-6 p-5 bg-amber-50 border-2 border-amber-300 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+              <div>
+                <p className="font-bold text-amber-800 text-lg">Payment required</p>
+                <p className="text-amber-700 text-sm mt-0.5">Payment of £{event.cost?.toFixed(2)} is required for {event.title}. Please pay below to confirm your child&#39;s place.</p>
+              </div>
+              <Button className="bg-amber-500 hover:bg-amber-600 text-white whitespace-nowrap flex-shrink-0" onClick={() => paymentRef.current?.scrollIntoView({ behavior: 'smooth' })}>
+                Pay now
+              </Button>
+            </div>
+          )}
 
           {/* Actions Required - Pending */}
           {unresolvedActions.length > 0 && (
@@ -522,7 +573,7 @@ export default function ParentEventDetail() {
                 <div className="pt-8 border-t">
                   <h2 className="text-3xl font-bold text-[#7413dc] mb-8 flex items-center gap-3">
                     <FileText className="w-8 h-8" />
-                    Documents & Kit Lists
+                    Documents &amp; Kit Lists
                   </h2>
                   <div className="grid gap-4">
                     {documents.map((doc, idx) => (
@@ -567,6 +618,52 @@ export default function ParentEventDetail() {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Payment Section */}
+              {paymentState && (
+                <div ref={paymentRef} className="pt-8 border-t">
+                  <h2 className="text-3xl font-bold text-[#7413dc] mb-6">Payment</h2>
+                  {paymentState === 'waived' ? (
+                    <p className="text-gray-500 bg-gray-100 inline-flex items-center px-4 py-2 rounded-xl font-medium">Waived</p>
+                  ) : paymentState === 'paid' ? (
+                    <div className="p-5 bg-green-50 border border-green-200 rounded-xl space-y-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <span className="font-bold text-green-700 text-lg">Paid — £{event.cost?.toFixed(2)}</span>
+                      </div>
+                      {eventPaymentStatus?.paid_at && <p className="text-sm text-gray-600">Date: {format(new Date(eventPaymentStatus.paid_at), 'd MMMM yyyy')}</p>}
+                      {eventPaymentStatus?.card_brand && eventPaymentStatus?.card_last4 && (
+                        <p className="text-sm text-gray-600 capitalize">Card: {eventPaymentStatus.card_brand} ending {eventPaymentStatus.card_last4}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="max-w-lg space-y-4">
+                      <p className="text-amber-700 font-semibold">£{event.cost?.toFixed(2)} outstanding</p>
+                      {!payDetailOpen ? (
+                        <Button className="bg-amber-500 hover:bg-amber-600 text-white" onClick={() => setPayDetailOpen(true)}>
+                          Pay £{event.cost?.toFixed(2)}
+                        </Button>
+                      ) : (
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="font-semibold text-gray-800">{event.title} — £{event.cost?.toFixed(2)}</p>
+                            <Button size="sm" variant="ghost" onClick={() => setPayDetailOpen(false)}>Cancel</Button>
+                          </div>
+                          <InlinePayment
+                            type="event"
+                            id={event.id}
+                            cost={Math.round((event.cost || 0) * 100)}
+                            memberId={primaryChild?.id}
+                            paymentMethods={primaryChild?.stripe_payment_methods || []}
+                            onSuccess={() => { setPayDetailOpen(false); queryClient.invalidateQueries({ queryKey: ['event-payment-status-detail'] }); }}
+                            onCancel={() => setPayDetailOpen(false)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 

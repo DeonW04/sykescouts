@@ -65,6 +65,7 @@ const parentNavLinks = [
   { label: 'Programme', page: 'ParentProgramme', icon: Calendar },
   { label: 'Events', page: 'ParentEvents', icon: CalendarDays },
   { label: 'Badges', page: 'ParentBadges', icon: Award },
+  { label: 'Account', page: 'AccountSettings', icon: Settings },
 ];
 
 const STRIP_RADIUS = '24px';
@@ -411,6 +412,12 @@ export default function FloatingNav() {
           </p>
           <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(26,26,46,0.4)', margin: '2px 0 0' }}>{user?.email}</p>
         </div>
+        <DropdownMenuItem asChild>
+          <Link to={createPageUrl('AccountSettings')} className="flex items-center gap-2 cursor-pointer">
+            <Settings className="w-4 h-4" /> Account Settings
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => base44.auth.logout()} className="cursor-pointer text-red-600 focus:text-red-600">
           <LogOut className="w-4 h-4 mr-2" /> Sign out
         </DropdownMenuItem>
