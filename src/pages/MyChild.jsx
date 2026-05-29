@@ -13,7 +13,8 @@ import { ArrowLeft, User, Heart, Phone, Edit, Save, X, UserCircle, Camera, Check
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
-import ParentNav from '../components/parent/ParentNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import WebSubscriptionSection from '../components/parent/WebSubscriptionSection';
 
 export default function MyChild() {
@@ -126,7 +127,8 @@ export default function MyChild() {
   if (!child) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <ParentNav />
+        <FloatingNav />
+        <NavBarSpacer />
         <div className="bg-[#7413dc] text-white py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-3xl font-bold">My Child</h1>
@@ -148,7 +150,8 @@ export default function MyChild() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <ParentNav />
+      <FloatingNav />
+      <NavBarSpacer />
       {/* Header */}
       <div className="relative bg-gradient-to-br from-blue-600 to-[#7413dc] text-white py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10">

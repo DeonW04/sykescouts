@@ -8,7 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import ParentNav from '../components/parent/ParentNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import PhotoGallery from '../components/events/PhotoGallery';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -279,7 +280,8 @@ export default function ParentEventDetail() {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-        <ParentNav />
+        <FloatingNav />
+        <NavBarSpacer />
         {/* Hero Header */}
         <div className="relative bg-gradient-to-br from-[#7413dc] via-[#8b32eb] to-[#5c0fb0] text-white overflow-hidden">
           <div className="absolute inset-0">

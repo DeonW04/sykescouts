@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import ParentNav from '../components/parent/ParentNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import { motion } from 'framer-motion';
 
 export default function ParentGoldAward() {
@@ -155,7 +156,8 @@ export default function ParentGoldAward() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50">
-      <ParentNav />
+      <FloatingNav />
+      <NavBarSpacer />
       
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-white py-20 overflow-hidden">

@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import ParentNav from '../components/parent/ParentNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import { motion } from 'framer-motion';
 import UniformDiagram from '../components/uniform/UniformDiagram';
 import { useRef } from 'react';
@@ -234,10 +235,11 @@ export default function ParentBadges() {
   if (!child) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <ParentNav />
+        <FloatingNav />
+        <NavBarSpacer />
         <div className="bg-[#7413dc] text-white py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold">Badges & Awards</h1>
+            <h1 className="text-3xl font-bold">Badges &amp; Awards</h1>
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -564,7 +566,8 @@ export default function ParentBadges() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-purple-50">
-      <ParentNav />
+      <FloatingNav />
+      <NavBarSpacer />
       <div className="relative bg-gradient-to-br from-yellow-600 to-[#7413dc] text-white py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
@@ -577,7 +580,7 @@ export default function ParentBadges() {
                 <Award className="w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold">Badges & Awards</h1>
+                <h1 className="text-4xl font-bold">Badges &amp; Awards</h1>
                 <p className="text-yellow-100 text-lg">{child.full_name}'s progress</p>
               </div>
             </div>

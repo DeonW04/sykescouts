@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, Award, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
-import ParentNav from '../components/parent/ParentNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import { motion } from 'framer-motion';
 import InlinePayment from '../components/mobile/InlinePayment';
 
@@ -242,7 +243,8 @@ export default function ParentProgramme() {
   if (!currentTerm) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <ParentNav />
+        <FloatingNav />
+        <NavBarSpacer />
         <div className="bg-[#7413dc] text-white py-8"><div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8"><h1 className="text-3xl font-bold">Term Programme</h1></div></div>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card><CardContent className="p-12 text-center"><Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" /><p className="text-gray-600">No upcoming term at the moment</p></CardContent></Card>
@@ -253,7 +255,8 @@ export default function ParentProgramme() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
-      <ParentNav />
+      <FloatingNav />
+      <NavBarSpacer />
       <div className="relative bg-gradient-to-br from-green-600 to-[#004851] text-white py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10"><div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div></div>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">

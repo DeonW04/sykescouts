@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { motion } from 'framer-motion';
-import ParentNav from '../components/parent/ParentNav';
+import FloatingNav from '../components/public/FloatingNav';
+import NavBarSpacer from '../components/public/NavBarSpacer';
 import InlinePayment from '../components/mobile/InlinePayment';
 
 const ATTENDING_VALUES = new Set(['yes', 'yes, attending', 'attending']);
@@ -196,7 +197,8 @@ export default function ParentEvents() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-      <ParentNav />
+      <FloatingNav />
+      <NavBarSpacer />
       <div className="relative bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] text-white py-16 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
