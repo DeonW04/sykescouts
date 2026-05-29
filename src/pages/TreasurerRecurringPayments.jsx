@@ -1,192 +1,173 @@
-import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import TreasurerLayout from '@/components/treasurer/TreasurerLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Plus, Edit, Trash2, AlertCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Bell, ChevronUp, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
-import { isWithinInterval, addDays } from 'date-fns';
 
-const fmt = (n) => `£${(n || 0).toFixed(2)}`;
+const INTERVAL_LABELS = { '4_months': 'Every 4 months', '6_months': 'Every 6 months', yearly: 'Yearly' };
+const todayStr = new Date().toISOString().split('T')[0];
+const in7Days = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-const empty = { name: '', amount: '', frequency: 'monthly', category: 'hall_hire', payment_method: 'standing_order', next_due_date: '', active: true, notes: '' };
+const getStatus = (nextDue) => {
+  if (!nextDue) return 'unknown';
+  if (nextDue < todayStr) return 'overdue';
+  if (nextDue <= in7Days) return 'due_soon';
+  return 'active';
+};
+
+const STATUS_CONFIG = {
+  active: { label: 'Active', className: 'bg-green-100 text-green-700 border-green-200' },
+  due_soon: { label: 'Due soon', className: 'bg-amber-100 text-amber-700 border-amber-200' },
+  overdue: { label: 'Overdue', className: 'bg-red-100 text-red-700 border-red-200' },
+  unknown: { label: 'Unknown', className: 'bg-gray-100 text-gray-600 border-gray-200' },
+};
 
 export default function TreasurerRecurringPayments() {
-  const queryClient = useQueryClient();
-  const [showDialog, setShowDialog] = useState(false);
-  const [editItem, setEditItem] = useState(null);
-  const [form, setForm] = useState(empty);
-  const [saving, setSaving] = useState(false);
+  const [filterSection, setFilterSection] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [sortField, setSortField] = useState('next_subs_due');
+  const [sortDir, setSortDir] = useState('asc');
+  const [reminderSent, setReminderSent] = useState({});
 
-  const { data: payments = [] } = useQuery({
-    queryKey: ['recurring-payments'],
-    queryFn: () => base44.entities.RecurringPayment.list('-created_date', 200),
-  });
+  const { data: sections = [] } = useQuery({ queryKey: ['sections'], queryFn: () => base44.entities.Section.filter({ active: true }) });
+  const { data: members = [] } = useQuery({ queryKey: ['members-active'], queryFn: () => base44.entities.Member.filter({ active: true }) });
 
-  const today = new Date();
-  const upcoming = payments.filter(p => {
-    if (!p.active || !p.next_due_date) return false;
-    return isWithinInterval(new Date(p.next_due_date), { start: today, end: addDays(today, 14) });
-  });
+  const subscribers = useMemo(() => members.filter(m => m.stripe_subscription_id), [members]);
 
-  const openNew = () => { setEditItem(null); setForm(empty); setShowDialog(true); };
-  const openEdit = (p) => { setEditItem(p); setForm({ ...p, amount: String(p.amount) }); setShowDialog(true); };
+  const filtered = useMemo(() => {
+    let result = subscribers.filter(m => {
+      const matchSection = filterSection === 'all' || m.section_id === filterSection;
+      const status = getStatus(m.next_subs_due);
+      const matchStatus = filterStatus === 'all' || status === filterStatus;
+      return matchSection && matchStatus;
+    });
+    result.sort((a, b) => {
+      const av = sortField === 'full_name' ? (a.full_name || '') : sortField === 'section' ? (a.section_id || '') : (a.next_subs_due || '9999');
+      const bv = sortField === 'full_name' ? (b.full_name || '') : sortField === 'section' ? (b.section_id || '') : (b.next_subs_due || '9999');
+      if (av < bv) return sortDir === 'asc' ? -1 : 1;
+      if (av > bv) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return result;
+  }, [subscribers, filterSection, filterStatus, sortField, sortDir]);
 
-  const handleSave = async () => {
-    if (!form.name || !form.amount) { toast.error('Name and amount are required'); return; }
-    setSaving(true);
+  const toggleSort = field => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDir('asc'); }
+  };
+
+  const SortIcon = ({ field }) => {
+    if (sortField !== field) return null;
+    return sortDir === 'asc' ? <ChevronUp className="w-3 h-3 inline ml-1" /> : <ChevronDown className="w-3 h-3 inline ml-1" />;
+  };
+
+  const totalActive = subscribers.filter(m => getStatus(m.next_subs_due) === 'active').length;
+  const totalDueSoon = subscribers.filter(m => getStatus(m.next_subs_due) === 'due_soon').length;
+  const totalOverdue = subscribers.filter(m => getStatus(m.next_subs_due) === 'overdue').length;
+
+  const sendReminder = async (member) => {
+    const emails = [member.parent_one_email, member.parent_two_email].filter(Boolean);
+    for (const email of emails) {
+      await base44.integrations.Core.SendEmail({ to: email, subject: 'Scout subscription payment reminder', body: `Your Scout subscription payment is due. Please log in to your account to ensure your payment method is up to date.` });
+    }
     try {
-      const payload = { ...form, amount: parseFloat(form.amount) };
-      if (editItem) {
-        await base44.entities.RecurringPayment.update(editItem.id, payload);
-      } else {
-        await base44.entities.RecurringPayment.create(payload);
-      }
-      queryClient.invalidateQueries({ queryKey: ['recurring-payments'] });
-      toast.success('Saved');
-      setShowDialog(false);
-    } catch (e) { toast.error('Failed: ' + e.message); }
-    finally { setSaving(false); }
+      if (member.parent_one_email) await base44.functions.invoke('sendPushNotification', { email: member.parent_one_email, title: 'Subscription reminder', body: 'Your Scout subscription payment is due.' });
+    } catch {}
+    setReminderSent(prev => ({ ...prev, [member.id]: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }));
+    toast.success('Reminder sent');
   };
-
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this recurring payment?')) return;
-    await base44.entities.RecurringPayment.delete(id);
-    queryClient.invalidateQueries({ queryKey: ['recurring-payments'] });
-    toast.success('Deleted');
-  };
-
-  const toggleActive = async (p) => {
-    await base44.entities.RecurringPayment.update(p.id, { active: !p.active });
-    queryClient.invalidateQueries({ queryKey: ['recurring-payments'] });
-  };
-
-  const sf = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const monthlyTotal = payments.filter(p => p.active).reduce((s, p) => {
-    if (p.frequency === 'monthly') return s + p.amount;
-    if (p.frequency === 'weekly') return s + p.amount * 4.33;
-    if (p.frequency === 'yearly') return s + p.amount / 12;
-    return s;
-  }, 0);
 
   return (
     <TreasurerLayout title="Recurring Payments">
-      {upcoming.length > 0 && (
-        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-          <p className="text-sm text-amber-800 font-medium">{upcoming.length} payment{upcoming.length > 1 ? 's' : ''} due in the next 14 days: {upcoming.map(p => `${p.name} (${fmt(p.amount)})`).join(', ')}</p>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-sm text-gray-600">Monthly commitment: <span className="font-bold text-red-600">{fmt(monthlyTotal)}</span></div>
-        <Button onClick={openNew} className="bg-[#1a472a] hover:bg-[#13381f]">
-          <Plus className="w-4 h-4 mr-2" />Add Recurring Payment
-        </Button>
+      {/* Summary */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <Card className="bg-green-50 border-0"><CardContent className="p-4 text-center"><p className="text-xs text-gray-500">Active</p><p className="text-2xl font-bold text-green-700">{totalActive}</p></CardContent></Card>
+        <Card className="bg-amber-50 border-0"><CardContent className="p-4 text-center"><p className="text-xs text-gray-500">Due within 7 days</p><p className="text-2xl font-bold text-amber-700">{totalDueSoon}</p></CardContent></Card>
+        <Card className="bg-red-50 border-0"><CardContent className="p-4 text-center"><p className="text-xs text-gray-500">Overdue</p><p className="text-2xl font-bold text-red-700">{totalOverdue}</p></CardContent></Card>
       </div>
 
       <Card>
-        <CardContent className="p-0">
-          {payments.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">No recurring payments set up</p>
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle>Subscriptions ({filtered.length} of {subscribers.length})</CardTitle>
+            <div className="flex gap-2">
+              <Select value={filterSection} onValueChange={setFilterSection}>
+                <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All sections</SelectItem>
+                  {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="due_soon">Due soon</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {filtered.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-8">No subscriptions found.</p>
           ) : (
-            <div className="divide-y">
-              {payments.map(p => (
-                <div key={p.id} className={`flex items-center justify-between p-4 ${!p.active ? 'opacity-50' : ''}`}>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold">{p.name}</p>
-                      <Badge variant="outline" className="text-xs capitalize">{p.frequency}</Badge>
-                      <Badge variant="outline" className="text-xs">{p.payment_method?.replace(/_/g, ' ')}</Badge>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-0.5">
-                      {p.category?.replace(/_/g, ' ')}
-                      {p.next_due_date && ` · Next due: ${p.next_due_date}`}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-red-600">{fmt(p.amount)}</span>
-                    <Switch checked={!!p.active} onCheckedChange={() => toggleActive(p)} />
-                    <Button size="sm" variant="ghost" onClick={() => openEdit(p)}><Edit className="w-3 h-3" /></Button>
-                    <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(p.id)}><Trash2 className="w-3 h-3" /></Button>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left py-2 px-2 font-semibold text-gray-600 cursor-pointer whitespace-nowrap" onClick={() => toggleSort('full_name')}>Member<SortIcon field="full_name" /></th>
+                    <th className="text-left py-2 px-2 font-semibold text-gray-600 cursor-pointer whitespace-nowrap" onClick={() => toggleSort('section')}>Section<SortIcon field="section" /></th>
+                    <th className="text-left py-2 px-2 font-semibold text-gray-600">Interval</th>
+                    <th className="text-left py-2 px-2 font-semibold text-gray-600">Last Payment</th>
+                    <th className="text-left py-2 px-2 font-semibold text-gray-600 cursor-pointer whitespace-nowrap" onClick={() => toggleSort('next_subs_due')}>Next Due<SortIcon field="next_subs_due" /></th>
+                    <th className="text-left py-2 px-2 font-semibold text-gray-600">Status</th>
+                    <th className="py-2 px-2"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(member => {
+                    const status = getStatus(member.next_subs_due);
+                    const sc = STATUS_CONFIG[status];
+                    const section = sections.find(s => s.id === member.section_id);
+                    const reminder = reminderSent[member.id];
+                    return (
+                      <tr key={member.id} className={`border-b hover:bg-gray-50 ${status === 'overdue' ? 'bg-red-50/30' : status === 'due_soon' ? 'bg-amber-50/30' : ''}`}>
+                        <td className="py-2 px-2 font-medium">{member.full_name}</td>
+                        <td className="py-2 px-2 text-gray-600">{section?.display_name || '—'}</td>
+                        <td className="py-2 px-2 text-gray-600">{INTERVAL_LABELS[member.subs_interval] || '—'}</td>
+                        <td className="py-2 px-2 text-gray-500">{member.last_subs_payment_date || '—'}</td>
+                        <td className={`py-2 px-2 font-medium ${status === 'overdue' ? 'text-red-600' : status === 'due_soon' ? 'text-amber-600' : ''}`}>{member.next_subs_due || '—'}</td>
+                        <td className="py-2 px-2">
+                          <Badge className={`border ${sc.className} text-xs`}>{sc.label}</Badge>
+                        </td>
+                        <td className="py-2 px-2">
+                          {status === 'overdue' && (
+                            reminder ? (
+                              <span className="text-xs text-gray-400">Sent {reminder}</span>
+                            ) : (
+                              <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => sendReminder(member)}>
+                                <Bell className="w-3 h-3" /> Remind
+                              </Button>
+                            )
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>{editItem ? 'Edit' : 'Add'} Recurring Payment</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <Label>Name</Label>
-              <Input value={form.name} onChange={e => sf('name', e.target.value)} placeholder="e.g. Hall Hire" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Amount (£)</Label>
-                <Input type="number" step="0.01" min="0" value={form.amount} onChange={e => sf('amount', e.target.value)} />
-              </div>
-              <div>
-                <Label>Frequency</Label>
-                <Select value={form.frequency} onValueChange={v => sf('frequency', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="yearly">Yearly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Category</Label>
-                <Select value={form.category} onValueChange={v => sf('category', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {['hall_hire', 'insurance', 'equipment', 'subscriptions', 'other'].map(c => (
-                      <SelectItem key={c} value={c}>{c.replace(/_/g, ' ')}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Payment Method</Label>
-                <Select value={form.payment_method} onValueChange={v => sf('payment_method', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="standing_order">Standing Order</SelectItem>
-                    <SelectItem value="manual_payment">Manual Payment</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div>
-              <Label>Next Due Date</Label>
-              <Input type="date" value={form.next_due_date} onChange={e => sf('next_due_date', e.target.value)} />
-            </div>
-            <div>
-              <Label>Notes (optional)</Label>
-              <Input value={form.notes} onChange={e => sf('notes', e.target.value)} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-[#1a472a] hover:bg-[#13381f]">
-              {saving ? 'Saving...' : 'Save'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </TreasurerLayout>
   );
 }

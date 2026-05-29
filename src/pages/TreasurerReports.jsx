@@ -1,226 +1,302 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import TreasurerLayout from '@/components/treasurer/TreasurerLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Download } from 'lucide-react';
 
-const fmt = (n) => `£${(n || 0).toFixed(2)}`;
-const COLORS = ['#1a472a', '#2d6a4f', '#40916c', '#52b788', '#74c69d', '#95d5b2', '#b7e4c7', '#d8f3dc'];
+const fmt = n => `£${(n || 0).toFixed(2)}`;
+const catLabel = c => { if (c === 'subs') return 'Subscriptions'; if (c === 'event_payments') return 'Event payment'; return c?.replace(/_/g, ' ') || '—'; };
+
+function getApproxTermRange() {
+  const today = new Date(); const month = today.getMonth() + 1; const year = today.getFullYear();
+  if (month >= 9) return { start: `${year}-09-01`, end: `${year}-12-20` };
+  if (month <= 4) return { start: `${year}-01-06`, end: `${year}-04-15` };
+  return { start: `${year}-04-20`, end: `${year}-07-20` };
+}
+
+function downloadCSV(rows, filename) {
+  const csv = rows.map(r => r.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function TreasurerReports() {
-  const [dateRange, setDateRange] = useState('all');
+  const todayStr = new Date().toISOString().split('T')[0];
 
-  const { data: ledger = [] } = useQuery({ queryKey: ['ledger'], queryFn: () => base44.entities.LedgerEntry.list('-date', 500) });
-  const { data: funds = [] } = useQuery({ queryKey: ['funds'], queryFn: () => base44.entities.Fund.filter({ active: true }) });
+  const { data: ledger = [] } = useQuery({ queryKey: ['ledger-reports'], queryFn: () => base44.entities.LedgerEntry.list('-date', 1000) });
+  const { data: members = [] } = useQuery({ queryKey: ['members-active'], queryFn: () => base44.entities.Member.filter({ active: true }) });
+  const { data: events = [] } = useQuery({ queryKey: ['events-reports'], queryFn: () => base44.entities.Event.list('-start_date', 100) });
+  const { data: programmes = [] } = useQuery({ queryKey: ['programmes-reports'], queryFn: () => base44.entities.Programme.list('-date', 300) });
   const { data: sections = [] } = useQuery({ queryKey: ['sections'], queryFn: () => base44.entities.Section.filter({ active: true }) });
-  const { data: budgets = [] } = useQuery({ queryKey: ['section-budgets'], queryFn: () => base44.entities.SectionBudget.filter({}) });
-  const { data: members = [] } = useQuery({ queryKey: ['members'], queryFn: () => base44.entities.Member.filter({ active: true }) });
-  const { data: payments = [] } = useQuery({ queryKey: ['member-payments'], queryFn: () => base44.entities.MemberPayment.list('-date', 500) });
-  const { data: events = [] } = useQuery({ queryKey: ['events'], queryFn: () => base44.entities.Event.list('-start_date', 200) });
+  const { data: terms = [] } = useQuery({ queryKey: ['terms'], queryFn: () => base44.entities.Term.list() });
+  const { data: eventPaymentStatuses = [] } = useQuery({ queryKey: ['eps-reports'], queryFn: () => base44.entities.EventPaymentStatus.filter({}) });
+  const { data: actions = [] } = useQuery({ queryKey: ['actions-reports'], queryFn: () => base44.entities.ActionRequired.filter({}) });
+  const { data: responses = [] } = useQuery({ queryKey: ['responses-reports'], queryFn: () => base44.entities.ActionResponse.filter({}) });
 
-  const filterByDate = (entries) => {
-    if (dateRange === 'all') return entries;
-    const now = new Date();
-    const cutoff = new Date();
-    if (dateRange === '1m') cutoff.setMonth(now.getMonth() - 1);
-    if (dateRange === '3m') cutoff.setMonth(now.getMonth() - 3);
-    if (dateRange === '6m') cutoff.setMonth(now.getMonth() - 6);
-    if (dateRange === '1y') cutoff.setFullYear(now.getFullYear() - 1);
-    return entries.filter(e => e.date && new Date(e.date) >= cutoff);
-  };
+  const defaultTerm = useMemo(() => {
+    const found = terms.find(t => t.start_date <= todayStr && t.end_date >= todayStr);
+    return found ? { start: found.start_date, end: found.end_date } : getApproxTermRange();
+  }, [terms, todayStr]);
 
-  const filteredLedger = filterByDate(ledger);
-  const totalIncome = filteredLedger.filter(e => e.type === 'income').reduce((s, e) => s + (e.amount || 0), 0);
-  const totalExpenses = filteredLedger.filter(e => e.type === 'expense').reduce((s, e) => s + (e.amount || 0), 0);
+  const [dateFrom, setDateFrom] = useState(defaultTerm.start);
+  const [dateTo, setDateTo] = useState(defaultTerm.end);
 
-  // Income vs expenses by category
-  const categoryData = {};
-  filteredLedger.forEach(e => {
-    const cat = e.category?.replace(/_/g, ' ') || 'other';
-    if (!categoryData[cat]) categoryData[cat] = { name: cat, income: 0, expense: 0 };
-    if (e.type === 'income') categoryData[cat].income += e.amount || 0;
-    else categoryData[cat].expense += e.amount || 0;
-  });
-  const categoryChartData = Object.values(categoryData).sort((a, b) => (b.income + b.expense) - (a.income + a.expense));
+  const filteredIncome = useMemo(() =>
+    ledger.filter(e => e.type === 'income' && (!dateFrom || e.date >= dateFrom) && (!dateTo || e.date <= dateTo)),
+    [ledger, dateFrom, dateTo]
+  );
 
-  // Income by month
-  const monthlyData = {};
-  filteredLedger.forEach(e => {
-    if (!e.date) return;
-    const month = e.date.substring(0, 7);
-    if (!monthlyData[month]) monthlyData[month] = { month, income: 0, expense: 0 };
-    if (e.type === 'income') monthlyData[month].income += e.amount || 0;
-    else monthlyData[month].expense += e.amount || 0;
-  });
-  const monthlyChartData = Object.values(monthlyData).sort((a, b) => a.month.localeCompare(b.month));
+  // Report 1: By Category
+  const byCategoryData = useMemo(() => {
+    const map = {};
+    filteredIncome.forEach(e => { if (!map[e.category]) map[e.category] = 0; map[e.category] += e.amount || 0; });
+    return Object.entries(map).map(([cat, total]) => ({ category: catLabel(cat), total })).sort((a, b) => b.total - a.total);
+  }, [filteredIncome]);
 
-  // Fund balances
-  const fundData = funds.map(f => {
-    const entries = ledger.filter(e => e.linked_fund_id === f.id);
-    const income = entries.filter(e => e.type === 'income').reduce((s, e) => s + (e.amount || 0), 0);
-    const expenses = entries.filter(e => e.type === 'expense').reduce((s, e) => s + (e.amount || 0), 0);
-    return { name: f.fund_name, value: Math.max(0, (f.starting_balance || 0) + income - expenses) };
-  }).filter(f => f.value > 0);
+  // Report 2: By Event
+  const byEventData = useMemo(() => {
+    return events.filter(e => (e.cost || 0) > 0).map(event => {
+      const evEntries = filteredIncome.filter(e => e.linked_event_id === event.id);
+      const collected = evEntries.reduce((s, e) => s + (e.amount || 0), 0);
+      const attAction = actions.find(a => a.event_id === event.id && a.action_purpose === 'attendance');
+      const attendingCount = attAction ? new Set(responses.filter(r => r.action_required_id === attAction.id && ['yes', 'Yes, attending', 'attending'].includes(r.response_value)).map(r => r.member_id)).size : 0;
+      const paidCount = eventPaymentStatuses.filter(ps => ps.event_id === event.id && ps.status === 'paid').length;
+      const estExpenses = (event.estimated_expenses || []).reduce((s, e) => s + (e.amount || 0), 0);
+      return { event, collected, attendingCount, paidCount, estExpenses, surplus: collected - estExpenses };
+    }).filter(r => r.collected > 0 || r.attendingCount > 0);
+  }, [events, filteredIncome, actions, responses, eventPaymentStatuses]);
 
-  // Budget usage
-  const budgetData = sections.map(s => {
-    const budget = budgets.find(b => b.section_id === s.id);
-    const spend = filteredLedger.filter(e => e.type === 'expense' && e.section_id === s.id).reduce((s, e) => s + (e.amount || 0), 0);
-    return { name: s.display_name, budget: budget?.budget_amount || 0, spend };
-  }).filter(b => b.budget > 0 || b.spend > 0);
+  // Report 3: By Section
+  const bySectionData = useMemo(() => {
+    const memberSectionMap = {};
+    members.forEach(m => { memberSectionMap[m.id] = m.section_id; });
+    const map = {};
+    filteredIncome.forEach(e => {
+      if (!e.linked_member_id) return;
+      const sectionId = memberSectionMap[e.linked_member_id];
+      if (!sectionId) return;
+      if (!map[sectionId]) map[sectionId] = 0;
+      map[sectionId] += e.amount || 0;
+    });
+    return sections.map(s => ({ section: s, total: map[s.id] || 0 })).filter(r => r.total > 0).sort((a, b) => b.total - a.total);
+  }, [filteredIncome, members, sections]);
 
-  // Payment summary stats
-  const totalPayments = payments.reduce((s, p) => s + (p.amount || 0), 0);
-  const payingMembers = [...new Set(payments.map(p => p.member_id))].length;
+  // Report 4: By Member
+  const byMemberData = useMemo(() => {
+    const map = {};
+    filteredIncome.forEach(e => {
+      if (!e.linked_member_id) return;
+      if (!map[e.linked_member_id]) map[e.linked_member_id] = { total: 0, subs: 0, events: 0, other: 0 };
+      map[e.linked_member_id].total += e.amount || 0;
+      if (e.category === 'subs') map[e.linked_member_id].subs += e.amount || 0;
+      else if (e.category === 'event_payments') map[e.linked_member_id].events += e.amount || 0;
+      else map[e.linked_member_id].other += e.amount || 0;
+    });
+    return Object.entries(map).map(([memberId, data]) => {
+      const member = members.find(m => m.id === memberId);
+      const section = sections.find(s => s.id === member?.section_id);
+      return { member, section, ...data };
+    }).filter(r => r.member).sort((a, b) => b.total - a.total);
+  }, [filteredIncome, members, sections]);
+
+  const DateRangeBar = () => (
+    <div className="flex flex-wrap items-end gap-3 mb-4 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+      <div className="space-y-1"><Label className="text-xs">From</Label><Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-40" /></div>
+      <div className="space-y-1"><Label className="text-xs">To</Label><Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-40" /></div>
+      <Button variant="outline" size="sm" onClick={() => { setDateFrom(defaultTerm.start); setDateTo(defaultTerm.end); }}>Reset to current term</Button>
+    </div>
+  );
 
   return (
     <TreasurerLayout title="Financial Reports">
-      <div className="flex items-center gap-4 mb-6">
-        <Label>Date Range:</Label>
-        <Select value={dateRange} onValueChange={setDateRange}>
-          <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Time</SelectItem>
-            <SelectItem value="1m">Last Month</SelectItem>
-            <SelectItem value="3m">Last 3 Months</SelectItem>
-            <SelectItem value="6m">Last 6 Months</SelectItem>
-            <SelectItem value="1y">Last Year</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <Tabs defaultValue="by_category">
+        <TabsList className="mb-6 grid grid-cols-2 sm:grid-cols-4 gap-1 h-auto">
+          <TabsTrigger value="by_category">By Category</TabsTrigger>
+          <TabsTrigger value="by_event">By Event</TabsTrigger>
+          <TabsTrigger value="by_section">By Section</TabsTrigger>
+          <TabsTrigger value="by_member">By Member</TabsTrigger>
+        </TabsList>
 
-      {/* Summary */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <Card className="bg-green-50 border-0">
-          <CardContent className="p-5 text-center">
-            <p className="text-sm text-gray-500">Total Income</p>
-            <p className="text-3xl font-bold text-green-700">{fmt(totalIncome)}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-red-50 border-0">
-          <CardContent className="p-5 text-center">
-            <p className="text-sm text-gray-500">Total Expenses</p>
-            <p className="text-3xl font-bold text-red-700">{fmt(totalExpenses)}</p>
-          </CardContent>
-        </Card>
-        <Card className={`border-0 ${totalIncome - totalExpenses >= 0 ? 'bg-blue-50' : 'bg-orange-50'}`}>
-          <CardContent className="p-5 text-center">
-            <p className="text-sm text-gray-500">Net</p>
-            <p className={`text-3xl font-bold ${totalIncome - totalExpenses >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>{fmt(totalIncome - totalExpenses)}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid lg:grid-cols-2 gap-6 mb-6">
-        {/* Monthly income vs expense */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">Monthly Income vs Expenses</CardTitle></CardHeader>
-          <CardContent>
-            {monthlyChartData.length === 0 ? (
-              <p className="text-center text-gray-400 py-8">No data</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={monthlyChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `£${v}`} />
-                  <Tooltip formatter={v => fmt(v)} />
-                  <Legend />
-                  <Bar dataKey="income" name="Income" fill="#40916c" />
-                  <Bar dataKey="expense" name="Expense" fill="#e63946" />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Fund balances pie */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">Fund Balances</CardTitle></CardHeader>
-          <CardContent>
-            {fundData.length === 0 ? (
-              <p className="text-center text-gray-400 py-8">No fund data</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie data={fundData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, value }) => `${name}: ${fmt(value)}`}>
-                    {fundData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip formatter={v => fmt(v)} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Category breakdown */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">Income & Expenses by Category</CardTitle></CardHeader>
-          <CardContent>
-            {categoryChartData.length === 0 ? (
-              <p className="text-center text-gray-400 py-8">No data</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={categoryChartData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={v => `£${v}`} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={90} />
-                  <Tooltip formatter={v => fmt(v)} />
-                  <Legend />
-                  <Bar dataKey="income" name="Income" fill="#40916c" />
-                  <Bar dataKey="expense" name="Expense" fill="#e63946" />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Budget usage */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">Budget vs Actual Spend by Section</CardTitle></CardHeader>
-          <CardContent>
-            {budgetData.length === 0 ? (
-              <p className="text-center text-gray-400 py-8">No budget data. Set section budgets first.</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={budgetData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `£${v}`} />
-                  <Tooltip formatter={v => fmt(v)} />
-                  <Legend />
-                  <Bar dataKey="budget" name="Budget" fill="#95d5b2" />
-                  <Bar dataKey="spend" name="Actual Spend" fill="#1a472a" />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Member payment summary */}
-      <Card>
-        <CardHeader><CardTitle className="text-base">Member Payment Summary</CardTitle></CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <p className="text-xs text-gray-500">Total Collected</p>
-              <p className="text-xl font-bold text-green-700">{fmt(totalPayments)}</p>
-            </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <p className="text-xs text-gray-500">Paying Members</p>
-              <p className="text-xl font-bold">{payingMembers}</p>
-            </div>
-            <div className="text-center p-3 bg-gray-50 rounded-lg">
-              <p className="text-xs text-gray-500">Total Members</p>
-              <p className="text-xl font-bold">{members.length}</p>
-            </div>
+        {/* By Category */}
+        <TabsContent value="by_category">
+          <DateRangeBar />
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Income by Category</CardTitle>
+                  <Button variant="outline" size="sm" className="gap-1" onClick={() => downloadCSV([['Category', 'Total Income'], ...byCategoryData.map(r => [r.category, r.total.toFixed(2)])], 'income-by-category.csv')}>
+                    <Download className="w-3 h-3" /> Export CSV
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-56 mb-4">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={byCategoryData} margin={{ top: 4, right: 10, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="category" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `£${v}`} />
+                      <Tooltip formatter={v => [`£${Number(v).toFixed(2)}`]} />
+                      <Bar dataKey="total" fill="#004851" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead><tr className="border-b bg-gray-50"><th className="text-left py-2 px-2 font-semibold text-gray-600">Category</th><th className="text-right py-2 px-2 font-semibold text-gray-600">Total Income</th></tr></thead>
+                    <tbody>
+                      {byCategoryData.map(r => (
+                        <tr key={r.category} className="border-b hover:bg-gray-50">
+                          <td className="py-2 px-2 capitalize">{r.category}</td>
+                          <td className="py-2 px-2 text-right font-semibold text-green-700">{fmt(r.total)}</td>
+                        </tr>
+                      ))}
+                      <tr className="border-t-2 bg-gray-50 font-semibold">
+                        <td className="py-2 px-2">Total</td>
+                        <td className="py-2 px-2 text-right text-green-700">{fmt(byCategoryData.reduce((s, r) => s + r.total, 0))}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+
+        {/* By Event */}
+        <TabsContent value="by_event">
+          <DateRangeBar />
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Income by Event</CardTitle>
+                <Button variant="outline" size="sm" className="gap-1" onClick={() => downloadCSV([['Event', 'Date', 'Attending', 'Paid', 'Collected', 'Est. Expenses', 'Surplus'], ...byEventData.map(r => [r.event.title, r.event.start_date, r.attendingCount, r.paidCount, r.collected.toFixed(2), r.estExpenses.toFixed(2), r.surplus.toFixed(2)])], 'income-by-event.csv')}>
+                  <Download className="w-3 h-3" /> Export CSV
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {byEventData.length === 0 ? <p className="text-sm text-gray-500 text-center py-6">No event income in this period.</p> : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead><tr className="border-b bg-gray-50">
+                      <th className="text-left py-2 px-2 font-semibold text-gray-600">Event</th>
+                      <th className="text-left py-2 px-2 font-semibold text-gray-600">Date</th>
+                      <th className="text-right py-2 px-2 font-semibold text-gray-600">Attending</th>
+                      <th className="text-right py-2 px-2 font-semibold text-gray-600">Paid</th>
+                      <th className="text-right py-2 px-2 font-semibold text-gray-600">Collected</th>
+                      <th className="text-right py-2 px-2 font-semibold text-gray-600">Est. Expenses</th>
+                      <th className="text-right py-2 px-2 font-semibold text-gray-600">Surplus</th>
+                    </tr></thead>
+                    <tbody>
+                      {byEventData.map(r => (
+                        <tr key={r.event.id} className="border-b hover:bg-gray-50">
+                          <td className="py-2 px-2">{r.event.title}</td>
+                          <td className="py-2 px-2 text-gray-500">{r.event.start_date}</td>
+                          <td className="py-2 px-2 text-right">{r.attendingCount}</td>
+                          <td className="py-2 px-2 text-right text-green-600">{r.paidCount}</td>
+                          <td className="py-2 px-2 text-right font-semibold text-green-700">{fmt(r.collected)}</td>
+                          <td className="py-2 px-2 text-right text-red-600">{fmt(r.estExpenses)}</td>
+                          <td className={`py-2 px-2 text-right font-semibold ${r.surplus >= 0 ? 'text-green-700' : 'text-red-700'}`}>{r.surplus >= 0 ? '+' : ''}{fmt(r.surplus)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* By Section */}
+        <TabsContent value="by_section">
+          <DateRangeBar />
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Income by Section</CardTitle>
+                <Button variant="outline" size="sm" className="gap-1" onClick={() => downloadCSV([['Section', 'Total Income'], ...bySectionData.map(r => [r.section.display_name, r.total.toFixed(2)])], 'income-by-section.csv')}>
+                  <Download className="w-3 h-3" /> Export CSV
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {bySectionData.length === 0 ? <p className="text-sm text-gray-500 text-center py-6">No section income in this period.</p> : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead><tr className="border-b bg-gray-50"><th className="text-left py-2 px-2 font-semibold text-gray-600">Section</th><th className="text-right py-2 px-2 font-semibold text-gray-600">Total Income</th></tr></thead>
+                    <tbody>
+                      {bySectionData.map(r => (
+                        <tr key={r.section.id} className="border-b hover:bg-gray-50">
+                          <td className="py-2 px-2">{r.section.display_name}</td>
+                          <td className="py-2 px-2 text-right font-semibold text-green-700">{fmt(r.total)}</td>
+                        </tr>
+                      ))}
+                      <tr className="border-t-2 bg-gray-50 font-semibold">
+                        <td className="py-2 px-2">Total</td>
+                        <td className="py-2 px-2 text-right text-green-700">{fmt(bySectionData.reduce((s, r) => s + r.total, 0))}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* By Member */}
+        <TabsContent value="by_member">
+          <DateRangeBar />
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Income by Member</CardTitle>
+                <Button variant="outline" size="sm" className="gap-1" onClick={() => downloadCSV([['Member', 'Section', 'Total Paid', 'Subscriptions', 'Events', 'Other'], ...byMemberData.map(r => [r.member.full_name, r.section?.display_name || '', r.total.toFixed(2), r.subs.toFixed(2), r.events.toFixed(2), r.other.toFixed(2)])], 'income-by-member.csv')}>
+                  <Download className="w-3 h-3" /> Export CSV
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {byMemberData.length === 0 ? <p className="text-sm text-gray-500 text-center py-6">No member income in this period.</p> : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead><tr className="border-b bg-gray-50">
+                      <th className="text-left py-2 px-2 font-semibold text-gray-600">Member</th>
+                      <th className="text-left py-2 px-2 font-semibold text-gray-600">Section</th>
+                      <th className="text-right py-2 px-2 font-semibold text-gray-600">Total Paid</th>
+                      <th className="text-right py-2 px-2 font-semibold text-gray-600">Subs</th>
+                      <th className="text-right py-2 px-2 font-semibold text-gray-600">Events</th>
+                      <th className="text-right py-2 px-2 font-semibold text-gray-600">Other</th>
+                    </tr></thead>
+                    <tbody>
+                      {byMemberData.map(r => (
+                        <tr key={r.member.id} className="border-b hover:bg-gray-50">
+                          <td className="py-2 px-2 font-medium">{r.member.full_name}</td>
+                          <td className="py-2 px-2 text-gray-600">{r.section?.display_name || '—'}</td>
+                          <td className="py-2 px-2 text-right font-semibold text-green-700">{fmt(r.total)}</td>
+                          <td className="py-2 px-2 text-right text-blue-600">{fmt(r.subs)}</td>
+                          <td className="py-2 px-2 text-right text-purple-600">{fmt(r.events)}</td>
+                          <td className="py-2 px-2 text-right text-gray-600">{fmt(r.other)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </TreasurerLayout>
   );
 }
