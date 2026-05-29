@@ -1,131 +1,90 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
-import { Users, Calendar, Award, Mail, Settings, ArrowLeft, Image, ShieldAlert, ChevronDown, UserCheck, CalendarDays, Lightbulb, Package, TrendingUp, FileText, Landmark, BookOpen, ScrollText } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Home, User, Calendar, Tent, Award, ChevronDown, LogOut } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-export default function LeaderNav() {
-  const navigate = useNavigate();
+const navItems = [
+  { label: 'Dashboard', page: 'ParentDashboard', icon: Home },
+  { label: 'My Child', page: 'MyChild', icon: User },
+  { label: 'Programme', page: 'ParentProgramme', icon: Calendar },
+  { label: 'Events & Camps', page: 'ParentEvents', icon: Tent },
+  { label: 'Badges', page: 'ParentBadges', icon: Award },
+];
+
+export default function ParentNav() {
   const location = useLocation();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  const [userRole, setUserRole] = useState('');
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    base44.auth.me().then(u => { setIsAdmin(u?.role === 'admin'); setUserRole(u?.role || ''); }).catch(() => {});
+    base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  const navItems = [
-    { icon: Users, label: 'Members', color: 'bg-blue-500' },
-    { icon: Calendar, label: 'Programme', color: 'bg-purple-500' },
-    { icon: ShieldAlert, label: 'Events', color: 'bg-orange-500' },
-    { icon: Award, label: 'Badges', color: 'bg-green-500' },
-    { icon: Settings, label: 'Account', page: 'AccountSettings', color: 'bg-gray-500' },
-  ];
+  const currentPage = location.pathname.replace('/', '');
 
-  const currentPage = location.pathname.split('/').pop();
-  
   return (
-    <motion.div 
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      className="bg-white border-b border-gray-200 shadow-sm sticky top-20 z-40"
-    >
+    <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between md:h-16 py-3 md:py-0 gap-3 md:gap-0">
-          <div className="hidden md:flex items-center gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
-            </Button>
-            <div className="w-px h-6 bg-gray-200" />
-            <Link to={createPageUrl('LeaderDashboard')}>
-              <Button
-                variant="ghost"
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-              >
-                Portal
-              </Button>
-            </Link>
-          </div>
+        <div className="flex items-center justify-between h-14">
+          {/* Logo / Brand */}
+          <Link to={createPageUrl('ParentDashboard')} className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-[#7413dc] rounded-lg flex items-center justify-center">
+              <svg viewBox="0 0 100 100" className="w-5 h-5 fill-white">
+                <path d="M50 10 L60 40 L90 40 L65 60 L75 90 L50 70 L25 90 L35 60 L10 40 L40 40 Z" />
+              </svg>
+            </div>
+            <span className="font-bold text-gray-900 hidden sm:block text-sm">Parent Portal</span>
+          </Link>
 
-          <nav className="flex items-center justify-center gap-2 md:gap-1">
-            {navItems.map((item, index) => {
-              const isActive = item.dropdown 
-                ? item.dropdown.some(sub => currentPage === sub.page)
-                : currentPage === item.page;
-              
+          {/* Nav Links */}
+          <div className="flex items-center gap-1">
+            {navItems.map((item) => {
+              const isActive = currentPage === item.page || location.pathname === `/${item.page}`;
               return (
-                <motion.div
-                  key={item.label}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.05 }}
+                <Link
+                  key={item.page}
+                  to={createPageUrl(item.page)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                    isActive
+                      ? 'bg-[#7413dc] text-white shadow-sm'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
                 >
-                  {item.dropdown ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          className={`flex items-center justify-center px-3 py-2 rounded-lg transition-all ${
-                            isActive
-                              ? `${item.color} text-white shadow-md scale-105`
-                              : 'text-gray-600 hover:bg-gray-100'
-                          }`}
-                        >
-                          <item.icon className="w-5 h-5 sm:w-4 sm:h-4" />
-                          <span className="hidden sm:inline sm:ml-2 text-sm font-medium">{item.label}</span>
-                          <ChevronDown className="hidden sm:inline w-3 h-3 ml-1" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="center">
-                        {item.dropdown.map((subItem) => [
-                          subItem.separator && <DropdownMenuSeparator key={`${subItem.page}-sep`} />,
-                          <DropdownMenuItem key={subItem.page} asChild>
-                            <Link to={createPageUrl(subItem.page)} className="flex items-center gap-2 cursor-pointer">
-                              <subItem.icon className="w-4 h-4" />
-                              {subItem.label}
-                            </Link>
-                          </DropdownMenuItem>
-                        ]).flat().filter(Boolean)}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  ) : (
-                    <Link to={createPageUrl(item.page)}>
-                      <button
-                        className={`flex items-center justify-center px-3 py-2 rounded-lg transition-all ${
-                          isActive
-                            ? `${item.color} text-white shadow-md scale-105`
-                            : 'text-gray-600 hover:bg-gray-100'
-                        }`}
-                      >
-                        <item.icon className="w-5 h-5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline sm:ml-2 text-sm font-medium">{item.label}</span>
-                      </button>
-                    </Link>
-                  )}
-                </motion.div>
+                  <item.icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden md:inline">{item.label}</span>
+                </Link>
               );
             })}
-          </nav>
-          
-          <Link to={createPageUrl('LeaderDashboard')} className="w-full md:hidden">
-            <Button
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2 text-gray-600 hover:text-gray-900 border-gray-300"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Parent Portal
-            </Button>
-          </Link>
+          </div>
+
+          {/* User Menu */}
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-all">
+                  <div className="w-7 h-7 bg-[#7413dc] rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    {(user.full_name || user.email || 'P').charAt(0).toUpperCase()}
+                  </div>
+                  <span className="hidden sm:block text-sm font-medium text-gray-700 max-w-[120px] truncate">
+                    {user.full_name || user.email}
+                  </span>
+                  <ChevronDown className="w-3 h-3 text-gray-500" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <div className="px-3 py-2 text-xs text-gray-500 font-medium">Signed in as</div>
+                <div className="px-3 pb-2 text-sm font-medium text-gray-900 truncate">{user.email}</div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => base44.auth.logout()} className="text-red-600 cursor-pointer">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
-    </motion.div>
+    </nav>
   );
 }

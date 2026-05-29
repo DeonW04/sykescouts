@@ -112,24 +112,28 @@ export default function ParentEventDetail() {
     enabled: !!eventId,
   });
 
-  const primaryChild = myChildrenInEvent[0] || children[0];
+  // primaryChild is derived after myChildrenInEvent — see below
 
   const { data: eventPaymentStatus } = useQuery({
-    queryKey: ['event-payment-status-detail', eventId, primaryChild?.id],
+    queryKey: ['event-payment-status-detail', eventId, children[0]?.id],
     queryFn: async () => {
-      const records = await base44.entities.EventPaymentStatus.filter({ event_id: eventId, member_id: primaryChild.id });
+      const child = children[0];
+      if (!child) return null;
+      const records = await base44.entities.EventPaymentStatus.filter({ event_id: eventId, member_id: child.id });
       return records[0] || null;
     },
-    enabled: !!eventId && !!primaryChild?.id && (event?.cost || 0) > 0,
+    enabled: !!eventId && children.length > 0 && (event?.cost || 0) > 0,
   });
 
   const { data: paymentOverride } = useQuery({
-    queryKey: ['payment-override-detail', eventId, primaryChild?.id],
+    queryKey: ['payment-override-detail', eventId, children[0]?.id],
     queryFn: async () => {
-      const records = await base44.entities.MeetingPaymentOverride.filter({ event_id: eventId, member_id: primaryChild.id, override_type: 'waived' });
+      const child = children[0];
+      if (!child) return null;
+      const records = await base44.entities.MeetingPaymentOverride.filter({ event_id: eventId, member_id: child.id, override_type: 'waived' });
       return records[0] || null;
     },
-    enabled: !!eventId && !!primaryChild?.id,
+    enabled: !!eventId && children.length > 0,
   });
 
   const { data: badges = [] } = useQuery({
@@ -193,6 +197,7 @@ export default function ParentEventDetail() {
     eventAttendances.some(a => a.member_id === child.id)
   );
 
+  const primaryChild = myChildrenInEvent[0] || children[0];
   const childIds = myChildrenInEvent.map(c => c.id);
 
   // Match responses by member_id so leader-entered responses are included
