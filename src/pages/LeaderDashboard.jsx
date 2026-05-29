@@ -7,7 +7,7 @@ import { useSectionContext } from '../components/leader/SectionContext';
 import {
   Users, Calendar, Award, Mail, Settings, ArrowRight, Tent,
   ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt,
-  Lightbulb, Package, TrendingUp, FileText, Landmark, BookOpen, Zap, Star,
+  Lightbulb, Package, TrendingUp, FileText, Landmark, BookOpen, Zap, Star, MessageSquare,
 } from 'lucide-react';
 import ActionsDrilldownModal from '../components/leader/ActionsDrilldownModal';
 import PaymentAlerts from '../components/leader/PaymentAlerts';
@@ -21,6 +21,7 @@ import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
 import { SectionProvider } from '../components/leader/SectionContext';
 import SectionTransitionOverlay from '../components/leader/SectionTransitionOverlay';
+import { PORTAL_NAV_GROUPS } from '@/lib/navConfig';
 
 const glassCard = {
   background: 'rgba(255,255,255,0.9)',
@@ -471,11 +472,14 @@ function ActionsStatus({ sections, selectedSection }) {
 
 // ── Quick action tiles config ──────────────────────────────────────────────────
 const getQuickActions = (user) => [
-  { icon: Users, label: 'Members', accent: '#3b82f6', dropdown: [{ label: 'Member Details', page: 'LeaderMembers', icon: Users }, { label: 'Attendance', page: 'LeaderAttendance', icon: UserCheck }, { label: 'Parent Portal', page: 'ParentPortal', icon: Users }] },
-  { icon: Calendar, label: 'Programme', accent: '#7413dc', dropdown: [{ label: 'Weekly Meetings', page: 'LeaderProgramme', icon: Calendar }, { label: 'Events', page: 'LeaderEvents', icon: CalendarDays }, { label: 'Ideas Board', page: 'IdeasBoard', icon: Lightbulb }] },
-  { icon: ShieldAlert, label: 'Safety', accent: '#f97316', dropdown: [{ label: 'Risk Assessments', page: 'RiskAssessments', icon: ShieldAlert }, { label: 'Consent Forms', page: 'ConsentForms', icon: FileText }] },
-  { icon: Award, label: 'Badges', accent: '#22c55e', dropdown: [{ label: 'Badge Tracking', page: 'LeaderBadges', icon: Award }, { label: 'Due Badges', page: 'AwardBadges', icon: TrendingUp }, { label: 'Badge Stock', page: 'BadgeStockManagement', icon: Package }, ...(user?.role === 'admin' ? [{ label: 'Manage Badges', page: 'ManageBadges', icon: Settings, separator: true }] : [])] },
-  { icon: BookOpen, label: 'Section Admin', accent: '#14b8a6', dropdown: [{ label: 'Communications', page: 'Communications', icon: Mail }, { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark }, ...(['admin', 'treasurer', 'glv', 'team_leader'].includes(user?.role) ? [{ label: 'Treasurer Portal', page: 'TreasurerDashboard', icon: Landmark, separator: true }] : [])] },
+  // Groups synced with nav bar via lib/navConfig — edit there to update both
+  ...PORTAL_NAV_GROUPS.map(group => ({
+    icon: group.icon,
+    label: group.label,
+    accent: group.accent,
+    dropdown: group.links.filter(link => !link.adminOnly || user?.role === 'admin'),
+  })),
+  // Gallery also has its own standalone tile on the dashboard
   { icon: Image, label: 'Gallery', accent: '#ec4899', page: 'LeaderGallery' },
 ];
 

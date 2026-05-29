@@ -12,52 +12,10 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PORTAL_NAV_GROUPS } from '@/lib/navConfig';
 
-// Portal nav groups (leader)
-const portalGroups = [
-  {
-    label: 'Members', icon: Users,
-    links: [
-      { label: 'Member Details', page: 'LeaderMembers', icon: Users },
-      { label: 'Attendance', page: 'LeaderAttendance', icon: UserCheck },
-      { label: 'Parent Portal', page: 'ParentPortal', icon: Users },
-    ],
-  },
-  {
-    label: 'Programme', icon: Calendar,
-    links: [
-      { label: 'Weekly Meetings', page: 'LeaderProgramme', icon: Calendar },
-      { label: 'Events', page: 'LeaderEvents', icon: CalendarDays },
-      { label: 'Ideas Board', page: 'IdeasBoard', icon: Lightbulb },
-    ],
-  },
-  {
-    label: 'Safety', icon: ShieldAlert,
-    links: [
-      { label: 'Risk Assessments', page: 'RiskAssessments', icon: ShieldAlert },
-      { label: 'Consent Forms', page: 'ConsentForms', icon: FileText },
-    ],
-  },
-  {
-    label: 'Badges', icon: Award,
-    links: [
-      { label: 'Badge Tracking', page: 'LeaderBadges', icon: Award },
-      { label: 'Due Badges', page: 'AwardBadges', icon: TrendingUp },
-      { label: 'Badge Stock', page: 'BadgeStockManagement', icon: Package },
-      { label: 'Manage Badges', page: 'ManageBadges', icon: Settings, separator: true, adminOnly: true },
-    ],
-  },
-  {
-    label: 'Section Admin', icon: BookOpen,
-    links: [
-      { label: 'Communications', page: 'Communications', icon: Mail },
-      { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark },
-      { label: 'Gallery', page: 'LeaderGallery', icon: Image },
-      { label: 'Treasurer Portal', page: 'TreasurerDashboard', icon: Landmark, separator: true },
-      { label: 'WhatsApp Schedules', page: 'WhatsAppSchedules', icon: MessageSquare, separator: true },
-    ],
-  },
-];
+// Portal nav groups — single source of truth in lib/navConfig
+const portalGroups = PORTAL_NAV_GROUPS;
 
 // Parent portal nav links (flat — no dropdowns)
 const parentNavLinks = [
