@@ -88,6 +88,24 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
     select: data => data[0] || null,
   });
 
+  // Fetch programmes linked to the current actions (for title/date context)
+  const actionProgrammeIds = actionsData.actions.map(a => a.programme_id).filter(Boolean);
+  const { data: actionProgrammes = [] } = useQuery({
+    queryKey: ['mobile-action-programmes', actionProgrammeIds.join(',')],
+    queryFn: async () => {
+      const all = await base44.entities.Programme.filter({ shown_in_portal: true });
+      return all.filter(p => actionProgrammeIds.includes(p.id));
+    },
+    enabled: actionProgrammeIds.length > 0,
+  });
+
+  // Fetch meeting payment statuses for child to compute virtual payment actions
+  const { data: allMeetingPayStatuses = [] } = useQuery({
+    queryKey: ['mobile-all-meeting-pay-statuses', primaryChild?.id],
+    queryFn: () => base44.entities.MeetingPaymentStatus.filter({ member_id: primaryChild.id }),
+    enabled: !!primaryChild?.id,
+  });
+
   const { data: volunteerActionsData = [] } = useQuery({
     queryKey: ['mobile-volunteer-actions', childIds.join(','), childSectionIds.join(',')],
     queryFn: async () => {
@@ -126,6 +144,35 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
   const actionsRequired = allActions.filter(action =>
     !children.every(child => existingResponses.some(r => r.action_required_id === action.id && r.member_id === child.id && r.response_value))
   );
+
+  // Compute virtual payment-required actions for meetings where child confirmed attending + has cost + not yet paid
+  const virtualPaymentActions = allActions
+    .filter(a => a.action_purpose === 'attendance' && a.programme_id)
+    .map(action => {
+      const prog = actionProgrammes.find(p => p.id === action.programme_id);
+      if (!prog || !prog.has_cost || !(prog.cost > 0)) return null;
+      // Child must have confirmed attending
+      const attendingResponse = existingResponses.find(r =>
+        r.action_required_id === action.id &&
+        childIds.includes(r.member_id) &&
+        r.response_value &&
+        ['yes', 'yes, attending', 'attending'].includes(r.response_value.toLowerCase())
+      );
+      if (!attendingResponse) return null;
+      // Must not already be paid
+      const payStatus = allMeetingPayStatuses.find(ps => ps.meeting_id === action.programme_id);
+      if (payStatus?.status === 'paid') return null;
+      return {
+        id: `pay_${action.programme_id}`,
+        action_purpose: 'meeting_payment',
+        action_text: `Pay £${prog.cost.toFixed(2)} — ${prog.title}`,
+        programme_id: action.programme_id,
+        is_open: true,
+      };
+    })
+    .filter(Boolean);
+
+  const allPendingActions = [...actionsRequired, ...virtualPaymentActions];
 
   const getEventAttendanceStatus = (eventId) => {
     const attendanceAction = eventActions.find(a => a.event_id === eventId);
@@ -217,7 +264,15 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
       </div>
 
       <div className="px-4 py-5 space-y-5">
-        <ActionRequiredCard actionsRequired={actionsRequired} children={children} user={user} existingResponses={existingResponses} onOpenConsentForm={onOpenConsentForm} />
+        <ActionRequiredCard
+          actionsRequired={allPendingActions}
+          children={children}
+          user={user}
+          existingResponses={existingResponses}
+          onOpenConsentForm={onOpenConsentForm}
+          programmes={actionProgrammes}
+          onTabChange={onTabChange}
+        />
         <VolunteerRequestCard volunteerActions={volunteerActionsData} user={user} onTabChange={onTabChange} />
 
         {/* This Week's Meeting */}

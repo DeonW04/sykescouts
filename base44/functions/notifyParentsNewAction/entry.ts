@@ -45,7 +45,28 @@ Deno.serve(async (req) => {
     const notificationType = isConsentForm ? 'new_consent_form' : 'new_action_required';
     
     const title = isConsentForm ? '📋 Consent Form Required' : '🔔 Action Required';
-    const body2 = `${action.column_title} for ${member.first_name}`;
+
+    // Look up meeting context for richer notification body
+    let meetingContext = '';
+    if (action.programme_id) {
+      try {
+        const progs = await base44.asServiceRole.entities.Programme.filter({ id: action.programme_id });
+        if (progs.length > 0 && progs[0].date) {
+          const d = new Date(progs[0].date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+          meetingContext = ` · ${progs[0].title || 'Meeting'} (${d})`;
+        }
+      } catch (_) { /* skip if lookup fails */ }
+    } else if (action.event_id) {
+      try {
+        const events = await base44.asServiceRole.entities.Event.filter({ id: action.event_id });
+        if (events.length > 0 && events[0].start_date) {
+          const d = new Date(events[0].start_date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+          meetingContext = ` · ${events[0].title || 'Event'} (${d})`;
+        }
+      } catch (_) { /* skip */ }
+    }
+
+    const body2 = `${action.action_text || action.column_title} for ${member.first_name}${meetingContext}`;
     const url = '/app';
 
     // Find parent emails for this member

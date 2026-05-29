@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Bell, CheckCircle, ChevronDown, ChevronUp, Pencil, FileText } from 'lucide-react';
+import { Bell, CheckCircle, ChevronDown, ChevronUp, Pencil, FileText, CreditCard } from 'lucide-react';
+import { format } from 'date-fns';
 import { toast } from 'sonner';
 
-function ActionItem({ action, children, user, existingResponses }) {
+const ATTENDING_VALUES = new Set(['yes', 'yes, attending', 'attending']);
+
+function ActionItem({ action, children, user, existingResponses, programme, event: eventItem, onTabChange }) {
   const queryClient = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -64,9 +67,25 @@ function ActionItem({ action, children, user, existingResponses }) {
     return val;
   };
 
+  const isAttendanceAction = action.action_purpose === 'attendance';
+  const hasMeetingCost = programme?.has_cost && (programme?.cost || 0) > 0;
+  const attendanceConfirmedAttending = isAttendanceAction && children.some(c => {
+    const r = getExistingResponse(c.id);
+    return r && ATTENDING_VALUES.has((r.response_value || '').toLowerCase());
+  });
+  const showPaymentPrompt = hasMeetingCost && attendanceConfirmedAttending && allAnswered;
+
+  // Context line: meeting title + date
+  const contextLine = programme
+    ? `${programme.title} · ${format(new Date(programme.date), 'EEE d MMM yyyy')}`
+    : eventItem
+    ? `${eventItem.title} · ${format(new Date(eventItem.start_date), 'EEE d MMM yyyy')}`
+    : null;
+
   // If all answered and not in edit mode, show compact "responded" state
   if (allAnswered && !editing) {
     return (
+      <div>
       <div className="bg-white rounded-2xl border border-green-200 p-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
@@ -90,6 +109,22 @@ function ActionItem({ action, children, user, existingResponses }) {
           Edit
         </button>
       </div>
+      {showPaymentPrompt && (
+        <button
+          onClick={() => onTabChange?.('programme')}
+          className="mt-2 w-full bg-amber-50 border border-amber-200 rounded-2xl px-3 py-2.5 flex items-center justify-between active:bg-amber-100 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-amber-600 flex-shrink-0" />
+            <div className="text-left">
+              <p className="text-xs font-bold text-amber-800">Payment required</p>
+              <p className="text-xs text-amber-600">£{(programme.cost).toFixed(2)} for {programme.title}</p>
+            </div>
+          </div>
+          <span className="text-amber-600 text-sm">→</span>
+        </button>
+      )}
+      </div>
     );
   }
 
@@ -101,6 +136,7 @@ function ActionItem({ action, children, user, existingResponses }) {
           <Bell className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm text-gray-900 leading-snug">{action.action_text}</p>
+            {contextLine && <p className="text-xs text-[#7413dc] mt-0.5 font-medium">{contextLine}</p>}
             {editing && <p className="text-xs text-gray-400 mt-0.5">Updating your response</p>}
           </div>
           {editing && (
@@ -173,7 +209,7 @@ function TextResponseInput({ currentResponse, onSubmit, submitting }) {
   );
 }
 
-export default function ActionRequiredCard({ actionsRequired, children, user, existingResponses, onOpenConsentForm }) {
+export default function ActionRequiredCard({ actionsRequired, children, user, existingResponses, onOpenConsentForm, programmes = [], events = [], onTabChange }) {
   // Only show actions that have at least one unanswered child
   const pendingActions = actionsRequired.filter(action =>
     !children.every(child =>
@@ -237,6 +273,8 @@ export default function ActionRequiredCard({ actionsRequired, children, user, ex
               </div>
             );
           }
+          const programme = action.programme_id ? programmes.find(p => p.id === action.programme_id) : null;
+          const eventItem = action.event_id ? events.find(e => e.id === action.event_id) : null;
           return (
             <ActionItem
               key={action.id}
@@ -244,6 +282,9 @@ export default function ActionRequiredCard({ actionsRequired, children, user, ex
               children={children}
               user={user}
               existingResponses={existingResponses}
+              programme={programme}
+              event={eventItem}
+              onTabChange={onTabChange}
             />
           );
         }).filter(Boolean)}

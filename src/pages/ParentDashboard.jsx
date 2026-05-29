@@ -262,10 +262,16 @@ export default function ParentDashboard() {
         childIds.includes(r.member_id) || childIds.includes(r.child_member_id)
       );
       
+      // Fetch events for event-based actions
+      const eventIds = [...new Set(relevantActions.map(a => a.event_id).filter(Boolean))];
+      const allEvents = eventIds.length > 0 ? await base44.entities.Event.filter({ published: true }) : [];
+      const relevantEvents = allEvents.filter(e => eventIds.includes(e.id));
+
       // Add programme/event details to each action
       const actionsWithDetails = relevantActions.map(action => ({
         ...action,
-        programme: relevantProgrammes.find(p => p.id === action.programme_id)
+        programme: relevantProgrammes.find(p => p.id === action.programme_id),
+        event: relevantEvents.find(e => e.id === action.event_id),
       }));
       
       // Filter out actions that are closed or have been completed for all children
@@ -406,12 +412,13 @@ export default function ParentDashboard() {
                       <div key={action.id} className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                         <p className="font-medium text-sm text-orange-900">{action.action_text}</p>
                         {action.programme && (
-                          <p className="text-xs text-orange-600 mt-1">
-                            {action.programme.title} - {new Date(action.programme.date).toLocaleDateString('en-GB', { 
-                              weekday: 'short', 
-                              month: 'short', 
-                              day: 'numeric' 
-                            })}
+                          <p className="text-xs text-[#7413dc] mt-1 font-medium">
+                            {action.programme.title} · {new Date(action.programme.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                          </p>
+                        )}
+                        {action.event && (
+                          <p className="text-xs text-[#7413dc] mt-1 font-medium">
+                            {action.event.title} · {new Date(action.event.start_date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                           </p>
                         )}
 

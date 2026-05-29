@@ -151,6 +151,9 @@ export default function MeetingDetail() {
       return allResponses.flat();
     },
     enabled: actionIds.length > 0,
+    // Auto-refresh so leader sees parent responses without manually reloading
+    refetchInterval: 15000,
+    staleTime: 0,
   });
 
   useEffect(() => {
@@ -286,7 +289,8 @@ export default function MeetingDetail() {
 
   const getActionResponse = (actionId, memberId) => {
     const response = actionResponses.find(r => r.action_required_id === actionId && r.member_id === memberId);
-    return response?.response || null;
+    // response_value is set by all clients; response is only set by some — check both
+    return response?.response_value || response?.response || null;
   };
 
   const isPastMeeting = () => {

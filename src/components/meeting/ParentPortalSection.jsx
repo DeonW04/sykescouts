@@ -230,7 +230,7 @@ export default function ParentPortalSection({ programmeId, formData, setFormData
 
       {actions.length > 0 && (
         <Card>
-          <CardHeader><CardTitle>Response Summary & Reminders</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Response Summary &amp; Reminders</CardTitle></CardHeader>
           <CardContent>
             <ActionSummaryPanel actions={actions} entityType="programme" />
           </CardContent>

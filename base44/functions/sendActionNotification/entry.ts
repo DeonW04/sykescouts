@@ -69,13 +69,24 @@ Deno.serve(async (req) => {
   });
 
   let entityName = '';
+  let entityDate = '';
   if (entityType === 'programme' && action.programme_id) {
     const progs = await base44.asServiceRole.entities.Programme.filter({ id: action.programme_id });
-    if (progs.length > 0) entityName = progs[0].title || 'Meeting';
+    if (progs.length > 0) {
+      entityName = progs[0].title || 'Meeting';
+      entityDate = progs[0].date;
+    }
   } else if (entityType === 'event' && action.event_id) {
     const events = await base44.asServiceRole.entities.Event.filter({ id: action.event_id });
-    if (events.length > 0) entityName = events[0].title || 'Event';
+    if (events.length > 0) {
+      entityName = events[0].title || 'Event';
+      entityDate = events[0].start_date;
+    }
   }
+  // Build a label that includes the date e.g. "Fire Safety · Wed 4 Jun 2025"
+  const entityLabel = entityName + (entityDate
+    ? ` · ${new Date(entityDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}`
+    : '');
 
   const existingResponses = await base44.asServiceRole.entities.ActionResponse.filter({ action_required_id: actionRequiredId });
 
@@ -138,7 +149,7 @@ Deno.serve(async (req) => {
             from_name: '40th Rochdale Scouts',
             to: email,
             subject,
-            body: createEmailTemplate(member.full_name, action.action_text, entityName, dashboardLink),
+            body: createEmailTemplate(member.full_name, action.action_text, entityLabel, dashboardLink),
           })
           .then(() => base44.asServiceRole.entities.NotificationLog.create({
             recipient_name: email === member.parent_one_email ? (member.parent_one_name || '') : (member.parent_two_name || ''),
@@ -165,7 +176,7 @@ Deno.serve(async (req) => {
 
     const payload = JSON.stringify({
       title: 'Action Required',
-      body: action.action_text + (entityName ? ` — ${entityName}` : ''),
+      body: action.action_text + (entityLabel ? ` — ${entityLabel}` : ''),
       url: '/app',
     });
 
