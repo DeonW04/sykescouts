@@ -7,160 +7,275 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, CreditCard, Trash2 } from 'lucide-react';
+import { Plus, CreditCard, Building2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import StripePaymentEntry from './StripePaymentEntry';
 
 const fmt = (n) => `£${(n || 0).toFixed(2)}`;
 
-export default function MemberPaymentsTab({ memberId, readOnly = false }) {
-  const queryClient = useQueryClient();
-  const [showDialog, setShowDialog] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ amount: '', date: new Date().toISOString().split('T')[0], payment_type: 'subs', notes: '', related_event_id: '' });
+const CATEGORY_LABELS = {
+  subs: 'Subscriptions',
+  event_payments: 'Event Payment',
+  donations: 'Donation',
+  fundraising: 'Fundraising',
+  equipment: 'Equipment',
+  food: 'Food',
+  transport: 'Transport',
+  hall_hire: 'Hall Hire',
+  badges: 'Badges',
+  reimbursement: 'Reimbursement',
+  other: 'Other',
+};
 
-  const { data: payments = [] } = useQuery({
-    queryKey: ['member-payments', memberId],
-    queryFn: () => base44.entities.MemberPayment.filter({ member_id: memberId }),
+export default function MemberPaymentsTab({ memberId, memberName = '', readOnly = false }) {
+  const queryClient = useQueryClient();
+  // null = list view | 'select' = path chooser | 'bank' = manual form | 'stripe' = stripe lookup
+  const [addMode, setAddMode] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [bankForm, setBankForm] = useState({
+    amount: '',
+    date: new Date().toISOString().split('T')[0],
+    category: 'subs',
+    description: '',
+    reference: '',
+    linked_event_id: '',
+  });
+
+  // Payment history: LedgerEntry records linked to this member
+  const { data: entries = [] } = useQuery({
+    queryKey: ['member-ledger-entries', memberId],
+    queryFn: () => base44.entities.LedgerEntry.filter({ linked_member_id: memberId }),
     enabled: !!memberId,
   });
-  const { data: events = [] } = useQuery({ queryKey: ['events'], queryFn: () => base44.entities.Event.list('-start_date', 100) });
+
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
-  const totalPaid = payments.reduce((s, p) => s + (p.amount || 0), 0);
+  const { data: events = [] } = useQuery({
+    queryKey: ['events-list-bank'],
+    queryFn: () => base44.entities.Event.list('-start_date', 100),
+    enabled: addMode === 'bank',
+  });
 
-  const handleSave = async () => {
-    if (!form.amount || !form.date) { toast.error('Amount and date are required'); return; }
+  // Show income entries sorted by date descending
+  const incomeEntries = [...entries]
+    .filter(e => e.type === 'income')
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const totalPaid = incomeEntries.reduce((s, e) => s + (e.amount || 0), 0);
+
+  const sf = (k, v) => setBankForm(f => ({ ...f, [k]: v }));
+
+  const handleBankSave = async () => {
+    if (!bankForm.amount || !bankForm.date) { toast.error('Amount and date are required'); return; }
     setSaving(true);
     try {
+      await base44.entities.LedgerEntry.create({
+        date: bankForm.date,
+        type: 'income',
+        amount: parseFloat(bankForm.amount),
+        category: bankForm.category,
+        description: bankForm.description || `${CATEGORY_LABELS[bankForm.category] || bankForm.category} \u2014 ${memberName}`,
+        reference: bankForm.reference,
+        linked_member_id: memberId,
+        linked_event_id: bankForm.linked_event_id || null,
+        entered_by: user?.email,
+      });
+      // Also create legacy MemberPayment record for other parts of the app
       await base44.entities.MemberPayment.create({
         member_id: memberId,
-        amount: parseFloat(form.amount),
-        date: form.date,
-        payment_type: form.payment_type,
-        notes: form.notes,
-        related_event_id: form.related_event_id || null,
+        amount: parseFloat(bankForm.amount),
+        date: bankForm.date,
+        payment_type: bankForm.category === 'subs' ? 'subs' : bankForm.category === 'event_payments' ? 'event' : 'other',
+        notes: bankForm.description,
+        related_event_id: bankForm.linked_event_id || null,
         entered_by: user?.email,
-      });
-      // Auto-create ledger entry
-      await base44.entities.LedgerEntry.create({
-        date: form.date,
-        type: 'income',
-        amount: parseFloat(form.amount),
-        category: form.payment_type === 'subs' ? 'subs' : form.payment_type === 'event' ? 'event_payments' : 'other',
-        description: `${form.payment_type} payment - member`,
-        linked_member_id: memberId,
-        linked_event_id: form.related_event_id || null,
-        entered_by: user?.email,
-      });
-      queryClient.invalidateQueries({ queryKey: ['member-payments', memberId] });
-      queryClient.invalidateQueries({ queryKey: ['ledger'] });
+      }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: ['member-ledger-entries', memberId] });
       toast.success('Payment recorded');
-      setShowDialog(false);
-      setForm({ amount: '', date: new Date().toISOString().split('T')[0], payment_type: 'subs', notes: '', related_event_id: '' });
+      setAddMode(null);
+      setBankForm({ amount: '', date: new Date().toISOString().split('T')[0], category: 'subs', description: '', reference: '', linked_event_id: '' });
     } catch (e) { toast.error('Failed: ' + e.message); }
     finally { setSaving(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this payment?')) return;
-    await base44.entities.MemberPayment.delete(id);
-    queryClient.invalidateQueries({ queryKey: ['member-payments', memberId] });
-    toast.success('Payment deleted');
+  const handleStripeSaved = () => {
+    queryClient.invalidateQueries({ queryKey: ['member-ledger-entries', memberId] });
+    setAddMode(null);
   };
 
-  const sf = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  // ── Path selection ──────────────────────────────────────────────────────────
+  if (addMode === 'select') {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-2">
+          <button onClick={() => setAddMode(null)} className="p-1 hover:bg-gray-100 rounded-lg">
+            <ArrowLeft className="w-4 h-4 text-gray-500" />
+          </button>
+          <CardTitle>Add Payment — Choose Method</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500 mb-4">How was this payment made?</p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <button
+              onClick={() => setAddMode('bank')}
+              className="flex flex-col items-start gap-3 p-5 border-2 border-gray-200 rounded-xl hover:border-[#7413dc] hover:bg-[#7413dc]/5 transition-all text-left"
+            >
+              <Building2 className="w-8 h-8 text-gray-400" />
+              <div>
+                <p className="font-semibold text-gray-900">Bank Transfer / Cash</p>
+                <p className="text-xs text-gray-400 mt-0.5">Manual entry — cash, bank transfer, or cheque</p>
+              </div>
+            </button>
+            <button
+              onClick={() => setAddMode('stripe')}
+              className="flex flex-col items-start gap-3 p-5 border-2 border-gray-200 rounded-xl hover:border-[#7413dc] hover:bg-[#7413dc]/5 transition-all text-left"
+            >
+              <CreditCard className="w-8 h-8 text-gray-400" />
+              <div>
+                <p className="font-semibold text-gray-900">Stripe Card Payment</p>
+                <p className="text-xs text-gray-400 mt-0.5">Look up a card payment by Payment Intent ID</p>
+              </div>
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
+  // ── Bank transfer form ──────────────────────────────────────────────────────
+  if (addMode === 'bank') {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-2">
+          <button onClick={() => setAddMode('select')} className="p-1 hover:bg-gray-100 rounded-lg">
+            <ArrowLeft className="w-4 h-4 text-gray-500" />
+          </button>
+          <CardTitle>Bank Transfer / Cash Payment</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Amount (£)</Label>
+              <Input type="number" step="0.01" min="0" value={bankForm.amount} onChange={e => sf('amount', e.target.value)} placeholder="0.00" />
+            </div>
+            <div>
+              <Label>Date</Label>
+              <Input type="date" value={bankForm.date} onChange={e => sf('date', e.target.value)} />
+            </div>
+          </div>
+          <div>
+            <Label>Category</Label>
+            <Select value={bankForm.category} onValueChange={v => sf('category', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="subs">Subscriptions</SelectItem>
+                <SelectItem value="event_payments">Event Payment</SelectItem>
+                <SelectItem value="donations">Donation</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {bankForm.category === 'event_payments' && (
+            <div>
+              <Label>Linked Event</Label>
+              <Select value={bankForm.linked_event_id} onValueChange={v => sf('linked_event_id', v)}>
+                <SelectTrigger><SelectValue placeholder="Select event..." /></SelectTrigger>
+                <SelectContent>
+                  {events.map(e => <SelectItem key={e.id} value={e.id}>{e.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div>
+            <Label>Description (optional)</Label>
+            <Input value={bankForm.description} onChange={e => sf('description', e.target.value)} placeholder="e.g. Camp payment received in cash" />
+          </div>
+          <div>
+            <Label>Reference (optional)</Label>
+            <Input value={bankForm.reference} onChange={e => sf('reference', e.target.value)} placeholder="e.g. Bank reference or receipt number" />
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" onClick={() => setAddMode('select')} className="flex-1">Cancel</Button>
+            <Button onClick={handleBankSave} disabled={saving} className="flex-1 bg-[#1a472a] hover:bg-[#13381f]">
+              {saving ? 'Saving...' : 'Record Payment'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // ── Stripe payment lookup ───────────────────────────────────────────────────
+  if (addMode === 'stripe') {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-2">
+          <button onClick={() => setAddMode('select')} className="p-1 hover:bg-gray-100 rounded-lg">
+            <ArrowLeft className="w-4 h-4 text-gray-500" />
+          </button>
+          <CardTitle>Stripe Card Payment</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <StripePaymentEntry
+            memberId={memberId}
+            memberName={memberName}
+            onSaved={handleStripeSaved}
+            onCancel={() => setAddMode('select')}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // ── Payment history list ────────────────────────────────────────────────────
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="flex items-center gap-2"><CreditCard className="w-4 h-4" />Payment History</CardTitle>
-          <p className="text-sm text-gray-500 mt-1">Total paid: <span className="font-semibold text-green-600">{fmt(totalPaid)}</span></p>
+          <p className="text-sm text-gray-500 mt-1">
+            Total income recorded: <span className="font-semibold text-green-600">{fmt(totalPaid)}</span>
+          </p>
         </div>
         {!readOnly && (
-          <Button onClick={() => setShowDialog(true)} className="bg-[#1a472a] hover:bg-[#13381f]">
+          <Button onClick={() => setAddMode('select')} className="bg-[#1a472a] hover:bg-[#13381f]">
             <Plus className="w-4 h-4 mr-1" />Add Payment
           </Button>
         )}
       </CardHeader>
       <CardContent>
-        {payments.length === 0 ? (
-          <p className="text-center text-gray-400 py-8">No payments recorded for this member</p>
+        {incomeEntries.length === 0 ? (
+          <p className="text-center text-gray-400 py-8">No payment records for this member</p>
         ) : (
           <div className="space-y-2">
-            {[...payments].sort((a, b) => new Date(b.date) - new Date(a.date)).map(p => (
-              <div key={p.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs capitalize">{p.payment_type}</Badge>
-                    <span className="font-semibold text-green-700">{fmt(p.amount)}</span>
-                    <span className="text-xs text-gray-500">{p.date}</span>
+            {incomeEntries.map(entry => (
+              <div key={entry.id} className="flex items-start justify-between p-3 border rounded-lg gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline" className="text-xs capitalize shrink-0">
+                      {CATEGORY_LABELS[entry.category] || entry.category}
+                    </Badge>
+                    <span className="font-semibold text-green-700">{fmt(entry.amount)}</span>
+                    <span className="text-xs text-gray-500">
+                      {entry.date ? format(new Date(entry.date), 'd MMM yyyy') : ''}
+                    </span>
                   </div>
-                  {p.notes && <p className="text-xs text-gray-500 mt-0.5">{p.notes}</p>}
-                  {p.entered_by && <p className="text-xs text-gray-400">Recorded by {p.entered_by}</p>}
+                  {entry.description && (
+                    <p className="text-xs text-gray-600 mt-0.5 truncate">{entry.description}</p>
+                  )}
+                  {entry.reference && (
+                    <p className="text-xs text-gray-400 font-mono mt-0.5">Ref: {entry.reference}</p>
+                  )}
+                  {entry.entered_by && (
+                    <p className="text-xs text-gray-400">Recorded by {entry.entered_by}</p>
+                  )}
                 </div>
-                {!readOnly && (
-                  <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(p.id)}>
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                )}
               </div>
             ))}
           </div>
         )}
       </CardContent>
-
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Add Payment</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Amount (£)</Label>
-                <Input type="number" step="0.01" min="0" value={form.amount} onChange={e => sf('amount', e.target.value)} placeholder="0.00" />
-              </div>
-              <div>
-                <Label>Date</Label>
-                <Input type="date" value={form.date} onChange={e => sf('date', e.target.value)} />
-              </div>
-            </div>
-            <div>
-              <Label>Payment Type</Label>
-              <Select value={form.payment_type} onValueChange={v => sf('payment_type', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="subs">Subs</SelectItem>
-                  <SelectItem value="event">Event</SelectItem>
-                  <SelectItem value="donation">Donation</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {form.payment_type === 'event' && (
-              <div>
-                <Label>Linked Event</Label>
-                <Select value={form.related_event_id} onValueChange={v => sf('related_event_id', v)}>
-                  <SelectTrigger><SelectValue placeholder="Select event..." /></SelectTrigger>
-                  <SelectContent>
-                    {events.map(e => <SelectItem key={e.id} value={e.id}>{e.title}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            <div>
-              <Label>Notes (optional)</Label>
-              <Input value={form.notes} onChange={e => sf('notes', e.target.value)} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={saving} className="bg-[#1a472a] hover:bg-[#13381f]">
-              {saving ? 'Saving...' : 'Record Payment'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 }

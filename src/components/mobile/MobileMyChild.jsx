@@ -99,6 +99,10 @@ function SubscriptionsSection({ child, onRefresh }) {
   const [pendingInterval, setPendingInterval] = useState(null);
   const [confirmingInterval, setConfirmingInterval] = useState(false);
   const [activatingSubscription, setActivatingSubscription] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [newAnchorDate, setNewAnchorDate] = useState('');
+  const [changingDate, setChangingDate] = useState(false);
+  const [dateChangeMsg, setDateChangeMsg] = useState('');
 
   useEffect(() => {
     getStripePromise().then(p => { if (p) setStripePromise(p); });
@@ -118,6 +122,32 @@ function SubscriptionsSection({ child, onRefresh }) {
     toast.success('Subscription activated!');
     setActivatingSubscription(false);
     onRefresh();
+  };
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+  const handleDateChange = async () => {
+    if (!newAnchorDate) return;
+    setChangingDate(true);
+    try {
+      const res = await base44.functions.invoke('updateSubscriptionAnchorDate', {
+        member_id: child.id,
+        new_anchor_date: newAnchorDate,
+      });
+      if (res?.data?.error) {
+        toast.error(res.data.error);
+      } else {
+        setDateChangeMsg(`Next payment date updated to ${format(new Date(newAnchorDate), 'd MMMM yyyy')}`);
+        setShowDatePicker(false);
+        onRefresh();
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to update date');
+    } finally {
+      setChangingDate(false);
+    }
   };
 
   const handleIntervalChange = async (newInterval) => {
@@ -177,12 +207,43 @@ function SubscriptionsSection({ child, onRefresh }) {
                     <span className="font-semibold text-gray-800">{format(new Date(child.last_subs_payment_date), 'd MMM yyyy')}</span>
                   </div>
                 )}
-                {child.next_subs_due && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Next payment</span>
-                    <span className="font-semibold text-gray-800">{format(new Date(child.next_subs_due), 'd MMM yyyy')}</span>
-                  </div>
-                )}
+                {child.next_subs_due && (() => {
+                  const isOverdue = new Date(child.next_subs_due) < new Date();
+                  return (
+                    <div>
+                      <div className={`rounded-xl p-3 border ${isOverdue ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+                        <p className={`text-xs font-bold uppercase tracking-wide mb-0.5 ${isOverdue ? 'text-red-500' : 'text-green-600'}`}>
+                          {isOverdue ? 'Payment overdue' : 'Next payment'}
+                        </p>
+                        <p className={`font-bold ${isOverdue ? 'text-red-700' : 'text-green-800'}`}>
+                          {format(new Date(child.next_subs_due), 'd MMMM yyyy')}
+                        </p>
+                        {hasSubscription && (
+                          <button
+                            onClick={() => { setShowDatePicker(!showDatePicker); setDateChangeMsg(''); setNewAnchorDate(''); }}
+                            className="text-xs text-[#7413dc] mt-1 font-medium underline">
+                            Change payment date
+                          </button>
+                        )}
+                      </div>
+                      {dateChangeMsg && <p className="text-xs text-green-700 font-medium mt-1">{dateChangeMsg}</p>}
+                      {showDatePicker && (
+                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mt-2 space-y-2">
+                          <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">Select new payment date</p>
+                          <input type="date" value={newAnchorDate} onChange={e => setNewAnchorDate(e.target.value)} min={tomorrowStr}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7413dc]" />
+                          <div className="flex gap-2">
+                            <button onClick={() => setShowDatePicker(false)} className="flex-1 py-1.5 border border-gray-200 rounded-lg text-xs font-semibold text-gray-600">Cancel</button>
+                            <button onClick={handleDateChange} disabled={changingDate || !newAnchorDate}
+                              className="flex-1 py-1.5 bg-[#7413dc] text-white rounded-lg text-xs font-bold disabled:opacity-60">
+                              {changingDate ? 'Updating...' : 'Confirm'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Frequency</span>
                   <span className="font-semibold text-gray-800">{intervalLabel}</span>

@@ -626,7 +626,7 @@ export default function MemberDetail() {
                 </div>
               </div>
             )}
-            <MemberPaymentsTab memberId={memberId} />
+            <MemberPaymentsTab memberId={memberId} memberName={member?.full_name} />
           </TabsContent>
 
           {/* Notes Tab */}

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { CheckCircle, ChevronRight, ChevronLeft, User, Baby, Heart, Phone, Camera, AlertCircle, LogOut } from 'lucide-react';
+import { CheckCircle, ChevronRight, ChevronLeft, User, Baby, Heart, Phone, Camera, AlertCircle, LogOut, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
+import InlineCardSetup from '../components/mobile/InlineCardSetup';
 
 // Reusable field components
 function Field({ label, required, children }) {
@@ -170,8 +171,8 @@ export default function CompleteRegistration() {
       .catch(() => base44.auth.redirectToLogin('/CompleteRegistration'));
   }, []);
 
-  // TOTAL steps: 0=welcome, 1=your name, 2=child basics, 3=parents, 4=medical, 5=emergency, 6=photo, 7=done
-  const TOTAL_CONTENT_STEPS = 6;
+  // TOTAL steps: 0=welcome, 1=your name, 2=child basics, 3=parents, 4=medical, 5=emergency, 6=photo, 7=payment, 8=done
+  const TOTAL_CONTENT_STEPS = 7;
 
   const handleComplete = async () => {
     setSubmitting(true);
@@ -218,7 +219,7 @@ export default function CompleteRegistration() {
       }
 
       await base44.auth.updateMe({ onboarding_complete: true });
-      setStep(8); // done
+      setStep(7); // payment setup step
     } catch (err) {
       toast.error('Error: ' + err.message);
       setSubmitting(false);
@@ -331,6 +332,37 @@ export default function CompleteRegistration() {
             <LogOut className="w-4 h-4" />
             Sign out
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Step 7: Payment Setup ──
+  if (step === 7) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto"
+        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="flex-1 overflow-y-auto pb-28">
+          <StepHeader icon={CreditCard} iconBg="bg-green-500" title="Set up your payment method" subtitle="Add a card for subscriptions and events" step={7} totalSteps={TOTAL_CONTENT_STEPS} />
+          <div className="px-5 space-y-4 pb-8">
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Add a card to pay for subscriptions and events. You can update this at any time in your account settings.
+            </p>
+            {existingChildId ? (
+              <InlineCardSetup
+                memberId={existingChildId}
+                onSuccess={() => setStep(8)}
+                onCancel={() => setStep(8)}
+              />
+            ) : (
+              <p className="text-sm text-gray-400">Payment setup not available — add a card later in Account Settings.</p>
+            )}
+            <div className="text-center pt-2">
+              <button onClick={() => setStep(8)} className="text-sm text-gray-400 hover:text-gray-600 underline">
+                Skip for now
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -577,7 +609,7 @@ export default function CompleteRegistration() {
             Continue
             <ChevronRight className="w-5 h-5" />
           </button>
-        ) : (
+        ) : step === 6 ? (
           <button
             onClick={handleComplete}
             disabled={submitting}
@@ -589,7 +621,7 @@ export default function CompleteRegistration() {
               <><CheckCircle className="w-5 h-5" /> Complete Registration</>
             )}
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );

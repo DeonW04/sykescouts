@@ -19,6 +19,14 @@ export default function WebSubscriptionSection({ child }) {
   const [activating, setActivating] = useState(false);
   const [pendingInterval, setPendingInterval] = useState(null);
   const [savingInterval, setSavingInterval] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [newAnchorDate, setNewAnchorDate] = useState('');
+  const [changingDate, setChangingDate] = useState(false);
+  const [dateChangeMsg, setDateChangeMsg] = useState('');
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
   if (!child) return null;
 
@@ -31,6 +39,28 @@ export default function WebSubscriptionSection({ child }) {
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ['children'] });
     queryClient.invalidateQueries({ queryKey: ['account-settings-children'] });
+  };
+
+  const handleDateChange = async () => {
+    if (!newAnchorDate) return;
+    setChangingDate(true);
+    try {
+      const res = await base44.functions.invoke('updateSubscriptionAnchorDate', {
+        member_id: child.id,
+        new_anchor_date: newAnchorDate,
+      });
+      if (res?.data?.error) {
+        toast.error(res.data.error);
+      } else {
+        setDateChangeMsg(`Next payment date updated to ${format(new Date(newAnchorDate), 'd MMMM yyyy')}`);
+        setShowDatePicker(false);
+        refresh();
+      }
+    } catch (err) {
+      toast.error(err.message || 'Failed to update date');
+    } finally {
+      setChangingDate(false);
+    }
   };
 
   const handleActivate = async () => {
@@ -106,12 +136,26 @@ export default function WebSubscriptionSection({ child }) {
                     <p className="font-semibold text-gray-900">{format(new Date(child.last_subs_payment_date), 'd MMMM yyyy')}</p>
                   </div>
                 )}
-                {child.next_subs_due && (
-                  <div className="p-4 bg-gray-50 rounded-xl">
-                    <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wide">Next Payment</p>
-                    <p className="font-semibold text-gray-900">{format(new Date(child.next_subs_due), 'd MMMM yyyy')}</p>
-                  </div>
-                )}
+                {child.next_subs_due && (() => {
+                  const isOverdue = new Date(child.next_subs_due) < new Date();
+                  return (
+                    <div className={`p-4 rounded-xl ${isOverdue ? 'bg-red-50 border border-red-200' : 'bg-gray-50'}`}>
+                      <p className={`text-xs mb-1 font-bold uppercase tracking-wide ${isOverdue ? 'text-red-600' : 'text-gray-500'}`}>
+                        {isOverdue ? 'Payment overdue' : 'Next Payment'}
+                      </p>
+                      <p className={`font-bold text-lg ${isOverdue ? 'text-red-700' : 'text-gray-900'}`}>
+                        {format(new Date(child.next_subs_due), 'd MMMM yyyy')}
+                      </p>
+                      {hasSubscription && (
+                        <button
+                          onClick={() => { setShowDatePicker(!showDatePicker); setDateChangeMsg(''); setNewAnchorDate(''); }}
+                          className="text-xs text-[#7413dc] mt-1.5 font-medium underline hover:no-underline">
+                          Change payment date
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
                 <div className="p-4 bg-gray-50 rounded-xl">
                   <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wide">Billing Frequency</p>
                   <p className="font-semibold text-gray-900">{INTERVAL_LABELS[currentInterval]}</p>
@@ -122,6 +166,24 @@ export default function WebSubscriptionSection({ child }) {
                 {activating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Activate subscription
               </Button>
+            )}
+
+            {/* Date change picker */}
+            {dateChangeMsg && (
+              <p className="text-sm text-green-700 font-medium">{dateChangeMsg}</p>
+            )}
+            {showDatePicker && (
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3">
+                <p className="text-sm font-semibold text-gray-700">Select new payment date</p>
+                <input type="date" value={newAnchorDate} onChange={e => setNewAnchorDate(e.target.value)} min={tomorrowStr}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7413dc]" />
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setShowDatePicker(false)}>Cancel</Button>
+                  <Button size="sm" onClick={handleDateChange} disabled={changingDate || !newAnchorDate} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
+                    {changingDate ? 'Updating...' : 'Confirm change'}
+                  </Button>
+                </div>
+              </div>
             )}
 
             {/* Interval selector (subscription active only) */}

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { CheckCircle, ChevronRight, ChevronLeft, User, Baby, Heart, Phone, Camera, AlertCircle, LogOut } from 'lucide-react';
+import { CheckCircle, ChevronRight, ChevronLeft, User, Baby, Heart, Phone, Camera, AlertCircle, LogOut, CreditCard } from 'lucide-react';
+import InlineCardSetup from '../components/mobile/InlineCardSetup';
 import { toast } from 'sonner';
 
 function Field({ label, required, children }) {
@@ -87,7 +88,7 @@ function SummaryRow({ label, value }) {
   );
 }
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 export default function MobileOnboarding({ user, onComplete }) {
   const [step, setStep] = useState(0);
@@ -192,7 +193,7 @@ export default function MobileOnboarding({ user, onComplete }) {
       }
 
       await base44.auth.updateMe({ onboarding_complete: true });
-      setStep(8); // done screen
+      setStep(7); // payment setup step before done
     } catch (err) {
       toast.error('Error: ' + err.message);
       setSubmitting(false);
@@ -475,6 +476,32 @@ export default function MobileOnboarding({ user, onComplete }) {
             </div>
           </div>
         )}
+
+        {/* Step 7: Payment Setup */}
+        {step === 7 && (
+          <div>
+            <StepHeader icon={CreditCard} iconBg="bg-green-500" title="Set up your payment method" subtitle="Add a card for subscriptions and events" step={7} totalSteps={TOTAL_STEPS} />
+            <div className="px-5 space-y-4 pb-8">
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Add a card to pay for subscriptions and events. You can update this at any time in your account settings.
+              </p>
+              {existingChildId ? (
+                <InlineCardSetup
+                  memberId={existingChildId}
+                  onSuccess={() => setStep(8)}
+                  onCancel={() => setStep(8)}
+                />
+              ) : (
+                <p className="text-sm text-gray-400">Payment setup not available — please add a card later in Account Settings.</p>
+              )}
+              <div className="text-center pt-2">
+                <button onClick={() => setStep(8)} className="text-sm text-gray-400 hover:text-gray-600 underline">
+                  Skip for now
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Sticky Bottom Button */}
@@ -486,14 +513,14 @@ export default function MobileOnboarding({ user, onComplete }) {
             className="w-full bg-[#7413dc] text-white font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform disabled:opacity-40 flex items-center justify-center gap-2">
             Continue <ChevronRight className="w-5 h-5" />
           </button>
-        ) : (
+        ) : step === 6 ? (
           <button onClick={handleComplete} disabled={submitting}
             className="w-full bg-gradient-to-r from-[#7413dc] to-[#004851] text-white font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform disabled:opacity-60 flex items-center justify-center gap-2">
             {submitting
               ? <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Saving…</>
               : <><CheckCircle className="w-5 h-5" /> Complete Registration</>}
           </button>
-        )}
+        ) : null}
       </div>
     </div>
   );
