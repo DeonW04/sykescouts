@@ -16,15 +16,17 @@ const INTERVAL_PRICE_FIELD = { 'monthly': 'price_pence_monthly', '4_months': 'pr
 
 export default function WebSubscriptionSection({ child }) {
   const queryClient = useQueryClient();
-  const [showCardSetup, setShowCardSetup] = useState(false);
+  const [showSetupForm, setShowSetupForm] = useState(false);
   const [showChangeCard, setShowChangeCard] = useState(false);
-  const [activating, setActivating] = useState(false);
   const [pendingInterval, setPendingInterval] = useState(null);
   const [savingInterval, setSavingInterval] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [newAnchorDate, setNewAnchorDate] = useState('');
   const [changingDate, setChangingDate] = useState(false);
   const [dateChangeMsg, setDateChangeMsg] = useState('');
+  const [setupInterval, setSetupInterval] = useState(null);
+  const [useNewCard, setUseNewCard] = useState(false);
+  const [activatingWithCard, setActivatingWithCard] = useState(false);
 
   const { data: subsConfig } = useQuery({
     queryKey: ['subs-config', child?.section_id],
@@ -40,9 +42,12 @@ export default function WebSubscriptionSection({ child }) {
 
   const paymentMethods = child.stripe_payment_methods || [];
   const defaultCard = paymentMethods.find(pm => pm.is_default) || paymentMethods[0];
-  const hasCard = paymentMethods.length > 0;
   const hasSubscription = !!child.stripe_subscription_id;
   const currentInterval = child.subs_interval || '4_months';
+  const intervalPrice = subsConfig?.[INTERVAL_PRICE_FIELD[currentInterval]];
+  const amountLabel = intervalPrice
+    ? `£${(intervalPrice / 100).toFixed(2)} ${INTERVAL_SHORT[currentInterval] || 'per period'}`
+    : null;
 
   // Legacy state
   const hasLegacy = !!child.legacy_subs_expiry && !hasSubscription;
@@ -53,15 +58,43 @@ export default function WebSubscriptionSection({ child }) {
   const legacyWithin30 = daysUntilLegacy !== null && daysUntilLegacy <= 30 && daysUntilLegacy >= 0;
   const legacyExpired = daysUntilLegacy !== null && daysUntilLegacy < 0;
 
-  // Subscription amount
-  const intervalPrice = subsConfig?.[INTERVAL_PRICE_FIELD[currentInterval]];
-  const amountLabel = intervalPrice
-    ? `£${(intervalPrice / 100).toFixed(2)} ${INTERVAL_SHORT[currentInterval] || 'per period'}`
-    : null;
+  const getEffectiveInterval = () => setupInterval || currentInterval;
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ['children'] });
     queryClient.invalidateQueries({ queryKey: ['account-settings-children'] });
+  };
+
+  const openSetupForm = () => {
+    setSetupInterval(null);
+    setUseNewCard(paymentMethods.length === 0);
+    setShowSetupForm(true);
+  };
+
+  const handleActivateWithExistingCard = async () => {
+    setActivatingWithCard(true);
+    const interval = getEffectiveInterval();
+    if (interval !== currentInterval) {
+      await base44.entities.Member.update(child.id, { subs_interval: interval });
+    }
+    const res = await base44.functions.invoke('createStripeSubscription', { member_id: child.id });
+    if (res?.data?.error) { toast.error(res.data.error); setActivatingWithCard(false); return; }
+    toast.success('Subscription activated!');
+    setActivatingWithCard(false);
+    setShowSetupForm(false);
+    refresh();
+  };
+
+  const handleCardSavedThenActivate = async () => {
+    const interval = getEffectiveInterval();
+    if (interval !== currentInterval) {
+      await base44.entities.Member.update(child.id, { subs_interval: interval });
+    }
+    const res = await base44.functions.invoke('createStripeSubscription', { member_id: child.id });
+    if (res?.data?.error) { toast.error(res.data.error); } else { toast.success('Card saved & subscription activated!'); }
+    setShowSetupForm(false);
+    setUseNewCard(false);
+    refresh();
   };
 
   const handleDateChange = async () => {
@@ -81,16 +114,6 @@ export default function WebSubscriptionSection({ child }) {
     finally { setChangingDate(false); }
   };
 
-  const handleActivate = async () => {
-    setActivating(true);
-    try {
-      await base44.functions.invoke('createStripeSubscription', { member_id: child.id });
-      toast.success('Subscription activated!');
-      refresh();
-    } catch (err) { toast.error('Failed to activate: ' + err.message); }
-    finally { setActivating(false); }
-  };
-
   const handleIntervalConfirm = async () => {
     if (!pendingInterval) return;
     setSavingInterval(true);
@@ -101,6 +124,62 @@ export default function WebSubscriptionSection({ child }) {
     } catch (err) { toast.error('Failed to update interval: ' + err.message); }
     finally { setSavingInterval(false); }
   };
+
+  // Shared setup UI: interval picker + saved cards or card form
+  const SetupUI = ({ onCardSaved, onClose }) => (
+    <div className="space-y-4">
+      {/* Interval picker */}
+      <div className="space-y-2">
+        <p className="text-sm font-semibold text-gray-700">Billing interval</p>
+        <div className="flex rounded-xl border border-gray-200 overflow-hidden w-fit">
+          {INTERVAL_OPTIONS.map((opt, i) => (
+            <button key={opt} onClick={() => setSetupInterval(opt)}
+              className={`px-4 py-2.5 text-sm font-semibold transition-colors ${
+                getEffectiveInterval() === opt ? 'bg-[#7413dc] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+              } ${i > 0 ? 'border-l border-gray-200' : ''}`}>
+              {INTERVAL_LABELS[opt]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Saved cards */}
+      {paymentMethods.length > 0 && !useNewCard ? (
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-gray-700">Saved cards</p>
+          {paymentMethods.map(pm => (
+            <div key={pm.pm_id} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl">
+              <CreditCard className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <span className="font-medium text-gray-800 capitalize flex-1">{pm.brand} ending {pm.last4}</span>
+              {pm.is_default && <Badge className="bg-green-600 text-xs">Default</Badge>}
+            </div>
+          ))}
+          <Button
+            onClick={handleActivateWithExistingCard}
+            disabled={activatingWithCard}
+            className="bg-[#7413dc] hover:bg-[#5c0fb0] w-full"
+          >
+            {activatingWithCard && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            Activate with {defaultCard?.brand} ···· {defaultCard?.last4}
+          </Button>
+          <button onClick={() => setUseNewCard(true)} className="text-sm text-[#7413dc] font-medium underline hover:no-underline">
+            Use a different card
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {paymentMethods.length > 0 && (
+            <button onClick={() => setUseNewCard(false)} className="text-sm text-[#7413dc] font-medium underline hover:no-underline">
+              ← Use saved card
+            </button>
+          )}
+          <div className="border rounded-xl p-5">
+            <InlineCardSetup memberId={child.id} onSuccess={onCardSaved} onCancel={onClose} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <Card className="shadow-xl bg-white/90 backdrop-blur-sm">
@@ -126,19 +205,21 @@ export default function WebSubscriptionSection({ child }) {
                 From that date you will need a payment method set up to continue your child's membership.
               </p>
             </div>
-            <Button
-              onClick={legacyWithin30 ? () => setShowCardSetup(true) : undefined}
-              disabled={!legacyWithin30}
-              className={legacyWithin30 ? 'bg-amber-500 hover:bg-amber-600 w-full' : 'bg-gray-100 text-gray-400 cursor-not-allowed hover:bg-gray-100 w-full'}
-            >
-              {legacyWithin30
-                ? `Set up subscription — due by ${format(new Date(child.legacy_subs_expiry), 'd MMM yyyy')}`
-                : 'Set up subscription (available 30 days before expiry)'}
-            </Button>
-            {showCardSetup && (
-              <div className="border rounded-xl p-5">
-                <InlineCardSetup memberId={child.id} onSuccess={() => { setShowCardSetup(false); refresh(); }} onCancel={() => setShowCardSetup(false)} />
-              </div>
+            {!showSetupForm ? (
+              <Button
+                onClick={legacyWithin30 ? openSetupForm : undefined}
+                disabled={!legacyWithin30}
+                className={legacyWithin30 ? 'bg-amber-500 hover:bg-amber-600 w-full' : 'bg-gray-100 text-gray-400 cursor-not-allowed hover:bg-gray-100 w-full'}
+              >
+                {legacyWithin30
+                  ? `Set up subscription — due by ${format(new Date(child.legacy_subs_expiry), 'd MMM yyyy')}`
+                  : 'Set up subscription (available 30 days before expiry)'}
+              </Button>
+            ) : (
+              <SetupUI
+                onCardSaved={handleCardSavedThenActivate}
+                onClose={() => { setShowSetupForm(false); setUseNewCard(false); }}
+              />
             )}
           </div>
         )}
@@ -150,67 +231,75 @@ export default function WebSubscriptionSection({ child }) {
               <CreditCard className="w-5 h-5 text-red-500 flex-shrink-0" />
               <div>
                 <p className="text-red-700 font-semibold">Subscription overdue</p>
-                <p className="text-xs text-red-600 mt-0.5">Legacy membership expired {format(new Date(child.legacy_subs_expiry), 'd MMMM yyyy')}. Please set up a subscription.</p>
+                <p className="text-xs text-red-600 mt-0.5">Legacy membership expired. Please set up a subscription.</p>
               </div>
             </div>
-            {!showCardSetup ? (
-              <Button onClick={() => setShowCardSetup(true)} className="bg-[#7413dc] hover:bg-[#5c0fb0] w-full">
-                Set up payments
+            {!showSetupForm ? (
+              <Button onClick={openSetupForm} className="bg-[#7413dc] hover:bg-[#5c0fb0] w-full">
+                Set up subscription
               </Button>
             ) : (
-              <div className="border rounded-xl p-5">
-                <InlineCardSetup memberId={child.id} onSuccess={() => { setShowCardSetup(false); refresh(); }} onCancel={() => setShowCardSetup(false)} />
-              </div>
+              <SetupUI
+                onCardSaved={handleCardSavedThenActivate}
+                onClose={() => { setShowSetupForm(false); setUseNewCard(false); }}
+              />
             )}
           </div>
         )}
 
-        {/* ── NO CARD (non-legacy) ── */}
-        {!hasLegacy && !legacyExpired && !hasCard && (
+        {/* ── NO CARD, NO SUBSCRIPTION (non-legacy) ── */}
+        {!hasLegacy && !legacyExpired && paymentMethods.length === 0 && !hasSubscription && (
           <div className="space-y-4">
             <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
               <CreditCard className="w-5 h-5 text-red-500 flex-shrink-0" />
               <p className="text-red-700 font-medium">No payment method connected</p>
             </div>
-            {!showCardSetup ? (
-              <Button onClick={() => setShowCardSetup(true)} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
-                Set up payments
+            {!showSetupForm ? (
+              <Button onClick={openSetupForm} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
+                Set up subscription
               </Button>
             ) : (
-              <div className="border rounded-xl p-5">
-                <InlineCardSetup memberId={child.id} onSuccess={() => { setShowCardSetup(false); refresh(); }} onCancel={() => setShowCardSetup(false)} />
-              </div>
+              <SetupUI
+                onCardSaved={handleCardSavedThenActivate}
+                onClose={() => { setShowSetupForm(false); setUseNewCard(false); }}
+              />
             )}
           </div>
         )}
 
         {/* ── CARD EXISTS, NO SUBSCRIPTION ── */}
-        {!hasLegacy && !legacyExpired && hasCard && !hasSubscription && (
+        {!hasLegacy && !legacyExpired && paymentMethods.length > 0 && !hasSubscription && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-xl">
-              <CreditCard className="w-5 h-5 text-gray-400 flex-shrink-0" />
-              <span className="font-medium text-gray-800 capitalize flex-1">{defaultCard?.brand} ending {defaultCard?.last4}</span>
-              <Badge className="bg-green-600">Active card</Badge>
-            </div>
-            <p className="text-sm text-gray-500">No active subscription</p>
-            <Button onClick={handleActivate} disabled={activating} className="bg-green-600 hover:bg-green-700">
-              {activating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Activate subscription
-            </Button>
+            {!showSetupForm ? (
+              <>
+                <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+                  <CreditCard className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  <span className="font-medium text-gray-800 capitalize flex-1">{defaultCard?.brand} ending {defaultCard?.last4}</span>
+                  <Badge className="bg-green-600">Active card</Badge>
+                </div>
+                <p className="text-sm text-gray-500">No active subscription</p>
+                <Button onClick={openSetupForm} className="bg-green-600 hover:bg-green-700">
+                  Set up subscription
+                </Button>
+              </>
+            ) : (
+              <SetupUI
+                onCardSaved={handleCardSavedThenActivate}
+                onClose={() => { setShowSetupForm(false); setUseNewCard(false); }}
+              />
+            )}
           </div>
         )}
 
         {/* ── ACTIVE SUBSCRIPTION ── */}
-        {!hasLegacy && !legacyExpired && hasCard && hasSubscription && (
+        {!hasLegacy && !legacyExpired && hasSubscription && (
           <div className="space-y-5">
-            {/* Card */}
             <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-xl">
               <CreditCard className="w-5 h-5 text-gray-400 flex-shrink-0" />
               <span className="font-medium text-gray-800 capitalize flex-1">{defaultCard?.brand} ending {defaultCard?.last4}</span>
               <Badge className="bg-green-600">Active card</Badge>
             </div>
 
-            {/* Amount */}
             {amountLabel && (
               <div className="p-4 bg-purple-50 rounded-xl">
                 <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wide">Subscription Amount</p>
@@ -266,7 +355,7 @@ export default function WebSubscriptionSection({ child }) {
               <div className="flex rounded-xl border border-gray-200 overflow-hidden w-fit">
                 {INTERVAL_OPTIONS.map((opt, i) => (
                   <button key={opt} onClick={() => { if (opt !== currentInterval) setPendingInterval(opt); }}
-                    className={`px-5 py-2.5 text-sm font-semibold transition-colors ${
+                    className={`px-4 py-2.5 text-sm font-semibold transition-colors ${
                       (pendingInterval || currentInterval) === opt ? 'bg-[#7413dc] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
                     } ${i > 0 ? 'border-l border-gray-200' : ''}`}>
                     {INTERVAL_LABELS[opt]}

@@ -31,9 +31,9 @@ async function getOrCreatePriceId(stripe, base44, sectionId, interval, fallbackA
   }
 
   const amountPence = config?.[pricePenceField] || fallbackAmountPence;
-  if (!amountPence) throw new Error(`No subscription price configured for this section and interval "${interval}". Set it up in Admin Settings → Subscription Pricing.`);
+  if (!amountPence) throw new Error(`No subscription price configured for interval "${interval}". Set it up in Admin Settings → Subscription Pricing.`);
 
-  const displayName = config?.display_name || 'Membership Subs';
+  const displayName = config?.display_name || 'Scout Group Membership Subscription';
   const intervalConfig = INTERVAL_MAP[interval];
 
   console.log(`Creating Stripe product/price for section ${sectionId} interval ${interval} at ${amountPence}p`);
@@ -89,13 +89,27 @@ Deno.serve(async (req) => {
   const interval = member.subs_interval || '4_months';
   const { priceId } = await getOrCreatePriceId(stripe, base44, member.section_id, interval, fallbackAmountPence);
 
-  const subscription = await stripe.subscriptions.create({
+  // Find the saved default payment method to charge immediately
+  const defaultPmId = member.stripe_payment_methods?.find(pm => pm.is_default)?.pm_id
+    || member.stripe_payment_methods?.[0]?.pm_id;
+
+  const subParams = {
     customer: customer_id,
     items: [{ price: priceId }],
-    payment_behavior: 'default_incomplete',
-    expand: ['latest_invoice.payment_intent'],
     metadata: { member_id },
-  });
+  };
+
+  if (defaultPmId) {
+    // Saved card exists — charge immediately on creation
+    subParams.default_payment_method = defaultPmId;
+    // Stripe default: charges immediately (first invoice paid at subscription start)
+  } else {
+    // No saved card — leave incomplete for frontend to confirm
+    subParams.payment_behavior = 'default_incomplete';
+    subParams.expand = ['latest_invoice.payment_intent'];
+  }
+
+  const subscription = await stripe.subscriptions.create(subParams);
 
   await base44.asServiceRole.entities.Member.update(member.id, { stripe_subscription_id: subscription.id });
 
