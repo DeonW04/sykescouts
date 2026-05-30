@@ -2,11 +2,19 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 import Stripe from 'npm:stripe@14.21.0';
 
 const INTERVAL_MAP = {
+  'monthly':  { interval: 'month', interval_count: 1 },
   '4_months': { interval: 'month', interval_count: 4 },
   '6_months': { interval: 'month', interval_count: 6 },
   'yearly':   { interval: 'year',  interval_count: 1 },
 };
+const PRICE_PENCE_FIELD = {
+  'monthly':  'price_pence_monthly',
+  '4_months': 'price_pence_termly',
+  '6_months': 'price_pence_6m',
+  'yearly':   'price_pence_yearly',
+};
 const PRICE_ID_FIELD = {
+  'monthly':  'stripe_price_id_monthly',
   '4_months': 'stripe_price_id_4m',
   '6_months': 'stripe_price_id_6m',
   'yearly':   'stripe_price_id_yearly',
@@ -15,19 +23,20 @@ const PRICE_ID_FIELD = {
 async function getOrCreatePriceId(stripe, base44, sectionId, interval, fallbackAmountPence) {
   const configs = await base44.asServiceRole.entities.SectionSubsConfig.filter({ section_id: sectionId });
   const config = configs[0];
-  const priceField = PRICE_ID_FIELD[interval];
+  const priceIdField = PRICE_ID_FIELD[interval];
+  const pricePenceField = PRICE_PENCE_FIELD[interval];
 
-  if (config?.[priceField]) {
-    return { priceId: config[priceField], amountPence: config.price_pence || fallbackAmountPence };
+  if (config?.[priceIdField]) {
+    return { priceId: config[priceIdField], amountPence: config[pricePenceField] || fallbackAmountPence };
   }
 
-  const amountPence = config?.price_pence || fallbackAmountPence;
-  if (!amountPence) throw new Error('No subscription price configured for this section. Set up SectionSubsConfig in Admin Settings or set SUBS_AMOUNT_PENCE.');
+  const amountPence = config?.[pricePenceField] || fallbackAmountPence;
+  if (!amountPence) throw new Error(`No subscription price configured for this section and interval "${interval}". Set it up in Admin Settings → Subscription Pricing.`);
 
   const displayName = config?.display_name || 'Scout Group Membership Subscription';
   const intervalConfig = INTERVAL_MAP[interval];
 
-  console.log(`Creating new Stripe product/price for section ${sectionId} interval ${interval} at ${amountPence}p`);
+  console.log(`Creating Stripe product/price for section ${sectionId} interval ${interval} at ${amountPence}p`);
   const product = await stripe.products.create({ name: displayName });
   const price = await stripe.prices.create({
     unit_amount: amountPence,
@@ -36,18 +45,18 @@ async function getOrCreatePriceId(stripe, base44, sectionId, interval, fallbackA
     product: product.id,
   });
 
-  const updateData = { [priceField]: price.id };
+  const updateData = { [priceIdField]: price.id };
   if (config) {
     await base44.asServiceRole.entities.SectionSubsConfig.update(config.id, updateData);
   } else {
     await base44.asServiceRole.entities.SectionSubsConfig.create({
       section_id: sectionId,
-      price_pence: amountPence,
       display_name: displayName,
+      [pricePenceField]: amountPence,
       ...updateData,
     });
   }
-  console.log(`Stripe price ${price.id} saved to SectionSubsConfig for section ${sectionId} interval ${interval}`);
+  console.log(`Stripe price ${price.id} saved for section ${sectionId} interval ${interval}`);
   return { priceId: price.id, amountPence };
 }
 
@@ -78,9 +87,7 @@ Deno.serve(async (req) => {
   }
 
   const interval = member.subs_interval || '4_months';
-  const sectionId = member.section_id;
-
-  const { priceId } = await getOrCreatePriceId(stripe, base44, sectionId, interval, fallbackAmountPence);
+  const { priceId } = await getOrCreatePriceId(stripe, base44, member.section_id, interval, fallbackAmountPence);
 
   const subscription = await stripe.subscriptions.create({
     customer: customer_id,
@@ -90,9 +97,7 @@ Deno.serve(async (req) => {
     metadata: { member_id },
   });
 
-  await base44.asServiceRole.entities.Member.update(member.id, {
-    stripe_subscription_id: subscription.id,
-  });
+  await base44.asServiceRole.entities.Member.update(member.id, { stripe_subscription_id: subscription.id });
 
   return Response.json({ subscription_id: subscription.id });
 });

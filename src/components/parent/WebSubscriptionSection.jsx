@@ -9,9 +9,10 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import InlineCardSetup from '../mobile/InlineCardSetup';
 
-const INTERVAL_LABELS = { '4_months': 'Every 4 months', '6_months': 'Every 6 months', yearly: 'Yearly' };
-const INTERVAL_SHORT  = { '4_months': 'every 4 months', '6_months': 'every 6 months', yearly: 'per year' };
-const INTERVAL_OPTIONS = ['4_months', '6_months', 'yearly'];
+const INTERVAL_LABELS = { 'monthly': 'Monthly', '4_months': 'Termly', '6_months': 'Half Yearly', 'yearly': 'Yearly' };
+const INTERVAL_SHORT  = { 'monthly': 'per month', '4_months': 'every 4 months', '6_months': 'every 6 months', 'yearly': 'per year' };
+const INTERVAL_OPTIONS = ['monthly', '4_months', '6_months', 'yearly'];
+const INTERVAL_PRICE_FIELD = { 'monthly': 'price_pence_monthly', '4_months': 'price_pence_termly', '6_months': 'price_pence_6m', 'yearly': 'price_pence_yearly' };
 
 export default function WebSubscriptionSection({ child }) {
   const queryClient = useQueryClient();
@@ -53,8 +54,9 @@ export default function WebSubscriptionSection({ child }) {
   const legacyExpired = daysUntilLegacy !== null && daysUntilLegacy < 0;
 
   // Subscription amount
-  const amountLabel = subsConfig?.price_pence
-    ? `£${(subsConfig.price_pence / 100).toFixed(2)} ${INTERVAL_SHORT[currentInterval] || 'per period'}`
+  const intervalPrice = subsConfig?.[INTERVAL_PRICE_FIELD[currentInterval]];
+  const amountLabel = intervalPrice
+    ? `£${(intervalPrice / 100).toFixed(2)} ${INTERVAL_SHORT[currentInterval] || 'per period'}`
     : null;
 
   const refresh = () => {

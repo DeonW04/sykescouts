@@ -8,10 +8,22 @@ import { Label } from '@/components/ui/label';
 import { CreditCard, Check, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+const INTERVALS = [
+  { key: 'monthly',  label: 'Monthly',     priceField: 'price_pence_monthly',  priceIdField: 'stripe_price_id_monthly' },
+  { key: '4_months', label: 'Termly',       priceField: 'price_pence_termly',   priceIdField: 'stripe_price_id_4m'     },
+  { key: '6_months', label: 'Half Yearly',  priceField: 'price_pence_6m',       priceIdField: 'stripe_price_id_6m'     },
+  { key: 'yearly',   label: 'Yearly',       priceField: 'price_pence_yearly',   priceIdField: 'stripe_price_id_yearly' },
+];
+
+function toPounds(pence) {
+  if (!pence) return '';
+  return (pence / 100).toFixed(2);
+}
+
 export default function SubscriptionPricingTab() {
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ price_pounds: '', display_name: '' });
+  const [editForm, setEditForm] = useState({});
   const [saved, setSaved] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -26,38 +38,36 @@ export default function SubscriptionPricingTab() {
 
   const handleEdit = (section) => {
     const config = configs.find(c => c.section_id === section.id);
-    setEditingId(section.id);
-    setEditForm({
-      price_pounds: config ? (config.price_pence / 100).toFixed(2) : '',
-      display_name: config?.display_name || `${section.display_name} Membership`,
+    const form = { display_name: config?.display_name || `${section.display_name} Membership` };
+    INTERVALS.forEach(({ key, priceField }) => {
+      form[key] = toPounds(config?.[priceField]);
     });
+    setEditingId(section.id);
+    setEditForm(form);
   };
 
   const handleSave = async (section) => {
-    const pricePounds = parseFloat(editForm.price_pounds);
-    if (isNaN(pricePounds) || pricePounds <= 0) {
-      toast.error('Please enter a valid price greater than £0');
-      return;
-    }
-    const price_pence = Math.round(pricePounds * 100);
     const config = configs.find(c => c.section_id === section.id);
+    const updateData = { display_name: editForm.display_name, updated_at: new Date().toISOString().split('T')[0] };
+    for (const { key, priceField } of INTERVALS) {
+      const val = parseFloat(editForm[key]);
+      if (!isNaN(val) && val > 0) {
+        updateData[priceField] = Math.round(val * 100);
+        // Clear cached Stripe price ID if price changed
+        const prevPence = config?.[priceField];
+        if (prevPence !== updateData[priceField]) {
+          updateData[INTERVALS.find(i => i.key === key).priceIdField] = null;
+        }
+      } else {
+        updateData[priceField] = null;
+      }
+    }
     setSaving(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
       if (config) {
-        await base44.entities.SectionSubsConfig.update(config.id, {
-          price_pence,
-          display_name: editForm.display_name,
-          updated_at: today,
-        });
+        await base44.entities.SectionSubsConfig.update(config.id, updateData);
       } else {
-        await base44.entities.SectionSubsConfig.create({
-          section_id: section.id,
-          price_pence,
-          display_name: editForm.display_name,
-          created_at: today,
-          updated_at: today,
-        });
+        await base44.entities.SectionSubsConfig.create({ section_id: section.id, ...updateData });
       }
       queryClient.invalidateQueries({ queryKey: ['subs-configs'] });
       setSaved(section.id);
@@ -78,31 +88,22 @@ export default function SubscriptionPricingTab() {
           Subscription Pricing
         </CardTitle>
         <p className="text-sm text-gray-500 mt-1">
-          Configure subscription price per section. Stripe price IDs are auto-created on first subscription and reused automatically — no manual secret management needed.
+          Set a price per billing interval for each section. Stripe price IDs are auto-created on first subscription — no manual setup needed.
         </p>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         {sections.length === 0 && <p className="text-sm text-gray-400 py-4 text-center">No sections found.</p>}
         {sections.map(section => {
           const config = configs.find(c => c.section_id === section.id);
           const isEditing = editingId === section.id;
-          const hasPriceIds = config?.stripe_price_id_4m || config?.stripe_price_id_6m || config?.stripe_price_id_yearly;
+          const hasAnyPrice = INTERVALS.some(({ priceField }) => config?.[priceField]);
           return (
             <div key={section.id} className="border border-gray-100 rounded-xl bg-gray-50 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900 text-sm">{section.display_name}</p>
-                  {!isEditing && (
-                    <div className="mt-1 space-y-0.5">
-                      <p className="text-xs text-gray-500">
-                        {config?.price_pence
-                          ? `£${(config.price_pence / 100).toFixed(2)} — ${config.display_name}`
-                          : <span className="text-amber-600">Not set — falls back to SUBS_AMOUNT_PENCE secret</span>}
-                      </p>
-                      {hasPriceIds && (
-                        <p className="text-xs text-green-600">✓ Stripe price IDs configured</p>
-                      )}
-                    </div>
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div>
+                  <p className="font-semibold text-gray-900">{section.display_name}</p>
+                  {config?.display_name && !isEditing && (
+                    <p className="text-xs text-gray-400 mt-0.5">{config.display_name}</p>
                   )}
                 </div>
                 {!isEditing && (
@@ -119,34 +120,49 @@ export default function SubscriptionPricingTab() {
                 )}
               </div>
 
+              {/* Price summary (view mode) */}
+              {!isEditing && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {INTERVALS.map(({ key, label, priceField }) => (
+                    <div key={key} className="bg-white rounded-lg p-2 border border-gray-100 text-center">
+                      <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                      <p className={`text-sm font-semibold ${config?.[priceField] ? 'text-gray-900' : 'text-gray-300'}`}>
+                        {config?.[priceField] ? `£${toPounds(config[priceField])}` : '—'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Edit form */}
               {isEditing && (
-                <div className="mt-3 space-y-3">
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs text-gray-600">Price (£)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        placeholder="e.g. 15.00"
-                        value={editForm.price_pounds}
-                        onChange={e => setEditForm(f => ({ ...f, price_pounds: e.target.value }))}
-                        className="mt-1 h-8 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-gray-600">Display Name</Label>
-                      <Input
-                        placeholder="e.g. Scout Membership"
-                        value={editForm.display_name}
-                        onChange={e => setEditForm(f => ({ ...f, display_name: e.target.value }))}
-                        className="mt-1 h-8 text-sm"
-                      />
-                    </div>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-xs text-gray-600">Display Name</Label>
+                    <Input
+                      placeholder="e.g. Scout Membership"
+                      value={editForm.display_name || ''}
+                      onChange={e => setEditForm(f => ({ ...f, display_name: e.target.value }))}
+                      className="mt-1 h-8 text-sm"
+                    />
                   </div>
-                  <p className="text-xs text-gray-400">
-                    Changing the price will create new Stripe price IDs on the next subscription. Existing active subscriptions are unaffected.
-                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {INTERVALS.map(({ key, label }) => (
+                      <div key={key}>
+                        <Label className="text-xs text-gray-600">{label} (£)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="e.g. 15.00"
+                          value={editForm[key] || ''}
+                          onChange={e => setEditForm(f => ({ ...f, [key]: e.target.value }))}
+                          className="mt-1 h-8 text-sm"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400">Changing a price will auto-create a new Stripe price on the next subscription. Existing subscriptions are unaffected.</p>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => handleSave(section)} disabled={saving} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
                       {saving ? 'Saving...' : 'Save'}

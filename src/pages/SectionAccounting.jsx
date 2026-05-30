@@ -17,7 +17,8 @@ export default function SectionAccounting() {
     queryKey: ['sections'],
     queryFn: () => base44.entities.Section.filter({ active: true }),
   });
-  const section = sections.find(s => s.id === selectedSectionId);
+  const effectiveSectionId = selectedSectionId || sections[0]?.id;
+  const section = sections.find(s => s.id === effectiveSectionId);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,16 +45,16 @@ export default function SectionAccounting() {
           </TabsList>
 
           <TabsContent value="dashboard">
-            <DashboardTab selectedSectionId={selectedSectionId} />
+            <DashboardTab selectedSectionId={effectiveSectionId} />
           </TabsContent>
           <TabsContent value="subscriptions">
-            <SubscriptionsTab selectedSectionId={selectedSectionId} />
+            <SubscriptionsTab selectedSectionId={effectiveSectionId} />
           </TabsContent>
           <TabsContent value="payment-tracker">
-            <PaymentTrackerTab selectedSectionId={selectedSectionId} />
+            <PaymentTrackerTab selectedSectionId={effectiveSectionId} />
           </TabsContent>
           <TabsContent value="receipts">
-            <ReceiptsTab selectedSectionId={selectedSectionId} section={section} />
+            <ReceiptsTab selectedSectionId={effectiveSectionId} section={section} />
           </TabsContent>
         </Tabs>
       </div>

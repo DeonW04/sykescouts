@@ -44,10 +44,23 @@ function InfoRow({ label, value }) {
 }
 
 const INTERVAL_OPTIONS = [
-  { value: '4_months', label: 'Every 4 months' },
-  { value: '6_months', label: 'Every 6 months' },
-  { value: 'yearly', label: 'Yearly' },
+  { value: 'monthly',  label: 'Monthly' },
+  { value: '4_months', label: 'Termly' },
+  { value: '6_months', label: 'Half Yearly' },
+  { value: 'yearly',   label: 'Yearly' },
 ];
+const INTERVAL_PRICE_FIELD = {
+  'monthly':  'price_pence_monthly',
+  '4_months': 'price_pence_termly',
+  '6_months': 'price_pence_6m',
+  'yearly':   'price_pence_yearly',
+};
+const INTERVAL_SHORT = {
+  'monthly':  'per month',
+  '4_months': 'every 4 months',
+  '6_months': 'every 6 months',
+  'yearly':   'per year',
+};
 
 function SetupCardForm({ memberId, onSuccess, onCancel }) {
   const stripe = useStripe();
@@ -130,9 +143,9 @@ function SubscriptionsSection({ child, onRefresh }) {
   const legacyExpired = daysUntilLegacy !== null && daysUntilLegacy < 0;
 
   // Subscription amount
-  const INTERVAL_SHORT = { '4_months': 'every 4 months', '6_months': 'every 6 months', 'yearly': 'per year' };
-  const amountLabel = subsConfig?.price_pence
-    ? `£${(subsConfig.price_pence / 100).toFixed(2)} ${INTERVAL_SHORT[currentInterval] || 'per period'}`
+  const intervalPrice = subsConfig?.[INTERVAL_PRICE_FIELD[currentInterval]];
+  const amountLabel = intervalPrice
+    ? `£${(intervalPrice / 100).toFixed(2)} ${INTERVAL_SHORT[currentInterval] || 'per period'}`
     : null;
 
   const handleActivateSubscription = async () => {

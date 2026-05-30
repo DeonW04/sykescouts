@@ -6,29 +6,41 @@
       "type": "string",
       "description": "Section ID this config applies to"
     },
-    "price_pence": {
-      "type": "number",
-      "description": "Subscription price in pence (e.g. 1500 = \u00a315.00)"
-    },
     "display_name": {
       "type": "string",
       "description": "Display name for the subscription product, e.g. 'Scout Membership'"
     },
+    "price_pence_monthly": {
+      "type": "number",
+      "description": "Monthly subscription price in pence (e.g. 500 = \u00a35.00)"
+    },
+    "price_pence_termly": {
+      "type": "number",
+      "description": "Termly (4-month) subscription price in pence"
+    },
+    "price_pence_6m": {
+      "type": "number",
+      "description": "Half-yearly (6-month) subscription price in pence"
+    },
+    "price_pence_yearly": {
+      "type": "number",
+      "description": "Yearly subscription price in pence"
+    },
+    "stripe_price_id_monthly": {
+      "type": "string",
+      "description": "Stripe Price ID for the monthly interval \u2014 auto-created on first use"
+    },
     "stripe_price_id_4m": {
       "type": "string",
-      "description": "Stripe Price ID for the 4-month billing interval \u2014 auto-created on first use"
+      "description": "Stripe Price ID for the 4-month (termly) interval \u2014 auto-created on first use"
     },
     "stripe_price_id_6m": {
       "type": "string",
-      "description": "Stripe Price ID for the 6-month billing interval \u2014 auto-created on first use"
+      "description": "Stripe Price ID for the 6-month interval \u2014 auto-created on first use"
     },
     "stripe_price_id_yearly": {
       "type": "string",
-      "description": "Stripe Price ID for the yearly billing interval \u2014 auto-created on first use"
-    },
-    "created_at": {
-      "type": "string",
-      "format": "date"
+      "description": "Stripe Price ID for the yearly interval \u2014 auto-created on first use"
     },
     "updated_at": {
       "type": "string",
