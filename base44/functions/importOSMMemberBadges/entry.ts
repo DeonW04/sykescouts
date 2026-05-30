@@ -96,9 +96,10 @@ Deno.serve(async (req) => {
     if (alreadyAwardedIds.has(badgeDefId)) return;
     await base44.asServiceRole.entities.MemberBadgeAward.create({
       member_id,
-      badge_id:     badgeDefId,
-      awarded_date: today,
-      awarded_by:   'OSM Import',
+      badge_id:        badgeDefId,
+      awarded_date:    today,
+      completed_date:  today,
+      awarded_by:      'OSM Import',
     });
     alreadyAwardedIds.add(badgeDefId);
     badgesAwarded++;
