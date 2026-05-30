@@ -48,7 +48,7 @@ function PaymentMethodsSection({ child }) {
     setRemoving(pm.pm_id);
     setConfirmRemove(null);
     try {
-      await base44.functions.invoke('detachPaymentMethod', { member_id: child.id, payment_method_id: pm.pm_id });
+      await base44.functions.invoke('detachPaymentMethod', { member_id: child.id, pm_id: pm.pm_id });
       toast.success('Card removed');
       refetch();
       queryClient.invalidateQueries({ queryKey: ['settings-children'] });
