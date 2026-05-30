@@ -31,7 +31,15 @@
     },
     "osm_id": {
       "type": "string",
-      "description": "OSM badge ID for syncing (e.g. '22412_0')"
+      "description": "OSM badge identifier (e.g. '22412_0') \u2014 legacy field"
+    },
+    "osm_badge_id": {
+      "type": "string",
+      "description": "OSM numeric badge_id for syncing (e.g. '1635'). For staged badges all stages share the same OSM badge_id."
+    },
+    "osm_badge_version": {
+      "type": "string",
+      "description": "OSM badge_version (e.g. '0'). Defaults to 0 if not set."
     },
     "badge_family_id": {
       "type": "string",

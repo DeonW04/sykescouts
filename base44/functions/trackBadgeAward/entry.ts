@@ -30,42 +30,26 @@ Deno.serve(async (req) => {
     const badgeDef = badgeDefs[0];
     if (!badgeDef) return Response.json({ skipped: 'Badge definition not found' });
 
-    // Find the linked OSM badge
-    // For staged badges, match by badge_family_id + stage_number → find the right OSMBadge
-    // For non-staged, match the OSMBadge that is linked to this app badge
-    const allOsmBadges = await base44.asServiceRole.entities.OSMBadge.list('-created_date', 500);
-    const linkedOsmBadge = allOsmBadges.find(ob => ob.linked_to_app_badge === award.badge_id);
-
-    if (!linkedOsmBadge) {
-      return Response.json({ skipped: `No OSM badge linked to app badge "${badgeDef.name}" — skipping sync` });
+    // Use osm_badge_id directly from the BadgeDefinition (set in Admin → OSM Badge Mapping)
+    if (!badgeDef.osm_badge_id) {
+      return Response.json({ skipped: `Badge "${badgeDef.name}" has no OSM badge ID linked — set it in Admin → OSM → Badge ID Mapping` });
     }
 
-    // Parse OSM badge_id and badge_version from the osm_id field (e.g. "97_0" → badge_id=97, badge_version=0)
-    // Also use the badge_id/badge_version fields if available
-    let osmBadgeId, osmBadgeVersion;
-    if (linkedOsmBadge.badge_id && linkedOsmBadge.badge_version != null) {
-      osmBadgeId = parseInt(linkedOsmBadge.badge_id, 10);
-      osmBadgeVersion = parseInt(linkedOsmBadge.badge_version, 10);
-    } else {
-      // Parse from osm_id e.g. "97_0"
-      const parts = String(linkedOsmBadge.osm_id).split('_');
-      osmBadgeId = parseInt(parts[0], 10);
-      osmBadgeVersion = parts[1] != null ? parseInt(parts[1], 10) : 0;
-    }
+    const osmBadgeId      = parseInt(badgeDef.osm_badge_id, 10);
+    const osmBadgeVersion = badgeDef.osm_badge_version != null ? parseInt(badgeDef.osm_badge_version, 10) : 0;
 
     if (isNaN(osmBadgeId)) {
-      return Response.json({ skipped: `Could not parse OSM badge ID from "${linkedOsmBadge.osm_id}"` });
+      return Response.json({ skipped: `Could not parse OSM badge ID "${badgeDef.osm_badge_id}"` });
     }
 
     const osmSectionId = parseInt(settings.osm_section_id, 10);
-    const osmSection = settings.osm_section; // e.g. "scouts"
-    const now = new Date().toISOString();
+    const osmSection   = settings.osm_section;
+    const now          = new Date().toISOString();
 
-    // Determine the stage level for overrideCompletion.
-    // For staged badges, stage_number is the level. For non-staged, level=1.
+    // For staged badges, stage_number is the completion level. For non-staged, level=1.
     const stageLevel = badgeDef.category === 'staged' && badgeDef.stage_number ? badgeDef.stage_number : 1;
 
-    // Check for existing pending records for this member + OSM badge to avoid duplicates
+    // Check for existing pending records for this member + OSM badge + level to avoid duplicates
     const existingPending = await base44.asServiceRole.entities.PendingBadgeSync.filter({});
     const alreadyQueued = existingPending.some(r =>
       r.scoutid === member.osm_scoutid &&
@@ -80,32 +64,32 @@ Deno.serve(async (req) => {
 
     // Queue 1: awardBadge (registers the badge in OSM at level 0)
     await base44.asServiceRole.entities.PendingBadgeSync.create({
-      scoutid: member.osm_scoutid,
-      firstname: member.first_name,
-      lastname: member.surname,
-      badge_id: osmBadgeId,
+      scoutid:       member.osm_scoutid,
+      firstname:     member.first_name,
+      lastname:      member.surname,
+      badge_id:      osmBadgeId,
       badge_version: osmBadgeVersion,
-      level: stageLevel,
-      section_id: osmSectionId,
-      section: osmSection,
-      action: 'award',
-      status: 'pending',
-      added_date: now,
+      level:         stageLevel,
+      section_id:    osmSectionId,
+      section:       osmSection,
+      action:        'award',
+      status:        'pending',
+      added_date:    now,
     });
 
     // Queue 2: overrideCompletion (sets the correct stage level)
     await base44.asServiceRole.entities.PendingBadgeSync.create({
-      scoutid: member.osm_scoutid,
-      firstname: member.first_name,
-      lastname: member.surname,
-      badge_id: osmBadgeId,
+      scoutid:       member.osm_scoutid,
+      firstname:     member.first_name,
+      lastname:      member.surname,
+      badge_id:      osmBadgeId,
       badge_version: osmBadgeVersion,
-      level: stageLevel,
-      section_id: osmSectionId,
-      section: osmSection,
-      action: 'complete',
-      status: 'pending',
-      added_date: now,
+      level:         stageLevel,
+      section_id:    osmSectionId,
+      section:       osmSection,
+      action:        'complete',
+      status:        'pending',
+      added_date:    now,
     });
 
     return Response.json({ success: true, queued: 2, badge: badgeDef.name, osm_badge_id: osmBadgeId, level: stageLevel });

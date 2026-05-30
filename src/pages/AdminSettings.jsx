@@ -33,6 +33,7 @@ import PublicWebsiteSettings from '../components/admin/PublicWebsiteSettings';
 import WhatsAppSetupTab from '../components/whatsapp/WhatsAppSetupTab';
 import WhatsAppTestTab from '../components/whatsapp/WhatsAppTestTab';
 import SubscriptionPricingTab from '../components/admin/SubscriptionPricingTab';
+import OSMBadgeMappingTab from '../components/admin/OSMBadgeMappingTab';
 
 const NAV_ITEMS = [
   { key: 'users',          label: 'User Management',    icon: Users,    group: 'People' },
@@ -507,9 +508,9 @@ export default function AdminSettings() {
               {/* ── OSM Programme Sync ── */}
               <TabsContent value="osm-programme"><OSMSyncPanel defaultTab="programme-sync" /></TabsContent>
 
-              {/* ── OSM Badge ID Sync ── */}
+              {/* ── OSM Badge ID Mapping ── */}
               <TabsContent value="osm-badge-ids">
-                <OSMSyncPanel defaultTab="badge-sync" />
+                <OSMBadgeMappingTab />
               </TabsContent>
 
               {/* ── OSM Badge Award Sync ── */}

@@ -16,7 +16,6 @@ Deno.serve(async (req) => {
 
   const { osm_access_token, osm_section_id, osm_section, osm_term_id } = settings;
 
-  // Fetch all badges by person for this section/term
   const url = `https://www.onlinescoutmanager.co.uk/ext/badges/badgesbyperson/?action=loadBadgesByMember&section=${osm_section || 'scouts'}&sectionid=${osm_section_id}&term_id=${osm_term_id}&access_token=${osm_access_token}`;
 
   const resp = await fetch(url, {
@@ -33,12 +32,10 @@ Deno.serve(async (req) => {
   try {
     osmData = await resp.json();
   } catch (e) {
-    console.warn('OSM badges returned non-JSON — skipping badge import');
     return Response.json({ success: true, badges_awarded: 0, skipped: true, reason: 'non-JSON response' });
   }
 
   if (osmData.status === false || osmData.ok === false) {
-    console.warn('OSM badges returned failure — skipping badge import');
     return Response.json({ success: true, badges_awarded: 0, skipped: true, reason: 'OSM reported failure' });
   }
 
@@ -46,13 +43,10 @@ Deno.serve(async (req) => {
   const memberBadgeData = allMemberData.find(m => String(m.scoutid) === String(scoutid));
 
   if (!memberBadgeData) {
-    console.log(`No badge data found for scoutid ${scoutid} in OSM response`);
     return Response.json({ success: true, badges_awarded: 0, message: 'No badge data found for this member in OSM' });
   }
 
-  // Include ALL badges where awarded > 0
-  // For normal badges: awarded=1 means complete
-  // For staged badges: awarded=N means stage N has been reached
+  // awarded > 0: for normal badges means complete (awarded=1), for staged means stage N reached
   const earnedBadges = (memberBadgeData.badges || []).filter(
     b => parseInt(b.awarded) > 0 || String(b.completed) === '1'
   );
@@ -63,100 +57,74 @@ Deno.serve(async (req) => {
     return Response.json({ success: true, badges_awarded: 0, message: 'No earned badges in OSM' });
   }
 
-  // Build OSM badge_id (numeric, e.g. "94") → OSMBadge record map
-  // FIX: use m.badge_id as key (not m.osm_badge_id which doesn't exist)
-  const osmBadgeMappings = await base44.asServiceRole.entities.OSMBadge.filter({});
-  const osmBadgeByOsmId = {};
-  for (const m of osmBadgeMappings) {
-    if (m.badge_id) osmBadgeByOsmId[String(m.badge_id)] = m;
-  }
-
-  // Load all app BadgeDefinitions — needed for staged badge family lookups
+  // Load all app BadgeDefinitions indexed by osm_badge_id
+  // For each OSM badge_id, there may be multiple BadgeDefinitions (one per stage for staged badges)
   const appBadgeDefs = await base44.asServiceRole.entities.BadgeDefinition.filter({ active: true });
-  const badgeDefById = {};
-  const badgeDefsByFamily = {};
+  const badgeDefsByOsmId = {};
   for (const bd of appBadgeDefs) {
-    badgeDefById[bd.id] = bd;
-    if (bd.badge_family_id) {
-      if (!badgeDefsByFamily[bd.badge_family_id]) badgeDefsByFamily[bd.badge_family_id] = [];
-      badgeDefsByFamily[bd.badge_family_id].push(bd);
-    }
+    if (!bd.osm_badge_id) continue;
+    const key = String(bd.osm_badge_id);
+    if (!badgeDefsByOsmId[key]) badgeDefsByOsmId[key] = [];
+    badgeDefsByOsmId[key].push(bd);
   }
 
-  // Get existing awards so we don't duplicate
+  // Get existing awards to avoid duplicates
   const existingAwards = await base44.asServiceRole.entities.MemberBadgeAward.filter({ member_id });
   const alreadyAwardedIds = new Set(existingAwards.map(a => a.badge_id).filter(Boolean));
 
   const today = new Date().toISOString().split('T')[0];
   let badgesAwarded = 0;
-  let badgesSkipped = 0;   // no link set up in admin
-  let badgesUnmapped = 0;  // OSMBadge record not found at all
+  let badgesSkipped = 0;   // no app badge linked
+  let badgesUnmapped = 0;  // no BadgeDefinition found for this OSM badge_id
 
   const awardBadge = async (badgeDefId) => {
     if (alreadyAwardedIds.has(badgeDefId)) return;
     await base44.asServiceRole.entities.MemberBadgeAward.create({
       member_id,
-      badge_id:        badgeDefId,
-      awarded_date:    today,
-      completed_date:  today,
-      awarded_by:      'OSM Import',
+      badge_id:       badgeDefId,
+      awarded_date:   today,
+      completed_date: today,
+      awarded_by:     'OSM Import',
     });
     alreadyAwardedIds.add(badgeDefId);
     badgesAwarded++;
   };
 
   for (const osmBadge of earnedBadges) {
-    const osmRecord = osmBadgeByOsmId[String(osmBadge.badge_id)];
+    const matchingDefs = badgeDefsByOsmId[String(osmBadge.badge_id)];
 
-    if (!osmRecord) {
-      console.log(`No OSMBadge record for badge_id ${osmBadge.badge_id} (${osmBadge.badge_name || ''})`);
+    if (!matchingDefs || matchingDefs.length === 0) {
+      console.log(`No BadgeDefinition with osm_badge_id=${osmBadge.badge_id} (${osmBadge.badge_name || ''})`);
       badgesUnmapped++;
       continue;
     }
 
-    if (!osmRecord.linked_to_app_badge) {
-      console.log(`OSMBadge "${osmRecord.name}" (id: ${osmRecord.badge_id}) has no linked app badge — skipping`);
-      badgesSkipped++;
-      continue;
-    }
-
-    // Extract just the ID part — some entries are stored as "id: Badge Name description"
-    const linkedAppBadgeId = osmRecord.linked_to_app_badge.split(':')[0].trim();
-    const linkedBadgeDef = badgeDefById[linkedAppBadgeId];
-
-    if (!linkedBadgeDef) {
-      console.log(`Linked BadgeDefinition "${linkedAppBadgeId}" not found for OSM badge "${osmRecord.name}"`);
-      badgesSkipped++;
-      continue;
-    }
-
     const awardedStage = parseInt(osmBadge.awarded);
-    const isStaged = osmRecord.badge_type === 'Staged' && awardedStage > 0 && linkedBadgeDef.badge_family_id;
+    const isStaged = matchingDefs.some(d => d.stage_number != null) && awardedStage > 1;
 
     if (isStaged) {
       // Award all stages up to and including the earned stage number
-      // e.g. if awarded=3, award Stage 1 + Stage 2 + Stage 3
-      const familyBadges = (badgeDefsByFamily[linkedBadgeDef.badge_family_id] || [])
-        .filter(bd => bd.stage_number != null && bd.stage_number >= 1)
+      const stageDefs = matchingDefs
+        .filter(d => d.stage_number != null && d.stage_number >= 1 && d.stage_number <= awardedStage)
         .sort((a, b) => a.stage_number - b.stage_number);
 
-      if (familyBadges.length === 0) {
-        // No staged children found — fall back to awarding the parent badge
-        await awardBadge(linkedAppBadgeId);
+      if (stageDefs.length === 0) {
+        // Stage badges exist but none match — award whatever is available
+        for (const d of matchingDefs) await awardBadge(d.id);
       } else {
-        for (const stageBadge of familyBadges) {
-          if (stageBadge.stage_number <= awardedStage) {
-            await awardBadge(stageBadge.id);
-          }
-        }
+        for (const d of stageDefs) await awardBadge(d.id);
       }
     } else {
-      // Normal badge — award the linked BadgeDefinition directly
-      await awardBadge(linkedAppBadgeId);
+      // Normal badge or stage 1 — award all matching defs (usually just one)
+      for (const d of matchingDefs) {
+        if (!d.stage_number || d.stage_number <= awardedStage) {
+          await awardBadge(d.id);
+        }
+      }
     }
   }
 
-  console.log(`Badge import for member ${member_id}: ${badgesAwarded} awarded, ${badgesSkipped} skipped (no link), ${badgesUnmapped} unmapped`);
+  console.log(`Badge import for member ${member_id}: ${badgesAwarded} awarded, ${badgesSkipped} skipped, ${badgesUnmapped} unmapped (no osm_badge_id set)`);
 
   return Response.json({
     success: true,
