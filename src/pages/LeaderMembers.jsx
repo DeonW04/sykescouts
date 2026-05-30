@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, Plus, Users, Grid3x3, List, Pencil, Check, X } from 'lucide-react';
+import { Search, Plus, Users, Grid3x3, List, Pencil, Check, X, Database, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
@@ -18,6 +18,7 @@ import { useSectionContext } from '../components/leader/SectionContext';
 export default function LeaderMembers() {
   const { selectedSection } = useSectionContext();
   const [searchTerm, setSearchTerm] = useState('');
+  const [showMethodDialog, setShowMethodDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [sending, setSending] = useState(false);
   const [viewMode, setViewMode] = useState('tile'); // 'tile' or 'patrol'
@@ -98,17 +99,59 @@ export default function LeaderMembers() {
             <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Members</h1>
             <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>{members.length} active members</p>
           </div>
+          {/* Step 1: Method selection */}
+          <Button className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white" onClick={() => setShowMethodDialog(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Member
+          </Button>
+
+          {/* Method chooser dialog */}
+          <Dialog open={showMethodDialog} onOpenChange={setShowMethodDialog}>
+            <DialogContent className="max-w-xl p-0 overflow-hidden">
+              <DialogHeader className="px-6 pt-6 pb-4 border-b">
+                <DialogTitle className="text-xl">Add Member</DialogTitle>
+              </DialogHeader>
+              <div className="flex divide-x divide-gray-200">
+                {/* Left: Import from OSM */}
+                <div className="flex-1 p-6 flex flex-col items-center text-center gap-4 opacity-50 cursor-not-allowed select-none">
+                  <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center">
+                    <Database className="w-7 h-7 text-gray-400" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-700 text-base">Import from OSM</p>
+                    <p className="text-sm text-gray-400 mt-1">Automatically import member data from Online Scout Manager</p>
+                  </div>
+                  <span className="text-xs bg-gray-100 text-gray-500 font-semibold px-3 py-1 rounded-full">Coming soon</span>
+                </div>
+
+                {/* Right: New Member */}
+                <div className="flex-1 p-6 flex flex-col items-center text-center gap-4">
+                  <div className="w-14 h-14 bg-[#7413dc]/10 rounded-2xl flex items-center justify-center">
+                    <UserPlus className="w-7 h-7 text-[#7413dc]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900 text-base">New Member</p>
+                    <p className="text-sm text-gray-500 mt-1">Manually enter the member's details to add them to your section</p>
+                  </div>
+                  <Button
+                    className="bg-[#7413dc] hover:bg-[#5c0fb0] w-full"
+                    onClick={() => { setShowMethodDialog(false); setShowInviteDialog(true); }}
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Add Manually
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Step 2: Add member form */}
           <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-            <DialogTrigger asChild>
-              <Button className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Member
-              </Button>
-            </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Add New Member</DialogTitle>
-                </DialogHeader>
+            <DialogContent className="max-w-md flex flex-col max-h-[90vh]">
+              <DialogHeader className="flex-shrink-0">
+                <DialogTitle>Add New Member</DialogTitle>
+              </DialogHeader>
+              <div className="overflow-y-auto flex-1 pr-1">
                 <form onSubmit={handleSendInvite} className="space-y-4 mt-4">
                   <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
                     <Label className="text-base font-semibold">Parent One</Label>
@@ -155,8 +198,9 @@ export default function LeaderMembers() {
                     {sending ? 'Adding Member...' : 'Add Member'}
                   </Button>
                 </form>
-              </DialogContent>
-            </Dialog>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
