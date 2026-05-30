@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
 
   const join = (...parts) => parts.filter(Boolean).join(' ').trim() || null;
 
-  const memberPayload = {
+  const rawPayload = {
     osm_scoutid:             parseInt(scoutid),
     first_name:              firstname || null,
     surname:                 lastname || null,
@@ -112,6 +112,14 @@ Deno.serve(async (req) => {
     allergies:               mapped.allergies || null,
     dietary_requirements:    mapped.dietary_requirements || null,
   };
+
+  // Strip null values — entity API rejects null for required string fields
+  const memberPayload = Object.fromEntries(
+    Object.entries(rawPayload).filter(([, v]) => v !== null && v !== undefined && v !== '')
+  );
+  // Always keep active and photo_consent (booleans)
+  memberPayload.active = true;
+  memberPayload.photo_consent = rawPayload.photo_consent;
 
   // Check if already exists (shouldn't happen, but safe)
   const existing = await base44.asServiceRole.entities.Member.filter({ osm_scoutid: parseInt(scoutid) });
