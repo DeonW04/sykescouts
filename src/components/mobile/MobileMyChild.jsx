@@ -224,10 +224,13 @@ function SubscriptionsSection({ child, onRefresh }) {
         <div className="flex rounded-xl border border-gray-200 overflow-hidden">
           {INTERVAL_OPTIONS.map((opt, i) => (
             <button key={opt.value} onClick={() => setSetupInterval(opt.value)}
-              className={`flex-1 py-2 text-xs font-semibold transition-all ${
+              className={`flex-1 py-2 text-xs font-semibold transition-all flex flex-col items-center gap-0.5 ${
                 getEffectiveInterval() === opt.value ? 'bg-[#7413dc] text-white' : 'bg-white text-gray-600'
               } ${i > 0 ? 'border-l border-gray-200' : ''}`}>
-              {opt.label}
+              <span>{opt.label}</span>
+              {subsConfig?.[INTERVAL_PRICE_FIELD[opt.value]] && (
+                <span className="text-[10px] opacity-75">£{(subsConfig[INTERVAL_PRICE_FIELD[opt.value]] / 100).toFixed(2)}</span>
+              )}
             </button>
           ))}
         </div>
@@ -426,17 +429,26 @@ function SubscriptionsSection({ child, onRefresh }) {
               <div className="flex rounded-xl border border-gray-200 overflow-hidden">
                 {INTERVAL_OPTIONS.map((opt, i) => (
                   <button key={opt.value} onClick={() => handleIntervalChange(opt.value)}
-                    className={`flex-1 py-2 text-xs font-semibold transition-all ${
+                    className={`flex-1 py-2 text-xs font-semibold transition-all flex flex-col items-center gap-0.5 ${
                       currentInterval === opt.value ? 'bg-[#7413dc] text-white' : 'bg-white text-gray-600 active:bg-gray-50'
                     } ${i > 0 ? 'border-l border-gray-200' : ''}`}>
-                    {opt.label}
+                    <span>{opt.label}</span>
+                    {subsConfig?.[INTERVAL_PRICE_FIELD[opt.value]] && (
+                      <span className="text-[10px] opacity-75">£{(subsConfig[INTERVAL_PRICE_FIELD[opt.value]] / 100).toFixed(2)}</span>
+                    )}
                   </button>
                 ))}
               </div>
-              {pendingInterval && (
+              {pendingInterval && (() => {
+                const newPrc = subsConfig?.[INTERVAL_PRICE_FIELD[pendingInterval]];
+                const curPrc = subsConfig?.[INTERVAL_PRICE_FIELD[currentInterval]];
+                const isUpgrade = newPrc && curPrc ? newPrc > curPrc : false;
+                return (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2">
                   <p className="text-xs font-semibold text-amber-800">
-                    Change to {INTERVAL_OPTIONS.find(o => o.value === pendingInterval)?.label}? Your next payment date will be adjusted.
+                    {isUpgrade
+                      ? `Change to ${INTERVAL_OPTIONS.find(o => o.value === pendingInterval)?.label}? A prorated charge will be taken immediately to cover the price difference.`
+                      : `Change to ${INTERVAL_OPTIONS.find(o => o.value === pendingInterval)?.label}? This takes effect from your next billing date — no charge today.`}
                   </p>
                   <div className="flex gap-2">
                     <button onClick={() => setPendingInterval(null)} className="flex-1 py-1.5 border border-gray-200 rounded-lg text-xs font-semibold text-gray-600">Cancel</button>
@@ -445,7 +457,8 @@ function SubscriptionsSection({ child, onRefresh }) {
                     </button>
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </div>
             {defaultPm && (
               <div className="flex justify-between text-sm">

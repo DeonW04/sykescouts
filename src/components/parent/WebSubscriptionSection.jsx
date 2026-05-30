@@ -134,10 +134,13 @@ export default function WebSubscriptionSection({ child }) {
         <div className="flex rounded-xl border border-gray-200 overflow-hidden w-fit">
           {INTERVAL_OPTIONS.map((opt, i) => (
             <button key={opt} onClick={() => setSetupInterval(opt)}
-              className={`px-4 py-2.5 text-sm font-semibold transition-colors ${
+              className={`px-4 py-2.5 text-sm font-semibold transition-colors flex flex-col items-center gap-0.5 ${
                 getEffectiveInterval() === opt ? 'bg-[#7413dc] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
               } ${i > 0 ? 'border-l border-gray-200' : ''}`}>
-              {INTERVAL_LABELS[opt]}
+              <span>{INTERVAL_LABELS[opt]}</span>
+              {subsConfig?.[INTERVAL_PRICE_FIELD[opt]] && (
+                <span className="text-xs opacity-75">£{(subsConfig[INTERVAL_PRICE_FIELD[opt]] / 100).toFixed(2)}</span>
+              )}
             </button>
           ))}
         </div>
@@ -355,16 +358,27 @@ export default function WebSubscriptionSection({ child }) {
               <div className="flex rounded-xl border border-gray-200 overflow-hidden w-fit">
                 {INTERVAL_OPTIONS.map((opt, i) => (
                   <button key={opt} onClick={() => { if (opt !== currentInterval) setPendingInterval(opt); }}
-                    className={`px-4 py-2.5 text-sm font-semibold transition-colors ${
+                    className={`px-4 py-2.5 text-sm font-semibold transition-colors flex flex-col items-center gap-0.5 ${
                       (pendingInterval || currentInterval) === opt ? 'bg-[#7413dc] text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
                     } ${i > 0 ? 'border-l border-gray-200' : ''}`}>
-                    {INTERVAL_LABELS[opt]}
+                    <span>{INTERVAL_LABELS[opt]}</span>
+                    {subsConfig?.[INTERVAL_PRICE_FIELD[opt]] && (
+                      <span className="text-xs opacity-75">£{(subsConfig[INTERVAL_PRICE_FIELD[opt]] / 100).toFixed(2)}</span>
+                    )}
                   </button>
                 ))}
               </div>
-              {pendingInterval && pendingInterval !== currentInterval && (
+              {pendingInterval && pendingInterval !== currentInterval && (() => {
+                const newPrc = subsConfig?.[INTERVAL_PRICE_FIELD[pendingInterval]];
+                const curPrc = subsConfig?.[INTERVAL_PRICE_FIELD[currentInterval]];
+                const isUpgrade = newPrc && curPrc ? newPrc > curPrc : false;
+                return (
                 <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3 max-w-md">
-                  <p className="text-sm text-amber-800 font-medium">Change to {INTERVAL_LABELS[pendingInterval]}? Your next payment date will be adjusted.</p>
+                  <p className="text-sm text-amber-800 font-medium">
+                    {isUpgrade
+                      ? `Change to ${INTERVAL_LABELS[pendingInterval]}? A prorated charge will be taken immediately to cover the price difference.`
+                      : `Change to ${INTERVAL_LABELS[pendingInterval]}? This takes effect from your next billing date — no charge today.`}
+                  </p>
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={() => setPendingInterval(null)}>Cancel</Button>
                     <Button size="sm" onClick={handleIntervalConfirm} disabled={savingInterval} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
@@ -372,7 +386,8 @@ export default function WebSubscriptionSection({ child }) {
                     </Button>
                   </div>
                 </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Change payment method */}

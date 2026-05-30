@@ -27,7 +27,7 @@ async function getOrCreatePriceId(stripe, base44, sectionId, interval) {
   const priceIdField = PRICE_ID_FIELD[interval];
   const pricePenceField = PRICE_PENCE_FIELD[interval];
 
-  if (config?.[priceIdField]) return config[priceIdField];
+  if (config?.[priceIdField]) return { priceId: config[priceIdField], config };
 
   const amountPence = config?.[pricePenceField] || fallbackAmountPence;
   if (!amountPence) throw new Error(`No price configured for interval "${interval}". Set it up in Admin Settings.`);
@@ -55,7 +55,7 @@ async function getOrCreatePriceId(stripe, base44, sectionId, interval) {
     });
   }
   console.log(`Created Stripe price ${price.id} for section ${sectionId} interval ${interval}`);
-  return price.id;
+  return { priceId: price.id, config };
 }
 
 Deno.serve(async (req) => {
@@ -77,17 +77,36 @@ Deno.serve(async (req) => {
 
   if (!member.stripe_subscription_id) return Response.json({ error: 'No active subscription found' }, { status: 400 });
 
-  const newPriceId = await getOrCreatePriceId(stripe, base44, member.section_id, new_interval);
+  const { priceId, config } = await getOrCreatePriceId(stripe, base44, member.section_id, new_interval);
+
+  // Determine if this is a price upgrade or downgrade
+  const fallbackAmountPence = parseInt(Deno.env.get('SUBS_AMOUNT_PENCE') || '1500', 10);
+  const currentPriceField = PRICE_PENCE_FIELD[member.subs_interval || '4_months'];
+  const newPriceField = PRICE_PENCE_FIELD[new_interval];
+  const currentPricePence = config?.[currentPriceField] || fallbackAmountPence;
+  const newPricePence = config?.[newPriceField] || fallbackAmountPence;
+  const isUpgrade = newPricePence > currentPricePence;
 
   const subscription = await stripe.subscriptions.retrieve(member.stripe_subscription_id);
   const itemId = subscription.items.data[0].id;
 
-  await stripe.subscriptions.update(member.stripe_subscription_id, {
-    items: [{ id: itemId, price: newPriceId }],
-    proration_behavior: 'none',
-  });
+  if (isUpgrade) {
+    // Upgrade: charge prorated difference immediately
+    await stripe.subscriptions.update(member.stripe_subscription_id, {
+      items: [{ id: itemId, price: priceId }],
+      proration_behavior: 'always_invoice',
+    });
+    console.log(`Upgraded member ${member_id} from ${member.subs_interval} to ${new_interval} — prorated charge applied`);
+  } else {
+    // Downgrade: change takes effect at next billing cycle, no charge/refund today
+    await stripe.subscriptions.update(member.stripe_subscription_id, {
+      items: [{ id: itemId, price: priceId }],
+      proration_behavior: 'none',
+    });
+    console.log(`Downgraded member ${member_id} from ${member.subs_interval} to ${new_interval} — effective next billing cycle`);
+  }
 
   await base44.asServiceRole.entities.Member.update(member.id, { subs_interval: new_interval });
 
-  return Response.json({ success: true });
+  return Response.json({ success: true, is_upgrade: isUpgrade });
 });

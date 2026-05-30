@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const INTERVAL_LABELS = { '4_months': 'Every 4 months', '6_months': 'Every 6 months', yearly: 'Yearly' };
+const INTERVAL_LABELS = { 'monthly': 'Monthly', '4_months': 'Every 4 months', '6_months': 'Every 6 months', 'yearly': 'Yearly' };
 
 function getSubsStatus(member) {
   const today = new Date().toISOString().split('T')[0];

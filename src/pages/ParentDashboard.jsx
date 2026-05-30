@@ -289,6 +289,16 @@ export default function ParentDashboard() {
       return actionsWithDetails.filter(action => {
         // Don't show closed actions
         if (action.is_open === false) return false;
+        // Don't show actions for past programmes
+        if (action.programme && action.programme.date) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (new Date(action.programme.date) < today) return false;
+        }
+        // Don't show actions for past events
+        if (action.event && (action.event.end_date || action.event.start_date)) {
+          if (new Date(action.event.end_date || action.event.start_date) < new Date()) return false;
+        }
         
         // Check if ALL children have a completed response for this action —
         // regardless of whether it was entered by the parent or a leader manually

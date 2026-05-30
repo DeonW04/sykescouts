@@ -141,9 +141,18 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
 
   const { actions: allNonVolunteerActions, responses: existingResponses } = actionsData;
   const allActions = allNonVolunteerActions.filter(a => a.action_purpose !== 'volunteer');
-  const actionsRequired = allActions.filter(action =>
-    !children.every(child => existingResponses.some(r => r.action_required_id === action.id && r.member_id === child.id && r.response_value))
-  );
+  const actionsRequired = allActions.filter(action => {
+    // Filter out actions for past programme dates
+    if (action.programme_id) {
+      const prog = actionProgrammes.find(p => p.id === action.programme_id);
+      if (prog && new Date(prog.date) < today) return false;
+    }
+    // Filter out actions for past events (not in upcomingEvents = past or not applicable)
+    if (action.event_id) {
+      if (!upcomingEvents.some(e => e.id === action.event_id)) return false;
+    }
+    return !children.every(child => existingResponses.some(r => r.action_required_id === action.id && r.member_id === child.id && r.response_value));
+  });
 
   // Compute virtual payment-required actions for meetings where child confirmed attending + has cost + not yet paid
   const virtualPaymentActions = allActions
