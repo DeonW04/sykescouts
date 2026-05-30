@@ -33,7 +33,7 @@ async function getOrCreatePriceId(stripe, base44, sectionId, interval, fallbackA
   const amountPence = config?.[pricePenceField] || fallbackAmountPence;
   if (!amountPence) throw new Error(`No subscription price configured for this section and interval "${interval}". Set it up in Admin Settings → Subscription Pricing.`);
 
-  const displayName = config?.display_name || 'Scout Group Membership Subscription';
+  const displayName = config?.display_name || 'Membership Subs';
   const intervalConfig = INTERVAL_MAP[interval];
 
   console.log(`Creating Stripe product/price for section ${sectionId} interval ${interval} at ${amountPence}p`);
