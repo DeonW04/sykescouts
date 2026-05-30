@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Search, Plus, Users, Grid3x3, List, Pencil, Check, X, Database, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import FloatingNav from '../components/public/FloatingNav';
+import OSMImportFlow from '../components/osm/OSMImportFlow';
 import NavBarSpacer from '../components/public/NavBarSpacer';
 import { useSectionContext } from '../components/leader/SectionContext';
 
@@ -20,6 +21,7 @@ export default function LeaderMembers() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showMethodDialog, setShowMethodDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showOSMImport, setShowOSMImport] = useState(false);
   const [sending, setSending] = useState(false);
   const [viewMode, setViewMode] = useState('tile'); // 'tile' or 'patrol'
   const [inviteForm, setInviteForm] = useState({
@@ -113,7 +115,10 @@ export default function LeaderMembers() {
               </DialogHeader>
               <div className="flex divide-x divide-gray-200">
                 {/* Left: Import from OSM */}
-                <div className="flex-1 p-6 flex flex-col items-center text-center gap-4 opacity-50 cursor-not-allowed select-none">
+                <div
+                  className="flex-1 p-6 flex flex-col items-center text-center gap-4 cursor-pointer hover:bg-[#004851]/5 transition-colors"
+                  onClick={() => { setShowMethodDialog(false); setShowOSMImport(true); }}
+                >
                   <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center">
                     <Database className="w-7 h-7 text-gray-400" />
                   </div>
@@ -121,7 +126,9 @@ export default function LeaderMembers() {
                     <p className="font-semibold text-gray-700 text-base">Import from OSM</p>
                     <p className="text-sm text-gray-400 mt-1">Automatically import member data from Online Scout Manager</p>
                   </div>
-                  <span className="text-xs bg-gray-100 text-gray-500 font-semibold px-3 py-1 rounded-full">Coming soon</span>
+                  <Button variant="outline" className="w-full border-[#004851] text-[#004851] hover:bg-[#004851] hover:text-white">
+                    Import from OSM
+                  </Button>
                 </div>
 
                 {/* Right: New Member */}
@@ -144,6 +151,13 @@ export default function LeaderMembers() {
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* OSM Import Flow */}
+          <OSMImportFlow
+            open={showOSMImport}
+            onClose={() => setShowOSMImport(false)}
+            sectionId={selectedSection}
+          />
 
           {/* Step 2: Add member form */}
           <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
