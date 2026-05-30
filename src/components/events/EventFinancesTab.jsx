@@ -330,50 +330,6 @@ export default function EventFinancesTab({ eventId, event }) {
         </Card>
       )}
 
-      {/* Attending Members with overrides */}
-      {attendingMemberIds.length > 0 && cost > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2"><Users className="w-4 h-4" /><CardTitle className="text-base">Attending Members — Payments ({attendingMemberIds.length})</CardTitle></div>
-            {paymentDeadline && <p className="text-xs text-gray-400 mt-0.5">Payment deadline: {paymentDeadline}{isDeadlinePassed ? ' — PASSED' : ''}</p>}
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead><tr className="border-b bg-gray-50"><th className="text-left py-2 px-2 text-gray-500 font-medium">Member</th><th className="text-right py-2 px-2 text-gray-500 font-medium">Cost</th><th className="text-right py-2 px-2 text-gray-500 font-medium">Paid</th><th className="text-center py-2 px-2 text-gray-500 font-medium">Status</th><th className="text-center py-2 px-2 text-gray-500 font-medium">Override</th></tr></thead>
-                <tbody>
-                  {attendingMemberIds.map(memberId => {
-                    const member = members.find(m => m.id === memberId);
-                    const paid = memberPayments.filter(p => p.member_id === memberId).reduce((s, p) => s + (p.amount || 0), 0);
-                    const ov = getOverride(memberId);
-                    const isNotAttending = ov?.override_type === 'not_attending';
-                    const isWaived = ov?.override_type === 'waived';
-                    const isPaid = paid >= cost;
-                    return (
-                      <tr key={memberId} className={`border-b hover:bg-gray-50 ${isNotAttending ? 'opacity-50' : ''}`}>
-                        <td className="py-2 px-2 font-medium">{member?.full_name || 'Unknown'}</td>
-                        <td className="py-2 px-2 text-right text-gray-500">{isNotAttending ? '—' : fmt(cost)}</td>
-                        <td className="py-2 px-2 text-right font-medium text-green-700">{fmt(paid)}</td>
-                        <td className="py-2 px-2 text-center"><StatusPill memberId={memberId} paid={paid} /></td>
-                        <td className="py-2 px-2 text-center">
-                          {!isPaid && !isWaived && (
-                            <div className="flex items-center justify-center gap-1">
-                              <Button size="sm" variant={isNotAttending ? 'default' : 'outline'} className={`text-xs h-6 px-2 ${isNotAttending ? 'bg-gray-500 text-white' : 'border-gray-300 text-gray-600'}`} onClick={() => handleSetOverride(memberId, 'not_attending')}>{isNotAttending ? 'Clear' : 'Not Attending'}</Button>
-                              {!isNotAttending && (<Button size="sm" variant="outline" className="text-xs h-6 px-2 border-blue-300 text-blue-600" onClick={() => handleSetOverride(memberId, 'waived')}>Waive</Button>)}
-                            </div>
-                          )}
-                          {(isPaid || isWaived) && ov && (<Button size="sm" variant="ghost" className="text-xs h-6 text-gray-400" onClick={() => handleSetOverride(memberId, ov.override_type)}>Clear</Button>)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Attending Members — Stripe Payments */}
       <EventAttendingMembersStripe eventId={eventId} event={eventData} />
 
