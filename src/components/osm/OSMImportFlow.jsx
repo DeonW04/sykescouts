@@ -12,9 +12,10 @@ import confetti from 'canvas-confetti';
 
 const IMPORT_STAGES = [
   { label: 'Identifying Member',               percent: 8  },
-  { label: 'Fetching Member Details from OSM', percent: 35 },
-  { label: 'Creating Member Record',            percent: 58 },
-  { label: 'Fetching Badge Data from OSM',      percent: 72 },
+  { label: 'Fetching Individual Details',       percent: 28 },
+  { label: 'Fetching Contact & Medical Data',   percent: 52 },
+  { label: 'Creating Member Record',            percent: 65 },
+  { label: 'Fetching Badge Data from OSM',      percent: 80 },
   { label: 'Awarding Badges',                   percent: 92 },
   { label: 'Import Complete!',                  percent: 100 },
 ];
@@ -83,16 +84,29 @@ export default function OSMImportFlow({ open, onClose, sectionId }) {
     };
 
     advance(0);
-    await delay(500);
+    await delay(400);
 
+    // Stage 1: fetch dob / startedsection / started via getIndividual
     advance(1);
+    const individualResp = await base44.functions.invoke('getOSMMemberIndividual', {
+      scoutid: selected.scoutid,
+    });
+    if (!individualResp.data.success) {
+      setError(individualResp.data.error || 'Failed to fetch individual member details from OSM.');
+      setStep('error');
+      return;
+    }
+    const individual = individualResp.data;
+
+    // Stage 2: fetch contact/medical data and create/update member record
+    advance(2);
     const detailsResp = await base44.functions.invoke('importOSMMemberCore', {
       scoutid:        selected.scoutid,
-      firstname:      selected.firstname,
-      lastname:       selected.lastname,
-      dob:            selected.dob,
-      startedsection: selected.startedsection,
-      started:        selected.started,
+      firstname:      individual.firstname || selected.firstname,
+      lastname:       individual.lastname  || selected.lastname,
+      dob:            individual.dob            || null,
+      startedsection: individual.startedsection || null,
+      started:        individual.started        || null,
       section_id:     sectionId || null,
     });
 
@@ -102,20 +116,20 @@ export default function OSMImportFlow({ open, onClose, sectionId }) {
       return;
     }
 
-    advance(2);
-    await delay(600);
-
     advance(3);
+    await delay(500);
+
+    advance(4);
     const badgesResp = await base44.functions.invoke('importOSMMemberBadges', {
       member_id: detailsResp.data.member_id,
       scoutid:   selected.scoutid,
     });
 
-    advance(4);
+    advance(5);
     await delay(500);
 
     const badgesAwarded = badgesResp.data?.badges_awarded || 0;
-    advance(5);
+    advance(6);
     setImportResult({ ...detailsResp.data, badges_awarded: badgesAwarded });
 
     await delay(700);
@@ -235,9 +249,7 @@ export default function OSMImportFlow({ open, onClose, sectionId }) {
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-gray-900 text-sm">{m.firstname} {m.lastname}</p>
                           <p className="text-xs text-gray-400">
-                            DOB: {m.dob ? format(new Date(m.dob), 'd MMM yyyy') : '—'}
-                            &nbsp;&middot;&nbsp;
-                            Joined section: {m.startedsection ? format(new Date(m.startedsection), 'd MMM yyyy') : '—'}
+                            Started: {m.startdate ? format(new Date(m.startdate), 'd MMM yyyy') : '—'}
                             {m.age_simple ? ` \u00b7 Age: ${m.age_simple}` : ''}
                           </p>
                         </div>
@@ -259,9 +271,9 @@ export default function OSMImportFlow({ open, onClose, sectionId }) {
                 <div>
                   <p className="font-bold text-gray-900 text-lg">{selected.firstname} {selected.lastname}</p>
                   <p className="text-sm text-gray-500">OSM ID: {selected.scoutid}</p>
-                  {selected.dob && (
+                  {selected.startdate && (
                     <p className="text-sm text-gray-500">
-                      Born: {format(new Date(selected.dob), 'd MMMM yyyy')}
+                      Started: {format(new Date(selected.startdate), 'd MMMM yyyy')}
                       {selected.age_simple ? ` \u00b7 Age: ${selected.age_simple}` : ''}
                     </p>
                   )}
