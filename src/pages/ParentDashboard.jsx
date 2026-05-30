@@ -5,7 +5,7 @@ import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, AlertCircle, Clock, Check, X, Tent, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Users, Calendar, Award, AlertCircle, Clock, Check, X, Tent, CheckCircle, AlertTriangle, FileText, HandHeart } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -556,8 +556,70 @@ export default function ParentDashboard() {
                                 </Button>
                               </div>
                             )}
-                          </div>
-                        ))}
+
+                            {action.action_purpose === 'volunteer' && (
+                              <div className="flex gap-2 flex-wrap">
+                                <Button
+                                  size="sm"
+                                  onClick={() => respondToActionMutation.mutate({
+                                    actionId: action.id,
+                                    memberId: child.id,
+                                    response: 'Yes, I will volunteer',
+                                    entityId: action.programme_id || action.event_id,
+                                    isVolunteer: true,
+                                  })}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <HandHeart className="w-3 h-3 mr-1" />
+                                  Yes, I'll help!
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => respondToActionMutation.mutate({
+                                    actionId: action.id,
+                                    memberId: child.id,
+                                    response: 'No, not this time',
+                                    entityId: action.programme_id || action.event_id,
+                                    isVolunteer: true,
+                                  })}
+                                >
+                                  Not this time
+                                </Button>
+                              </div>
+                            )}
+
+                            {action.action_purpose === 'consent_form' && (
+                              <Button
+                                size="sm"
+                                onClick={async () => {
+                                  const subs = await base44.entities.ConsentFormSubmission.filter({ form_id: action.consent_form_id, member_id: child.id });
+                                  let sub = subs.find(s => action.event_id ? s.event_id === action.event_id : s.programme_id === action.programme_id) || subs[0];
+                                  if (!sub) {
+                                    const token = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+                                    sub = await base44.entities.ConsentFormSubmission.create({
+                                      form_id: action.consent_form_id,
+                                      member_id: child.id,
+                                      event_id: action.event_id || null,
+                                      programme_id: action.programme_id || null,
+                                      sign_token: token,
+                                      status: 'pending',
+                                    });
+                                  } else if (!sub.sign_token) {
+                                    const token = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+                                    await base44.entities.ConsentFormSubmission.update(sub.id, { sign_token: token });
+                                    sub = { ...sub, sign_token: token };
+                                  }
+                                  window.open(`/sign?token=${sub.sign_token}`, '_blank');
+                                }}
+                                className="bg-[#7413dc] hover:bg-[#5c0fb0]"
+                              >
+                                <FileText className="w-3 h-3 mr-1" />
+                                Sign Consent Form
+                              </Button>
+                            )}
+                            </div>
+                            ))}
                       </div>
                     ))}
                   </div>

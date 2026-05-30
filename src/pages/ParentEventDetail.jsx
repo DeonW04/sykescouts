@@ -413,26 +413,55 @@ export default function ParentEventDetail() {
                             )}
 
                             {action.action_purpose === 'text_input' && (
-                              <div className="flex gap-2">
-                                <Input
-                                  placeholder="Enter your response"
-                                  value={textInputs[`${action.id}-${child.id}`] || ''}
-                                  onChange={(e) => setTextInputs({ ...textInputs, [`${action.id}-${child.id}`]: e.target.value })}
-                                />
-                                <Button
-                                  size="sm"
-                                  onClick={() => {
-                                    const value = textInputs[`${action.id}-${child.id}`];
-                                    if (value) {
-                                      respondToActionMutation.mutate({ actionId: action.id, memberId: child.id, response: value });
-                                    }
-                                  }}
-                                  disabled={!textInputs[`${action.id}-${child.id}`]}
-                                >
-                                  Submit
-                                </Button>
-                              </div>
-                            )}
+                               <div className="flex gap-2">
+                                 <Input
+                                   placeholder="Enter your response"
+                                   value={textInputs[`${action.id}-${child.id}`] || ''}
+                                   onChange={(e) => setTextInputs({ ...textInputs, [`${action.id}-${child.id}`]: e.target.value })}
+                                 />
+                                 <Button
+                                   size="sm"
+                                   onClick={() => {
+                                     const value = textInputs[`${action.id}-${child.id}`];
+                                     if (value) {
+                                       respondToActionMutation.mutate({ actionId: action.id, memberId: child.id, response: value });
+                                     }
+                                   }}
+                                   disabled={!textInputs[`${action.id}-${child.id}`]}
+                                 >
+                                   Submit
+                                 </Button>
+                               </div>
+                             )}
+
+                            {action.action_purpose === 'consent_form' && (
+                               <Button
+                                 size="sm"
+                                 onClick={async () => {
+                                   const subs = await base44.entities.ConsentFormSubmission.filter({ form_id: action.consent_form_id, member_id: child.id });
+                                   let sub = subs.find(s => s.event_id === eventId) || subs[0];
+                                   if (!sub) {
+                                     const token = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+                                     sub = await base44.entities.ConsentFormSubmission.create({
+                                       form_id: action.consent_form_id,
+                                       member_id: child.id,
+                                       event_id: eventId,
+                                       sign_token: token,
+                                       status: 'pending',
+                                     });
+                                   } else if (!sub.sign_token) {
+                                     const token = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+                                     await base44.entities.ConsentFormSubmission.update(sub.id, { sign_token: token });
+                                     sub = { ...sub, sign_token: token };
+                                   }
+                                   window.open(`/sign?token=${sub.sign_token}`, '_blank');
+                                 }}
+                                 className="bg-[#7413dc] hover:bg-[#5c0fb0] w-full"
+                               >
+                                 <FileText className="w-4 h-4 mr-2" />
+                                 Sign Consent Form
+                               </Button>
+                             )}
                           </div>
                         );
                       })}
