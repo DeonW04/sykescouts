@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { TrendingUp, TrendingDown, Receipt, Users, QrCode, ExternalLink, CheckCircle, AlertTriangle, XCircle, MinusCircle, Slash, Clock, Plus, Trash2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Receipt, QrCode, CheckCircle, AlertTriangle, XCircle, MinusCircle, Slash, Clock, Plus, Trash2, Maximize2, X, Check, MessageSquare } from 'lucide-react';
 import EventAttendingMembersStripe from '../leader/EventAttendingMembersStripe';
 import { toast } from 'sonner';
 
@@ -17,6 +17,8 @@ export default function EventFinancesTab({ eventId, event }) {
   const [newEstDesc, setNewEstDesc] = useState('');
   const [newEstAmt, setNewEstAmt] = useState('');
   const [savingEst, setSavingEst] = useState(false);
+  const [qrExpanded, setQrExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const { data: allocations = [] } = useQuery({
     queryKey: ['receipt-allocations-event', eventId],
@@ -32,16 +34,6 @@ export default function EventFinancesTab({ eventId, event }) {
   const { data: eventAttendance = [] } = useQuery({
     queryKey: ['event-attendances', eventId],
     queryFn: () => base44.entities.EventAttendance.filter({ event_id: eventId }),
-  });
-
-  const { data: members = [] } = useQuery({
-    queryKey: ['members'],
-    queryFn: () => base44.entities.Member.filter({ active: true }),
-  });
-
-  const { data: memberPayments = [] } = useQuery({
-    queryKey: ['member-payments-event', eventId],
-    queryFn: () => base44.entities.MemberPayment.filter({ related_event_id: eventId }),
   });
 
   const { data: actionsRequired = [] } = useQuery({
@@ -67,7 +59,6 @@ export default function EventFinancesTab({ eventId, event }) {
 
   const { data: currentUser } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
-  // Re-fetch event to get latest estimated_expenses
   const { data: latestEvent } = useQuery({
     queryKey: ['event-detail-finance', eventId],
     queryFn: () => base44.entities.Event.filter({ id: eventId }).then(r => r[0]),
@@ -130,7 +121,6 @@ export default function EventFinancesTab({ eventId, event }) {
     queryClient.invalidateQueries({ queryKey: ['event-detail-finance', eventId] });
   };
 
-  // Billable = attending, not not_attending, not waived
   const billableMemberIds = attendingMemberIds.filter(id => !getOverride(id));
   const expectedIncome = billableMemberIds.length * cost;
   const netEstimate = expectedIncome - totalEstimatedExpenses;
@@ -140,6 +130,15 @@ export default function EventFinancesTab({ eventId, event }) {
   const totalCollected = ledgerEntries.filter(e => e.type === 'income').reduce((s, e) => s + (e.amount || 0), 0);
 
   const qrUrl = `${window.location.origin}/receipt-submit?event_id=${eventId}&label=${encodeURIComponent(eventData?.title || 'Event')}`;
+  const qrSmall = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrUrl)}`;
+  const qrLarge = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(qrUrl)}`;
+  const whatsappMessage = `Hi everyone! Please use the link below to submit any receipts for ${eventData?.title || 'this event'}:\n\n${qrUrl}`;
+
+  const handleCopyWhatsapp = async () => {
+    await navigator.clipboard.writeText(whatsappMessage);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
 
   const StatusPill = ({ memberId, paid }) => {
     const ov = getOverride(memberId);
@@ -177,6 +176,7 @@ export default function EventFinancesTab({ eventId, event }) {
 
   return (
     <div className="space-y-4">
+
       {/* Deadline warning */}
       {isDeadlinePassed && cost > 0 && (
         <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
@@ -280,15 +280,91 @@ export default function EventFinancesTab({ eventId, event }) {
               <QrCode className="w-4 h-4 text-teal-700" />
               <CardTitle className="text-sm text-teal-800">QR Receipt Submission</CardTitle>
             </div>
-            <Button size="sm" variant="outline" className="border-teal-300 text-teal-700 hover:bg-teal-100 text-xs" onClick={() => window.open(qrUrl, '_blank')}>
-              <ExternalLink className="w-3 h-3 mr-1" />Open Link
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-teal-300 text-teal-700 hover:bg-teal-100 text-xs"
+              onClick={() => setQrExpanded(true)}
+            >
+              <Maximize2 className="w-3 h-3 mr-1" />
+              Expand
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="pb-4">
-          <div className="bg-white border border-teal-200 rounded-lg px-3 py-2 text-xs font-mono text-gray-600 break-all select-all">{qrUrl}</div>
+        <CardContent className="pb-4 flex flex-col items-center gap-3">
+          <div
+            className="bg-white border border-teal-200 rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => setQrExpanded(true)}
+            title="Click to expand"
+          >
+            <img
+              src={qrSmall}
+              alt="QR code for receipt submission"
+              width={120}
+              height={120}
+              className="block"
+            />
+          </div>
+          <p className="text-xs text-gray-400 font-mono truncate max-w-full px-2">{qrUrl}</p>
         </CardContent>
       </Card>
+
+      {/* QR Fullscreen Overlay */}
+      {qrExpanded && (
+        <div
+          className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6"
+          onClick={(e) => { if (e.target === e.currentTarget) setQrExpanded(false); }}
+        >
+          <button
+            className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            onClick={() => setQrExpanded(false)}
+          >
+            <X className="w-6 h-6 text-gray-600" />
+          </button>
+
+          <p className="text-sm font-medium text-gray-500 mb-2 tracking-wide uppercase">
+            Receipt Submission
+          </p>
+          <p className="text-base font-semibold text-gray-800 mb-6">
+            {eventData?.title || 'Event'}
+          </p>
+
+          <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 shadow-lg mb-6">
+            <img
+              src={qrLarge}
+              alt="QR code for receipt submission"
+              width={280}
+              height={280}
+              className="block"
+            />
+          </div>
+
+          <p className="text-xs text-gray-400 font-mono text-center break-all max-w-sm mb-8 px-4">
+            {qrUrl}
+          </p>
+
+          <Button
+            onClick={handleCopyWhatsapp}
+            className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium shadow-md"
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4" />
+                Copied to clipboard!
+              </>
+            ) : (
+              <>
+                <MessageSquare className="w-4 h-4" />
+                Copy WhatsApp message
+              </>
+            )}
+          </Button>
+
+          <p className="text-xs text-gray-400 mt-3 text-center">
+            Pastes a ready-made message with the link for your group chat
+          </p>
+        </div>
+      )}
 
       {/* Receipt Allocations */}
       {allocations.length > 0 && (
@@ -365,6 +441,7 @@ export default function EventFinancesTab({ eventId, event }) {
           </CardContent>
         </Card>
       )}
+
     </div>
   );
 }
