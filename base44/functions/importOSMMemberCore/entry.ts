@@ -40,17 +40,26 @@ Deno.serve(async (req) => {
   const { osm_access_token, osm_section_id } = settings;
 
   // Fetch full custom data for this member
-  const url = `https://www.onlinescoutmanager.co.uk/ext/customdata/?action=getData&section_id=${osm_section_id}&associated_id=${scoutid}&associated_type=member&associated_is_section=null&varname_filter=null&context=members&group_order=section`;
+  const url = `https://www.onlinescoutmanager.co.uk/ext/customdata/?action=getData&section_id=${osm_section_id}&associated_id=${scoutid}&associated_type=member&associated_is_section=null&varname_filter=null&context=members&group_order=section&access_token=${osm_access_token}`;
 
   const resp = await fetch(url, {
     headers: { 'Authorization': `Bearer ${osm_access_token}` }
   });
 
   if (!resp.ok) {
+    const body2 = await resp.text().catch(() => '');
+    console.error(`OSM customdata HTTP ${resp.status}:`, body2.slice(0, 200));
     return Response.json({ error: `OSM API error: ${resp.status}` }, { status: 500 });
   }
 
-  const osmData = await resp.json();
+  let osmData;
+  try {
+    osmData = await resp.json();
+  } catch (e) {
+    return Response.json({ error: 'OSM returned non-JSON for member details.' }, { status: 500 });
+  }
+
+  console.log('OSM customdata status:', osmData.status, 'data length:', Array.isArray(osmData.data) ? osmData.data.length : typeof osmData.data);
 
   // Map column data using (group_id, column_id) pairs
   const mapped = {};
@@ -66,40 +75,42 @@ Deno.serve(async (req) => {
     }
   }
 
+  console.log(`Mapped ${Object.keys(mapped).length} fields for scoutid ${scoutid}`);
+
   const join = (...parts) => parts.filter(Boolean).join(' ').trim() || null;
 
   const memberPayload = {
-    osm_scoutid:            parseInt(scoutid),
-    first_name:             firstname || null,
-    surname:                lastname || null,
-    full_name:              join(firstname, lastname),
-    date_of_birth:          dob || null,
-    join_date:              startedsection || null,
-    scouting_start_date:    started || null,
-    section_id:             appSectionId || null,
-    active:                 true,
-    gender:                 mapped.gender || null,
-    photo_consent:          mapped.photo_consent_raw
-                              ? mapped.photo_consent_raw.toLowerCase().includes('yes')
-                              : false,
-    parent_one_first_name:  mapped.parent_one_first_name || null,
-    parent_one_surname:     mapped.parent_one_surname || null,
-    parent_one_name:        join(mapped.parent_one_first_name, mapped.parent_one_surname),
-    parent_one_email:       mapped.parent_one_email || null,
-    parent_one_phone:       mapped.parent_one_phone || null,
-    parent_two_first_name:  mapped.parent_two_first_name || null,
-    parent_two_surname:     mapped.parent_two_surname || null,
-    parent_two_name:        join(mapped.parent_two_first_name, mapped.parent_two_surname),
-    parent_two_email:       mapped.parent_two_email || null,
-    parent_two_phone:       mapped.parent_two_phone || null,
-    emergency_contact_name: join(mapped.ec_first_name, mapped.ec_surname),
-    emergency_contact_phone:mapped.emergency_contact_phone || null,
-    doctors_surgery:        mapped.doctors_surgery || null,
-    doctors_phone:          mapped.doctors_phone || null,
-    medical_info:           mapped.medical_info || null,
-    medications:            mapped.medications || null,
-    allergies:              mapped.allergies || null,
-    dietary_requirements:   mapped.dietary_requirements || null,
+    osm_scoutid:             parseInt(scoutid),
+    first_name:              firstname || null,
+    surname:                 lastname || null,
+    full_name:               join(firstname, lastname),
+    date_of_birth:           dob || null,
+    join_date:               startedsection || null,
+    scouting_start_date:     started || null,
+    section_id:              appSectionId || null,
+    active:                  true,
+    gender:                  mapped.gender || null,
+    photo_consent:           mapped.photo_consent_raw
+                               ? mapped.photo_consent_raw.toLowerCase().includes('yes')
+                               : false,
+    parent_one_first_name:   mapped.parent_one_first_name || null,
+    parent_one_surname:      mapped.parent_one_surname || null,
+    parent_one_name:         join(mapped.parent_one_first_name, mapped.parent_one_surname),
+    parent_one_email:        mapped.parent_one_email || null,
+    parent_one_phone:        mapped.parent_one_phone || null,
+    parent_two_first_name:   mapped.parent_two_first_name || null,
+    parent_two_surname:      mapped.parent_two_surname || null,
+    parent_two_name:         join(mapped.parent_two_first_name, mapped.parent_two_surname),
+    parent_two_email:        mapped.parent_two_email || null,
+    parent_two_phone:        mapped.parent_two_phone || null,
+    emergency_contact_name:  join(mapped.ec_first_name, mapped.ec_surname),
+    emergency_contact_phone: mapped.emergency_contact_phone || null,
+    doctors_surgery:         mapped.doctors_surgery || null,
+    doctors_phone:           mapped.doctors_phone || null,
+    medical_info:            mapped.medical_info || null,
+    medications:             mapped.medications || null,
+    allergies:               mapped.allergies || null,
+    dietary_requirements:    mapped.dietary_requirements || null,
   };
 
   // Check if already exists (shouldn't happen, but safe)

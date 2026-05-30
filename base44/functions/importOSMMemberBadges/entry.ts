@@ -17,23 +17,39 @@ Deno.serve(async (req) => {
   const { osm_access_token, osm_section_id, osm_section, osm_term_id } = settings;
 
   // Fetch all badges by person for this section/term
-  const url = `https://www.onlinescoutmanager.co.uk/ext/badges/badgesbyperson/?action=loadBadgesByMember&section=${osm_section || 'scouts'}&sectionid=${osm_section_id}&term_id=${osm_term_id}`;
+  const url = `https://www.onlinescoutmanager.co.uk/ext/badges/badgesbyperson/?action=loadBadgesByMember&section=${osm_section || 'scouts'}&sectionid=${osm_section_id}&term_id=${osm_term_id}&access_token=${osm_access_token}`;
 
   const resp = await fetch(url, {
     headers: { 'Authorization': `Bearer ${osm_access_token}` }
   });
 
   if (!resp.ok) {
-    console.warn(`OSM badges API returned ${resp.status} — skipping badge import`);
+    const body2 = await resp.text().catch(() => '');
+    console.warn(`OSM badges HTTP ${resp.status}:`, body2.slice(0, 200));
     return Response.json({ success: true, badges_awarded: 0, skipped: true, reason: `OSM API ${resp.status}` });
   }
 
-  const osmData = await resp.json();
+  let osmData;
+  try {
+    osmData = await resp.json();
+  } catch (e) {
+    console.warn('OSM badges returned non-JSON — skipping badge import');
+    return Response.json({ success: true, badges_awarded: 0, skipped: true, reason: 'non-JSON response' });
+  }
+
+  console.log('OSM badges status:', osmData.status, 'data length:', Array.isArray(osmData.data) ? osmData.data.length : typeof osmData.data);
+
+  // Only hard-fail if OSM explicitly signals false
+  if (osmData.status === false || osmData.ok === false) {
+    console.warn('OSM badges returned failure — skipping badge import');
+    return Response.json({ success: true, badges_awarded: 0, skipped: true, reason: 'OSM reported failure' });
+  }
 
   const allMemberData = Array.isArray(osmData.data) ? osmData.data : [];
   const memberBadgeData = allMemberData.find(m => String(m.scoutid) === String(scoutid));
 
   if (!memberBadgeData) {
+    console.log(`No badge data found for scoutid ${scoutid} in OSM response`);
     return Response.json({ success: true, badges_awarded: 0, message: 'No badge data found for this member in OSM' });
   }
 
@@ -41,6 +57,8 @@ Deno.serve(async (req) => {
   const completedBadges = (memberBadgeData.badges || []).filter(
     b => String(b.awarded) === '1' || String(b.completed) === '1'
   );
+
+  console.log(`Found ${completedBadges.length} completed badges for scoutid ${scoutid}`);
 
   if (completedBadges.length === 0) {
     return Response.json({ success: true, badges_awarded: 0, message: 'No completed badges in OSM' });
@@ -65,11 +83,11 @@ Deno.serve(async (req) => {
     const appBadgeId = mappingByOsmId[String(osmBadge.badge_id)];
     if (!appBadgeId) {
       badgesSkipped++;
-      continue; // No mapping found
+      continue;
     }
     if (alreadyAwardedIds.has(appBadgeId)) {
       badgesSkipped++;
-      continue; // Already awarded
+      continue;
     }
 
     await base44.asServiceRole.entities.MemberBadgeAward.create({
@@ -83,7 +101,7 @@ Deno.serve(async (req) => {
     badgesAwarded++;
   }
 
-  console.log(`Badge import for member ${member_id}: ${badgesAwarded} awarded, ${badgesSkipped} skipped (no mapping or already awarded)`);
+  console.log(`Badge import for member ${member_id}: ${badgesAwarded} awarded, ${badgesSkipped} skipped`);
 
   return Response.json({
     success: true,
