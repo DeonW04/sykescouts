@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json();
-  const { scoutid } = body;
+  const { scoutid, osm_section_id_override, osm_term_id_override } = body;
   if (!scoutid) return Response.json({ error: 'scoutid is required' }, { status: 400 });
 
   const settingsList = await base44.asServiceRole.entities.OSMSyncSettings.list();
@@ -15,13 +15,13 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'OSM not connected' }, { status: 400 });
   }
 
-  const { osm_access_token, osm_section_id, osm_term_id } = settings;
+  const { osm_access_token } = settings;
+  const osm_section_id = osm_section_id_override || settings.osm_section_id;
+  const osm_term_id    = osm_term_id_override     || settings.osm_term_id;
 
   const url = `https://www.onlinescoutmanager.co.uk/ext/members/contact/?action=getIndividual&sectionid=${osm_section_id}&scoutid=${scoutid}&termid=${osm_term_id}&context=members`;
 
-  const resp = await fetch(url, {
-    headers: { 'Authorization': `Bearer ${osm_access_token}` }
-  });
+  const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${osm_access_token}` } });
 
   if (!resp.ok) {
     const text = await resp.text().catch(() => '');

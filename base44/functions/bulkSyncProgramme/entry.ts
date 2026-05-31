@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const NO_MEETING_KEYWORDS = ['no meeting', 'no scout', 'cancelled', 'half term'];
 
@@ -27,21 +27,21 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const { selections } = await req.json();
+    const { selections, osm_section_id_override, osm_term_id_override } = await req.json();
     if (!Array.isArray(selections)) {
       return Response.json({ error: 'selections must be an array' }, { status: 400 });
     }
 
     const settingsArr = await base44.asServiceRole.entities.OSMSyncSettings.filter({});
     const settings = settingsArr[0];
-
     if (!settings?.osm_access_token) {
       return Response.json({ error: 'OSM not connected' }, { status: 400 });
     }
 
-    const { osm_access_token: accessToken, osm_section_id: sectionId, osm_term_id: termId, linked_app_term_id: appTermId } = settings;
+    const accessToken = settings.osm_access_token;
+    const sectionId   = osm_section_id_override || settings.osm_section_id;
+    const termId      = osm_term_id_override     || settings.osm_term_id;
 
-    // Fetch all sections so we can use their default meeting times as fallback
     const allSections = await base44.asServiceRole.entities.Section.filter({});
 
     let created = 0, updated = 0, pushed = 0, skipped = 0;
@@ -55,10 +55,8 @@ Deno.serve(async (req) => {
       if (action === 'use_osm') {
         try {
           if (local_id) {
-            // Pull OSM data into local
             const osmMeeting = osm_item || null;
             if (!osmMeeting) {
-              // Fetch from OSM
               const url = `https://www.onlinescoutmanager.co.uk/ext/programme/?action=getProgramme&eveningid=${osm_evening_id}&sectionid=${sectionId}&termid=${termId}`;
               const res = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
               if (!res.ok) throw new Error(`OSM returned ${res.status}`);
@@ -77,7 +75,6 @@ Deno.serve(async (req) => {
             }
             updated++;
           } else {
-            // Create new local record from OSM
             if (!osm_item) { failed.push({ date, reason: 'Missing OSM item data for creation' }); continue; }
             const createFields = mapOSMToFields(osm_item);
             createFields.section_id = sel.section_id || '';
@@ -103,20 +100,15 @@ Deno.serve(async (req) => {
           const programme = programmes[0];
           if (!programme) { failed.push({ date, reason: 'Local programme not found' }); continue; }
 
-          // Fall back to section default times if no override is set on the meeting
           const section = allSections.find(s => s.id === programme.section_id);
+          // Prefer section's own osm_section_id, then override, then global
+          const effectiveSectionId = section?.osm_section_id || sectionId;
           const starttime = programme.optional_start_time || section?.meeting_start_time || '';
-          const endtime = programme.optional_end_time || section?.meeting_end_time || '';
+          const endtime   = programme.optional_end_time   || section?.meeting_end_time   || '';
+          const title = programme.no_meeting ? (programme.no_meeting_reason || 'No Meeting') : (programme.title || '');
 
-          let title = programme.no_meeting ? (programme.no_meeting_reason || 'No Meeting') : (programme.title || '');
-          const parts = {
-            title,
-            notesforparents: programme.description || '',
-            starttime,
-            endtime,
-          };
-
-          const body = new URLSearchParams({ sectionid: sectionId, eveningid: osm_evening_id, parts: JSON.stringify(parts) });
+          const parts = { title, notesforparents: programme.description || '', starttime, endtime };
+          const body = new URLSearchParams({ sectionid: effectiveSectionId, eveningid: osm_evening_id, parts: JSON.stringify(parts) });
           const res = await fetch('https://www.onlinescoutmanager.co.uk/ext/programme/?action=editEveningParts', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -125,7 +117,6 @@ Deno.serve(async (req) => {
 
           if (!res.ok) { const rb = await res.text(); throw new Error(`OSM returned ${res.status}: ${rb.substring(0, 100)}`); }
 
-          // Save osm_evening_id back to local programme if not already set
           if (!programme.osm_evening_id) {
             await base44.asServiceRole.entities.Programme.update(local_id, { osm_evening_id: String(osm_evening_id) });
           }

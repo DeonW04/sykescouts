@@ -29,7 +29,11 @@ Deno.serve(async (req) => {
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json();
-  const { scoutid, firstname, lastname, dob, startedsection, started, section_id: appSectionId } = body;
+  const {
+    scoutid, firstname, lastname, dob, startedsection, started,
+    section_id: appSectionId,
+    osm_section_id_override,
+  } = body;
 
   if (!scoutid) return Response.json({ error: 'scoutid is required' }, { status: 400 });
 
@@ -37,14 +41,13 @@ Deno.serve(async (req) => {
   const settings = settingsList[0];
   if (!settings?.osm_access_token) return Response.json({ error: 'OSM not connected' }, { status: 400 });
 
-  const { osm_access_token, osm_section_id } = settings;
+  const { osm_access_token } = settings;
+  // Use section-specific OSM section ID if provided, fall back to global
+  const osm_section_id = osm_section_id_override || settings.osm_section_id;
 
-  // Fetch full custom data for this member
   const url = `https://www.onlinescoutmanager.co.uk/ext/customdata/?action=getData&section_id=${osm_section_id}&associated_id=${scoutid}&associated_type=member&associated_is_section=null&varname_filter=null&context=members&group_order=section&access_token=${osm_access_token}`;
 
-  const resp = await fetch(url, {
-    headers: { 'Authorization': `Bearer ${osm_access_token}` }
-  });
+  const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${osm_access_token}` } });
 
   if (!resp.ok) {
     const body2 = await resp.text().catch(() => '');
@@ -61,7 +64,6 @@ Deno.serve(async (req) => {
 
   console.log('OSM customdata status:', osmData.status, 'data length:', Array.isArray(osmData.data) ? osmData.data.length : typeof osmData.data);
 
-  // Map column data using (group_id, column_id) pairs
   const mapped = {};
   if (osmData.data && Array.isArray(osmData.data)) {
     for (const group of osmData.data) {
@@ -113,15 +115,12 @@ Deno.serve(async (req) => {
     dietary_requirements:    mapped.dietary_requirements || null,
   };
 
-  // Strip null values — entity API rejects null for required string fields
   const memberPayload = Object.fromEntries(
     Object.entries(rawPayload).filter(([, v]) => v !== null && v !== undefined && v !== '')
   );
-  // Always keep active and photo_consent (booleans)
   memberPayload.active = true;
   memberPayload.photo_consent = rawPayload.photo_consent;
 
-  // Check if already exists (shouldn't happen, but safe)
   const existing = await base44.asServiceRole.entities.Member.filter({ osm_scoutid: parseInt(scoutid) });
   let member;
   if (existing.length > 0) {
@@ -132,6 +131,5 @@ Deno.serve(async (req) => {
   }
 
   console.log(`Imported member ${member.full_name} (OSM ID: ${scoutid}) → App ID: ${member.id}`);
-
   return Response.json({ success: true, member_id: member.id, member });
 });

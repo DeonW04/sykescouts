@@ -101,8 +101,14 @@ export default function OSMImportFlow({ open, onClose, sectionId }) {
 
     // Stage 1: fetch dob / startedsection / started via getIndividual
     advance(1);
+    // sectionOsmData is loaded fresh in fetchMembers — safe to use here
+    const sectionOverrides = sectionOsmData?.osm_section_id ? {
+      osm_section_id_override: sectionOsmData.osm_section_id,
+      osm_term_id_override:    sectionOsmData.osm_term_id,
+    } : {};
     const individualResp = await base44.functions.invoke('getOSMMemberIndividual', {
       scoutid: selected.scoutid,
+      ...sectionOverrides,
     });
     if (!individualResp.data.success) {
       setError(individualResp.data.error || 'Failed to fetch individual member details from OSM.');
@@ -114,13 +120,14 @@ export default function OSMImportFlow({ open, onClose, sectionId }) {
     // Stage 2: fetch contact/medical data and create/update member record
     advance(2);
     const detailsResp = await base44.functions.invoke('importOSMMemberCore', {
-      scoutid:        selected.scoutid,
-      firstname:      individual.firstname || selected.firstname,
-      lastname:       individual.lastname  || selected.lastname,
-      dob:            individual.dob            || null,
-      startedsection: individual.startedsection || null,
-      started:        individual.started        || null,
-      section_id:     sectionId || null,
+      scoutid:                 selected.scoutid,
+      firstname:               individual.firstname || selected.firstname,
+      lastname:                individual.lastname  || selected.lastname,
+      dob:                     individual.dob            || null,
+      startedsection:          individual.startedsection || null,
+      started:                 individual.started        || null,
+      section_id:              sectionId || null,
+      ...(sectionOsmData?.osm_section_id ? { osm_section_id_override: sectionOsmData.osm_section_id } : {}),
     });
 
     if (!detailsResp.data.success) {

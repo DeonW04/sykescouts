@@ -31,6 +31,7 @@ export default function MeetingOSMSyncModal({ open, onClose, programme, onSynced
   const [errorMsg, setErrorMsg] = useState('');
   const [confirmPull, setConfirmPull] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [resolvedOverrides, setResolvedOverrides] = useState({});
 
   useEffect(() => {
     if (!open || !programme) return;
@@ -39,37 +40,39 @@ export default function MeetingOSMSyncModal({ open, onClose, programme, onSynced
     setErrorMsg('');
     setConfirmPull(false);
     setSuccessMsg('');
+    setResolvedOverrides({});
     findOSMMeeting();
   }, [open, programme?.id]);
 
   const findOSMMeeting = async () => {
     try {
-      // Load section-specific OSM overrides
-      let sectionOverrides = {};
+      // Load section-specific OSM overrides and store in state for handlePull
+      let overrides = {};
       if (programme.section_id) {
         const allSections = await base44.entities.Section.filter({ active: true });
         const sec = allSections.find(s => s.id === programme.section_id);
         if (sec?.osm_section_id) {
-          sectionOverrides = {
+          overrides = {
             osm_section_id_override: sec.osm_section_id,
             osm_section_type_override: sec.osm_section_type,
             osm_term_id_override: sec.osm_term_id,
           };
         }
       }
+      setResolvedOverrides(overrides);
       if (programme.osm_evening_id) {
-        const res = await base44.functions.invoke('getOSMSingleMeeting', { eveningid: programme.osm_evening_id, ...sectionOverrides });
+        const res = await base44.functions.invoke('getOSMSingleMeeting', { eveningid: programme.osm_evening_id, ...overrides });
         if (res.data.error) throw new Error(res.data.error);
         if (!res.data.meeting) { setStep('not_found'); return; }
         setOsmMeeting(res.data.meeting);
         setStep('compare');
       } else {
-        const res = await base44.functions.invoke('getOSMProgrammeSummary', { ...sectionOverrides });
+        const res = await base44.functions.invoke('getOSMProgrammeSummary', { ...overrides });
         if (res.data.error) throw new Error(res.data.error);
         const items = res.data.items || [];
         const match = items.find(i => i.meetingdate === programme.date);
         if (!match) { setStep('not_found'); return; }
-        const res2 = await base44.functions.invoke('getOSMSingleMeeting', { eveningid: String(match.eveningid), ...sectionOverrides });
+        const res2 = await base44.functions.invoke('getOSMSingleMeeting', { eveningid: String(match.eveningid), ...overrides });
         if (res2.data.error || !res2.data.meeting) { setOsmMeeting(match); setStep('compare'); return; }
         setOsmMeeting(res2.data.meeting);
         setStep('compare');
@@ -106,6 +109,7 @@ export default function MeetingOSMSyncModal({ open, onClose, programme, onSynced
       const res = await base44.functions.invoke('pullMeetingFromOSM', {
         osm_evening_id: eveningId,
         programme_id: programme.id,
+        ...resolvedOverrides,
       });
       if (res.data.error) throw new Error(res.data.error);
       setSuccessMsg('Meeting updated from OSM');
