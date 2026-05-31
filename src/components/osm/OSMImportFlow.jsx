@@ -47,6 +47,7 @@ export default function OSMImportFlow({ open, onClose, sectionId }) {
   const [inviting, setInviting]         = useState(false);
   const [inviteDone, setInviteDone]     = useState(false);
   const [error, setError]               = useState('');
+  const [sectionOsmData, setSectionOsmData] = useState(null);
 
   useEffect(() => {
     if (open) {
@@ -62,8 +63,20 @@ export default function OSMImportFlow({ open, onClose, sectionId }) {
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!sectionId || !open) return;
+    base44.entities.Section.filter({ active: true })
+      .then(all => setSectionOsmData(all.find(s => s.id === sectionId) || null))
+      .catch(() => {});
+  }, [sectionId, open]);
+
   const fetchMembers = async () => {
-    const resp = await base44.functions.invoke('getOSMMembersList', {});
+    const osmPayload = sectionOsmData?.osm_section_id ? {
+      osm_section_id_override:   sectionOsmData.osm_section_id,
+      osm_section_type_override: sectionOsmData.osm_section_type,
+      osm_term_id_override:      sectionOsmData.osm_term_id,
+    } : {};
+    const resp = await base44.functions.invoke('getOSMMembersList', osmPayload);
     if (resp.data.success) {
       setOsmMembers(resp.data.members || []);
       setOsmMeta(resp.data);
@@ -123,6 +136,11 @@ export default function OSMImportFlow({ open, onClose, sectionId }) {
     const badgesResp = await base44.functions.invoke('importOSMMemberBadges', {
       member_id: detailsResp.data.member_id,
       scoutid:   selected.scoutid,
+      ...(sectionOsmData?.osm_section_id ? {
+        osm_section_id_override:   sectionOsmData.osm_section_id,
+        osm_section_type_override: sectionOsmData.osm_section_type,
+        osm_term_id_override:      sectionOsmData.osm_term_id,
+      } : {}),
     });
 
     advance(5);

@@ -15,8 +15,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'OSM not connected' }, { status: 400 });
     }
 
+    const body = await req.json().catch(() => ({}));
+    const { osm_section_id_override } = body;
     const accessToken = settings.osm_access_token;
-    const sectionId = settings.osm_section_id;
+    const sectionId   = osm_section_id_override || settings.osm_section_id;
 
     if (!sectionId) {
       return Response.json({ error: 'OSM section not configured' }, { status: 400 });

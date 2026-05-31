@@ -25,6 +25,7 @@ export default function OSMSyncPanel({ defaultTab }) {
   const [matchingBadges, setMatchingBadges] = useState(false);
   const [autoLinking, setAutoLinking] = useState(false);
   const [badgeView, setBadgeView] = useState('osm');
+  const [syncSectionId, setSyncSectionId] = useState('');
 
   // Filter/sort state
   const [filterType, setFilterType] = useState('all');
@@ -131,7 +132,12 @@ export default function OSMSyncPanel({ defaultTab }) {
     setMatchingBadges(true);
     setOsmExpired(false);
     try {
-      const res = await base44.functions.invoke('syncOSMBadges', {});
+      const syncSec = syncSectionId ? sections.find(s => s.id === syncSectionId) : null;
+      const syncPayload = syncSec?.osm_section_id ? {
+        osm_section_id_override:   syncSec.osm_section_id,
+        osm_section_type_override: syncSec.osm_section_type,
+      } : {};
+      const res = await base44.functions.invoke('syncOSMBadges', syncPayload);
       if (res.data.error) {
         const expired = await isOSMExpired();
         if (expired) { setOsmExpired(true); }
@@ -317,6 +323,17 @@ export default function OSMSyncPanel({ defaultTab }) {
 
             {/* Action buttons + view toggle */}
             <div className="flex items-center gap-2 flex-wrap">
+              {sections.some(s => s.osm_section_id) && (
+                <Select value={syncSectionId || '__default__'} onValueChange={v => setSyncSectionId(v === '__default__' ? '' : v)}>
+                  <SelectTrigger className="h-8 text-xs w-44"><SelectValue placeholder="Default section" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__default__">Default (global settings)</SelectItem>
+                    {sections.filter(s => s.osm_section_id).map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <Button onClick={handleSyncBadges} disabled={matchingBadges || !osmConnected} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
                 {matchingBadges ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Syncing...</> : <><Zap className="w-4 h-4 mr-2" />Fetch OSM Badges</>}
               </Button>

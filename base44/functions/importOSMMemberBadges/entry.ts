@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json();
-  const { member_id, scoutid } = body;
+  const { member_id, scoutid, osm_section_id_override, osm_section_type_override, osm_term_id_override } = body;
 
   if (!member_id || !scoutid) return Response.json({ error: 'member_id and scoutid required' }, { status: 400 });
 
@@ -14,7 +14,10 @@ Deno.serve(async (req) => {
   const settings = settingsList[0];
   if (!settings?.osm_access_token) return Response.json({ error: 'OSM not connected' }, { status: 400 });
 
-  const { osm_access_token, osm_section_id, osm_section, osm_term_id } = settings;
+  const { osm_access_token } = settings;
+  const osm_section_id = osm_section_id_override || settings.osm_section_id;
+  const osm_section   = osm_section_type_override || settings.osm_section;
+  const osm_term_id   = osm_term_id_override       || settings.osm_term_id;
 
   const url = `https://www.onlinescoutmanager.co.uk/ext/badges/badgesbyperson/?action=loadBadgesByMember&section=${osm_section || 'scouts'}&sectionid=${osm_section_id}&term_id=${osm_term_id}&access_token=${osm_access_token}`;
 

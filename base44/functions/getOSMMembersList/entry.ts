@@ -11,7 +11,12 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'OSM is not connected. Please connect OSM in Admin Settings first.' }, { status: 400 });
   }
 
-  const { osm_access_token, osm_section_id, osm_section, osm_term_id } = settings;
+  const body = await req.json().catch(() => ({}));
+  const { osm_section_id_override, osm_section_type_override, osm_term_id_override } = body;
+  const { osm_access_token } = settings;
+  const osm_section_id = osm_section_id_override || settings.osm_section_id;
+  const osm_section   = osm_section_type_override || settings.osm_section;
+  const osm_term_id   = osm_term_id_override       || settings.osm_term_id;
   if (!osm_section_id || !osm_term_id) {
     return Response.json({ error: 'OSM section or term not configured. Please set up OSM sync in Admin Settings.' }, { status: 400 });
   }

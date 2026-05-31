@@ -52,6 +52,18 @@
     "team_leader_id": {
       "type": "string",
       "description": "Leader ID of the Team Leader for this section"
+    },
+    "osm_section_id": {
+      "type": "string",
+      "description": "OSM section ID for this section (numeric ID from OSM, e.g. '12345')"
+    },
+    "osm_section_type": {
+      "type": "string",
+      "description": "OSM section type string (e.g. 'cubs', 'scouts', 'beavers')"
+    },
+    "osm_term_id": {
+      "type": "string",
+      "description": "Current active OSM term ID for this section \u2014 updated each term"
     }
   },
   "required": [

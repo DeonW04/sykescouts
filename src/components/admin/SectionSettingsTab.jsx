@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Users, Clock, ToggleLeft } from 'lucide-react';
+import { Users, Clock, ToggleLeft, RefreshCw } from 'lucide-react';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const SECTION_ORDER = ['squirrels', 'beavers', 'cubs', 'scouts', 'explorers'];
@@ -16,6 +16,7 @@ const SECTION_ORDER = ['squirrels', 'beavers', 'cubs', 'scouts', 'explorers'];
 export default function SectionSettingsTab({ sections, leaders, queryClient }) {
   const [saving, setSaving] = useState({});
   const [meetingEdits, setMeetingEdits] = useState({});
+  const [osmEdits, setOsmEdits] = useState({});
 
   // Sort sections by canonical order
   const sortedSections = [...sections].sort(
@@ -82,6 +83,34 @@ export default function SectionSettingsTab({ sections, leaders, queryClient }) {
     } finally {
       setSaving(s => ({ ...s, [`meet_${sectionId}`]: false }));
     }
+  };
+
+  const setOsmField = (sectionId, field, value) => {
+    const s = sections.find(sec => sec.id === sectionId);
+    const current = osmEdits[sectionId] ?? {
+      osm_section_id: s?.osm_section_id || '',
+      osm_section_type: s?.osm_section_type || s?.name || '',
+      osm_term_id: s?.osm_term_id || '',
+    };
+    setOsmEdits(prev => ({ ...prev, [sectionId]: { ...current, [field]: value } }));
+  };
+
+  const handleSaveOSM = async (sectionId) => {
+    const edit = osmEdits[sectionId];
+    if (!edit) return;
+    setSaving(s => ({ ...s, [`osm_${sectionId}`]: true }));
+    try {
+      await base44.entities.Section.update(sectionId, {
+        osm_section_id: edit.osm_section_id || null,
+        osm_section_type: edit.osm_section_type || null,
+        osm_term_id: edit.osm_term_id || null,
+      });
+      queryClient.invalidateQueries({ queryKey: ['sections'] });
+      queryClient.invalidateQueries({ queryKey: ['all-sections-admin'] });
+      setOsmEdits(prev => { const n = { ...prev }; delete n[sectionId]; return n; });
+      toast.success('OSM settings saved');
+    } catch (e) { toast.error('Failed: ' + e.message); }
+    finally { setSaving(s => ({ ...s, [`osm_${sectionId}`]: false })); }
   };
 
   return (
@@ -203,6 +232,66 @@ export default function SectionSettingsTab({ sections, leaders, queryClient }) {
                 )}
                 {!isDirty && edit.meeting_day && (
                   <p className="text-xs text-gray-500">{edit.meeting_day}s, {edit.meeting_start_time}–{edit.meeting_end_time}</p>
+                )}
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+
+      {/* OSM Section Mapping */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><RefreshCw className="w-5 h-5" />OSM Section Mapping</CardTitle>
+          <p className="text-sm text-gray-500">Link each section to its OSM section so badge syncing, member imports, and programme sync all use the correct OSM data per section.</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {sortedSections.filter(s => s.active).length === 0 && <p className="text-sm text-gray-400">No active sections found.</p>}
+          {sortedSections.filter(s => s.active).map(section => {
+            const edit = osmEdits[section.id] ?? {
+              osm_section_id: section.osm_section_id || '',
+              osm_section_type: section.osm_section_type || section.name || '',
+              osm_term_id: section.osm_term_id || '',
+            };
+            const isDirty = !!osmEdits[section.id];
+            return (
+              <div key={section.id} className="p-4 border rounded-lg bg-gray-50 space-y-3">
+                <p className="font-semibold text-sm">{section.display_name}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-xs">OSM Section ID</Label>
+                    <Input value={edit.osm_section_id} onChange={e => setOsmField(section.id, 'osm_section_id', e.target.value)} placeholder="e.g. 12345" className="h-8 text-sm" />
+                    <p className="text-[10px] text-gray-400 mt-0.5">Numeric ID from OSM</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs">OSM Section Type</Label>
+                    <Select value={edit.osm_section_type || '__none__'} onValueChange={v => setOsmField(section.id, 'osm_section_type', v === '__none__' ? '' : v)}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Select..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="squirrels">Squirrels</SelectItem>
+                        <SelectItem value="beavers">Beavers</SelectItem>
+                        <SelectItem value="cubs">Cubs</SelectItem>
+                        <SelectItem value="scouts">Scouts</SelectItem>
+                        <SelectItem value="explorers">Explorers</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Current Term ID</Label>
+                    <Input value={edit.osm_term_id} onChange={e => setOsmField(section.id, 'osm_term_id', e.target.value)} placeholder="e.g. 67890" className="h-8 text-sm" />
+                    <p className="text-[10px] text-gray-400 mt-0.5">From OSM → Admin → Terms</p>
+                  </div>
+                </div>
+                {isDirty && (
+                  <Button size="sm" onClick={() => handleSaveOSM(section.id)} disabled={saving[`osm_${section.id}`]} className="bg-[#004851] hover:bg-[#003840]">
+                    {saving[`osm_${section.id}`] ? 'Saving...' : 'Save OSM Settings'}
+                  </Button>
+                )}
+                {!isDirty && edit.osm_section_id && (
+                  <p className="text-xs text-green-600">✓ Linked: OSM ID {edit.osm_section_id} ({edit.osm_section_type}){edit.osm_term_id ? ` · Term ${edit.osm_term_id}` : ''}</p>
+                )}
+                {!isDirty && !edit.osm_section_id && (
+                  <p className="text-xs text-amber-600">⚠ No OSM section linked yet</p>
                 )}
               </div>
             );

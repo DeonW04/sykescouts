@@ -21,6 +21,13 @@ export const SectionProvider = ({ children }) => {
 
   const [pendingSectionId, setPendingSectionId] = useState(null);
 
+  // Persist active section across navigation
+  useEffect(() => {
+    if (selectedSection) {
+      localStorage.setItem('syke_active_section', selectedSection);
+    }
+  }, [selectedSection]);
+
   const changeSection = (newSectionId) => {
     if (newSectionId === selectedSection) return;
     setPreviousSection(selectedSection);
@@ -49,8 +56,10 @@ export const SectionProvider = ({ children }) => {
         const allSections = await base44.entities.Section.filter({ active: true });
         setAvailableSections(allSections);
         if (allSections.length > 0) {
-          const defaultExists = defaultId && allSections.find(s => s.id === defaultId);
-          setSelectedSection(defaultExists ? defaultId : allSections[0].id);
+          const storedId = localStorage.getItem('syke_active_section');
+          const preferred = storedId || defaultId;
+          const preferredExists = preferred && allSections.find(s => s.id === preferred);
+          setSelectedSection(preferredExists ? preferred : allSections[0].id);
         }
       } else {
         const leaders = await base44.entities.Leader.filter({ user_id: currentUser.id });
@@ -59,8 +68,10 @@ export const SectionProvider = ({ children }) => {
           const leaderSections = sections.filter(s => leaders[0].section_ids.includes(s.id));
           setAvailableSections(leaderSections);
           if (leaderSections.length > 0) {
-            const defaultExists = defaultId && leaderSections.find(s => s.id === defaultId);
-            setSelectedSection(defaultExists ? defaultId : leaderSections[0].id);
+            const storedId = localStorage.getItem('syke_active_section');
+            const preferred = storedId || defaultId;
+            const preferredExists = preferred && leaderSections.find(s => s.id === preferred);
+            setSelectedSection(preferredExists ? preferred : leaderSections[0].id);
           }
         }
       }

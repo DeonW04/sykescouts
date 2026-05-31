@@ -43,6 +43,7 @@ import WhatsAppTestTab from '../components/whatsapp/WhatsAppTestTab';
 import SubscriptionPricingTab from '../components/admin/SubscriptionPricingTab';
 import OSMBadgeMappingTab from '../components/admin/OSMBadgeMappingTab';
 import ParentPortalAnalyticsPanel from '../components/admin/ParentPortalAnalyticsPanel';
+import ManageBadgesPanel from '../components/admin/ManageBadgesPanel';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const SECTION_STYLES = {
@@ -71,7 +72,9 @@ const SECTIONS = [
       { key: 'sections',     label: 'Section Settings',     icon: Layers },
       { key: 'terms',        label: 'Terms',                icon: Calendar },
       { key: 'subs',         label: 'Subscription Pricing', icon: CreditCard },
-      { key: 'badges-admin', label: 'Manage Badges',        icon: Award },
+      { key: 'manage-badges',    label: 'Manage Badges',        icon: Award },
+      { key: 'badge-bulk-award', label: 'Badge Bulk Award',     icon: Award },
+      { key: 'import-badges',    label: 'Import Badges',        icon: Upload, navigate: '/ImportBadges' },
     ]},
   { key: 'website', label: 'Website Content',  icon: Globe,    description: 'Pages & media',
     pages: [
@@ -497,16 +500,14 @@ export default function AdminSettings() {
       case 'osm-awards':    return <OSMBadgeAwardSync />;
       case 'wa-setup':      return <WhatsAppSetupTab />;
       case 'wa-test':       return <WhatsAppTestTab />;
-      case 'badges-admin': return (
-        <div className="space-y-6">
-          <Card><CardHeader><CardTitle className="flex items-center gap-2"><Award className="w-5 h-5" />Badge System</CardTitle></CardHeader>
-            <CardContent className="space-y-3"><p className="text-gray-600">Manage badge structure, definitions, and staged progressions.</p>
-              <Button onClick={() => navigate(createPageUrl('ManageBadges'))} className="bg-[#7413dc] hover:bg-[#5c0fb0]"><Award className="w-4 h-4 mr-2" />Open Badge Manager</Button>
-            </CardContent></Card>
-          <Card className="border-green-200 bg-green-50"><CardHeader><CardTitle className="flex items-center gap-2 text-green-900"><Award className="w-5 h-5" />Bulk Badge Completion</CardTitle></CardHeader><CardContent><BulkBadgeUpdate /></CardContent></Card>
-          <Card className="border-purple-200 bg-purple-50"><CardHeader><CardTitle className="flex items-center gap-2 text-purple-900"><Upload className="w-5 h-5" />Import Badges from CSV</CardTitle></CardHeader>
-            <CardContent><Button onClick={() => navigate(createPageUrl('ImportBadges'))} className="bg-purple-600 hover:bg-purple-700"><Upload className="w-4 h-4 mr-2" />Import Badges</Button></CardContent></Card>
-        </div>
+      case 'manage-badges': return <ManageBadgesPanel />;
+      case 'badge-bulk-award': return (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader><CardTitle className="flex items-center gap-2 text-green-900"><Award className="w-5 h-5" />Badge Bulk Award</CardTitle>
+            <p className="text-sm text-green-700">Manually complete or batch-award badges to multiple members at once.</p>
+          </CardHeader>
+          <CardContent><BulkBadgeUpdate /></CardContent>
+        </Card>
       );
       case 'website': return (
         <div className="space-y-6">

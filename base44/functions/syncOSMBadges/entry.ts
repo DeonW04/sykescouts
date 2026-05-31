@@ -20,10 +20,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'OSM not connected' }, { status: 400 });
     }
 
+    const body = await req.json().catch(() => ({}));
+    const { osm_section_id_override, osm_section_type_override } = body;
     const accessToken = settings.osm_access_token;
-    const sectionId = settings.osm_section_id;
-    const sectionType = settings.osm_section;
-    const termId = settings.osm_term_id || '0';
+    const sectionId   = osm_section_id_override   || settings.osm_section_id;
+    const sectionType = osm_section_type_override || settings.osm_section;
+    const termId      = settings.osm_term_id || '0';
 
     if (!sectionId || !sectionType) {
       console.error('[syncOSMBadges] Missing section config');
