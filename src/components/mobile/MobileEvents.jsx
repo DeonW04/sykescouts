@@ -104,7 +104,8 @@ function EventCard({ event, onClick, child, paymentStatus, override, attending, 
 }
 
 // ── Action card (unchanged from original) ─────────────────────────────────────
-function ActionCard({ action, children, user, getResponse, saveResponseMutation }) {
+function ActionCard({ action, child, user, getResponse, saveResponseMutation }) {
+  const children = child ? [child] : [];
   const [editing, setEditing] = useState(false);
   const [textVal, setTextVal] = useState('');
 
@@ -189,18 +190,18 @@ function ActionCard({ action, children, user, getResponse, saveResponseMutation 
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function MobileEvents({ children, user }) {
+export default function MobileEvents({ selectedChild, user }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [detailPayOpen, setDetailPayOpen] = useState(false);
   const queryClient = useQueryClient();
-  const childSectionIds = [...new Set(children.map(c => c.section_id).filter(Boolean))];
-  const childIds = children.map(c => c.id);
-  const child = children[0];
+  const child = selectedChild;
+  const childSectionIds = selectedChild?.section_id ? [selectedChild.section_id] : [];
+  const childIds = selectedChild ? [selectedChild.id] : [];
 
   useEffect(() => { setDetailPayOpen(false); }, [selectedEvent?.id]);
 
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ['mobile-events-full', childSectionIds],
+    queryKey: ['mobile-events-full', selectedChild?.section_id],
     queryFn: async () => {
       const all = await base44.entities.Event.filter({ published: true });
       return all.filter(e => e.section_ids?.some(sid => childSectionIds.includes(sid))).sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
@@ -374,7 +375,7 @@ export default function MobileEvents({ children, user }) {
           )}
 
           {eventActions.filter(a => a.is_open !== false).map(action => (
-            <ActionCard key={action.id} action={action} children={children} user={user} getResponse={getResponse} saveResponseMutation={saveResponseMutation} />
+            <ActionCard key={action.id} action={action} child={child} user={user} getResponse={getResponse} saveResponseMutation={saveResponseMutation} />
           ))}
 
           {(selectedEvent.cost > 0 || selectedEvent.consent_deadline || selectedEvent.payment_deadline) && (

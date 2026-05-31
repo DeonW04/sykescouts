@@ -487,9 +487,9 @@ function SubscriptionsSection({ child, onRefresh }) {
   );
 }
 
-export default function MobileMyChild({ children }) {
+export default function MobileMyChild({ selectedChild }) {
   const queryClient = useQueryClient();
-  const child = children[0];
+  const child = selectedChild;
   const [editing, setEditing] = useState(false);
 
   const { data: sections = [] } = useQuery({

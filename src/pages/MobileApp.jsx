@@ -6,6 +6,7 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import PushNotificationPrompt from '../components/pwa/PushNotificationPrompt';
 import MobileOnboarding from './MobileOnboarding.jsx';
 import MobileSettings from '../components/mobile/MobileSettings';
+import ChildSelectPage from '../components/mobile/ChildSelectPage';
 import MobileConsentFormFlow from '../components/mobile/MobileConsentFormFlow';
 
 // ── Parent tabs ──
@@ -111,7 +112,9 @@ function BottomNav({ tabs, activeTab, onTabChange, accent }) {
 // Parent app
 // ─────────────────────────────────────────────────────────────
 function ParentApp({ user, activeTab, onTabChange }) {
-  const [consentFlow, setConsentFlow] = useState(null); // { action, child, submission }
+  const [consentFlow, setConsentFlow] = useState(null);
+  const [selectedChildId, setSelectedChildId] = useState(() => localStorage.getItem('selected_child_id') || null);
+  const [showChildSelect, setShowChildSelect] = useState(false);
 
   // Track every tab visit in the PWA (URL never changes inside /app)
   const { useEffect: _useEffect } = React;
@@ -140,6 +143,36 @@ function ParentApp({ user, activeTab, onTabChange }) {
     enabled: !!user?.email,
   });
 
+  // Auto-select if only one child and none selected
+  React.useEffect(() => {
+    if (children.length === 1 && !selectedChildId) {
+      setSelectedChildId(children[0].id);
+      localStorage.setItem('selected_child_id', children[0].id);
+    }
+  }, [children, selectedChildId]);
+
+  const selectedChild = children.find(c => c.id === selectedChildId) || null;
+
+  const handleSelectChild = (childId) => {
+    setSelectedChildId(childId);
+    localStorage.setItem('selected_child_id', childId);
+    setShowChildSelect(false);
+  };
+
+  // Show child selector when: multiple children and none selected, or explicitly requested
+  const needsChildSelect = children.length > 0 && (!selectedChild || showChildSelect);
+
+  if (needsChildSelect) {
+    return (
+      <ChildSelectPage
+        children={children}
+        onSelect={handleSelectChild}
+        allowBack={showChildSelect && !!selectedChild}
+        onBack={() => setShowChildSelect(false)}
+      />
+    );
+  }
+
   const handleOpenConsentForm = async (action, child) => {
     // Load existing submission for this child, scoped to the correct event/programme
     const subs = await base44.entities.ConsentFormSubmission.filter({ form_id: action.consent_form_id, member_id: child.id });
@@ -163,11 +196,11 @@ function ParentApp({ user, activeTab, onTabChange }) {
   }
 
   switch (activeTab) {
-    case 'home': return <MobileHome user={user} children={children} onTabChange={onTabChange} onOpenConsentForm={handleOpenConsentForm} />;
-    case 'child': return <MobileMyChild user={user} children={children} />;
-    case 'programme': return <MobileProgramme memberChildren={children} />;
-    case 'events': return <MobileEvents children={children} user={user} />;
-    case 'badges': return <MobileBadges children={children} />;
+    case 'home': return <MobileHome user={user} selectedChild={selectedChild} allChildren={children} onTabChange={onTabChange} onOpenConsentForm={handleOpenConsentForm} onChangeChild={() => setShowChildSelect(true)} />;
+    case 'child': return <MobileMyChild user={user} selectedChild={selectedChild} />;
+    case 'programme': return <MobileProgramme selectedChild={selectedChild} />;
+    case 'events': return <MobileEvents selectedChild={selectedChild} user={user} />;
+    case 'badges': return <MobileBadges selectedChild={selectedChild} />;
     case 'settings': return <MobileSettings user={user} role="parent" />;
     default: return null;
   }

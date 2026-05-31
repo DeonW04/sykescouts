@@ -135,10 +135,10 @@ function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMee
   );
 }
 
-export default function MobileProgramme({ memberChildren = [] }) {
+export default function MobileProgramme({ selectedChild }) {
   const queryClient = useQueryClient();
-  const childSectionIds = [...new Set(memberChildren.map(c => c.section_id).filter(Boolean))];
-  const primaryChild = memberChildren[0];
+  const childSectionIds = selectedChild?.section_id ? [selectedChild.section_id] : [];
+  const primaryChild = selectedChild;
 
   const { data: terms = [] } = useQuery({
     queryKey: ['mobile-terms', childSectionIds],
@@ -216,10 +216,11 @@ export default function MobileProgramme({ memberChildren = [] }) {
     }
   });
 
+  // Filter to selected child's section only (no more duplicate meetings)
   const termProgrammes = currentTerm
     ? programmes.filter(p => {
         const d = new Date(p.date);
-        return d >= new Date(currentTerm.start_date) && d <= new Date(currentTerm.end_date) && childSectionIds.includes(p.section_id);
+        return d >= new Date(currentTerm.start_date) && d <= new Date(currentTerm.end_date) && p.section_id === selectedChild?.section_id;
       }).sort((a, b) => new Date(a.date) - new Date(b.date))
     : [];
 

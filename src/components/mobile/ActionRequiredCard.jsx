@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 
 const ATTENDING_VALUES = new Set(['yes', 'yes, attending', 'attending']);
 
-function ActionItem({ action, children, user, existingResponses, programme, event: eventItem, onTabChange }) {
+function ActionItem({ action, child, user, existingResponses, programme, event: eventItem, onTabChange }) {
   const queryClient = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -19,7 +19,7 @@ function ActionItem({ action, children, user, existingResponses, programme, even
       r.response_value
     );
 
-  const allAnswered = children.every(c => getExistingResponse(c.id));
+  const allAnswered = !!getExistingResponse(child?.id);
 
   const handleSubmit = async (child, response_value) => {
     setSubmitting(true);
@@ -69,10 +69,8 @@ function ActionItem({ action, children, user, existingResponses, programme, even
 
   const isAttendanceAction = action.action_purpose === 'attendance';
   const hasMeetingCost = programme?.has_cost && (programme?.cost || 0) > 0;
-  const attendanceConfirmedAttending = isAttendanceAction && children.some(c => {
-    const r = getExistingResponse(c.id);
-    return r && ATTENDING_VALUES.has((r.response_value || '').toLowerCase());
-  });
+  const childResponse = getExistingResponse(child?.id);
+  const attendanceConfirmedAttending = isAttendanceAction && childResponse && ATTENDING_VALUES.has((childResponse.response_value || '').toLowerCase());
   const showPaymentPrompt = hasMeetingCost && attendanceConfirmedAttending && allAnswered;
 
   // Context line: meeting title + date
@@ -84,6 +82,7 @@ function ActionItem({ action, children, user, existingResponses, programme, even
 
   // If all answered and not in edit mode, show compact "responded" state
   if (allAnswered && !editing) {
+    const r = getExistingResponse(child?.id);
     return (
       <div>
       <div className="bg-white rounded-2xl border border-green-200 p-3 flex items-center justify-between gap-3">
@@ -91,14 +90,8 @@ function ActionItem({ action, children, user, existingResponses, programme, even
           <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
           <div className="min-w-0">
             <p className="text-sm font-medium text-gray-800 leading-snug truncate">{action.action_text}</p>
-            {children.map(child => {
-              const r = getExistingResponse(child.id);
-              return (
-                <p key={child.id} className="text-xs text-green-700 font-medium">
-                  {children.length > 1 ? `${child.full_name || child.first_name}: ` : ''}{formatResponse(r?.response_value)}
-                </p>
-              );
-            })}
+            {contextLine && <p className="text-xs text-[#7413dc] font-medium truncate">{contextLine}</p>}
+            <p className="text-xs text-green-700 font-medium">{formatResponse(r?.response_value)}</p>
           </div>
         </div>
         <button
@@ -129,6 +122,8 @@ function ActionItem({ action, children, user, existingResponses, programme, even
   }
 
   // Unanswered (or editing) — show full form
+  const existing = getExistingResponse(child?.id);
+  const currentVal = existing?.response_value || '';
   return (
     <div className="bg-white rounded-2xl overflow-hidden border border-orange-100">
       <div className="p-4">
@@ -143,46 +138,33 @@ function ActionItem({ action, children, user, existingResponses, programme, even
             <button onClick={() => setEditing(false)} className="text-xs text-gray-400 flex-shrink-0">Cancel</button>
           )}
         </div>
-        <div className="space-y-3">
-          {children.map(child => {
-            const existing = getExistingResponse(child.id);
-            const currentVal = existing?.response_value || '';
-            return (
-              <div key={child.id}>
-                {children.length > 1 && (
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{child.full_name || child.first_name}</p>
-                )}
-                {options ? (
-                  <div className="flex flex-wrap gap-2">
-                    {options.map(opt => {
-                      const selected = currentVal === opt;
-                      return (
-                        <button
-                          key={opt}
-                          onClick={() => handleSubmit(child, opt)}
-                          disabled={submitting}
-                          className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all active:scale-95 ${
-                            selected
-                              ? 'bg-[#7413dc] text-white border-[#7413dc]'
-                              : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-[#7413dc] hover:text-[#7413dc]'
-                          }`}
-                        >
-                          {selected ? '✓ ' : ''}{opt}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <TextResponseInput
-                    currentResponse={currentVal}
-                    onSubmit={(val) => handleSubmit(child, val)}
-                    submitting={submitting}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {options ? (
+          <div className="flex flex-wrap gap-2">
+            {options.map(opt => {
+              const selected = currentVal === opt;
+              return (
+                <button
+                  key={opt}
+                  onClick={() => handleSubmit(child, opt)}
+                  disabled={submitting}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all active:scale-95 ${
+                    selected
+                      ? 'bg-[#7413dc] text-white border-[#7413dc]'
+                      : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-[#7413dc] hover:text-[#7413dc]'
+                  }`}
+                >
+                  {selected ? '✓ ' : ''}{opt}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <TextResponseInput
+            currentResponse={currentVal}
+            onSubmit={(val) => handleSubmit(child, val)}
+            submitting={submitting}
+          />
+        )}
       </div>
     </div>
   );
@@ -209,15 +191,12 @@ function TextResponseInput({ currentResponse, onSubmit, submitting }) {
   );
 }
 
-export default function ActionRequiredCard({ actionsRequired, children, user, existingResponses, onOpenConsentForm, programmes = [], events = [], onTabChange }) {
-  // Only show actions that have at least one unanswered child
+export default function ActionRequiredCard({ actionsRequired, child, user, existingResponses, onOpenConsentForm, programmes = [], events = [], onTabChange }) {
   const pendingActions = actionsRequired.filter(action =>
-    !children.every(child =>
-      existingResponses.some(r =>
-        r.action_required_id === action.id &&
-        r.member_id === child.id &&
-        r.response_value
-      )
+    !existingResponses.some(r =>
+      r.action_required_id === action.id &&
+      r.member_id === child?.id &&
+      r.response_value
     )
   );
 
@@ -235,14 +214,8 @@ export default function ActionRequiredCard({ actionsRequired, children, user, ex
       <div className="space-y-3">
         {pendingActions.map(action => {
           if (action.action_purpose === 'consent_form') {
-            // Find relevant child and their submission status
-            const child = children.find(c => {
-              return existingResponses.some(r => r.action_required_id === action.id && r.member_id === c.id && r.response_value === 'signed');
-            });
-            const allSigned = children.every(c =>
-              existingResponses.some(r => r.action_required_id === action.id && r.member_id === c.id && r.response_value === 'signed')
-            );
-            if (allSigned) return null;
+            const signed = existingResponses.some(r => r.action_required_id === action.id && r.member_id === child?.id && r.response_value === 'signed');
+            if (signed) return null;
             return (
               <div key={action.id} className="bg-white rounded-2xl overflow-hidden border border-orange-100">
                 <div className="p-4">
@@ -250,25 +223,13 @@ export default function ActionRequiredCard({ actionsRequired, children, user, ex
                     <FileText className="w-4 h-4 text-orange-500 flex-shrink-0 mt-0.5" />
                     <p className="font-semibold text-sm text-gray-900 leading-snug">{action.action_text}</p>
                   </div>
-                  {children.map(c => {
-                    const signed = existingResponses.some(r => r.action_required_id === action.id && r.member_id === c.id && r.response_value === 'signed');
-                    if (signed) return (
-                      <div key={c.id} className="flex items-center gap-2 py-1">
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                        <span className="text-sm text-green-700 font-medium">{children.length > 1 ? `${c.full_name}: ` : ''}Signed</span>
-                      </div>
-                    );
-                    return (
-                      <button
-                        key={c.id}
-                        onClick={() => onOpenConsentForm && onOpenConsentForm(action, c)}
-                        className="w-full mt-1 bg-[#7413dc] text-white rounded-xl py-2.5 text-sm font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform"
-                      >
-                        <FileText className="w-4 h-4" />
-                        {children.length > 1 ? `Sign for ${c.full_name}` : 'Sign Consent Form'}
-                      </button>
-                    );
-                  })}
+                  <button
+                    onClick={() => onOpenConsentForm && onOpenConsentForm(action, child)}
+                    className="w-full mt-1 bg-[#7413dc] text-white rounded-xl py-2.5 text-sm font-semibold flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Sign Consent Form
+                  </button>
                 </div>
               </div>
             );
@@ -279,7 +240,7 @@ export default function ActionRequiredCard({ actionsRequired, children, user, ex
             <ActionItem
               key={action.id}
               action={action}
-              children={children}
+              child={child}
               user={user}
               existingResponses={existingResponses}
               programme={programme}

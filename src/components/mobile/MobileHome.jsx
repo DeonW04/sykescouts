@@ -11,10 +11,10 @@ import VolunteerRequestCard from './VolunteerRequestCard';
 
 const ATTENDING_VALUES = new Set(['yes', 'yes, attending', 'attending']);
 
-export default function MobileHome({ user, children, onTabChange, onOpenConsentForm }) {
-  const childSectionIds = [...new Set(children.map(c => c.section_id).filter(Boolean))];
-  const childIds = children.map(c => c.id);
-  const primaryChild = children[0];
+export default function MobileHome({ user, selectedChild, allChildren, onTabChange, onOpenConsentForm, onChangeChild }) {
+  const childSectionIds = selectedChild?.section_id ? [selectedChild.section_id] : [];
+  const childIds = selectedChild ? [selectedChild.id] : [];
+  const primaryChild = selectedChild;
   const { ongoingSession } = useOngoingSession({ sectionIds: childSectionIds });
   const [showLiveView, setShowLiveView] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -58,20 +58,20 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
   });
 
   const { data: actionsData = { actions: [], responses: [] } } = useQuery({
-    queryKey: ['mobile-actions', children],
+    queryKey: ['mobile-actions', selectedChild?.id],
     queryFn: async () => {
-      if (children.length === 0) return { actions: [], responses: [] };
+      if (!selectedChild) return { actions: [], responses: [] };
       const allAssignments = await base44.entities.ActionAssignment.filter({});
-      const myAssignments = allAssignments.filter(a => childIds.includes(a.member_id));
+      const myAssignments = allAssignments.filter(a => a.member_id === selectedChild.id);
       if (myAssignments.length === 0) return { actions: [], responses: [] };
       const assignedActionIds = [...new Set(myAssignments.map(a => a.action_required_id))];
       const allActions = await base44.entities.ActionRequired.filter({});
       const relevantActions = allActions.filter(a => assignedActionIds.includes(a.id) && a.is_open !== false);
       const allResponses = await base44.entities.ActionResponse.filter({});
-      const relevantResponses = allResponses.filter(r => childIds.includes(r.member_id));
+      const relevantResponses = allResponses.filter(r => r.member_id === selectedChild.id);
       return { actions: relevantActions, responses: relevantResponses };
     },
-    enabled: children.length > 0,
+    enabled: !!selectedChild,
   });
 
   // Payment data for labels + banner
@@ -107,9 +107,9 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
   });
 
   const { data: volunteerActionsData = [] } = useQuery({
-    queryKey: ['mobile-volunteer-actions', childIds.join(','), childSectionIds.join(',')],
+    queryKey: ['mobile-volunteer-actions', selectedChild?.id, childSectionIds.join(',')],
     queryFn: async () => {
-      if (children.length === 0) return [];
+      if (!selectedChild) return [];
       const allActionsAll = await base44.entities.ActionRequired.filter({});
       const volunteerActions = allActionsAll.filter(a => a.action_purpose === 'volunteer' && a.is_open !== false);
       if (volunteerActions.length === 0) return [];
@@ -120,7 +120,7 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
       const myEventIds = [...new Set(allAttendances.filter(a => childIds.includes(a.member_id)).map(a => a.event_id))];
       return volunteerActions.map(action => {
         let entityInfo = null;
-        const relevantMemberId = children[0]?.id;
+        const relevantMemberId = selectedChild?.id;
         if (action.event_id) {
           if (!myEventIds.includes(action.event_id)) return null;
           const event = allEvents.find(e => e.id === action.event_id);
@@ -136,22 +136,22 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
         return { ...action, _entityInfo: entityInfo, _memberId: relevantMemberId, _parentResponse: parentResponse?.response_value || null, _existingResponseId: parentResponse?.id || null, _totalYes: totalYes };
       }).filter(Boolean);
     },
-    enabled: children.length > 0,
+    enabled: !!selectedChild,
   });
 
+  const child = selectedChild;
   const { actions: allNonVolunteerActions, responses: existingResponses } = actionsData;
   const allActions = allNonVolunteerActions.filter(a => a.action_purpose !== 'volunteer');
   const actionsRequired = allActions.filter(action => {
-    // Filter out actions for past programme dates
     if (action.programme_id) {
       const prog = actionProgrammes.find(p => p.id === action.programme_id);
       if (prog && new Date(prog.date) < today) return false;
     }
-    // Filter out actions for past events (not in upcomingEvents = past or not applicable)
     if (action.event_id) {
       if (!upcomingEvents.some(e => e.id === action.event_id)) return false;
     }
-    return !children.every(child => existingResponses.some(r => r.action_required_id === action.id && r.member_id === child.id && r.response_value));
+    // Only show if selected child hasn't responded
+    return !existingResponses.some(r => r.action_required_id === action.id && r.member_id === selectedChild?.id && r.response_value);
   });
 
   // Compute virtual payment-required actions for meetings where child confirmed attending + has cost + not yet paid
@@ -195,7 +195,6 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
   };
 
   const isThisWeekMeeting = thisWeekMeeting && isThisWeek(new Date(thisWeekMeeting.date), { weekStartsOn: 1 });
-  const child = children[0];
   const displayName = user?.display_name || user?.full_name?.split(' ')[0] || 'there';
 
   // Compute payment labels for events
@@ -273,9 +272,19 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
         <p className="text-white/70 text-sm font-medium">Welcome back 👋</p>
         <h1 className="text-2xl font-bold mt-0.5">{displayName}</h1>
         {child && (
-          <div className="mt-3 flex items-center gap-2 bg-white/15 rounded-xl px-3 py-2 w-fit">
-            <div className="w-6 h-6 bg-white/30 rounded-full flex items-center justify-center text-xs font-bold">{child.full_name?.charAt(0)}</div>
-            <span className="text-sm font-medium">{child.full_name}</span>
+          <div className="mt-3 flex items-center gap-2">
+            <div className="flex items-center gap-2 bg-white/15 rounded-xl px-3 py-2">
+              <div className="w-6 h-6 bg-white/30 rounded-full flex items-center justify-center text-xs font-bold">{child.full_name?.charAt(0)}</div>
+              <span className="text-sm font-medium">{child.full_name}</span>
+            </div>
+            {allChildren.length > 1 && (
+              <button
+                onClick={onChangeChild}
+                className="bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-colors"
+              >
+                Switch
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -283,11 +292,12 @@ export default function MobileHome({ user, children, onTabChange, onOpenConsentF
       <div className="px-4 py-5 space-y-5">
         <ActionRequiredCard
           actionsRequired={allPendingActions}
-          children={children}
+          child={selectedChild}
           user={user}
           existingResponses={existingResponses}
           onOpenConsentForm={onOpenConsentForm}
           programmes={actionProgrammes}
+          events={upcomingEvents}
           onTabChange={onTabChange}
         />
         <VolunteerRequestCard volunteerActions={volunteerActionsData} user={user} onTabChange={onTabChange} />

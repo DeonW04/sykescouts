@@ -179,8 +179,8 @@ function GoldAwardBanner({ child, badges, awards, badgeProgress, sections, onLea
   );
 }
 
-export default function MobileBadges({ children }) {
-  const child = children[0];
+export default function MobileBadges({ selectedChild }) {
+  const child = selectedChild;
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [stagedContext, setStagedContext] = useState(null);
   const [showGoldAward, setShowGoldAward] = useState(false);
