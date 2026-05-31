@@ -44,22 +44,32 @@ export default function MeetingOSMSyncModal({ open, onClose, programme, onSynced
 
   const findOSMMeeting = async () => {
     try {
+      // Load section-specific OSM overrides
+      let sectionOverrides = {};
+      if (programme.section_id) {
+        const allSections = await base44.entities.Section.filter({ active: true });
+        const sec = allSections.find(s => s.id === programme.section_id);
+        if (sec?.osm_section_id) {
+          sectionOverrides = {
+            osm_section_id_override: sec.osm_section_id,
+            osm_section_type_override: sec.osm_section_type,
+            osm_term_id_override: sec.osm_term_id,
+          };
+        }
+      }
       if (programme.osm_evening_id) {
-        // Direct lookup
-        const res = await base44.functions.invoke('getOSMSingleMeeting', { eveningid: programme.osm_evening_id });
+        const res = await base44.functions.invoke('getOSMSingleMeeting', { eveningid: programme.osm_evening_id, ...sectionOverrides });
         if (res.data.error) throw new Error(res.data.error);
         if (!res.data.meeting) { setStep('not_found'); return; }
         setOsmMeeting(res.data.meeting);
         setStep('compare');
       } else {
-        // Scan summary for matching date
-        const res = await base44.functions.invoke('getOSMProgrammeSummary', {});
+        const res = await base44.functions.invoke('getOSMProgrammeSummary', { ...sectionOverrides });
         if (res.data.error) throw new Error(res.data.error);
         const items = res.data.items || [];
         const match = items.find(i => i.meetingdate === programme.date);
         if (!match) { setStep('not_found'); return; }
-        // Get full details
-        const res2 = await base44.functions.invoke('getOSMSingleMeeting', { eveningid: String(match.eveningid) });
+        const res2 = await base44.functions.invoke('getOSMSingleMeeting', { eveningid: String(match.eveningid), ...sectionOverrides });
         if (res2.data.error || !res2.data.meeting) { setOsmMeeting(match); setStep('compare'); return; }
         setOsmMeeting(res2.data.meeting);
         setStep('compare');

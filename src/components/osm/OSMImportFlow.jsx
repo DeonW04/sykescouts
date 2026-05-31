@@ -63,18 +63,18 @@ export default function OSMImportFlow({ open, onClose, sectionId }) {
     }
   }, [open]);
 
-  useEffect(() => {
-    if (!sectionId || !open) return;
-    base44.entities.Section.filter({ active: true })
-      .then(all => setSectionOsmData(all.find(s => s.id === sectionId) || null))
-      .catch(() => {});
-  }, [sectionId, open]);
-
   const fetchMembers = async () => {
-    const osmPayload = sectionOsmData?.osm_section_id ? {
-      osm_section_id_override:   sectionOsmData.osm_section_id,
-      osm_section_type_override: sectionOsmData.osm_section_type,
-      osm_term_id_override:      sectionOsmData.osm_term_id,
+    // Load section OSM data fresh — avoids stale-state race condition
+    let sectionData = null;
+    if (sectionId) {
+      const all = await base44.entities.Section.filter({ active: true });
+      sectionData = all.find(s => s.id === sectionId) || null;
+      setSectionOsmData(sectionData);
+    }
+    const osmPayload = sectionData?.osm_section_id ? {
+      osm_section_id_override:   sectionData.osm_section_id,
+      osm_section_type_override: sectionData.osm_section_type,
+      osm_term_id_override:      sectionData.osm_term_id,
     } : {};
     const resp = await base44.functions.invoke('getOSMMembersList', osmPayload);
     if (resp.data.success) {
