@@ -306,7 +306,7 @@ export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId,
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={onClose}>Cancel</Button>
-              <Button onClick={handleApply} disabled={syncing} className="bg-[#004851] hover:bg-[#003840] text-white">
+              <Button onClick={() => handleApply()} disabled={syncing} className="bg-[#004851] hover:bg-[#003840] text-white">
                 {syncing ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Syncing...</> : 'Apply Changes'}
               </Button>
             </div>
