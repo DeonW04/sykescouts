@@ -39,9 +39,8 @@ Deno.serve(async (req) => {
     const sectionTerms = data[sectionId] || data[String(sectionId)] || [];
     const termsArray = Array.isArray(sectionTerms) ? sectionTerms : Object.values(sectionTerms);
 
-    // Filter out past terms, sort by startdate descending
+    // Sort all terms by startdate descending (most recent first)
     const filtered = termsArray
-      .filter(t => !t.past)
       .sort((a, b) => new Date(b.startdate) - new Date(a.startdate))
       .map(t => ({
         termid: String(t.termid),
