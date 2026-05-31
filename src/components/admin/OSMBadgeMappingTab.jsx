@@ -16,11 +16,9 @@ const CATEGORY_COLOURS = {
   special:   'bg-gray-100 text-gray-800',
 };
 
-// Delay helper for sequential AI calls
 const delay = ms => new Promise(r => setTimeout(r, ms));
 
 function BadgeRow({ label, subLabel, imageUrl, category, currentValue, currentLevel, uniqueOsmBadges, saving, suggesting, onSelect, onLevelChange, onSave, onSuggest, isDirty }) {
-  // Determine if the linked OSM badge is staged — if so, show level picker
   const linkedOsm = uniqueOsmBadges.find(o => String(o.badge_id) === String(currentValue));
   const isLinkedToStaged = linkedOsm?.badge_type === 'Staged';
 
@@ -44,7 +42,6 @@ function BadgeRow({ label, subLabel, imageUrl, category, currentValue, currentLe
         </div>
       </div>
 
-      {/* AI Suggest */}
       <Button
         size="sm" variant="ghost"
         disabled={suggesting || uniqueOsmBadges.length === 0}
@@ -55,7 +52,6 @@ function BadgeRow({ label, subLabel, imageUrl, category, currentValue, currentLe
         {suggesting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
       </Button>
 
-      {/* OSM Badge select */}
       <div className="w-52 flex-shrink-0">
         <Select value={currentValue || '__none__'} onValueChange={v => onSelect(v === '__none__' ? '' : v)}>
           <SelectTrigger className="h-8 text-xs">
@@ -72,7 +68,6 @@ function BadgeRow({ label, subLabel, imageUrl, category, currentValue, currentLe
         </Select>
       </div>
 
-      {/* OSM Level picker — shown when linked to a Staged OSM badge */}
       {isLinkedToStaged && (
         <div className="flex-shrink-0">
           <Select value={String(currentLevel || 1)} onValueChange={v => onLevelChange(parseInt(v))}>
@@ -102,11 +97,10 @@ function BadgeRow({ label, subLabel, imageUrl, category, currentValue, currentLe
 
 export default function OSMBadgeMappingTab() {
   const queryClient = useQueryClient();
-  // pendingChanges: { key → { osmBadgeId, level } }
   const [pendingChanges, setPendingChanges] = useState({});
   const [saving, setSaving] = useState(null);
   const [suggesting, setSuggesting] = useState(null);
-  const [matchingAll, setMatchingAll] = useState({}); // { categoryKey: bool }
+  const [matchingAll, setMatchingAll] = useState({});
   const [savingAll, setSavingAll] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
@@ -120,7 +114,6 @@ export default function OSMBadgeMappingTab() {
     queryFn: () => base44.entities.OSMBadge.list('-created_date', 300),
   });
 
-  // Deduplicate OSM badges by badge_id for the dropdown
   const uniqueOsmBadges = useMemo(() => {
     const seen = new Set();
     return osmBadges.filter(o => {
@@ -131,7 +124,6 @@ export default function OSMBadgeMappingTab() {
     }).sort((a, b) => a.name.localeCompare(b.name));
   }, [osmBadges]);
 
-  // Old linked_to_app_badge fallback
   const oldLinkByBadgeId = useMemo(() => {
     const map = {};
     for (const o of osmBadges) {
@@ -140,18 +132,23 @@ export default function OSMBadgeMappingTab() {
     return map;
   }, [osmBadges]);
 
+  // Group badges with badge_family_id + stage_number as families (regardless of category).
+  // This correctly handles Joining In Award (core + badge_family_id + stage_number 1-8)
+  // as well as true staged badge families.
   const { stagedFamilies, nonStagedBadges } = useMemo(() => {
     const families = {};
     const nonStaged = [];
     for (const b of appBadges) {
-      if (b.category === 'staged' && b.badge_family_id) {
+      if (b.badge_family_id && b.stage_number != null) {
         if (!families[b.badge_family_id]) families[b.badge_family_id] = [];
         families[b.badge_family_id].push(b);
       } else {
         nonStaged.push(b);
       }
     }
-    for (const f of Object.values(families)) f.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
+    for (const f of Object.values(families)) {
+      f.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
+    }
     return { stagedFamilies: families, nonStagedBadges: nonStaged.sort((a, b) => a.name.localeCompare(b.name)) };
   }, [appBadges]);
 
@@ -161,7 +158,6 @@ export default function OSMBadgeMappingTab() {
 
   const getOsmRecord = (osmBadgeId) => uniqueOsmBadges.find(o => String(o.badge_id) === String(osmBadgeId));
 
-  // Resolve current value for a badge (pending > saved > old link)
   const getValueForBadge = (badge) => {
     const p = pendingChanges[badge.id];
     if (p !== undefined) return { osmBadgeId: p.osmBadgeId, level: p.level ?? badge.stage_number ?? 1 };
@@ -200,7 +196,6 @@ export default function OSMBadgeMappingTab() {
   const setPending = (key, osmBadgeId, level) =>
     setPendingChanges(p => ({ ...p, [key]: { osmBadgeId, level } }));
 
-  // --- Saves ---
   const saveSingle = async (badge) => {
     const { osmBadgeId, level } = getValueForBadge(badge);
     const osmRecord = osmBadgeId ? getOsmRecord(osmBadgeId) : null;
@@ -246,8 +241,7 @@ export default function OSMBadgeMappingTab() {
   };
 
   const handleSaveAll = async () => {
-    const dirtyKeys = Object.keys(pendingChanges);
-    if (dirtyKeys.length === 0) { toast.info('No unsaved changes'); return; }
+    if (Object.keys(pendingChanges).length === 0) { toast.info('No unsaved changes'); return; }
     setSavingAll(true);
     try {
       for (const badge of nonStagedBadges) {
@@ -257,24 +251,16 @@ export default function OSMBadgeMappingTab() {
         if (isFamilyDirty(familyKey, badges)) await saveFamily(familyKey, badges);
       }
       queryClient.invalidateQueries({ queryKey: ['badge-definitions-all'] });
-      toast.success(`Saved all changes`);
+      toast.success('Saved all changes');
     } catch (e) { toast.error('Save all failed: ' + e.message); }
     finally { setSavingAll(false); }
   };
 
-  // --- AI ---
-  const runAISuggest = async (label, key, currentOsmBadgeId) => {
+  const runAISuggest = async (label) => {
     const osmList = uniqueOsmBadges.map(o => `${o.badge_id}: ${o.name} (${o.badge_type})`).join('\n');
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `Match Scout badge to OSM badge.
-App badge: "${label}"
-OSM badges (id: name):
-${osmList}
-Return ONLY the numeric badge_id of the best matching OSM badge, or "none" if no confident match.`,
-      response_json_schema: {
-        type: 'object',
-        properties: { badge_id: { type: 'string' } }
-      }
+      prompt: `Match Scout badge to OSM badge.\nApp badge: "${label}"\nOSM badges (id: name):\n${osmList}\nReturn ONLY the numeric badge_id of the best matching OSM badge, or "none" if no confident match.`,
+      response_json_schema: { type: 'object', properties: { badge_id: { type: 'string' } } }
     });
     const suggested = result?.badge_id;
     if (suggested && suggested !== 'none' && uniqueOsmBadges.find(o => String(o.badge_id) === String(suggested))) {
@@ -287,7 +273,7 @@ Return ONLY the numeric badge_id of the best matching OSM badge, or "none" if no
     if (uniqueOsmBadges.length === 0) return;
     setSuggesting(key);
     try {
-      const suggested = await runAISuggest(label, key, null);
+      const suggested = await runAISuggest(label);
       if (suggested) {
         setPending(key, suggested, existingLevel || 1);
         const match = uniqueOsmBadges.find(o => String(o.badge_id) === String(suggested));
@@ -300,21 +286,20 @@ Return ONLY the numeric badge_id of the best matching OSM badge, or "none" if no
   };
 
   const handleMatchAll = async (categoryKey, items) => {
-    // items: array of { key, label, level } for singles, or { key, label, badges } for families
     setMatchingAll(p => ({ ...p, [categoryKey]: true }));
     let matched = 0;
     try {
       for (const item of items) {
         setSuggesting(item.key);
         try {
-          const suggested = await runAISuggest(item.label, item.key, null);
+          const suggested = await runAISuggest(item.label);
           if (suggested) {
             setPending(item.key, suggested, item.level || 1);
             matched++;
           }
-        } catch {}
+        } catch { /* continue on individual failure */ }
         setSuggesting(null);
-        await delay(300); // small pause between calls
+        await delay(300);
       }
       toast.success(`AI matched ${matched} of ${items.length} badges — review and Save All`);
     } finally {
@@ -355,7 +340,9 @@ Return ONLY the numeric badge_id of the best matching OSM badge, or "none" if no
               onClick={() => handleMatchAll(catKey, matchAllItems)}
               className="text-xs h-8 text-purple-600 border-purple-200 hover:bg-purple-50"
             >
-              {isMatchingThis ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Matching...</> : <><Sparkles className="w-3.5 h-3.5 mr-1.5" />Match All with AI</>}
+              {isMatchingThis
+                ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Matching...</>
+                : <><Sparkles className="w-3.5 h-3.5 mr-1.5" />Match All with AI</>}
             </Button>
           </div>
         </CardHeader>
@@ -389,7 +376,6 @@ Return ONLY the numeric badge_id of the best matching OSM badge, or "none" if no
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <Card className="border-[#7413dc]/20 bg-purple-50">
         <CardContent className="p-5">
           <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -398,8 +384,9 @@ Return ONLY the numeric badge_id of the best matching OSM badge, or "none" if no
                 <Link className="w-4 h-4" /> OSM Badge Mapping
               </h3>
               <p className="text-sm text-purple-700 mt-1">
-                Link each app badge to its OSM equivalent. Use <Sparkles className="w-3.5 h-3.5 inline text-purple-500" /> for AI suggestions, or <strong>Match All with AI</strong> per category.
-                Non-staged badges linked to a Staged OSM badge will show a Level picker (e.g. Joining In).
+                Link each app badge to its OSM equivalent. Use <Sparkles className="w-3.5 h-3.5 inline text-purple-500" /> for AI suggestions,
+                or <strong>Match All with AI</strong> per category.
+                Badges linked to a Staged OSM badge show a Level picker (e.g. Joining In Award).
               </p>
               <div className="flex gap-4 mt-3 text-sm">
                 <span className="flex items-center gap-1.5 text-green-700"><CheckCircle className="w-4 h-4" /> {linkedCount} linked</span>
@@ -423,11 +410,11 @@ Return ONLY the numeric badge_id of the best matching OSM badge, or "none" if no
         </Card>
       )}
 
-      {/* Staged badge families */}
+      {/* Badge families (staged + cross-category families like Joining In) */}
       {Object.keys(stagedFamilies).length > 0 && (() => {
         const catKey = 'staged-families';
         const isMatchingThis = matchingAll[catKey];
-        const matchAllItems = Object.entries(stagedFamilies).map(([fk, badges]) => ({
+        const matchAllItems = Object.entries(stagedFamilies).map(([fk, bs]) => ({
           key: fk,
           label: fk.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
           level: 1,
@@ -437,8 +424,11 @@ Return ONLY the numeric badge_id of the best matching OSM badge, or "none" if no
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-base">Staged Badges</CardTitle>
-                  <CardDescription>Each family maps to one OSM badge; stage number = completion level.</CardDescription>
+                  <CardTitle className="text-base">Badge Families</CardTitle>
+                  <CardDescription>
+                    Grouped badges (staged + families like Joining In). Each family maps to one OSM badge;
+                    each badge's stage number = its completion level in OSM.
+                  </CardDescription>
                 </div>
                 <Button
                   size="sm" variant="outline"
@@ -446,7 +436,9 @@ Return ONLY the numeric badge_id of the best matching OSM badge, or "none" if no
                   onClick={() => handleMatchAll(catKey, matchAllItems)}
                   className="text-xs h-8 text-purple-600 border-purple-200 hover:bg-purple-50"
                 >
-                  {isMatchingThis ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Matching...</> : <><Sparkles className="w-3.5 h-3.5 mr-1.5" />Match All with AI</>}
+                  {isMatchingThis
+                    ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Matching...</>
+                    : <><Sparkles className="w-3.5 h-3.5 mr-1.5" />Match All with AI</>}
                 </Button>
               </div>
             </CardHeader>
@@ -456,13 +448,14 @@ Return ONLY the numeric badge_id of the best matching OSM badge, or "none" if no
                 const stageNums = badges.map(b => b.stage_number).filter(Boolean).sort((a, b) => a - b);
                 const { osmBadgeId } = getValueForFamily(familyKey, badges);
                 const dirty = isFamilyDirty(familyKey, badges);
+                const familyCat = badges[0]?.category || 'staged';
                 return (
                   <BadgeRow
                     key={familyKey}
                     label={familyLabel}
-                    subLabel={stageNums.length > 0 ? `Stages ${stageNums.join(', ')} · ${badges.length} badges` : `${badges.length} badges`}
+                    subLabel={stageNums.length > 0 ? `Levels ${stageNums.join(', ')} · ${badges.length} badges` : `${badges.length} badges`}
                     imageUrl={badges[0]?.image_url}
-                    category="staged"
+                    category={familyCat}
                     currentValue={osmBadgeId}
                     currentLevel={null}
                     uniqueOsmBadges={uniqueOsmBadges}
@@ -481,13 +474,11 @@ Return ONLY the numeric badge_id of the best matching OSM badge, or "none" if no
         );
       })()}
 
-      {/* Non-staged by category */}
       {renderCategoryCard('challenge', nonStagedBadges.filter(b => b.category === 'challenge'), 'challenge')}
       {renderCategoryCard('activity',  nonStagedBadges.filter(b => b.category === 'activity'),  'activity')}
       {renderCategoryCard('core',      nonStagedBadges.filter(b => b.category === 'core'),      'core')}
       {renderCategoryCard('special',   nonStagedBadges.filter(b => b.category === 'special'),   'special')}
 
-      {/* Save All footer */}
       {pendingCount > 0 && (
         <div className="sticky bottom-4">
           <Card className="border-[#7413dc] shadow-lg bg-white">
@@ -495,12 +486,10 @@ Return ONLY the numeric badge_id of the best matching OSM badge, or "none" if no
               <p className="text-sm text-gray-700">
                 <strong>{pendingCount}</strong> unsaved change{pendingCount !== 1 ? 's' : ''} — review above then save all at once.
               </p>
-              <Button
-                disabled={savingAll}
-                onClick={handleSaveAll}
-                className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white"
-              >
-                {savingAll ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : <><Save className="w-4 h-4 mr-2" />Save All Changes</>}
+              <Button disabled={savingAll} onClick={handleSaveAll} className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white">
+                {savingAll
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
+                  : <><Save className="w-4 h-4 mr-2" />Save All Changes</>}
               </Button>
             </CardContent>
           </Card>
