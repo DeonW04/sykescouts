@@ -60,8 +60,9 @@ export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId,
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [osmExpired, setOsmExpired] = useState(false);
-  // Store pending sync selections so we can auto-retry after reconnect
   const [pendingSelections, setPendingSelections] = useState(null);
+  // Section-specific OSM overrides resolved from the sectionId prop
+  const [sectionOsmOverrides, setSectionOsmOverrides] = useState({});
 
   useEffect(() => {
     if (!open) { setRows([]); setActions({}); setResult(null); setError(''); setOsmExpired(false); setPendingSelections(null); return; }
@@ -80,8 +81,22 @@ export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId,
     setLoading(true);
     setError('');
     try {
+      // Resolve section-specific OSM overrides from the selected section
+      let overrides = {};
+      if (sectionId) {
+        const allSections = await base44.entities.Section.filter({ active: true });
+        const sec = allSections.find(s => s.id === sectionId);
+        if (sec?.osm_section_id) {
+          overrides = {
+            osm_section_id_override: sec.osm_section_id,
+            osm_term_id_override: sec.osm_term_id || osmTermId,
+          };
+        }
+      }
+      setSectionOsmOverrides(overrides);
+
       const [osmRes, appProgrammes] = await Promise.all([
-        base44.functions.invoke('getOSMProgrammeSummary', {}),
+        base44.functions.invoke('getOSMProgrammeSummary', { ...overrides }),
         base44.entities.Programme.filter({ section_id: sectionId }),
       ]);
 
@@ -162,7 +177,7 @@ export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId,
     }));
     setSyncing(true);
     try {
-      const res = await base44.functions.invoke('bulkSyncProgramme', { selections });
+      const res = await base44.functions.invoke('bulkSyncProgramme', { selections, ...sectionOsmOverrides });
       if (res.data.error) throw new Error(res.data.error);
       setResult(res.data);
       setPendingSelections(null);
