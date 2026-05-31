@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -8,17 +9,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Users, Shield, Mail, Edit, Image, Upload, X, Award, Download, Camera, PieChart, Bell, BarChart2, Calendar, Play, MessageCircle, Send, TestTube, CreditCard as CreditCardIcon } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
-import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '../utils';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '../utils';
+import {
+  LayoutDashboard, Users, Settings, Globe, RefreshCw, Zap,
+  BarChart2, Bell, Mail, Shield, Award, Calendar, Image, Camera,
+  MessageCircle, CreditCard, ChevronRight, ArrowLeft, Layers,
+  TestTube, Edit, X, Upload, Play, Send, Activity, TrendingUp
+} from 'lucide-react';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, PieChart as RPieChart, Pie, Cell, Legend
+} from 'recharts';
+import { format, startOfWeek } from 'date-fns';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
 import BulkBadgeUpdate from '../components/badges/BulkBadgeUpdate';
 import UniformPositionEditor from '../components/uniform/UniformPositionEditor';
 import PushNotificationsTab from '../components/admin/PushNotificationsTab';
@@ -35,115 +43,176 @@ import WhatsAppTestTab from '../components/whatsapp/WhatsAppTestTab';
 import SubscriptionPricingTab from '../components/admin/SubscriptionPricingTab';
 import OSMBadgeMappingTab from '../components/admin/OSMBadgeMappingTab';
 
-const NAV_ITEMS = [
-  { key: 'users',          label: 'User Management',    icon: Users,    group: 'People' },
-  { key: 'leaders',        label: 'Leader Management',  icon: Shield,   group: 'People' },
-  { key: 'sections',       label: 'Section Settings',   icon: Users,    group: 'People' },
-  { key: 'terms',          label: 'Terms',              icon: Calendar, group: 'People' },
-  { key: 'website',        label: 'Public Website',     icon: Image,    group: 'Content' },
-  { key: 'badges',         label: 'Badge System',       icon: Award,    group: 'Content' },
-  { key: 'uniform',        label: 'Uniform Guide',      icon: Shield,   group: 'Content' },
-  { key: 'gallery',        label: 'Gallery Stats',      icon: Camera,   group: 'Content' },
-  { key: 'push',           label: 'Push Notifications', icon: Bell,     group: 'System' },
-  { key: 'notif-log',      label: 'Notification Log',   icon: Mail,     group: 'System' },
-  { key: 'osm-overview',   label: 'Overview',           icon: Award,    group: 'OSM Sync' },
-  { key: 'osm-members',    label: 'Member Sync',        icon: Users,    group: 'OSM Sync' },
-  { key: 'osm-programme',  label: 'Programme Sync',     icon: Calendar, group: 'OSM Sync' },
-  { key: 'osm-badge-ids',  label: 'Badge ID Sync',      icon: Award,    group: 'OSM Sync' },
-  { key: 'osm-awards',     label: 'Badge Award Sync',   icon: Award,    group: 'OSM Sync' },
-  { key: 'subs-pricing',    label: 'Subscription Pricing', icon: CreditCardIcon, group: 'System' },
-  { key: 'wa-setup',        label: 'Setup',              icon: MessageCircle, group: 'WhatsApp' },
-  { key: 'wa-test',         label: 'Test Console',       icon: TestTube,  group: 'WhatsApp' },
-];
-const GROUPS = [...new Set(NAV_ITEMS.map(n => n.group))];
+// ── Section config ───────────────────────────────────────────────────────────
+const SECTION_STYLES = {
+  dashboard: { bg: 'from-violet-600 to-purple-800',  accent: '#7413dc', light: 'bg-purple-50', lightText: 'text-purple-700' },
+  people:    { bg: 'from-teal-600 to-cyan-800',      accent: '#004851', light: 'bg-teal-50',   lightText: 'text-teal-700' },
+  group:     { bg: 'from-orange-500 to-amber-700',   accent: '#c2410c', light: 'bg-orange-50', lightText: 'text-orange-700' },
+  website:   { bg: 'from-blue-500 to-indigo-700',    accent: '#1d4ed8', light: 'bg-blue-50',   lightText: 'text-blue-700' },
+  osm:       { bg: 'from-emerald-600 to-green-800',  accent: '#15803d', light: 'bg-green-50',  lightText: 'text-green-700' },
+  future:    { bg: 'from-pink-500 to-rose-700',      accent: '#be123c', light: 'bg-pink-50',   lightText: 'text-pink-700' },
+};
 
+const SECTIONS = [
+  {
+    key: 'dashboard', label: 'Group Dashboard', icon: LayoutDashboard,
+    description: 'Live group overview & stats', isDashboard: true,
+  },
+  {
+    key: 'people', label: 'People', icon: Users,
+    description: 'Users, leaders & parents',
+    pages: [
+      { key: 'users',      label: 'User Management',         icon: Users },
+      { key: 'leaders',    label: 'Leader Management',       icon: Shield },
+      { key: 'analytics',  label: 'Parent Portal Analytics', icon: BarChart2, navigate: '/ParentPortalAnalytics' },
+      { key: 'push',       label: 'Push Notifications',      icon: Bell },
+      { key: 'notif-log',  label: 'Notification Log',        icon: Mail },
+    ],
+  },
+  {
+    key: 'group', label: 'Group Management', icon: Settings,
+    description: 'Sections, terms & badges',
+    pages: [
+      { key: 'sections',     label: 'Section Settings',     icon: Layers },
+      { key: 'terms',        label: 'Terms',                icon: Calendar },
+      { key: 'subs',         label: 'Subscription Pricing', icon: CreditCard },
+      { key: 'badges-admin', label: 'Manage Badges',        icon: Award },
+    ],
+  },
+  {
+    key: 'website', label: 'Website Content', icon: Globe,
+    description: 'Public pages & media',
+    pages: [
+      { key: 'website', label: 'Public Website', icon: Globe },
+      { key: 'gallery', label: 'Gallery Stats',  icon: Camera },
+      { key: 'uniform', label: 'Uniform Guide',  icon: Shield },
+    ],
+  },
+  {
+    key: 'osm', label: 'OSM Sync', icon: RefreshCw,
+    description: 'Online Scout Manager',
+    pages: [
+      { key: 'osm-overview',  label: 'Overview',         icon: Activity },
+      { key: 'osm-members',   label: 'Member Sync',      icon: Users },
+      { key: 'osm-programme', label: 'Programme Sync',   icon: Calendar },
+      { key: 'osm-badge-ids', label: 'Badge ID Sync',    icon: Award },
+      { key: 'osm-awards',    label: 'Badge Award Sync', icon: TrendingUp },
+    ],
+  },
+  {
+    key: 'future', label: 'Future Testing', icon: Zap,
+    description: 'Experimental features',
+    pages: [
+      { key: 'wa-setup',    label: 'WhatsApp Setup',        icon: MessageCircle },
+      { key: 'wa-test',     label: 'WhatsApp Test Console', icon: TestTube },
+      { key: 'wa-schedule', label: 'WhatsApp Schedule',     icon: Send, navigate: '/WhatsAppSchedules' },
+    ],
+  },
+];
+
+const CHART_COLORS = ['#7413dc', '#004851', '#f59e0b', '#3b82f6', '#10b981', '#ec4899'];
+
+// ── Main component ────────────────────────────────────────────────────────────
 export default function AdminSettings() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const urlParams = new URLSearchParams(window.location.search);
-  const [activeTab, setActiveTab] = useState(urlParams.get('tab') || 'users');
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editForm, setEditForm] = useState({ display_name: '', email: '', user_type: 'parent', section_ids: [], default_section_id: '' });
-  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const [selectedSection, setSelectedSection] = useState(null);
+  const [selectedPage,    setSelectedPage]    = useState(null);
+
+  // Dialog / UI state
+  const [selectedUser,      setSelectedUser]      = useState(null);
+  const [showEditDialog,    setShowEditDialog]    = useState(false);
+  const [editForm,          setEditForm]          = useState({ display_name: '', email: '', user_type: 'parent', section_ids: [], default_section_id: '' });
+  const [uploadingImage,    setUploadingImage]    = useState(false);
   const [showGallerySelector, setShowGallerySelector] = useState(false);
-  const [currentImagePage, setCurrentImagePage] = useState(null);
-  const [gifSize, setGifSize] = useState(60);
-  const [gifPreviewOpen, setGifPreviewOpen] = useState(false);
-  const [savingGifSize, setSavingGifSize] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [importFile, setImportFile] = useState(null);
-  const [galleryView, setGalleryView] = useState('camps');
-  const [galleryFolder, setGalleryFolder] = useState(null);
+  const [currentImagePage,  setCurrentImagePage]  = useState(null);
+  const [gifSize,           setGifSize]           = useState(60);
+  const [gifPreviewOpen,    setGifPreviewOpen]    = useState(false);
+  const [savingGifSize,     setSavingGifSize]     = useState(false);
+  const [galleryView,       setGalleryView]       = useState('camps');
+  const [galleryFolder,     setGalleryFolder]     = useState(null);
 
-  const { data: users = [], isLoading } = useQuery({ queryKey: ['all-users'], queryFn: () => base44.entities.User.list() });
-  const { data: leaders = [] } = useQuery({ queryKey: ['all-leaders'], queryFn: () => base44.entities.Leader.filter({}) });
-  const { data: parents = [] } = useQuery({ queryKey: ['all-parents'], queryFn: () => base44.entities.Parent.filter({}) });
-  const { data: members = [] } = useQuery({ queryKey: ['all-members-admin'], queryFn: () => base44.entities.Member.filter({ active: true }) });
-  const { data: pageViews = [] } = useQuery({ queryKey: ['page-views-admin'], queryFn: () => base44.entities.PageView.filter({}) });
-  const { data: allSections = [] } = useQuery({ queryKey: ['all-sections-admin'], queryFn: () => base44.entities.Section.filter({}) });
-  const { data: sections = [] } = useQuery({ queryKey: ['sections'], queryFn: () => base44.entities.Section.filter({ active: true }) });
-  const { data: websiteImages = [] } = useQuery({ queryKey: ['website-images'], queryFn: () => base44.entities.WebsiteImage.list() });
+  // ── Queries ──────────────────────────────────────────────────────────────────
+  const { data: users = [],         isLoading }   = useQuery({ queryKey: ['all-users'],         queryFn: () => base44.entities.User.list() });
+  const { data: leaders = [] }                    = useQuery({ queryKey: ['all-leaders'],       queryFn: () => base44.entities.Leader.filter({}) });
+  const { data: parents = [] }                    = useQuery({ queryKey: ['all-parents'],       queryFn: () => base44.entities.Parent.filter({}) });
+  const { data: members = [] }                    = useQuery({ queryKey: ['all-members-admin'], queryFn: () => base44.entities.Member.filter({ active: true }) });
+  const { data: allSections = [] }                = useQuery({ queryKey: ['all-sections-admin'],queryFn: () => base44.entities.Section.filter({}) });
+  const { data: sections = [] }                   = useQuery({ queryKey: ['sections'],          queryFn: () => base44.entities.Section.filter({ active: true }) });
+  const { data: websiteImages = [] }              = useQuery({ queryKey: ['website-images'],    queryFn: () => base44.entities.WebsiteImage.list() });
   const { data: uniformConfigs = [], refetch: refetchUniforms } = useQuery({ queryKey: ['uniform-configs'], queryFn: () => base44.entities.UniformConfig.filter({}) });
-  const { data: galleryPhotos = [] } = useQuery({ queryKey: ['gallery-photos'], queryFn: () => base44.entities.EventPhoto.filter({}) });
-  const { data: events = [] } = useQuery({ queryKey: ['events-for-gallery'], queryFn: () => base44.entities.Event.list('-start_date') });
-  const { data: programmes = [] } = useQuery({ queryKey: ['programmes-for-gallery'], queryFn: () => base44.entities.Programme.list('-date') });
-  const { data: gifConfigs = [] } = useQuery({
-    queryKey: ['loading-gif-config'],
-    queryFn: () => base44.entities.WebsiteImage.filter({ page: 'loading_gif_config' }),
-  });
+  const { data: galleryPhotos = [] }              = useQuery({ queryKey: ['gallery-photos'],    queryFn: () => base44.entities.EventPhoto.filter({}) });
+  const { data: events = [] }                     = useQuery({ queryKey: ['events-admin'],      queryFn: () => base44.entities.Event.list('-start_date') });
+  const { data: programmes = [] }                 = useQuery({ queryKey: ['programmes-admin'],  queryFn: () => base44.entities.Programme.list('-date', 200) });
+  const { data: gifConfigs = [] }                 = useQuery({ queryKey: ['loading-gif-config'],queryFn: () => base44.entities.WebsiteImage.filter({ page: 'loading_gif_config' }) });
+  const { data: pageViews = [] }                  = useQuery({ queryKey: ['page-views-admin'],  queryFn: () => base44.entities.PageView.filter({}) });
 
-  // Sync gifSize from loaded config
-  useEffect(() => {
-    if (gifConfigs[0]) setGifSize(gifConfigs[0].order || 60);
-  }, [gifConfigs]);
+  React.useEffect(() => { if (gifConfigs[0]) setGifSize(gifConfigs[0].order || 60); }, [gifConfigs]);
 
-  const handleSaveGifSize = async (size) => {
-    setSavingGifSize(true);
-    try {
-      const existing = gifConfigs[0];
-      if (existing) {
-        await base44.entities.WebsiteImage.update(existing.id, { order: size });
-      } else {
-        await base44.entities.WebsiteImage.create({ page: 'loading_gif_config', image_url: '', order: size });
-      }
-      queryClient.invalidateQueries({ queryKey: ['loading-gif-config'] });
-      toast.success('GIF size saved');
-    } catch (e) {
-      toast.error('Failed to save size');
-    } finally {
-      setSavingGifSize(false);
-    }
-  };
+  // ── Dashboard derived data ────────────────────────────────────────────────────
+  const thisWeekMeetings = useMemo(() => {
+    const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    return programmes.filter(p => {
+      if (!p.date || p.no_meeting) return false;
+      const d = new Date(p.date);
+      return d >= weekStart && d < weekEnd;
+    }).sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [programmes]);
 
-  // ── Gallery groupings ──────────────────────────────────────
-  const galleryCamps = [...new Map(galleryPhotos.filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp')).map(p => [p.event_id, events.find(e => e.id === p.event_id)])).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
-  const galleryEvents = [...new Map(galleryPhotos.filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'Camp')).map(p => [p.event_id, events.find(e => e.id === p.event_id)])).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
-  const galleryMeetings = [...new Map(galleryPhotos.filter(p => p.programme_id).map(p => [p.programme_id, programmes.find(pr => pr.id === p.programme_id)])).values()].filter(Boolean).sort((a, b) => new Date(b.date) - new Date(a.date));
+  const upcomingEvents = useMemo(() =>
+    events.filter(e => new Date(e.start_date) >= new Date()).slice(0, 8),
+  [events]);
+
+  const sectionSizes = useMemo(() =>
+    sections.map(s => ({ name: s.display_name, members: members.filter(m => m.section_id === s.id).length })).filter(s => s.members > 0),
+  [sections, members]);
+
+  const ageDistribution = useMemo(() => {
+    const byAge = {};
+    members.forEach(m => {
+      if (!m.date_of_birth) return;
+      const age = Math.floor((Date.now() - new Date(m.date_of_birth)) / (365.25 * 24 * 3600 * 1000));
+      if (age < 4 || age > 20) return;
+      if (!byAge[age]) byAge[age] = { age: String(age) };
+      const sec = sections.find(s => s.id === m.section_id);
+      const sName = sec?.display_name || 'Other';
+      byAge[age][sName] = (byAge[age][sName] || 0) + 1;
+    });
+    return Object.values(byAge).sort((a, b) => parseInt(a.age) - parseInt(b.age));
+  }, [members, sections]);
+
+  // ── Gallery helpers ───────────────────────────────────────────────────────────
+  const galleryCamps    = [...new Map(galleryPhotos.filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp')).map(p => [p.event_id, events.find(e => e.id === p.event_id)])).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+  const galleryEventsL  = [...new Map(galleryPhotos.filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type !== 'Camp')).map(p => [p.event_id, events.find(e => e.id === p.event_id)])).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+  const galleryMeetings = [...new Map(galleryPhotos.filter(p => p.programme_id).map(p => [p.programme_id, programmes.find(pr => pr.id === p.programme_id)])).values()].filter(Boolean).sort((a, b) => new Date(b?.date) - new Date(a?.date));
   const getGalleryDisplayPhotos = () => galleryFolder ? galleryPhotos.filter(p => p.event_id === galleryFolder.id || p.programme_id === galleryFolder.id) : galleryPhotos;
+  const getImagesForPage = (page) => websiteImages.filter(img => img.page === page).sort((a, b) => (a.order || 0) - (b.order || 0));
 
-  // ── Helpers ────────────────────────────────────────────────
+  // ── User helpers ──────────────────────────────────────────────────────────────
   const getUserType = (user) => {
     const userId = typeof user === 'string' ? user : user?.id;
-    if (typeof user === 'object' && user?.account_type === 'ipad') return { type: 'iPad', color: 'bg-indigo-100 text-indigo-800' };
-    if (leaders.some(l => l.user_id === userId)) return { type: 'Leader', color: 'bg-blue-100 text-blue-800' };
-    if (parents.some(p => p.user_id === userId)) return { type: 'Parent', color: 'bg-green-100 text-green-800' };
+    if (typeof user === 'object' && user?.account_type === 'ipad') return { type: 'iPad',   color: 'bg-indigo-100 text-indigo-800' };
+    if (leaders.some(l => l.user_id === userId))                   return { type: 'Leader', color: 'bg-blue-100 text-blue-800' };
+    if (parents.some(p => p.user_id === userId))                   return { type: 'Parent', color: 'bg-green-100 text-green-800' };
     return { type: 'User', color: 'bg-gray-100 text-gray-800' };
   };
 
   const handleSaveUniform = async (section, data) => {
     const existing = uniformConfigs.find(u => u.section === section);
-    if (existing) { await base44.entities.UniformConfig.update(existing.id, data); }
-    else { await base44.entities.UniformConfig.create({ section, ...data }); }
+    if (existing) await base44.entities.UniformConfig.update(existing.id, data);
+    else await base44.entities.UniformConfig.create({ section, ...data });
     refetchUniforms();
   };
 
   const handleEditUser = (user) => {
     setSelectedUser(user);
     const userType = getUserType(user);
-    const specialRoles2 = ['admin','treasurer','glv','team_leader'];
-    let typeValue = user.account_type === 'ipad' ? 'ipad' : specialRoles2.includes(user.role) ? user.role : userType.type === 'Parent' ? 'parent' : userType.type === 'Leader' ? 'leader' : 'user';
+    const specialRoles = ['admin','treasurer','glv','team_leader'];
+    const typeValue = user.account_type === 'ipad' ? 'ipad' : specialRoles.includes(user.role) ? user.role : userType.type === 'Parent' ? 'parent' : userType.type === 'Leader' ? 'leader' : 'user';
     const leaderRecord = leaders.find(l => l.user_id === user.id);
     setEditForm({ display_name: user.display_name || user.full_name, email: user.email, user_type: typeValue, section_ids: leaderRecord?.section_ids || [], default_section_id: user.default_section_id || '' });
     setShowEditDialog(true);
@@ -151,7 +220,7 @@ export default function AdminSettings() {
 
   const handleSaveUser = async () => {
     try {
-      const specialRoles = ['admin','treasurer','glv','team_leader']; // team_leader set via Section Settings only
+      const specialRoles = ['admin','treasurer','glv','team_leader'];
       const role = specialRoles.includes(editForm.user_type) ? editForm.user_type : 'user';
       const account_type = editForm.user_type === 'ipad' ? 'ipad' : null;
       const response = await base44.functions.invoke('updateUser', { userId: selectedUser.id, display_name: editForm.display_name, role, default_section_id: editForm.default_section_id || null });
@@ -161,8 +230,8 @@ export default function AdminSettings() {
       const currentType = getUserType(selectedUser).type.toLowerCase();
       if (editForm.user_type === 'ipad') { if (leaderRecord) await base44.entities.Leader.delete(leaderRecord.id); }
       else if (editForm.user_type === 'leader') {
-        if (currentType !== 'leader') { await base44.entities.Leader.create({ user_id: selectedUser.id, phone: '', display_name: editForm.display_name, section_ids: editForm.section_ids }); }
-        else if (leaderRecord) { await base44.entities.Leader.update(leaderRecord.id, { display_name: editForm.display_name, section_ids: editForm.section_ids }); }
+        if (currentType !== 'leader') await base44.entities.Leader.create({ user_id: selectedUser.id, phone: '', display_name: editForm.display_name, section_ids: editForm.section_ids });
+        else if (leaderRecord)         await base44.entities.Leader.update(leaderRecord.id, { display_name: editForm.display_name, section_ids: editForm.section_ids });
       } else { if (leaderRecord) await base44.entities.Leader.delete(leaderRecord.id); }
       await Promise.all([queryClient.invalidateQueries({ queryKey: ['all-users'] }), queryClient.invalidateQueries({ queryKey: ['all-leaders'] }), queryClient.invalidateQueries({ queryKey: ['all-parents'] })]);
       setShowEditDialog(false);
@@ -170,379 +239,490 @@ export default function AdminSettings() {
     } catch (error) { toast.error('Error updating user: ' + error.message); }
   };
 
-  const getImagesForPage = (page) => websiteImages.filter(img => img.page === page).sort((a, b) => (a.order || 0) - (b.order || 0));
-
+  // ── Mutations ─────────────────────────────────────────────────────────────────
   const uploadImageMutation = useMutation({
-    mutationFn: async ({ page, file, order }) => {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      return base44.entities.WebsiteImage.create({ page, image_url: file_url, order: order || 0 });
-    },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['website-images'] }); toast.success('Image uploaded successfully'); },
+    mutationFn: async ({ page, file, order }) => { const { file_url } = await base44.integrations.Core.UploadFile({ file }); return base44.entities.WebsiteImage.create({ page, image_url: file_url, order: order || 0 }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['website-images'] }); toast.success('Image uploaded'); },
   });
-
   const deleteImageMutation = useMutation({
-    mutationFn: (imageId) => base44.entities.WebsiteImage.delete(imageId),
+    mutationFn: (id) => base44.entities.WebsiteImage.delete(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['website-images'] }); toast.success('Image deleted'); },
   });
-
   const selectFromGalleryMutation = useMutation({
     mutationFn: async ({ page, imageUrl, order }) => base44.entities.WebsiteImage.create({ page, image_url: imageUrl, order: order || 0 }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['website-images'] }); setShowGallerySelector(false); toast.success('Image added from gallery'); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['website-images'] }); setShowGallerySelector(false); toast.success('Image added'); },
   });
-
   const sendPasswordResetMutation = useMutation({
     mutationFn: async (email) => base44.integrations.Core.SendEmail({ to: email, subject: 'Password Reset Request', body: 'You have requested a password reset.' }),
     onSuccess: () => toast.success('Password reset email sent'),
-    onError: (e) => toast.error('Error: ' + e.message),
   });
 
-  const handleExportData = async () => {
-    setExporting(true);
+  const handleSaveGifSize = async (size) => {
+    setSavingGifSize(true);
     try {
-      const response = await base44.functions.invoke('exportAllData', {});
-      const blob = new Blob([new Uint8Array(response.data)], { type: 'application/zip' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `scout-data-export-${new Date().toISOString().split('T')[0]}.zip`;
-      document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url); a.remove();
-      toast.success('Data exported successfully');
-    } catch (error) { toast.error('Export failed: ' + error.message); }
-    finally { setExporting(false); }
+      const existing = gifConfigs[0];
+      if (existing) await base44.entities.WebsiteImage.update(existing.id, { order: size });
+      else await base44.entities.WebsiteImage.create({ page: 'loading_gif_config', image_url: '', order: size });
+      queryClient.invalidateQueries({ queryKey: ['loading-gif-config'] });
+      toast.success('GIF size saved');
+    } catch { toast.error('Failed to save'); } finally { setSavingGifSize(false); }
   };
-
   const handleFileUpload = async (page, file, order) => {
     setUploadingImage(true);
-    try { await uploadImageMutation.mutateAsync({ page, file, order }); }
-    finally { setUploadingImage(false); }
+    try { await uploadImageMutation.mutateAsync({ page, file, order }); } finally { setUploadingImage(false); }
   };
 
-  const COLORS = ['#7413dc', '#004851', '#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#14b8a6'];
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <FloatingNav />
-      <NavBarSpacer />
-      <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '16px' }}>
-        <div className="max-w-7xl mx-auto flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Admin</p>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(20px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Admin Settings</h1>
-            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>Manage system configuration and users</p>
-          </div>
-          <button onClick={() => navigate(createPageUrl('ParentPortalAnalytics'))} className="flex items-center gap-2 text-xs font-semibold border border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white px-3 py-2 rounded-lg transition-colors flex-shrink-0">
-            <BarChart2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">Parent Portal</span> Analytics
-          </button>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4">
-        <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-
-          {/* Sidebar — desktop */}
-          <aside className="w-56 flex-shrink-0 hidden md:block">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden sticky top-4">
-              {GROUPS.map(group => (
-                <div key={group}>
-                  <p className="px-4 pt-4 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">{group}</p>
-                  {NAV_ITEMS.filter(n => n.group === group).map(item => {
-                    const Icon = item.icon;
-                    const active = activeTab === item.key;
-                    return (
-                      <button
-                        key={item.key}
-                        onClick={() => setActiveTab(item.key)}
-                        className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm transition-colors text-left ${active ? 'bg-[#7413dc] text-white font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}
-                      >
-                        <Icon className="w-4 h-4 flex-shrink-0" />
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
+  // ── Page content renderer ─────────────────────────────────────────────────────
+  const renderPageContent = (pageKey) => {
+    switch (pageKey) {
+      case 'users': return (
+        <Card>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" />User Management</CardTitle></CardHeader>
+          <CardContent>
+            {isLoading ? <div className="py-8 text-center"><div className="animate-spin w-8 h-8 border-4 border-[#004851] border-t-transparent rounded-full mx-auto" /></div> : (
+              <div className="space-y-2">
+                <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-2 bg-gray-50 rounded-lg font-semibold text-sm text-gray-700">
+                  <div>Name</div><div>Email</div><div>Type / Info</div><div className="text-right">Actions</div>
                 </div>
-              ))}
-            </div>
-          </aside>
-
-          {/* Mobile: dropdown nav */}
-          <div className="md:hidden w-full mb-4">
-            <Select value={activeTab} onValueChange={setActiveTab}>
-              <SelectTrigger className="w-full bg-white border-gray-200 rounded-xl h-12 text-sm font-semibold">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {GROUPS.map(group => (
-                  <React.Fragment key={group}>
-                    <div className="px-3 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">{group}</div>
-                    {NAV_ITEMS.filter(n => n.group === group).map(item => (
-                      <SelectItem key={item.key} value={item.key} className="pl-5">
-                        {item.label}
-                      </SelectItem>
-                    ))}
-                  </React.Fragment>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Main content — full width on mobile */}
-          <div className="flex-1 min-w-0 w-full">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="hidden"><TabsTrigger value="_" /></TabsList>
-
-              {/* ── Users ── */}
-              <TabsContent value="users">
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" />User Management</CardTitle></CardHeader>
-                  <CardContent>
-                    {isLoading ? (
-                      <div className="text-center py-8"><div className="animate-spin w-8 h-8 border-4 border-[#004851] border-t-transparent rounded-full mx-auto mb-4" /></div>
-                    ) : (
-                      <div className="space-y-2">
-                        {/* Desktop header */}
-                        <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-2 bg-gray-50 rounded-lg font-semibold text-sm text-gray-700">
-                          <div>Name</div><div>Email</div><div>Type / Info</div><div className="text-right">Actions</div>
-                        </div>
-                        {users.map(user => {
-                          const userType = getUserType(user);
-                          const parentRecord = parents.find(p => p.user_id === user.id);
-                          const linkedChildren = parentRecord ? members.filter(m => m.parent_ids?.includes(parentRecord.id)) : [];
-                          const lastView = pageViews.filter(v => v.user_email === user.email).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
-                          const lastLogin = lastView ? new Date(lastView.timestamp) : null;
-                          const daysAgo = lastLogin ? Math.floor((Date.now() - lastLogin) / (1000*60*60*24)) : null;
-                          const lastLoginLabel = daysAgo === null ? 'Never' : daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo}d ago`;
-                          return (
-                            <div key={user.id}>
-                              {/* Desktop row */}
-                              <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-3 bg-white border rounded-lg items-center">
-                                <div className="font-medium">{user.display_name || user.full_name}</div>
-                                <div className="text-sm text-gray-600 truncate">{user.email}</div>
-                                <div className="space-y-0.5">
-                                  <Badge className={userType.color}>{user.role === 'admin' ? 'Admin' : userType.type}</Badge>
-                                  {linkedChildren.length > 0 && <p className="text-xs text-gray-500">{linkedChildren.map(c => c.first_name).join(', ')}</p>}
-                                  <p className="text-xs text-gray-400">Last login: {lastLoginLabel}</p>
-                                </div>
-                                <div className="flex justify-end gap-2">
-                                  <Button size="sm" variant="outline" onClick={() => handleEditUser(user)}><Edit className="w-3 h-3 mr-1" />Edit</Button>
-                                  <Button size="sm" variant="outline" onClick={() => sendPasswordResetMutation.mutate(user.email)} disabled={sendPasswordResetMutation.isPending}><Mail className="w-3 h-3 mr-1" />Reset PW</Button>
-                                </div>
-                              </div>
-                              {/* Mobile card */}
-                              <div className="md:hidden bg-white border border-gray-100 rounded-xl p-4 space-y-3">
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="min-w-0 flex-1">
-                                    <p className="font-semibold text-sm text-gray-900">{user.display_name || user.full_name}</p>
-                                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                                    <div className="flex flex-wrap gap-1.5 mt-1.5">
-                                      <Badge className={`${userType.color} text-xs`}>{user.role === 'admin' ? 'Admin' : userType.type}</Badge>
-                                      {linkedChildren.length > 0 && <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">👦 {linkedChildren.map(c => c.first_name).join(', ')}</span>}
-                                      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">🕐 {lastLoginLabel}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button size="sm" variant="outline" className="flex-1" onClick={() => handleEditUser(user)}><Edit className="w-3.5 h-3.5 mr-1.5" />Edit User</Button>
-                                  <Button size="sm" variant="outline" className="flex-1" onClick={() => sendPasswordResetMutation.mutate(user.email)} disabled={sendPasswordResetMutation.isPending}><Mail className="w-3.5 h-3.5 mr-1.5" />Reset Password</Button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* ── Leaders ── */}
-              <TabsContent value="leaders"><LeaderManagement /></TabsContent>
-
-              {/* ── Sections ── */}
-              <TabsContent value="sections">
-                <SectionSettingsTab sections={allSections} leaders={leaders} queryClient={queryClient} />
-              </TabsContent>
-
-              {/* ── Terms ── */}
-              <TabsContent value="terms">
-                <AdminTermsTab />
-              </TabsContent>
-
-              {/* ── Public Website Settings (now includes loading GIF) ── */}
-              <TabsContent value="website">
-                <div className="space-y-6">
-                  <PublicWebsiteSettings />
-                  {/* Loading Screen GIF */}
-                  <Card className="border-purple-200 bg-purple-50">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-purple-900"><Upload className="w-5 h-5" />Loading Screen GIF</CardTitle>
-                      <p className="text-sm text-purple-700">Plays as a loading animation on the Home page, Leader Portal, and Parent Portal on first visit per session.</p>
-                    </CardHeader>
-                    <CardContent className="space-y-5">
-                      {getImagesForPage('loading_gif')[0] && (
-                        <div className="relative group w-fit">
-                          <img src={getImagesForPage('loading_gif')[0].image_url} alt="Loading GIF" className="h-48 rounded-lg border border-purple-200 object-contain bg-white" />
-                          <button onClick={() => deleteImageMutation.mutate(getImagesForPage('loading_gif')[0].id)} className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button>
-                        </div>
-                      )}
-                      {!getImagesForPage('loading_gif')[0] && <p className="text-sm text-purple-600 italic">No loading GIF uploaded yet.</p>}
-                      {getImagesForPage('loading_gif')[0] && (
-                        <div className="space-y-3 p-4 bg-white rounded-lg border border-purple-200">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-purple-900 font-semibold">Display Size: {gifSize}%</Label>
-                            <span className="text-xs text-purple-600">of screen width</span>
-                          </div>
-                          <Slider min={10} max={100} step={5} value={[gifSize]} onValueChange={([v]) => setGifSize(v)} className="w-full" />
-                          <div className="flex items-center justify-between text-xs text-purple-500"><span>Small (10%)</span><span>Full (100%)</span></div>
-                          <Button size="sm" disabled={savingGifSize} onClick={() => handleSaveGifSize(gifSize)} className="bg-purple-600 hover:bg-purple-700 text-white">{savingGifSize ? 'Saving...' : 'Save Size'}</Button>
-                        </div>
-                      )}
-                      <div className="flex flex-wrap gap-2">
-                        <Button type="button" variant="outline" disabled={uploadingImage} className="border-purple-300 text-purple-700 hover:bg-purple-100" onClick={() => document.getElementById('loading-gif-upload').click()}>
-                          <Upload className="w-4 h-4 mr-2" />{getImagesForPage('loading_gif').length > 0 ? 'Replace GIF' : 'Upload GIF'}
-                        </Button>
-                        {getImagesForPage('loading_gif')[0] && (
-                          <Button type="button" variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-100" onClick={() => setGifPreviewOpen(true)}>
-                            <Play className="w-4 h-4 mr-2" />Preview
-                          </Button>
-                        )}
-                        <input id="loading-gif-upload" type="file" accept="image/gif,image/*" className="hidden" onChange={async (e) => { const f = e.target.files[0]; if (!f) return; const existing = getImagesForPage('loading_gif')[0]; if (existing) await deleteImageMutation.mutateAsync(existing.id); handleFileUpload('loading_gif', f, 0); }} />
-                      </div>
-                    </CardContent>
-                  </Card>
-                  {gifPreviewOpen && getImagesForPage('loading_gif')[0] && (
-                    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white" onClick={() => setGifPreviewOpen(false)}>
-                      <img src={getImagesForPage('loading_gif')[0].image_url} alt="Preview" style={{ width: `${gifSize}%`, maxHeight: `${gifSize}vh`, objectFit: 'contain' }} />
-                      <button className="absolute top-4 right-4 p-2 bg-gray-900/70 text-white rounded-full" onClick={() => setGifPreviewOpen(false)}><X className="w-5 h-5" /></button>
-                      <p className="absolute bottom-6 text-gray-500 text-sm">Click anywhere to close</p>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-
-              {/* ── Badges ── */}
-              <TabsContent value="badges">
-                <div className="space-y-6">
-                  <Card>
-                    <CardHeader><CardTitle className="flex items-center gap-2"><Award className="w-5 h-5" />Badge System Management</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-gray-600">Manage the badge structure and definitions for your sections.</p>
-                      <Button onClick={() => navigate(createPageUrl('ManageBadges'))} className="bg-[#7413dc] hover:bg-[#5c0fb0]"><Award className="w-4 h-4 mr-2" />Manage Badges</Button>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-green-200 bg-green-50">
-                    <CardHeader><CardTitle className="flex items-center gap-2 text-green-900"><Award className="w-5 h-5" />Bulk Badge Completion</CardTitle></CardHeader>
-                    <CardContent><p className="text-gray-600 mb-4">Manually complete badges in bulk for members.</p><BulkBadgeUpdate /></CardContent>
-                  </Card>
-                  <Card className="border-purple-200 bg-purple-50">
-                    <CardHeader><CardTitle className="flex items-center gap-2 text-purple-900"><Upload className="w-5 h-5" />Import Badges from CSV</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-gray-600">Import badge definitions, modules, and requirements from CSV files.</p>
-                      <Button onClick={() => navigate(createPageUrl('ImportBadges'))} className="bg-purple-600 hover:bg-purple-700"><Upload className="w-4 h-4 mr-2" />Import Badges</Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              {/* ── Uniform ── */}
-              <TabsContent value="uniform">
-                <Tabs defaultValue="scouts">
-                  <TabsList><TabsTrigger value="scouts">Scouts</TabsTrigger><TabsTrigger value="cubs">Cubs</TabsTrigger><TabsTrigger value="beavers">Beavers</TabsTrigger></TabsList>
-                  {['scouts', 'cubs', 'beavers'].map(sec => (
-                    <TabsContent key={sec} value={sec}>
-                      <Card>
-                        <CardHeader><CardTitle className="capitalize">{sec} Uniform Diagram</CardTitle></CardHeader>
-                        <CardContent><UniformPositionEditor uniformConfig={uniformConfigs.find(u => u.section === sec)} onSave={(data) => handleSaveUniform(sec, data)} /></CardContent>
-                      </Card>
-                    </TabsContent>
-                  ))}
-                </Tabs>
-              </TabsContent>
-
-              {/* ── Gallery Stats ── */}
-              <TabsContent value="gallery">
-                {(() => {
-                  const totalPhotos = galleryPhotos.length;
-                  const sectionCounts = sections.map(s => ({ name: s.display_name, count: galleryPhotos.filter(p => p.section_id === s.id).length })).filter(s => s.count > 0);
-                  const groupWide = galleryPhotos.filter(p => p.section_id === 'all').length;
-                  if (groupWide > 0) sectionCounts.push({ name: 'Group-wide', count: groupWide });
+                {users.map(user => {
+                  const userType = getUserType(user);
+                  const parentRecord = parents.find(p => p.user_id === user.id);
+                  const linkedChildren = parentRecord ? members.filter(m => m.parent_ids?.includes(parentRecord.id)) : [];
+                  const lastView = pageViews.filter(v => v.user_email === user.email).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0];
+                  const daysAgo = lastView ? Math.floor((Date.now() - new Date(lastView.timestamp)) / (1000*60*60*24)) : null;
+                  const lastLabel = daysAgo === null ? 'Never' : daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo}d ago`;
                   return (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <Card className="border-l-4 border-l-[#7413dc]"><CardContent className="p-4"><div className="flex items-center justify-between"><div><p className="text-sm text-gray-600 mb-1">Total Photos</p><p className="text-3xl font-bold text-[#7413dc]">{totalPhotos}</p></div><Camera className="w-8 h-8 text-[#7413dc]" /></div></CardContent></Card>
-                        {sectionCounts.map((s, i) => (<Card key={s.name} style={{ borderLeftColor: COLORS[i % COLORS.length] }} className="border-l-4"><CardContent className="p-4"><div className="flex items-center justify-between"><div><p className="text-sm text-gray-600 mb-1">{s.name}</p><p className="text-3xl font-bold">{s.count}</p></div><Camera className="w-8 h-8 text-gray-400" /></div></CardContent></Card>))}
+                    <div key={user.id}>
+                      <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-3 bg-white border rounded-lg items-center">
+                        <div className="font-medium">{user.display_name || user.full_name}</div>
+                        <div className="text-sm text-gray-600 truncate">{user.email}</div>
+                        <div><Badge className={userType.color}>{user.role === 'admin' ? 'Admin' : userType.type}</Badge>{linkedChildren.length > 0 && <p className="text-xs text-gray-500 mt-0.5">{linkedChildren.map(c => c.first_name).join(', ')}</p>}<p className="text-xs text-gray-400">Last login: {lastLabel}</p></div>
+                        <div className="flex justify-end gap-2">
+                          <Button size="sm" variant="outline" onClick={() => handleEditUser(user)}><Edit className="w-3 h-3 mr-1" />Edit</Button>
+                          <Button size="sm" variant="outline" onClick={() => sendPasswordResetMutation.mutate(user.email)} disabled={sendPasswordResetMutation.isPending}><Mail className="w-3 h-3 mr-1" />Reset PW</Button>
+                        </div>
                       </div>
-                      {sectionCounts.length > 0 && (
-                        <Card>
-                          <CardHeader><CardTitle className="flex items-center gap-2"><PieChart className="w-5 h-5" />Photos by Section</CardTitle></CardHeader>
-                          <CardContent>
-                            <ResponsiveContainer width="100%" height={300}>
-                              <RechartsPieChart>
-                                <Pie data={sectionCounts} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name} ${Math.round(percent * 100)}%`}>
-                                  {sectionCounts.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                                </Pie>
-                                <Tooltip />
-                              </RechartsPieChart>
-                            </ResponsiveContainer>
-                          </CardContent>
-                        </Card>
-                      )}
+                      <div className="md:hidden bg-white border rounded-xl p-4 space-y-3">
+                        <p className="font-semibold text-sm">{user.display_name || user.full_name}</p>
+                        <p className="text-xs text-gray-500">{user.email}</p>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => handleEditUser(user)}><Edit className="w-3.5 h-3.5 mr-1" />Edit</Button>
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => sendPasswordResetMutation.mutate(user.email)}><Mail className="w-3.5 h-3.5 mr-1" />Reset PW</Button>
+                        </div>
+                      </div>
                     </div>
                   );
-                })()}
-              </TabsContent>
-
-
-
-              {/* ── Push Notifications ── */}
-              <TabsContent value="push"><PushNotificationsTab /></TabsContent>
-
-              {/* ── Notification Log ── */}
-              <TabsContent value="notif-log"><NotificationLogTab /></TabsContent>
-
-
-              {/* ── OSM Overview ── */}
-              <TabsContent value="osm-overview"><OSMOverview /></TabsContent>
-
-              {/* ── OSM Member Sync ── */}
-              <TabsContent value="osm-members"><OSMSyncPanel defaultTab="member-sync" /></TabsContent>
-
-              {/* ── OSM Programme Sync ── */}
-              <TabsContent value="osm-programme"><OSMSyncPanel defaultTab="programme-sync" /></TabsContent>
-
-              {/* ── OSM Badge ID Mapping ── */}
-              <TabsContent value="osm-badge-ids">
-                <OSMBadgeMappingTab />
-              </TabsContent>
-
-              {/* ── OSM Badge Award Sync ── */}
-              <TabsContent value="osm-awards"><OSMBadgeAwardSync /></TabsContent>
-
-              {/* ── Subscription Pricing ── */}
-              <TabsContent value="subs-pricing"><SubscriptionPricingTab /></TabsContent>
-
-              {/* ── WhatsApp Setup ── */}
-              <TabsContent value="wa-setup"><WhatsAppSetupTab /></TabsContent>
-
-              {/* ── WhatsApp Test ── */}
-              <TabsContent value="wa-test"><WhatsAppTestTab /></TabsContent>
-
-
-            </Tabs>
-          </div>
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      );
+      case 'leaders':    return <LeaderManagement />;
+      case 'sections':   return <SectionSettingsTab sections={allSections} leaders={leaders} queryClient={queryClient} />;
+      case 'terms':      return <AdminTermsTab />;
+      case 'subs':       return <SubscriptionPricingTab />;
+      case 'push':       return <PushNotificationsTab />;
+      case 'notif-log':  return <NotificationLogTab />;
+      case 'osm-overview':  return <OSMOverview />;
+      case 'osm-members':   return <OSMSyncPanel defaultTab="member-sync" />;
+      case 'osm-programme': return <OSMSyncPanel defaultTab="programme-sync" />;
+      case 'osm-badge-ids': return <OSMBadgeMappingTab />;
+      case 'osm-awards':    return <OSMBadgeAwardSync />;
+      case 'wa-setup':   return <WhatsAppSetupTab />;
+      case 'wa-test':    return <WhatsAppTestTab />;
+      case 'badges-admin': return (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Award className="w-5 h-5" />Badge System</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-600">Manage badge structure, definitions, and staged progressions.</p>
+              <Button onClick={() => navigate(createPageUrl('ManageBadges'))} className="bg-[#7413dc] hover:bg-[#5c0fb0]"><Award className="w-4 h-4 mr-2" />Open Badge Manager</Button>
+            </CardContent>
+          </Card>
+          <Card className="border-green-200 bg-green-50">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-green-900"><Award className="w-5 h-5" />Bulk Badge Completion</CardTitle></CardHeader>
+            <CardContent><BulkBadgeUpdate /></CardContent>
+          </Card>
+          <Card className="border-purple-200 bg-purple-50">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-purple-900"><Upload className="w-5 h-5" />Import Badges from CSV</CardTitle></CardHeader>
+            <CardContent>
+              <Button onClick={() => navigate(createPageUrl('ImportBadges'))} className="bg-purple-600 hover:bg-purple-700"><Upload className="w-4 h-4 mr-2" />Import Badges</Button>
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      );
+      case 'website': return (
+        <div className="space-y-6">
+          <PublicWebsiteSettings />
+          <Card className="border-purple-200 bg-purple-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-purple-900"><Upload className="w-5 h-5" />Loading Screen GIF</CardTitle>
+              <p className="text-sm text-purple-700">Plays as a loading animation on first visit per session.</p>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {getImagesForPage('loading_gif')[0] && (
+                <div className="relative group w-fit">
+                  <img src={getImagesForPage('loading_gif')[0].image_url} alt="Loading GIF" className="h-48 rounded-lg border border-purple-200 object-contain bg-white" />
+                  <button onClick={() => deleteImageMutation.mutate(getImagesForPage('loading_gif')[0].id)} className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button>
+                </div>
+              )}
+              {!getImagesForPage('loading_gif')[0] && <p className="text-sm text-purple-600 italic">No loading GIF uploaded yet.</p>}
+              {getImagesForPage('loading_gif')[0] && (
+                <div className="space-y-3 p-4 bg-white rounded-lg border border-purple-200">
+                  <Label className="text-purple-900 font-semibold">Display Size: {gifSize}%</Label>
+                  <Slider min={10} max={100} step={5} value={[gifSize]} onValueChange={([v]) => setGifSize(v)} className="w-full" />
+                  <Button size="sm" disabled={savingGifSize} onClick={() => handleSaveGifSize(gifSize)} className="bg-purple-600 hover:bg-purple-700 text-white">{savingGifSize ? 'Saving...' : 'Save Size'}</Button>
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" disabled={uploadingImage} className="border-purple-300 text-purple-700 hover:bg-purple-100" onClick={() => document.getElementById('loading-gif-upload').click()}>
+                  <Upload className="w-4 h-4 mr-2" />{getImagesForPage('loading_gif').length > 0 ? 'Replace GIF' : 'Upload GIF'}
+                </Button>
+                {getImagesForPage('loading_gif')[0] && <Button type="button" variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-100" onClick={() => setGifPreviewOpen(true)}><Play className="w-4 h-4 mr-2" />Preview</Button>}
+                <input id="loading-gif-upload" type="file" accept="image/gif,image/*" className="hidden" onChange={async (e) => { const f = e.target.files[0]; if (!f) return; const existing = getImagesForPage('loading_gif')[0]; if (existing) await deleteImageMutation.mutateAsync(existing.id); handleFileUpload('loading_gif', f, 0); }} />
+              </div>
+            </CardContent>
+          </Card>
+          {gifPreviewOpen && getImagesForPage('loading_gif')[0] && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white" onClick={() => setGifPreviewOpen(false)}>
+              <img src={getImagesForPage('loading_gif')[0].image_url} alt="Preview" style={{ width: `${gifSize}%`, maxHeight: `${gifSize}vh`, objectFit: 'contain' }} />
+              <button className="absolute top-4 right-4 p-2 bg-gray-900/70 text-white rounded-full"><X className="w-5 h-5" /></button>
+            </div>
+          )}
+        </div>
+      );
+      case 'gallery': {
+        const totalPhotos = galleryPhotos.length;
+        const sectionCounts = sections.map(s => ({ name: s.display_name, count: galleryPhotos.filter(p => p.section_id === s.id).length })).filter(s => s.count > 0);
+        const groupWide = galleryPhotos.filter(p => p.section_id === 'all').length;
+        if (groupWide > 0) sectionCounts.push({ name: 'Group-wide', count: groupWide });
+        return (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <Card className="border-l-4 border-l-[#7413dc]"><CardContent className="p-4"><p className="text-sm text-gray-600">Total Photos</p><p className="text-3xl font-bold text-[#7413dc]">{totalPhotos}</p></CardContent></Card>
+              {sectionCounts.map((s, i) => (<Card key={s.name} style={{ borderLeftColor: CHART_COLORS[i % CHART_COLORS.length] }} className="border-l-4"><CardContent className="p-4"><p className="text-sm text-gray-600">{s.name}</p><p className="text-3xl font-bold">{s.count}</p></CardContent></Card>))}
+            </div>
+            {sectionCounts.length > 0 && (
+              <Card>
+                <CardHeader><CardTitle>Photos by Section</CardTitle></CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <RPieChart><Pie data={sectionCounts} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name} ${Math.round(percent * 100)}%`}>{sectionCounts.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}</Pie><Tooltip /></RPieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        );
+      }
+      case 'uniform': return (
+        <div className="space-y-4">
+          {['scouts','cubs','beavers'].map(sec => (
+            <Card key={sec}>
+              <CardHeader><CardTitle className="capitalize">{sec} Uniform Diagram</CardTitle></CardHeader>
+              <CardContent><UniformPositionEditor uniformConfig={uniformConfigs.find(u => u.section === sec)} onSave={(data) => handleSaveUniform(sec, data)} /></CardContent>
+            </Card>
+          ))}
+        </div>
+      );
+      default: return <div className="text-gray-400 py-12 text-center">Content coming soon</div>;
+    }
+  };
 
-      {/* Edit User Dialog */}
+  const currentSection = SECTIONS.find(s => s.key === selectedSection);
+  const currentStyles  = selectedSection ? SECTION_STYLES[selectedSection] : null;
+
+  // ── Render ────────────────────────────────────────────────────────────────────
+  return (
+    <div className="min-h-screen bg-[#f8f7fc]">
+      <FloatingNav />
+      <NavBarSpacer />
+
+      <AnimatePresence mode="wait">
+        {!selectedSection ? (
+          /* ─── LANDING GRID ─────────────────────────────────────────────────── */
+          <motion.div
+            key="landing"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.18 } }}
+            className="min-h-[82vh] flex flex-col items-center justify-center px-4 py-16"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: -24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05, type: 'spring', stiffness: 180, damping: 22 }}
+              className="text-center mb-12"
+            >
+              <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#7413dc] mb-3 bg-purple-100 px-3 py-1 rounded-full">
+                40th Rochdale (Syke) Scouts
+              </span>
+              <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mt-2 mb-2 tracking-tight">Admin Area</h1>
+              <p className="text-gray-400 text-base">Choose a section to get started</p>
+            </motion.div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5 w-full max-w-3xl">
+              {SECTIONS.map((section, idx) => {
+                const Icon = section.icon;
+                const styles = SECTION_STYLES[section.key];
+                return (
+                  <motion.button
+                    key={section.key}
+                    layoutId={`section-card-${section.key}`}
+                    initial={{ opacity: 0, y: 32, scale: 0.94 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: 0.1 + idx * 0.065, type: 'spring', stiffness: 220, damping: 22 }}
+                    onClick={() => setSelectedSection(section.key)}
+                    whileHover={{ y: -6, scale: 1.035, transition: { duration: 0.2 } }}
+                    whileTap={{ scale: 0.96 }}
+                    className={`relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-shadow text-left`}
+                  >
+                    <div className={`bg-gradient-to-br ${styles.bg} p-6 sm:p-7 flex flex-col gap-4 min-h-[150px] sm:min-h-[170px]`}>
+                      {/* Decorative circle */}
+                      <div className="absolute -top-4 -right-4 w-20 h-20 bg-white/10 rounded-full" />
+                      <div className="absolute -bottom-6 -left-3 w-16 h-16 bg-white/10 rounded-full" />
+                      <div className="relative w-11 h-11 bg-white/25 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                      </div>
+                      <div className="relative">
+                        <p className="font-bold text-white text-sm sm:text-base leading-tight">{section.label}</p>
+                        <p className="text-white/60 text-xs mt-0.5 hidden sm:block">{section.description}</p>
+                      </div>
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </motion.div>
+        ) : (
+          /* ─── SECTION VIEW ─────────────────────────────────────────────────── */
+          <motion.div
+            key={`section-${selectedSection}`}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, transition: { duration: 0.12 } }}
+            transition={{ type: 'spring', stiffness: 200, damping: 26 }}
+            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+          >
+            {/* Top bar */}
+            <div className="flex items-center gap-3 mb-7">
+              <button
+                onClick={() => { setSelectedSection(null); setSelectedPage(null); }}
+                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">All sections</span>
+              </button>
+              <div className="w-px h-5 bg-gray-200" />
+              <motion.div
+                layoutId={`section-card-${selectedSection}`}
+                className={`bg-gradient-to-r ${currentStyles.bg} rounded-xl px-4 py-2 flex items-center gap-2.5 text-white shadow`}
+              >
+                {currentSection && <currentSection.icon className="w-4 h-4 flex-shrink-0" />}
+                <span className="font-semibold text-sm">{currentSection?.label}</span>
+              </motion.div>
+              {selectedPage && currentSection && (
+                <>
+                  <ChevronRight className="w-4 h-4 text-gray-300" />
+                  <button onClick={() => setSelectedPage(null)} className="text-sm text-gray-500 hover:text-gray-800 transition-colors flex items-center gap-1.5">
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    {currentSection.pages?.find(p => p.key === selectedPage)?.label}
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Content area */}
+            <AnimatePresence mode="wait">
+              {currentSection?.isDashboard ? (
+                /* ── GROUP DASHBOARD ─────────────────────────────────────────── */
+                <motion.div
+                  key="dashboard"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ delay: 0.05 }}
+                  className="space-y-6"
+                >
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {[
+                      { label: 'Total Members',      value: members.length,         color: '#7413dc', icon: Users },
+                      { label: 'Active Sections',    value: sections.length,        color: '#004851', icon: Layers },
+                      { label: 'Upcoming Events',    value: upcomingEvents.length,  color: '#f59e0b', icon: Calendar },
+                      { label: 'Meetings This Week', value: thisWeekMeetings.length,color: '#10b981', icon: Activity },
+                    ].map((stat, i) => {
+                      const SI = stat.icon;
+                      return (
+                        <motion.div key={stat.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                          <Card style={{ borderLeftColor: stat.color }} className="border-l-4">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-xs text-gray-500">{stat.label}</p>
+                                  <p className="text-2xl font-black mt-0.5" style={{ color: stat.color }}>{stat.value}</p>
+                                </div>
+                                <SI className="w-8 h-8 text-gray-100" />
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Meetings + Events */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <Card>
+                      <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Calendar className="w-4 h-4 text-[#7413dc]" />This Week's Meetings</CardTitle></CardHeader>
+                      <CardContent>
+                        {thisWeekMeetings.length === 0 ? <p className="text-sm text-gray-400 text-center py-4">No meetings this week</p> : (
+                          <div className="space-y-2">
+                            {thisWeekMeetings.map(m => {
+                              const sec = sections.find(s => s.id === m.section_id);
+                              return (
+                                <div key={m.id} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
+                                  <div className="w-8 h-8 rounded-lg bg-[#7413dc] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                                    {format(new Date(m.date), 'EEE').substring(0, 2).toUpperCase()}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-xs truncate">{m.title}</p>
+                                    <p className="text-[11px] text-gray-400">{sec?.display_name || '—'} · {format(new Date(m.date), 'EEE d MMM')}</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="w-4 h-4 text-[#7413dc]" />Upcoming Events</CardTitle></CardHeader>
+                      <CardContent>
+                        {upcomingEvents.length === 0 ? <p className="text-sm text-gray-400 text-center py-4">No upcoming events</p> : (
+                          <div className="space-y-2">
+                            {upcomingEvents.map(e => (
+                              <div key={e.id} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
+                                <div className="w-8 h-8 rounded-lg bg-[#004851] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                                  {(e.type || 'E')[0]}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-xs truncate">{e.title}</p>
+                                  <p className="text-[11px] text-gray-400">{format(new Date(e.start_date), 'EEE d MMM yyyy')}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Section sizes */}
+                  {sectionSizes.length > 0 && (
+                    <Card>
+                      <CardHeader className="pb-3"><CardTitle className="text-sm">Section Sizes</CardTitle></CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={200}>
+                          <BarChart data={sectionSizes} barCategoryGap="30%">
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                            <Tooltip />
+                            <Bar dataKey="members" radius={[6, 6, 0, 0]}>
+                              {sectionSizes.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Age distribution */}
+                  {ageDistribution.length > 0 && (
+                    <Card>
+                      <CardHeader className="pb-3"><CardTitle className="text-sm">Age Distribution by Section</CardTitle></CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={240}>
+                          <BarChart data={ageDistribution} barCategoryGap="20%">
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                            <XAxis dataKey="age" tick={{ fontSize: 11 }} label={{ value: 'Age', position: 'insideBottom', offset: -2, fontSize: 11 }} height={36} />
+                            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                            <Tooltip />
+                            <Legend iconSize={10} wrapperStyle={{ fontSize: 12 }} />
+                            {sections.map((s, i) => (
+                              <Bar key={s.id} dataKey={s.display_name} stackId="a" fill={CHART_COLORS[i % CHART_COLORS.length]}
+                                radius={i === sections.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />
+                            ))}
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                  )}
+                </motion.div>
+              ) : !selectedPage ? (
+                /* ── SUB-PAGE LIST ────────────────────────────────────────────── */
+                <motion.div
+                  key="subpages"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 24 }}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl"
+                >
+                  {currentSection?.pages?.map((page, idx) => {
+                    const PageIcon = page.icon;
+                    return (
+                      <motion.button
+                        key={page.key}
+                        initial={{ opacity: 0, x: -16 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        onClick={() => page.navigate ? navigate(page.navigate) : setSelectedPage(page.key)}
+                        className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all p-4 flex items-center gap-4 group text-left w-full"
+                        whileHover={{ x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${currentStyles.light} ${currentStyles.lightText}`}>
+                          <PageIcon className="w-5 h-5" />
+                        </div>
+                        <p className="font-semibold text-sm text-gray-800 flex-1">{page.label}</p>
+                        <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors flex-shrink-0" />
+                      </motion.button>
+                    );
+                  })}
+                </motion.div>
+              ) : (
+                /* ── PAGE CONTENT ─────────────────────────────────────────────── */
+                <motion.div
+                  key={selectedPage}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 26 }}
+                >
+                  {renderPageContent(selectedPage)}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Edit User Dialog ────────────────────────────────────────────────── */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent>
           <DialogHeader><DialogTitle>Edit User</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="edit_display_name">Display Name</Label>
-              <Input id="edit_display_name" value={editForm.display_name} onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })} />
+              <Label>Display Name</Label>
+              <Input value={editForm.display_name} onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit_email">Email Address</Label>
-              <Input id="edit_email" type="email" value={editForm.email} disabled className="bg-gray-100" />
+              <Label>Email Address</Label>
+              <Input type="email" value={editForm.email} disabled className="bg-gray-100" />
               <p className="text-xs text-gray-500">Email cannot be changed</p>
             </div>
             <div className="space-y-2">
@@ -572,7 +752,7 @@ export default function AdminSettings() {
                 </div>
               </div>
             )}
-            {(['leader', 'admin', 'treasurer', 'glv', 'team_leader'].includes(editForm.user_type)) && (
+            {(['leader','admin','treasurer','glv','team_leader'].includes(editForm.user_type)) && (
               <div className="space-y-2">
                 <Label>Default Section</Label>
                 <Select value={editForm.default_section_id || '__none__'} onValueChange={(v) => setEditForm({ ...editForm, default_section_id: v === '__none__' ? '' : v })}>
@@ -582,7 +762,6 @@ export default function AdminSettings() {
                     {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-gray-500">Which section this user sees first when they log in</p>
               </div>
             )}
             <Button onClick={handleSaveUser} className="w-full">Save Changes</Button>
@@ -590,7 +769,7 @@ export default function AdminSettings() {
         </DialogContent>
       </Dialog>
 
-      {/* Gallery Selector Dialog */}
+      {/* ── Gallery Selector Dialog ─────────────────────────────────────────── */}
       <Dialog open={showGallerySelector} onOpenChange={(open) => { setShowGallerySelector(open); if (!open) { setGalleryFolder(null); setGalleryView('camps'); } }}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Select from Gallery</DialogTitle></DialogHeader>
@@ -598,12 +777,12 @@ export default function AdminSettings() {
             {!galleryFolder ? (
               <div className="space-y-4">
                 <div className="flex gap-2">
-                  {[['camps', 'Camps', galleryCamps.length], ['events', 'Events', galleryEvents.length], ['meetings', 'Meetings', galleryMeetings.length]].map(([key, label, count]) => (
+                  {[['camps','Camps',galleryCamps.length],['events','Events',galleryEventsL.length],['meetings','Meetings',galleryMeetings.length]].map(([key,label,count]) => (
                     <Button key={key} size="sm" variant={galleryView === key ? 'default' : 'outline'} onClick={() => setGalleryView(key)}>{label} ({count})</Button>
                   ))}
                 </div>
                 <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
-                  {(galleryView === 'camps' ? galleryCamps : galleryView === 'events' ? galleryEvents : galleryMeetings).map(item => (
+                  {(galleryView === 'camps' ? galleryCamps : galleryView === 'events' ? galleryEventsL : galleryMeetings).map(item => (
                     <div key={item.id} onClick={() => setGalleryFolder(item)} className="cursor-pointer border rounded-lg p-3 hover:bg-gray-50">
                       <p className="font-medium">{item.title}</p>
                       <p className="text-sm text-gray-500">{galleryPhotos.filter(p => p.event_id === item.id || p.programme_id === item.id).length} photos</p>

@@ -213,7 +213,7 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, user, porta
 
                   {isAdmin && (
                     <Link to={createPageUrl('AdminSettings')} onClick={onClose} style={linkStyle(location.pathname === '/AdminSettings')}>
-                      <Settings size={15} /> Admin Settings
+                      <Settings size={15} /> Admin Area
                     </Link>
                   )}
                 </>
@@ -628,7 +628,7 @@ export default function FloatingNav() {
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.07)'; e.currentTarget.style.color = '#7413dc'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'rgba(26,26,46,0.65)'; }}
                   >
-                    <Settings size={13} /> Admin Settings
+                    <Settings size={13} /> Admin Area
                   </Link>
                 )}
                 <AccountDropdown />

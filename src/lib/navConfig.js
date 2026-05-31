@@ -9,9 +9,9 @@
  *   adminOnly : boolean  — only show when user.role === 'admin'
  */
 import {
-  Users, Calendar, Award, Mail, Settings, Image, ShieldAlert,
+  Users, Calendar, Award, Mail, Image, ShieldAlert,
   CalendarDays, Lightbulb, Package, TrendingUp, FileText,
-  Landmark, BookOpen, MessageSquare, UserCheck,
+  Landmark, BookOpen, UserCheck,
 } from 'lucide-react';
 
 export const PORTAL_NAV_GROUPS = [
@@ -45,7 +45,6 @@ export const PORTAL_NAV_GROUPS = [
       { label: 'Badge Tracking',   page: 'LeaderBadges', icon: Award },
       { label: 'Due Badges',       page: 'AwardBadges', icon: TrendingUp },
       { label: 'Badge Stock',      page: 'BadgeStockManagement', icon: Package },
-      { label: 'Manage Badges',    page: 'ManageBadges', icon: Settings, separator: true, adminOnly: true },
     ],
   },
   {
@@ -55,7 +54,6 @@ export const PORTAL_NAV_GROUPS = [
       { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark },
       { label: 'Gallery',           page: 'LeaderGallery', icon: Image },
       { label: 'Treasurer Portal',  page: 'TreasurerDashboard', icon: Landmark, separator: true },
-      { label: 'WhatsApp Schedules', page: 'WhatsAppSchedules', icon: MessageSquare, separator: true },
     ],
   },
 ];

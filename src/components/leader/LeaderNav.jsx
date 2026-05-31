@@ -56,7 +56,7 @@ export default function LeaderNav() {
         { label: 'Badge Tracking', page: 'LeaderBadges', icon: Award },
         { label: 'Due Badges', page: 'AwardBadges', icon: TrendingUp },
         { label: 'Badge Stock', page: 'BadgeStockManagement', icon: Package },
-        ...(isAdmin ? [{ label: 'Manage Badges', page: 'ManageBadges', icon: Settings, separator: true }] : []),
+
       ]
     },
     { 

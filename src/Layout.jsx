@@ -83,7 +83,7 @@ export default function Layout({ children, currentPageName }) {
         'MeetingDetail': 'Meeting Details',
         'BadgeDetail': 'Badge Details',
         'RiskAssessmentDetail': 'Risk Assessment',
-        'AdminSettings': 'Admin Settings',
+        'AdminSettings': 'Admin Area',
         'CompleteRegistration': 'Complete Registration',
         'ArchivedMembers': 'Archived Members',
         'BadgeStockManagement': 'Badge Stock',
