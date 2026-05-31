@@ -2,20 +2,24 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const NO_MEETING_KEYWORDS = ['no meeting', 'no scout', 'cancelled', 'half term'];
 
-function mapOSMToFields(osmItem) {
-  const osmTitle = osmItem.title || '';
-  const titleLower = osmTitle.toLowerCase();
-  const isNoMeeting = NO_MEETING_KEYWORDS.some(kw => titleLower.includes(kw));
+function mapOSMToFields(osmMeeting) {
+  const osmTitle = osmMeeting.title || '';
+  const isNoMeeting = NO_MEETING_KEYWORDS.some(kw => osmTitle.toLowerCase().includes(kw));
   const fields = {
     title: isNoMeeting ? 'No Meeting' : osmTitle,
-    description: osmItem.notesforparents || '',
-    osm_evening_id: String(osmItem.eveningid),
-    published: false,
-    shown_in_portal: false,
+    description: osmMeeting.notesforparents || '',
+    osm_evening_id: String(osmMeeting.eveningid),
+    published: true,
+    shown_in_portal: true,
   };
-  if (isNoMeeting) { fields.no_meeting = true; fields.no_meeting_reason = osmTitle; }
-  if (osmItem.starttime?.trim()) fields.optional_start_time = osmItem.starttime.trim();
-  if (osmItem.endtime?.trim()) fields.optional_end_time = osmItem.endtime.trim();
+  if (isNoMeeting) {
+    fields.no_meeting = true;
+    fields.no_meeting_reason = osmTitle;
+  } else {
+    fields.no_meeting = false;
+  }
+  if (osmMeeting.starttime?.trim()) fields.optional_start_time = osmMeeting.starttime.trim();
+  if (osmMeeting.endtime?.trim()) fields.optional_end_time = osmMeeting.endtime.trim();
   return fields;
 }
 
@@ -44,42 +48,46 @@ Deno.serve(async (req) => {
 
     const allSections = await base44.asServiceRole.entities.Section.filter({});
 
+    // Helper: fetch full meeting detail from OSM
+    const fetchOSMMeeting = async (eveningid) => {
+      const url = `https://www.onlinescoutmanager.co.uk/ext/programme/?action=getProgramme&eveningid=${eveningid}&sectionid=${sectionId}&termid=${termId}`;
+      const res = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+      if (!res.ok) throw new Error(`OSM returned ${res.status} for eveningid ${eveningid}`);
+      const data = await res.json();
+      const meeting = Array.isArray(data.items) ? data.items[0] : null;
+      if (!meeting) throw new Error(`No meeting found in OSM for eveningid ${eveningid}`);
+      return meeting;
+    };
+
     let created = 0, updated = 0, pushed = 0, skipped = 0;
     const failed = [];
 
     for (const sel of selections) {
-      const { action, local_id, osm_evening_id, date, osm_item } = sel;
+      const { action, local_id, osm_evening_id, date, section_id } = sel;
 
       if (action === 'skip') { skipped++; continue; }
 
       if (action === 'use_osm') {
+        if (!osm_evening_id) {
+          failed.push({ date, reason: 'No OSM evening ID available for this meeting — cannot pull from OSM.' });
+          continue;
+        }
         try {
+          // Always fetch full details so we get title, notesforparents, starttime, endtime
+          const osmMeeting = await fetchOSMMeeting(osm_evening_id);
+          const updateFields = mapOSMToFields(osmMeeting);
+
           if (local_id) {
-            const osmMeeting = osm_item || null;
-            if (!osmMeeting) {
-              const url = `https://www.onlinescoutmanager.co.uk/ext/programme/?action=getProgramme&eveningid=${osm_evening_id}&sectionid=${sectionId}&termid=${termId}`;
-              const res = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
-              if (!res.ok) throw new Error(`OSM returned ${res.status}`);
-              const data = await res.json();
-              const meeting = Array.isArray(data.items) ? data.items[0] : null;
-              if (!meeting) throw new Error('Meeting not found in OSM');
-              const updateFields = mapOSMToFields(meeting);
-              const programmes = await base44.asServiceRole.entities.Programme.filter({ id: local_id });
-              const prog = programmes[0];
-              if (prog && !prog.osm_evening_id) updateFields.osm_evening_id = String(meeting.eveningid);
-              await base44.asServiceRole.entities.Programme.update(local_id, updateFields);
-            } else {
-              const updateFields = mapOSMToFields(osmMeeting);
-              updateFields.osm_evening_id = String(osmMeeting.eveningid);
-              await base44.asServiceRole.entities.Programme.update(local_id, updateFields);
-            }
+            await base44.asServiceRole.entities.Programme.update(local_id, updateFields);
             updated++;
           } else {
-            if (!osm_item) { failed.push({ date, reason: 'Missing OSM item data for creation' }); continue; }
-            const createFields = mapOSMToFields(osm_item);
-            createFields.section_id = sel.section_id || '';
-            createFields.date = date;
-            await base44.asServiceRole.entities.Programme.create(createFields);
+            // Create new meeting — needs section_id and date
+            const appSectionId = section_id || '';
+            await base44.asServiceRole.entities.Programme.create({
+              ...updateFields,
+              section_id: appSectionId,
+              date,
+            });
             created++;
           }
         } catch (e) {
@@ -91,7 +99,7 @@ Deno.serve(async (req) => {
       if (action === 'use_app') {
         try {
           if (!osm_evening_id) {
-            failed.push({ date, reason: 'Cannot push to OSM — no evening ID. Link this meeting to an OSM meeting first using the meeting detail sync.' });
+            failed.push({ date, reason: 'Cannot push to OSM — no evening ID. Link this meeting to an OSM meeting first.' });
             continue;
           }
           if (!local_id) { failed.push({ date, reason: 'No local meeting to push' }); continue; }
@@ -101,7 +109,6 @@ Deno.serve(async (req) => {
           if (!programme) { failed.push({ date, reason: 'Local programme not found' }); continue; }
 
           const section = allSections.find(s => s.id === programme.section_id);
-          // Prefer section's own osm_section_id, then override, then global
           const effectiveSectionId = section?.osm_section_id || sectionId;
           const starttime = programme.optional_start_time || section?.meeting_start_time || '';
           const endtime   = programme.optional_end_time   || section?.meeting_end_time   || '';
