@@ -18,11 +18,11 @@ import {
   LayoutDashboard, Users, Settings, Globe, RefreshCw, Zap,
   BarChart2, Bell, Mail, Shield, Award, Calendar, Image, Camera,
   MessageCircle, CreditCard, ChevronRight, ArrowLeft, Layers,
-  TestTube, Edit, X, Upload, Play, Send, Activity, TrendingUp
+  TestTube, Edit, X, Upload, Play, Send, Activity, TrendingUp, ChevronDown
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart as RPieChart, Pie, Cell, Legend
+  ResponsiveContainer, PieChart as RPieChart, Pie, Cell, LabelList
 } from 'recharts';
 import { format, startOfWeek } from 'date-fns';
 import FloatingNav from '../components/public/FloatingNav';
@@ -43,74 +43,280 @@ import WhatsAppTestTab from '../components/whatsapp/WhatsAppTestTab';
 import SubscriptionPricingTab from '../components/admin/SubscriptionPricingTab';
 import OSMBadgeMappingTab from '../components/admin/OSMBadgeMappingTab';
 
-// ── Section config ───────────────────────────────────────────────────────────
+// ── Config ────────────────────────────────────────────────────────────────────
 const SECTION_STYLES = {
-  dashboard: { bg: 'from-violet-600 to-purple-800',  accent: '#7413dc', light: 'bg-purple-50', lightText: 'text-purple-700' },
-  people:    { bg: 'from-teal-600 to-cyan-800',      accent: '#004851', light: 'bg-teal-50',   lightText: 'text-teal-700' },
-  group:     { bg: 'from-orange-500 to-amber-700',   accent: '#c2410c', light: 'bg-orange-50', lightText: 'text-orange-700' },
-  website:   { bg: 'from-blue-500 to-indigo-700',    accent: '#1d4ed8', light: 'bg-blue-50',   lightText: 'text-blue-700' },
-  osm:       { bg: 'from-emerald-600 to-green-800',  accent: '#15803d', light: 'bg-green-50',  lightText: 'text-green-700' },
-  future:    { bg: 'from-pink-500 to-rose-700',      accent: '#be123c', light: 'bg-pink-50',   lightText: 'text-pink-700' },
+  dashboard: { bg: 'from-violet-600 to-purple-800',  accent: '#7413dc', light: 'bg-purple-50', lightText: 'text-purple-700', border: 'border-purple-200' },
+  people:    { bg: 'from-teal-600 to-cyan-800',      accent: '#004851', light: 'bg-teal-50',   lightText: 'text-teal-700',   border: 'border-teal-200' },
+  group:     { bg: 'from-orange-500 to-amber-700',   accent: '#c2410c', light: 'bg-orange-50', lightText: 'text-orange-700', border: 'border-orange-200' },
+  website:   { bg: 'from-blue-500 to-indigo-700',    accent: '#1d4ed8', light: 'bg-blue-50',   lightText: 'text-blue-700',   border: 'border-blue-200' },
+  osm:       { bg: 'from-emerald-600 to-green-800',  accent: '#15803d', light: 'bg-green-50',  lightText: 'text-green-700',  border: 'border-green-200' },
+  future:    { bg: 'from-pink-500 to-rose-700',      accent: '#be123c', light: 'bg-pink-50',   lightText: 'text-pink-700',   border: 'border-pink-200' },
 };
 
+const CHART_COLORS = ['#7413dc', '#004851', '#f59e0b', '#3b82f6', '#10b981', '#ec4899'];
+
 const SECTIONS = [
-  {
-    key: 'dashboard', label: 'Group Dashboard', icon: LayoutDashboard,
-    description: 'Live group overview & stats', isDashboard: true,
-  },
-  {
-    key: 'people', label: 'People', icon: Users,
-    description: 'Users, leaders & parents',
+  { key: 'dashboard', label: 'Group Dashboard', icon: LayoutDashboard, description: 'Live overview', isDashboard: true },
+  { key: 'people',   label: 'People',           icon: Users,           description: 'Users & leaders',
     pages: [
       { key: 'users',      label: 'User Management',         icon: Users },
       { key: 'leaders',    label: 'Leader Management',       icon: Shield },
       { key: 'analytics',  label: 'Parent Portal Analytics', icon: BarChart2, navigate: '/ParentPortalAnalytics' },
       { key: 'push',       label: 'Push Notifications',      icon: Bell },
       { key: 'notif-log',  label: 'Notification Log',        icon: Mail },
-    ],
-  },
-  {
-    key: 'group', label: 'Group Management', icon: Settings,
-    description: 'Sections, terms & badges',
+    ]},
+  { key: 'group',   label: 'Group Management', icon: Settings, description: 'Sections & badges',
     pages: [
       { key: 'sections',     label: 'Section Settings',     icon: Layers },
       { key: 'terms',        label: 'Terms',                icon: Calendar },
       { key: 'subs',         label: 'Subscription Pricing', icon: CreditCard },
       { key: 'badges-admin', label: 'Manage Badges',        icon: Award },
-    ],
-  },
-  {
-    key: 'website', label: 'Website Content', icon: Globe,
-    description: 'Public pages & media',
+    ]},
+  { key: 'website', label: 'Website Content',  icon: Globe,    description: 'Pages & media',
     pages: [
       { key: 'website', label: 'Public Website', icon: Globe },
       { key: 'gallery', label: 'Gallery Stats',  icon: Camera },
       { key: 'uniform', label: 'Uniform Guide',  icon: Shield },
-    ],
-  },
-  {
-    key: 'osm', label: 'OSM Sync', icon: RefreshCw,
-    description: 'Online Scout Manager',
+    ]},
+  { key: 'osm',    label: 'OSM Sync',          icon: RefreshCw, description: 'Scout Manager',
     pages: [
       { key: 'osm-overview',  label: 'Overview',         icon: Activity },
       { key: 'osm-members',   label: 'Member Sync',      icon: Users },
       { key: 'osm-programme', label: 'Programme Sync',   icon: Calendar },
       { key: 'osm-badge-ids', label: 'Badge ID Sync',    icon: Award },
       { key: 'osm-awards',    label: 'Badge Award Sync', icon: TrendingUp },
-    ],
-  },
-  {
-    key: 'future', label: 'Future Testing', icon: Zap,
-    description: 'Experimental features',
+    ]},
+  { key: 'future', label: 'Future Testing',    icon: Zap,      description: 'Experiments',
     pages: [
       { key: 'wa-setup',    label: 'WhatsApp Setup',        icon: MessageCircle },
       { key: 'wa-test',     label: 'WhatsApp Test Console', icon: TestTube },
       { key: 'wa-schedule', label: 'WhatsApp Schedule',     icon: Send, navigate: '/WhatsAppSchedules' },
-    ],
-  },
+    ]},
 ];
 
-const CHART_COLORS = ['#7413dc', '#004851', '#f59e0b', '#3b82f6', '#10b981', '#ec4899'];
+// ── Dashboard Components ──────────────────────────────────────────────────────
+function SectionBar({ name, count, max, color }) {
+  const pct = max > 0 ? (count / max) * 100 : 0;
+  return (
+    <div className="flex items-center gap-3 group">
+      <span className="text-xs font-medium text-gray-500 w-20 text-right flex-shrink-0 truncate">{name}</span>
+      <div className="flex-1 h-7 bg-gray-100 rounded-lg overflow-hidden relative">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.8, ease: 'easeOut', delay: 0.1 }}
+          className="h-full rounded-lg flex items-center justify-end pr-2"
+          style={{ background: `linear-gradient(90deg, ${color}cc, ${color})` }}
+        >
+          {pct > 25 && <span className="text-white text-xs font-bold">{count}</span>}
+        </motion.div>
+        {pct <= 25 && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-600">{count}</span>}
+      </div>
+    </div>
+  );
+}
+
+function AgeBar({ age, total, sections, sectionData, maxTotal }) {
+  const pct = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs text-gray-400 w-6 text-right flex-shrink-0">{age}</span>
+      <div className="flex-1 h-5 bg-gray-100 rounded overflow-hidden flex">
+        {sections.map((s, i) => {
+          const val = sectionData[s.display_name] || 0;
+          const segPct = total > 0 ? (val / total) * 100 : 0;
+          const segWidth = (segPct / 100) * pct;
+          return segWidth > 0 ? (
+            <motion.div
+              key={s.id}
+              initial={{ width: 0 }}
+              animate={{ width: `${segWidth}%` }}
+              transition={{ duration: 0.7, ease: 'easeOut', delay: 0.05 * i }}
+              className="h-full flex-shrink-0"
+              style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
+              title={`${s.display_name}: ${val}`}
+            />
+          ) : null;
+        })}
+      </div>
+      <span className="text-xs font-bold text-gray-600 w-6 flex-shrink-0">{total}</span>
+    </div>
+  );
+}
+
+function GroupDashboard({ members, sections, events, programmes }) {
+  const now = new Date();
+
+  const thisWeekMeetings = useMemo(() => {
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 7);
+    return programmes.filter(p => {
+      if (!p.date || p.no_meeting) return false;
+      const d = new Date(p.date);
+      return d >= weekStart && d < weekEnd;
+    }).sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [programmes]);
+
+  const upcomingEvents = useMemo(() => events.filter(e => new Date(e.start_date) >= now).slice(0, 6), [events]);
+
+  const sectionSizes = useMemo(() =>
+    sections.map(s => ({ name: s.display_name, members: members.filter(m => m.section_id === s.id).length })).filter(s => s.members > 0),
+  [sections, members]);
+
+  const ageRows = useMemo(() => {
+    const byAge = {};
+    members.forEach(m => {
+      if (!m.date_of_birth) return;
+      const age = Math.floor((Date.now() - new Date(m.date_of_birth)) / (365.25 * 24 * 3600 * 1000));
+      if (age < 4 || age > 20) return;
+      if (!byAge[age]) byAge[age] = { age: String(age), total: 0 };
+      const sec = sections.find(s => s.id === m.section_id);
+      const sName = sec?.display_name || 'Other';
+      byAge[age][sName] = (byAge[age][sName] || 0) + 1;
+      byAge[age].total++;
+    });
+    return Object.values(byAge).sort((a, b) => parseInt(a.age) - parseInt(b.age));
+  }, [members, sections]);
+
+  const maxSectionSize = Math.max(...sectionSizes.map(s => s.members), 1);
+  const maxAge = Math.max(...ageRows.map(r => r.total), 1);
+
+  const totalMembers = members.length;
+  const avgAge = members.filter(m => m.date_of_birth).reduce((sum, m) => {
+    return sum + Math.floor((Date.now() - new Date(m.date_of_birth)) / (365.25 * 24 * 3600 * 1000));
+  }, 0) / (members.filter(m => m.date_of_birth).length || 1);
+
+  return (
+    <div className="space-y-8">
+      {/* Hero row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+          className="sm:col-span-1 bg-gradient-to-br from-violet-600 to-purple-800 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="absolute -top-6 -right-6 w-28 h-28 bg-white/10 rounded-full" />
+          <div className="absolute -bottom-4 -left-4 w-20 h-20 bg-white/10 rounded-full" />
+          <p className="text-purple-200 text-xs font-semibold uppercase tracking-wider mb-1">Total Members</p>
+          <p className="text-6xl font-black text-white leading-none">{totalMembers}</p>
+          <p className="text-purple-200 text-sm mt-2">across {sections.length} active section{sections.length !== 1 ? 's' : ''}</p>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          className="flex flex-col gap-4">
+          <div className="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
+            <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center"><Calendar className="w-5 h-5 text-amber-500" /></div>
+            <div>
+              <p className="text-2xl font-black text-gray-900">{upcomingEvents.length}</p>
+              <p className="text-xs text-gray-500">Upcoming events</p>
+            </div>
+          </div>
+          <div className="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
+            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center"><Activity className="w-5 h-5 text-emerald-500" /></div>
+            <div>
+              <p className="text-2xl font-black text-gray-900">{thisWeekMeetings.length}</p>
+              <p className="text-xs text-gray-500">Meetings this week</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">This Week</p>
+          {thisWeekMeetings.length === 0
+            ? <p className="text-sm text-gray-400 mt-4">No meetings scheduled</p>
+            : <div className="space-y-2">
+                {thisWeekMeetings.map(m => {
+                  const sec = sections.find(s => s.id === m.section_id);
+                  return (
+                    <div key={m.id} className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-[#7413dc]/10 flex items-center justify-center text-[#7413dc] text-[10px] font-black flex-shrink-0">
+                        {format(new Date(m.date), 'EEE').slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-800 truncate">{m.title}</p>
+                        <p className="text-[10px] text-gray-400">{sec?.display_name}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+          }
+        </motion.div>
+      </div>
+
+      {/* Section sizes — horizontal bars */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+        className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-bold text-gray-900">Section Sizes</h3>
+          <span className="text-xs text-gray-400">{totalMembers} total</span>
+        </div>
+        <div className="space-y-3">
+          {sectionSizes.map((s, i) => (
+            <SectionBar key={s.name} name={s.name} count={s.members} max={maxSectionSize} color={CHART_COLORS[i % CHART_COLORS.length]} />
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Upcoming events + Age distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+          className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <h3 className="font-bold text-gray-900 mb-4">Upcoming Events</h3>
+          {upcomingEvents.length === 0
+            ? <p className="text-sm text-gray-400">No upcoming events</p>
+            : <div className="space-y-3">
+                {upcomingEvents.map((e, i) => {
+                  const daysAway = Math.ceil((new Date(e.start_date) - now) / (1000 * 60 * 60 * 24));
+                  return (
+                    <div key={e.id} className="flex items-center gap-3">
+                      <div className="flex-shrink-0 text-center w-10">
+                        <p className="text-xs font-black text-[#7413dc]">{format(new Date(e.start_date), 'd')}</p>
+                        <p className="text-[9px] text-gray-400 uppercase">{format(new Date(e.start_date), 'MMM')}</p>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">{e.title}</p>
+                        <p className="text-xs text-gray-400">{e.type} · {daysAway === 0 ? 'Today' : daysAway === 1 ? 'Tomorrow' : `in ${daysAway} days`}</p>
+                      </div>
+                      <div className={`flex-shrink-0 w-2 h-2 rounded-full ${daysAway < 7 ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                    </div>
+                  );
+                })}
+              </div>
+          }
+        </motion.div>
+
+        {ageRows.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900">Age Distribution</h3>
+              <div className="flex flex-wrap gap-2">
+                {sections.map((s, i) => (
+                  <span key={s.id} className="flex items-center gap-1 text-[10px] text-gray-500">
+                    <span className="w-2 h-2 rounded-full inline-block flex-shrink-0" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                    {s.display_name}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              {ageRows.map(row => (
+                <AgeBar
+                  key={row.age}
+                  age={row.age}
+                  total={row.total}
+                  sections={sections}
+                  sectionData={row}
+                  maxTotal={maxAge}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function AdminSettings() {
@@ -120,70 +326,34 @@ export default function AdminSettings() {
   const [selectedSection, setSelectedSection] = useState(null);
   const [selectedPage,    setSelectedPage]    = useState(null);
 
-  // Dialog / UI state
-  const [selectedUser,      setSelectedUser]      = useState(null);
-  const [showEditDialog,    setShowEditDialog]    = useState(false);
-  const [editForm,          setEditForm]          = useState({ display_name: '', email: '', user_type: 'parent', section_ids: [], default_section_id: '' });
-  const [uploadingImage,    setUploadingImage]    = useState(false);
+  const [selectedUser,        setSelectedUser]        = useState(null);
+  const [showEditDialog,      setShowEditDialog]      = useState(false);
+  const [editForm,            setEditForm]            = useState({ display_name: '', email: '', user_type: 'parent', section_ids: [], default_section_id: '' });
+  const [uploadingImage,      setUploadingImage]      = useState(false);
   const [showGallerySelector, setShowGallerySelector] = useState(false);
-  const [currentImagePage,  setCurrentImagePage]  = useState(null);
-  const [gifSize,           setGifSize]           = useState(60);
-  const [gifPreviewOpen,    setGifPreviewOpen]    = useState(false);
-  const [savingGifSize,     setSavingGifSize]     = useState(false);
-  const [galleryView,       setGalleryView]       = useState('camps');
-  const [galleryFolder,     setGalleryFolder]     = useState(null);
+  const [currentImagePage,    setCurrentImagePage]    = useState(null);
+  const [gifSize,             setGifSize]             = useState(60);
+  const [gifPreviewOpen,      setGifPreviewOpen]      = useState(false);
+  const [savingGifSize,       setSavingGifSize]       = useState(false);
+  const [galleryView,         setGalleryView]         = useState('camps');
+  const [galleryFolder,       setGalleryFolder]       = useState(null);
 
   // ── Queries ──────────────────────────────────────────────────────────────────
-  const { data: users = [],         isLoading }   = useQuery({ queryKey: ['all-users'],         queryFn: () => base44.entities.User.list() });
-  const { data: leaders = [] }                    = useQuery({ queryKey: ['all-leaders'],       queryFn: () => base44.entities.Leader.filter({}) });
-  const { data: parents = [] }                    = useQuery({ queryKey: ['all-parents'],       queryFn: () => base44.entities.Parent.filter({}) });
-  const { data: members = [] }                    = useQuery({ queryKey: ['all-members-admin'], queryFn: () => base44.entities.Member.filter({ active: true }) });
-  const { data: allSections = [] }                = useQuery({ queryKey: ['all-sections-admin'],queryFn: () => base44.entities.Section.filter({}) });
-  const { data: sections = [] }                   = useQuery({ queryKey: ['sections'],          queryFn: () => base44.entities.Section.filter({ active: true }) });
-  const { data: websiteImages = [] }              = useQuery({ queryKey: ['website-images'],    queryFn: () => base44.entities.WebsiteImage.list() });
+  const { data: users = [],   isLoading }   = useQuery({ queryKey: ['all-users'],          queryFn: () => base44.entities.User.list() });
+  const { data: leaders = [] }              = useQuery({ queryKey: ['all-leaders'],        queryFn: () => base44.entities.Leader.filter({}) });
+  const { data: parents = [] }              = useQuery({ queryKey: ['all-parents'],        queryFn: () => base44.entities.Parent.filter({}) });
+  const { data: members = [] }              = useQuery({ queryKey: ['all-members-admin'],  queryFn: () => base44.entities.Member.filter({ active: true }) });
+  const { data: allSections = [] }          = useQuery({ queryKey: ['all-sections-admin'], queryFn: () => base44.entities.Section.filter({}) });
+  const { data: sections = [] }             = useQuery({ queryKey: ['sections'],           queryFn: () => base44.entities.Section.filter({ active: true }) });
+  const { data: websiteImages = [] }        = useQuery({ queryKey: ['website-images'],     queryFn: () => base44.entities.WebsiteImage.list() });
   const { data: uniformConfigs = [], refetch: refetchUniforms } = useQuery({ queryKey: ['uniform-configs'], queryFn: () => base44.entities.UniformConfig.filter({}) });
-  const { data: galleryPhotos = [] }              = useQuery({ queryKey: ['gallery-photos'],    queryFn: () => base44.entities.EventPhoto.filter({}) });
-  const { data: events = [] }                     = useQuery({ queryKey: ['events-admin'],      queryFn: () => base44.entities.Event.list('-start_date') });
-  const { data: programmes = [] }                 = useQuery({ queryKey: ['programmes-admin'],  queryFn: () => base44.entities.Programme.list('-date', 200) });
-  const { data: gifConfigs = [] }                 = useQuery({ queryKey: ['loading-gif-config'],queryFn: () => base44.entities.WebsiteImage.filter({ page: 'loading_gif_config' }) });
-  const { data: pageViews = [] }                  = useQuery({ queryKey: ['page-views-admin'],  queryFn: () => base44.entities.PageView.filter({}) });
+  const { data: galleryPhotos = [] }        = useQuery({ queryKey: ['gallery-photos'],     queryFn: () => base44.entities.EventPhoto.filter({}) });
+  const { data: events = [] }               = useQuery({ queryKey: ['events-admin'],       queryFn: () => base44.entities.Event.list('-start_date') });
+  const { data: programmes = [] }           = useQuery({ queryKey: ['programmes-admin'],   queryFn: () => base44.entities.Programme.list('-date', 200) });
+  const { data: gifConfigs = [] }           = useQuery({ queryKey: ['loading-gif-config'], queryFn: () => base44.entities.WebsiteImage.filter({ page: 'loading_gif_config' }) });
+  const { data: pageViews = [] }            = useQuery({ queryKey: ['page-views-admin'],   queryFn: () => base44.entities.PageView.filter({}) });
 
-  React.useEffect(() => { if (gifConfigs[0]) setGifSize(gifConfigs[0].order || 60); }, [gifConfigs]);
-
-  // ── Dashboard derived data ────────────────────────────────────────────────────
-  const thisWeekMeetings = useMemo(() => {
-    const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-    weekStart.setHours(0, 0, 0, 0);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekEnd.getDate() + 7);
-    return programmes.filter(p => {
-      if (!p.date || p.no_meeting) return false;
-      const d = new Date(p.date);
-      return d >= weekStart && d < weekEnd;
-    }).sort((a, b) => new Date(a.date) - new Date(b.date));
-  }, [programmes]);
-
-  const upcomingEvents = useMemo(() =>
-    events.filter(e => new Date(e.start_date) >= new Date()).slice(0, 8),
-  [events]);
-
-  const sectionSizes = useMemo(() =>
-    sections.map(s => ({ name: s.display_name, members: members.filter(m => m.section_id === s.id).length })).filter(s => s.members > 0),
-  [sections, members]);
-
-  const ageDistribution = useMemo(() => {
-    const byAge = {};
-    members.forEach(m => {
-      if (!m.date_of_birth) return;
-      const age = Math.floor((Date.now() - new Date(m.date_of_birth)) / (365.25 * 24 * 3600 * 1000));
-      if (age < 4 || age > 20) return;
-      if (!byAge[age]) byAge[age] = { age: String(age) };
-      const sec = sections.find(s => s.id === m.section_id);
-      const sName = sec?.display_name || 'Other';
-      byAge[age][sName] = (byAge[age][sName] || 0) + 1;
-    });
-    return Object.values(byAge).sort((a, b) => parseInt(a.age) - parseInt(b.age));
-  }, [members, sections]);
+  useEffect(() => { if (gifConfigs[0]) setGifSize(gifConfigs[0].order || 60); }, [gifConfigs]);
 
   // ── Gallery helpers ───────────────────────────────────────────────────────────
   const galleryCamps    = [...new Map(galleryPhotos.filter(p => p.event_id && events.find(e => e.id === p.event_id && e.type === 'Camp')).map(p => [p.event_id, events.find(e => e.id === p.event_id)])).values()].filter(Boolean).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
@@ -231,12 +401,12 @@ export default function AdminSettings() {
       if (editForm.user_type === 'ipad') { if (leaderRecord) await base44.entities.Leader.delete(leaderRecord.id); }
       else if (editForm.user_type === 'leader') {
         if (currentType !== 'leader') await base44.entities.Leader.create({ user_id: selectedUser.id, phone: '', display_name: editForm.display_name, section_ids: editForm.section_ids });
-        else if (leaderRecord)         await base44.entities.Leader.update(leaderRecord.id, { display_name: editForm.display_name, section_ids: editForm.section_ids });
+        else if (leaderRecord)        await base44.entities.Leader.update(leaderRecord.id, { display_name: editForm.display_name, section_ids: editForm.section_ids });
       } else { if (leaderRecord) await base44.entities.Leader.delete(leaderRecord.id); }
       await Promise.all([queryClient.invalidateQueries({ queryKey: ['all-users'] }), queryClient.invalidateQueries({ queryKey: ['all-leaders'] }), queryClient.invalidateQueries({ queryKey: ['all-parents'] })]);
       setShowEditDialog(false);
-      toast.success('User updated successfully');
-    } catch (error) { toast.error('Error updating user: ' + error.message); }
+      toast.success('User updated');
+    } catch (error) { toast.error('Error: ' + error.message); }
   };
 
   // ── Mutations ─────────────────────────────────────────────────────────────────
@@ -282,7 +452,7 @@ export default function AdminSettings() {
             {isLoading ? <div className="py-8 text-center"><div className="animate-spin w-8 h-8 border-4 border-[#004851] border-t-transparent rounded-full mx-auto" /></div> : (
               <div className="space-y-2">
                 <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-2 bg-gray-50 rounded-lg font-semibold text-sm text-gray-700">
-                  <div>Name</div><div>Email</div><div>Type / Info</div><div className="text-right">Actions</div>
+                  <div>Name</div><div>Email</div><div>Type</div><div className="text-right">Actions</div>
                 </div>
                 {users.map(user => {
                   const userType = getUserType(user);
@@ -296,13 +466,13 @@ export default function AdminSettings() {
                       <div className="hidden md:grid grid-cols-4 gap-4 px-4 py-3 bg-white border rounded-lg items-center">
                         <div className="font-medium">{user.display_name || user.full_name}</div>
                         <div className="text-sm text-gray-600 truncate">{user.email}</div>
-                        <div><Badge className={userType.color}>{user.role === 'admin' ? 'Admin' : userType.type}</Badge>{linkedChildren.length > 0 && <p className="text-xs text-gray-500 mt-0.5">{linkedChildren.map(c => c.first_name).join(', ')}</p>}<p className="text-xs text-gray-400">Last login: {lastLabel}</p></div>
+                        <div><Badge className={userType.color}>{user.role === 'admin' ? 'Admin' : userType.type}</Badge>{linkedChildren.length > 0 && <p className="text-xs text-gray-500 mt-0.5">{linkedChildren.map(c => c.first_name).join(', ')}</p>}<p className="text-xs text-gray-400">{lastLabel}</p></div>
                         <div className="flex justify-end gap-2">
                           <Button size="sm" variant="outline" onClick={() => handleEditUser(user)}><Edit className="w-3 h-3 mr-1" />Edit</Button>
                           <Button size="sm" variant="outline" onClick={() => sendPasswordResetMutation.mutate(user.email)} disabled={sendPasswordResetMutation.isPending}><Mail className="w-3 h-3 mr-1" />Reset PW</Button>
                         </div>
                       </div>
-                      <div className="md:hidden bg-white border rounded-xl p-4 space-y-3">
+                      <div className="md:hidden bg-white border rounded-xl p-4 space-y-2">
                         <p className="font-semibold text-sm">{user.display_name || user.full_name}</p>
                         <p className="text-xs text-gray-500">{user.email}</p>
                         <div className="flex gap-2">
@@ -318,68 +488,55 @@ export default function AdminSettings() {
           </CardContent>
         </Card>
       );
-      case 'leaders':    return <LeaderManagement />;
-      case 'sections':   return <SectionSettingsTab sections={allSections} leaders={leaders} queryClient={queryClient} />;
-      case 'terms':      return <AdminTermsTab />;
-      case 'subs':       return <SubscriptionPricingTab />;
-      case 'push':       return <PushNotificationsTab />;
-      case 'notif-log':  return <NotificationLogTab />;
+      case 'leaders':       return <LeaderManagement />;
+      case 'sections':      return <SectionSettingsTab sections={allSections} leaders={leaders} queryClient={queryClient} />;
+      case 'terms':         return <AdminTermsTab />;
+      case 'subs':          return <SubscriptionPricingTab />;
+      case 'push':          return <PushNotificationsTab />;
+      case 'notif-log':     return <NotificationLogTab />;
       case 'osm-overview':  return <OSMOverview />;
       case 'osm-members':   return <OSMSyncPanel defaultTab="member-sync" />;
       case 'osm-programme': return <OSMSyncPanel defaultTab="programme-sync" />;
       case 'osm-badge-ids': return <OSMBadgeMappingTab />;
       case 'osm-awards':    return <OSMBadgeAwardSync />;
-      case 'wa-setup':   return <WhatsAppSetupTab />;
-      case 'wa-test':    return <WhatsAppTestTab />;
-      case 'badges-admin': return (
+      case 'wa-setup':      return <WhatsAppSetupTab />;
+      case 'wa-test':       return <WhatsAppTestTab />;
+      case 'badges-admin':  return (
         <div className="space-y-6">
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><Award className="w-5 h-5" />Badge System</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-gray-600">Manage badge structure, definitions, and staged progressions.</p>
+          <Card><CardHeader><CardTitle className="flex items-center gap-2"><Award className="w-5 h-5" />Badge System</CardTitle></CardHeader>
+            <CardContent className="space-y-3"><p className="text-gray-600">Manage badge structure, definitions, and staged progressions.</p>
               <Button onClick={() => navigate(createPageUrl('ManageBadges'))} className="bg-[#7413dc] hover:bg-[#5c0fb0]"><Award className="w-4 h-4 mr-2" />Open Badge Manager</Button>
-            </CardContent>
-          </Card>
-          <Card className="border-green-200 bg-green-50">
-            <CardHeader><CardTitle className="flex items-center gap-2 text-green-900"><Award className="w-5 h-5" />Bulk Badge Completion</CardTitle></CardHeader>
-            <CardContent><BulkBadgeUpdate /></CardContent>
-          </Card>
-          <Card className="border-purple-200 bg-purple-50">
-            <CardHeader><CardTitle className="flex items-center gap-2 text-purple-900"><Upload className="w-5 h-5" />Import Badges from CSV</CardTitle></CardHeader>
-            <CardContent>
-              <Button onClick={() => navigate(createPageUrl('ImportBadges'))} className="bg-purple-600 hover:bg-purple-700"><Upload className="w-4 h-4 mr-2" />Import Badges</Button>
-            </CardContent>
-          </Card>
+            </CardContent></Card>
+          <Card className="border-green-200 bg-green-50"><CardHeader><CardTitle className="flex items-center gap-2 text-green-900"><Award className="w-5 h-5" />Bulk Badge Completion</CardTitle></CardHeader><CardContent><BulkBadgeUpdate /></CardContent></Card>
+          <Card className="border-purple-200 bg-purple-50"><CardHeader><CardTitle className="flex items-center gap-2 text-purple-900"><Upload className="w-5 h-5" />Import Badges from CSV</CardTitle></CardHeader>
+            <CardContent><Button onClick={() => navigate(createPageUrl('ImportBadges'))} className="bg-purple-600 hover:bg-purple-700"><Upload className="w-4 h-4 mr-2" />Import Badges</Button></CardContent></Card>
         </div>
       );
       case 'website': return (
         <div className="space-y-6">
           <PublicWebsiteSettings />
           <Card className="border-purple-200 bg-purple-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-purple-900"><Upload className="w-5 h-5" />Loading Screen GIF</CardTitle>
-              <p className="text-sm text-purple-700">Plays as a loading animation on first visit per session.</p>
-            </CardHeader>
-            <CardContent className="space-y-5">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-purple-900"><Upload className="w-5 h-5" />Loading Screen GIF</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
               {getImagesForPage('loading_gif')[0] && (
                 <div className="relative group w-fit">
-                  <img src={getImagesForPage('loading_gif')[0].image_url} alt="Loading GIF" className="h-48 rounded-lg border border-purple-200 object-contain bg-white" />
-                  <button onClick={() => deleteImageMutation.mutate(getImagesForPage('loading_gif')[0].id)} className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-4 h-4" /></button>
+                  <img src={getImagesForPage('loading_gif')[0].image_url} alt="GIF" className="h-40 rounded-lg border border-purple-200 object-contain bg-white" />
+                  <button onClick={() => deleteImageMutation.mutate(getImagesForPage('loading_gif')[0].id)} className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-3.5 h-3.5" /></button>
                 </div>
               )}
-              {!getImagesForPage('loading_gif')[0] && <p className="text-sm text-purple-600 italic">No loading GIF uploaded yet.</p>}
+              {!getImagesForPage('loading_gif')[0] && <p className="text-sm text-purple-600 italic">No GIF uploaded yet.</p>}
               {getImagesForPage('loading_gif')[0] && (
-                <div className="space-y-3 p-4 bg-white rounded-lg border border-purple-200">
-                  <Label className="text-purple-900 font-semibold">Display Size: {gifSize}%</Label>
-                  <Slider min={10} max={100} step={5} value={[gifSize]} onValueChange={([v]) => setGifSize(v)} className="w-full" />
+                <div className="space-y-2 p-4 bg-white rounded-lg border border-purple-200">
+                  <Label className="text-purple-900 font-semibold">Size: {gifSize}%</Label>
+                  <Slider min={10} max={100} step={5} value={[gifSize]} onValueChange={([v]) => setGifSize(v)} />
                   <Button size="sm" disabled={savingGifSize} onClick={() => handleSaveGifSize(gifSize)} className="bg-purple-600 hover:bg-purple-700 text-white">{savingGifSize ? 'Saving...' : 'Save Size'}</Button>
                 </div>
               )}
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="outline" disabled={uploadingImage} className="border-purple-300 text-purple-700 hover:bg-purple-100" onClick={() => document.getElementById('loading-gif-upload').click()}>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" disabled={uploadingImage} className="border-purple-300 text-purple-700" onClick={() => document.getElementById('loading-gif-upload').click()}>
                   <Upload className="w-4 h-4 mr-2" />{getImagesForPage('loading_gif').length > 0 ? 'Replace GIF' : 'Upload GIF'}
                 </Button>
-                {getImagesForPage('loading_gif')[0] && <Button type="button" variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-100" onClick={() => setGifPreviewOpen(true)}><Play className="w-4 h-4 mr-2" />Preview</Button>}
+                {getImagesForPage('loading_gif')[0] && <Button type="button" variant="outline" className="border-purple-300 text-purple-700" onClick={() => setGifPreviewOpen(true)}><Play className="w-4 h-4 mr-2" />Preview</Button>}
                 <input id="loading-gif-upload" type="file" accept="image/gif,image/*" className="hidden" onChange={async (e) => { const f = e.target.files[0]; if (!f) return; const existing = getImagesForPage('loading_gif')[0]; if (existing) await deleteImageMutation.mutateAsync(existing.id); handleFileUpload('loading_gif', f, 0); }} />
               </div>
             </CardContent>
@@ -404,14 +561,8 @@ export default function AdminSettings() {
               {sectionCounts.map((s, i) => (<Card key={s.name} style={{ borderLeftColor: CHART_COLORS[i % CHART_COLORS.length] }} className="border-l-4"><CardContent className="p-4"><p className="text-sm text-gray-600">{s.name}</p><p className="text-3xl font-bold">{s.count}</p></CardContent></Card>))}
             </div>
             {sectionCounts.length > 0 && (
-              <Card>
-                <CardHeader><CardTitle>Photos by Section</CardTitle></CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <RPieChart><Pie data={sectionCounts} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name} ${Math.round(percent * 100)}%`}>{sectionCounts.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}</Pie><Tooltip /></RPieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+              <Card><CardHeader><CardTitle>Photos by Section</CardTitle></CardHeader>
+                <CardContent><ResponsiveContainer width="100%" height={280}><RPieChart><Pie data={sectionCounts} dataKey="count" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name} ${Math.round(percent * 100)}%`}>{sectionCounts.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}</Pie><Tooltip /></RPieChart></ResponsiveContainer></CardContent></Card>
             )}
           </div>
         );
@@ -419,10 +570,8 @@ export default function AdminSettings() {
       case 'uniform': return (
         <div className="space-y-4">
           {['scouts','cubs','beavers'].map(sec => (
-            <Card key={sec}>
-              <CardHeader><CardTitle className="capitalize">{sec} Uniform Diagram</CardTitle></CardHeader>
-              <CardContent><UniformPositionEditor uniformConfig={uniformConfigs.find(u => u.section === sec)} onSave={(data) => handleSaveUniform(sec, data)} /></CardContent>
-            </Card>
+            <Card key={sec}><CardHeader><CardTitle className="capitalize">{sec} Uniform Diagram</CardTitle></CardHeader>
+              <CardContent><UniformPositionEditor uniformConfig={uniformConfigs.find(u => u.section === sec)} onSave={(data) => handleSaveUniform(sec, data)} /></CardContent></Card>
           ))}
         </div>
       );
@@ -435,7 +584,7 @@ export default function AdminSettings() {
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#f8f7fc]">
+    <div className="min-h-screen bg-[#f5f5f8]">
       <FloatingNav />
       <NavBarSpacer />
 
@@ -446,15 +595,10 @@ export default function AdminSettings() {
             key="landing"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.18 } }}
+            exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.15 } }}
             className="min-h-[82vh] flex flex-col items-center justify-center px-4 py-16"
           >
-            <motion.div
-              initial={{ opacity: 0, y: -24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05, type: 'spring', stiffness: 180, damping: 22 }}
-              className="text-center mb-12"
-            >
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="text-center mb-12">
               <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#7413dc] mb-3 bg-purple-100 px-3 py-1 rounded-full">
                 40th Rochdale (Syke) Scouts
               </span>
@@ -470,19 +614,18 @@ export default function AdminSettings() {
                   <motion.button
                     key={section.key}
                     layoutId={`section-card-${section.key}`}
-                    initial={{ opacity: 0, y: 32, scale: 0.94 }}
+                    initial={{ opacity: 0, y: 30, scale: 0.94 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ delay: 0.1 + idx * 0.065, type: 'spring', stiffness: 220, damping: 22 }}
-                    onClick={() => setSelectedSection(section.key)}
-                    whileHover={{ y: -6, scale: 1.035, transition: { duration: 0.2 } }}
-                    whileTap={{ scale: 0.96 }}
-                    className={`relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-shadow text-left`}
+                    onClick={() => { setSelectedSection(section.key); setSelectedPage(null); }}
+                    whileHover={{ y: -5, scale: 1.03, transition: { duration: 0.18 } }}
+                    whileTap={{ scale: 0.97 }}
+                    className="relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-shadow text-left"
                   >
-                    <div className={`bg-gradient-to-br ${styles.bg} p-6 sm:p-7 flex flex-col gap-4 min-h-[150px] sm:min-h-[170px]`}>
-                      {/* Decorative circle */}
+                    <div className={`bg-gradient-to-br ${styles.bg} p-6 sm:p-7 flex flex-col gap-4 min-h-[150px] sm:min-h-[165px]`}>
                       <div className="absolute -top-4 -right-4 w-20 h-20 bg-white/10 rounded-full" />
                       <div className="absolute -bottom-6 -left-3 w-16 h-16 bg-white/10 rounded-full" />
-                      <div className="relative w-11 h-11 bg-white/25 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                      <div className="relative w-11 h-11 bg-white/25 rounded-xl flex items-center justify-center">
                         <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                       </div>
                       <div className="relative">
@@ -496,271 +639,163 @@ export default function AdminSettings() {
             </div>
           </motion.div>
         ) : (
-          /* ─── SECTION VIEW ─────────────────────────────────────────────────── */
+          /* ─── SECTION VIEW: sidebar + content ─────────────────────────────── */
           <motion.div
             key={`section-${selectedSection}`}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.12 } }}
-            transition={{ type: 'spring', stiffness: 200, damping: 26 }}
-            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
+            className="flex min-h-[calc(100vh-120px)]"
           >
-            {/* Top bar */}
-            <div className="flex items-center gap-3 mb-7">
-              <button
-                onClick={() => { setSelectedSection(null); setSelectedPage(null); }}
-                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">All sections</span>
-              </button>
-              <div className="w-px h-5 bg-gray-200" />
+            {/* ── Sidebar ─────────────────────────────────────────────────── */}
+            <motion.aside
+              initial={{ x: -40, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+              className="w-56 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col"
+              style={{ position: 'sticky', top: 0, height: 'calc(100vh - 120px)', overflowY: 'auto' }}
+            >
+              {/* Mini section card */}
               <motion.div
                 layoutId={`section-card-${selectedSection}`}
-                className={`bg-gradient-to-r ${currentStyles.bg} rounded-xl px-4 py-2 flex items-center gap-2.5 text-white shadow`}
+                className={`bg-gradient-to-br ${currentStyles.bg} m-3 rounded-xl p-4 flex items-center gap-3 text-white shadow relative overflow-hidden`}
               >
-                {currentSection && <currentSection.icon className="w-4 h-4 flex-shrink-0" />}
-                <span className="font-semibold text-sm">{currentSection?.label}</span>
+                <div className="absolute -top-2 -right-2 w-10 h-10 bg-white/10 rounded-full" />
+                {currentSection && <currentSection.icon className="w-5 h-5 flex-shrink-0 relative z-10" />}
+                <span className="font-bold text-sm relative z-10 leading-tight">{currentSection?.label}</span>
               </motion.div>
-              {selectedPage && currentSection && (
-                <>
-                  <ChevronRight className="w-4 h-4 text-gray-300" />
-                  <button onClick={() => setSelectedPage(null)} className="text-sm text-gray-500 hover:text-gray-800 transition-colors flex items-center gap-1.5">
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    {currentSection.pages?.find(p => p.key === selectedPage)?.label}
+
+              {/* Back button */}
+              <button
+                onClick={() => { setSelectedSection(null); setSelectedPage(null); }}
+                className="flex items-center gap-2 mx-3 mb-2 text-xs text-gray-400 hover:text-gray-700 transition-colors py-1.5 px-2 rounded-lg hover:bg-gray-50"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> Back to all sections
+              </button>
+
+              <div className="h-px bg-gray-100 mx-3 mb-2" />
+
+              {/* Page list */}
+              <nav className="flex-1 px-2 pb-4">
+                {currentSection?.isDashboard ? (
+                  <button
+                    onClick={() => setSelectedPage(null)}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all mb-1 ${
+                      selectedPage === null
+                        ? `${currentStyles.light} ${currentStyles.lightText}`
+                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                    }`}
+                  >
+                    <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
+                    Dashboard Overview
                   </button>
-                </>
-              )}
-            </div>
-
-            {/* Content area */}
-            <AnimatePresence mode="wait">
-              {currentSection?.isDashboard ? (
-                /* ── GROUP DASHBOARD ─────────────────────────────────────────── */
-                <motion.div
-                  key="dashboard"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ delay: 0.05 }}
-                  className="space-y-6"
-                >
-                  {/* Stats */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {[
-                      { label: 'Total Members',      value: members.length,         color: '#7413dc', icon: Users },
-                      { label: 'Active Sections',    value: sections.length,        color: '#004851', icon: Layers },
-                      { label: 'Upcoming Events',    value: upcomingEvents.length,  color: '#f59e0b', icon: Calendar },
-                      { label: 'Meetings This Week', value: thisWeekMeetings.length,color: '#10b981', icon: Activity },
-                    ].map((stat, i) => {
-                      const SI = stat.icon;
-                      return (
-                        <motion.div key={stat.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                          <Card style={{ borderLeftColor: stat.color }} className="border-l-4">
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-xs text-gray-500">{stat.label}</p>
-                                  <p className="text-2xl font-black mt-0.5" style={{ color: stat.color }}>{stat.value}</p>
-                                </div>
-                                <SI className="w-8 h-8 text-gray-100" />
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Meetings + Events */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                    <Card>
-                      <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Calendar className="w-4 h-4 text-[#7413dc]" />This Week's Meetings</CardTitle></CardHeader>
-                      <CardContent>
-                        {thisWeekMeetings.length === 0 ? <p className="text-sm text-gray-400 text-center py-4">No meetings this week</p> : (
-                          <div className="space-y-2">
-                            {thisWeekMeetings.map(m => {
-                              const sec = sections.find(s => s.id === m.section_id);
-                              return (
-                                <div key={m.id} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
-                                  <div className="w-8 h-8 rounded-lg bg-[#7413dc] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-                                    {format(new Date(m.date), 'EEE').substring(0, 2).toUpperCase()}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-xs truncate">{m.title}</p>
-                                    <p className="text-[11px] text-gray-400">{sec?.display_name || '—'} · {format(new Date(m.date), 'EEE d MMM')}</p>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="w-4 h-4 text-[#7413dc]" />Upcoming Events</CardTitle></CardHeader>
-                      <CardContent>
-                        {upcomingEvents.length === 0 ? <p className="text-sm text-gray-400 text-center py-4">No upcoming events</p> : (
-                          <div className="space-y-2">
-                            {upcomingEvents.map(e => (
-                              <div key={e.id} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
-                                <div className="w-8 h-8 rounded-lg bg-[#004851] flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-                                  {(e.type || 'E')[0]}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-xs truncate">{e.title}</p>
-                                  <p className="text-[11px] text-gray-400">{format(new Date(e.start_date), 'EEE d MMM yyyy')}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  {/* Section sizes */}
-                  {sectionSizes.length > 0 && (
-                    <Card>
-                      <CardHeader className="pb-3"><CardTitle className="text-sm">Section Sizes</CardTitle></CardHeader>
-                      <CardContent>
-                        <ResponsiveContainer width="100%" height={200}>
-                          <BarChart data={sectionSizes} barCategoryGap="30%">
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                            <Tooltip />
-                            <Bar dataKey="members" radius={[6, 6, 0, 0]}>
-                              {sectionSizes.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Age distribution */}
-                  {ageDistribution.length > 0 && (
-                    <Card>
-                      <CardHeader className="pb-3"><CardTitle className="text-sm">Age Distribution by Section</CardTitle></CardHeader>
-                      <CardContent>
-                        <ResponsiveContainer width="100%" height={240}>
-                          <BarChart data={ageDistribution} barCategoryGap="20%">
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                            <XAxis dataKey="age" tick={{ fontSize: 11 }} label={{ value: 'Age', position: 'insideBottom', offset: -2, fontSize: 11 }} height={36} />
-                            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                            <Tooltip />
-                            <Legend iconSize={10} wrapperStyle={{ fontSize: 12 }} />
-                            {sections.map((s, i) => (
-                              <Bar key={s.id} dataKey={s.display_name} stackId="a" fill={CHART_COLORS[i % CHART_COLORS.length]}
-                                radius={i === sections.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />
-                            ))}
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </CardContent>
-                    </Card>
-                  )}
-                </motion.div>
-              ) : !selectedPage ? (
-                /* ── SUB-PAGE LIST ────────────────────────────────────────────── */
-                <motion.div
-                  key="subpages"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 24 }}
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl"
-                >
-                  {currentSection?.pages?.map((page, idx) => {
+                ) : (
+                  currentSection?.pages?.map((page, idx) => {
                     const PageIcon = page.icon;
+                    const isActive = selectedPage === page.key;
                     return (
                       <motion.button
                         key={page.key}
-                        initial={{ opacity: 0, x: -16 }}
+                        initial={{ opacity: 0, x: -12 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.05 }}
+                        transition={{ delay: idx * 0.04 }}
                         onClick={() => page.navigate ? navigate(page.navigate) : setSelectedPage(page.key)}
-                        className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all p-4 flex items-center gap-4 group text-left w-full"
-                        whileHover={{ x: 4 }}
-                        whileTap={{ scale: 0.98 }}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all mb-1 text-left ${
+                          isActive
+                            ? `${currentStyles.light} ${currentStyles.lightText} font-semibold`
+                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-medium'
+                        }`}
                       >
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${currentStyles.light} ${currentStyles.lightText}`}>
-                          <PageIcon className="w-5 h-5" />
-                        </div>
-                        <p className="font-semibold text-sm text-gray-800 flex-1">{page.label}</p>
-                        <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition-colors flex-shrink-0" />
+                        <PageIcon className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{page.label}</span>
+                        {page.navigate && <ChevronRight className="w-3 h-3 ml-auto flex-shrink-0 opacity-40" />}
                       </motion.button>
                     );
-                  })}
-                </motion.div>
-              ) : (
-                /* ── PAGE CONTENT ─────────────────────────────────────────────── */
-                <motion.div
-                  key={selectedPage}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 26 }}
-                >
-                  {renderPageContent(selectedPage)}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  })
+                )}
+              </nav>
+            </motion.aside>
+
+            {/* ── Main content ─────────────────────────────────────────────── */}
+            <main className="flex-1 overflow-auto p-6 min-w-0">
+              <AnimatePresence mode="wait">
+                {currentSection?.isDashboard ? (
+                  <motion.div
+                    key="dashboard"
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 26 }}
+                  >
+                    <GroupDashboard members={members} sections={sections} events={events} programmes={programmes} />
+                  </motion.div>
+                ) : !selectedPage ? (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col items-center justify-center h-full text-center py-24"
+                  >
+                    {currentSection && (
+                      <>
+                        <div className={`w-16 h-16 rounded-2xl ${currentStyles.light} flex items-center justify-center mb-4`}>
+                          <currentSection.icon className={`w-8 h-8 ${currentStyles.lightText}`} />
+                        </div>
+                        <h2 className="text-xl font-bold text-gray-800 mb-2">{currentSection.label}</h2>
+                        <p className="text-gray-400 text-sm">Select a page from the sidebar to get started</p>
+                      </>
+                    )}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={selectedPage}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 220, damping: 26 }}
+                  >
+                    {renderPageContent(selectedPage)}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </main>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ── Edit User Dialog ────────────────────────────────────────────────── */}
+      {/* ── Edit User Dialog ──────────────────────────────────────────────────── */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent>
           <DialogHeader><DialogTitle>Edit User</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label>Display Name</Label>
-              <Input value={editForm.display_name} onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })} />
-            </div>
-            <div className="space-y-2">
-              <Label>Email Address</Label>
-              <Input type="email" value={editForm.email} disabled className="bg-gray-100" />
-              <p className="text-xs text-gray-500">Email cannot be changed</p>
-            </div>
-            <div className="space-y-2">
-              <Label>User Type</Label>
+            <div className="space-y-2"><Label>Display Name</Label><Input value={editForm.display_name} onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })} /></div>
+            <div className="space-y-2"><Label>Email</Label><Input type="email" value={editForm.email} disabled className="bg-gray-100" /><p className="text-xs text-gray-500">Email cannot be changed</p></div>
+            <div className="space-y-2"><Label>User Type</Label>
               <Select value={editForm.user_type} onValueChange={(value) => setEditForm({ ...editForm, user_type: value })}>
                 <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="parent">Parent</SelectItem>
-                  <SelectItem value="leader">Leader</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="treasurer">Treasurer</SelectItem>
-                  <SelectItem value="glv">GLV</SelectItem>
-                  <SelectItem value="ipad">iPad (Kiosk)</SelectItem>
+                  <SelectItem value="parent">Parent</SelectItem><SelectItem value="leader">Leader</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem><SelectItem value="treasurer">Treasurer</SelectItem>
+                  <SelectItem value="glv">GLV</SelectItem><SelectItem value="ipad">iPad (Kiosk)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {editForm.user_type === 'leader' && (
-              <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
-                <Label>Assigned Sections</Label>
-                <div className="space-y-2">
-                  {sections.map(section => (
-                    <div key={section.id} className="flex items-center space-x-2">
-                      <Checkbox id={`section-${section.id}`} checked={editForm.section_ids.includes(section.id)} onCheckedChange={(checked) => setEditForm({ ...editForm, section_ids: checked ? [...editForm.section_ids, section.id] : editForm.section_ids.filter(id => id !== section.id) })} />
-                      <Label htmlFor={`section-${section.id}`} className="cursor-pointer">{section.display_name}</Label>
-                    </div>
-                  ))}
-                </div>
+              <div className="space-y-3 p-4 bg-gray-50 rounded-lg border"><Label>Assigned Sections</Label>
+                {sections.map(section => (
+                  <div key={section.id} className="flex items-center space-x-2">
+                    <Checkbox id={`section-${section.id}`} checked={editForm.section_ids.includes(section.id)} onCheckedChange={(checked) => setEditForm({ ...editForm, section_ids: checked ? [...editForm.section_ids, section.id] : editForm.section_ids.filter(id => id !== section.id) })} />
+                    <Label htmlFor={`section-${section.id}`} className="cursor-pointer">{section.display_name}</Label>
+                  </div>
+                ))}
               </div>
             )}
             {(['leader','admin','treasurer','glv','team_leader'].includes(editForm.user_type)) && (
-              <div className="space-y-2">
-                <Label>Default Section</Label>
+              <div className="space-y-2"><Label>Default Section</Label>
                 <Select value={editForm.default_section_id || '__none__'} onValueChange={(v) => setEditForm({ ...editForm, default_section_id: v === '__none__' ? '' : v })}>
                   <SelectTrigger><SelectValue placeholder="No default" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">No default</SelectItem>
-                    {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent><SelectItem value="__none__">No default</SelectItem>{sections.map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             )}
@@ -769,7 +804,7 @@ export default function AdminSettings() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Gallery Selector Dialog ─────────────────────────────────────────── */}
+      {/* ── Gallery Selector ──────────────────────────────────────────────────── */}
       <Dialog open={showGallerySelector} onOpenChange={(open) => { setShowGallerySelector(open); if (!open) { setGalleryFolder(null); setGalleryView('camps'); } }}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Select from Gallery</DialogTitle></DialogHeader>
