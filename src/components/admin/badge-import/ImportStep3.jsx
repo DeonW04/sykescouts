@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,13 +51,11 @@ function translateCompletionRule(config = {}, description = '') {
 }
 
 function parseOSMResponse(rawData) {
-  // OSM getBadgeRecords response has a nested `data` object with details, requirements, modules
   const inner = rawData.data || rawData;
   const details = inner.details || {};
   const modules = inner.modules || {};
   const flatReqs = Array.isArray(inner.requirements) ? inner.requirements : [];
 
-  // Group flat requirements by module letter
   const reqsByModule = {};
   for (const r of flatReqs) {
     const m = (r.module || 'a').toLowerCase();
@@ -65,7 +63,6 @@ function parseOSMResponse(rawData) {
     reqsByModule[m].push(r);
   }
 
-  // Build module letter list — union of modules obj keys and req keys
   const allLetters = [...new Set([...Object.keys(modules), ...Object.keys(reqsByModule)])].sort();
 
   const parsedModules = {};
@@ -80,9 +77,7 @@ function parseOSMResponse(rawData) {
     };
   }
 
-  // Derive config for completion rule from details.config if present
   const config = details.config || {};
-
   return { details, config, parsedModules };
 }
 
@@ -164,7 +159,10 @@ export default function ImportStep3({ section, term, badges, onComplete }) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState({ saved: 0, skipped: 0, alreadyExisted: 0 });
-  const [form, setForm] = useState(null);   // { name, description, badge_group, image_url, badge_image_local, modules, meta }
+  const [form, setForm] = useState(null);
+  const [countdown, setCountdown] = useState(null);
+  const [paused, setPaused] = useState(false);
+  const saveNextRef = useRef(null);
 
   const total = badges.length;
   const badge = badges[currentIndex];
@@ -173,7 +171,6 @@ export default function ImportStep3({ section, term, badges, onComplete }) {
     setLoading(true);
     setForm(null);
     try {
-      // Duplicate guard
       const existing = await base44.entities.BadgeDefinition.filter({});
       const key = `${b.badge_id}_${b.badge_version || '0'}`;
       const dup = existing.find(bd => `${bd.osm_badge_id}_${bd.osm_badge_version || '0'}` === key);
@@ -183,7 +180,6 @@ export default function ImportStep3({ section, term, badges, onComplete }) {
         return;
       }
 
-      // Fetch full badge details
       const detailsRes = await base44.functions.invoke('getOSMBadgeDetails', {
         sectionId: section.osm_section_id,
         sectionType: section.osm_section_type || section.name,
@@ -195,14 +191,11 @@ export default function ImportStep3({ section, term, badges, onComplete }) {
       const rawData = detailsRes?.data?.data || {};
       const { details, config, parsedModules } = parseOSMResponse(rawData);
 
-      // Determine category
       const typeId = b.type_id || parseInt(b.badge_type_id) || 2;
       const category = typeId === 1 ? 'challenge' : 'activity';
 
-      // Translate completion rule
       const { rule, description: desc } = translateCompletionRule(config, details.description || b.description || '');
 
-      // Download image
       let imageUrl = '';
       const pictureField = details.picture || b.picture || '';
       if (pictureField) {
@@ -212,7 +205,6 @@ export default function ImportStep3({ section, term, badges, onComplete }) {
         } catch { /* silent fallback */ }
       }
 
-      // Determine section type from app section
       const sectionName = section.osm_section_type || section.name || 'scouts';
 
       setForm({
@@ -250,7 +242,33 @@ export default function ImportStep3({ section, term, badges, onComplete }) {
     }
   }
 
+  // Keep ref always pointing to latest handleSaveAndNext (avoids stale closure)
+  useEffect(() => { saveNextRef.current = handleSaveAndNext; });
+
+  // Start countdown when form loads
+  useEffect(() => {
+    if (form && !loading) {
+      setCountdown(5);
+      setPaused(false);
+    }
+  }, [form, loading]);
+
+  // Tick down every second
+  useEffect(() => {
+    if (countdown === null || countdown <= 0 || paused || saving) return;
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown, paused, saving]);
+
+  // Auto-save when countdown hits 0
+  useEffect(() => {
+    if (countdown === 0 && !paused && !saving && form) {
+      saveNextRef.current?.();
+    }
+  }, [countdown]);
+
   const handleSkip = () => {
+    setCountdown(null);
     const next = { ...stats, skipped: stats.skipped + 1 };
     setStats(next);
     if (currentIndex + 1 >= total) { onComplete(next); return; }
@@ -318,6 +336,7 @@ export default function ImportStep3({ section, term, badges, onComplete }) {
   };
 
   const handleSaveAndNext = async () => {
+    setCountdown(null);
     const ok = await doSave();
     if (!ok) return;
     const next = { ...stats, saved: stats.saved + 1 };
@@ -327,6 +346,7 @@ export default function ImportStep3({ section, term, badges, onComplete }) {
   };
 
   const handleSaveAndStop = async () => {
+    setCountdown(null);
     const ok = await doSave();
     if (!ok) return;
     const next = { ...stats, saved: stats.saved + 1 };
@@ -357,9 +377,8 @@ export default function ImportStep3({ section, term, badges, onComplete }) {
           <CardTitle>Step 3 — Badge {currentIndex + 1} of {total}</CardTitle>
           <span className="text-sm text-gray-500">{form.name}</span>
         </div>
-        {/* Progress bar */}
         <div className="w-full bg-gray-100 rounded-full h-2 mt-2">
-          <div className="bg-[#7413dc] h-2 rounded-full transition-all" style={{ width: `${((currentIndex) / total) * 100}%` }} />
+          <div className="bg-[#7413dc] h-2 rounded-full transition-all" style={{ width: `${(currentIndex / total) * 100}%` }} />
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -427,6 +446,41 @@ export default function ImportStep3({ section, term, badges, onComplete }) {
           )}
         </div>
 
+        {/* Countdown bar */}
+        {countdown !== null && (
+          <div className="flex items-center gap-4 p-3 bg-purple-50 border border-purple-100 rounded-lg">
+            <div className="relative w-12 h-12 flex-shrink-0">
+              <svg className="w-12 h-12 -rotate-90" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e9d5ff" strokeWidth="3" />
+                <circle
+                  cx="18" cy="18" r="15.9" fill="none"
+                  stroke="#7413dc" strokeWidth="3"
+                  strokeDasharray="100"
+                  strokeDashoffset={100 - (countdown / 5) * 100}
+                  strokeLinecap="round"
+                  style={{ transition: 'stroke-dashoffset 0.9s linear' }}
+                />
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-[#7413dc]">{countdown}</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-purple-700">
+                {paused ? 'Paused — click Resume to continue' : `Auto-saving in ${countdown}s…`}
+              </p>
+              <p className="text-xs text-purple-500">Badge will be saved and the next will load automatically.</p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="border-purple-300 text-purple-700 hover:bg-purple-100"
+              onClick={() => setPaused(p => !p)}
+            >
+              {paused ? 'Resume' : 'Pause'}
+            </Button>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex justify-between pt-4 border-t gap-3 flex-wrap">
           <Button type="button" variant="outline" onClick={handleSkip} disabled={saving}>Skip badge</Button>
@@ -434,7 +488,7 @@ export default function ImportStep3({ section, term, badges, onComplete }) {
             <Button type="button" variant="outline" onClick={handleSaveAndStop} disabled={saving}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}Save and stop
             </Button>
-            <Button type="button" onClick={handleSaveAndNext} disabled={saving} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
+            <Button type="button" onClick={() => handleSaveAndNext()} disabled={saving} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
               {currentIndex + 1 >= total ? 'Save and finish' : 'Save and next'}
             </Button>

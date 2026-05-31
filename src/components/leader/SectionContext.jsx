@@ -30,6 +30,8 @@ export const SectionProvider = ({ children }) => {
 
   const changeSection = (newSectionId) => {
     if (newSectionId === selectedSection) return;
+    // Persist immediately so navigation before animation completes still picks up new section
+    localStorage.setItem('syke_active_section', newSectionId);
     setPreviousSection(selectedSection);
     setPendingSectionId(newSectionId);
     setTransitioning(true);
