@@ -61,7 +61,7 @@ function BadgeRow({ label, subLabel, imageUrl, category, currentValue, currentLe
             <SelectItem value="__none__">— Not linked —</SelectItem>
             {uniqueOsmBadges.map(o => (
               <SelectItem key={o.badge_id} value={String(o.badge_id)}>
-                {o.name} <span className="text-gray-400">({o.badge_type})</span>
+                {o.name} <span className="text-gray-400">({o.badge_type} · ID: {o.badge_id})</span>
               </SelectItem>
             ))}
           </SelectContent>
