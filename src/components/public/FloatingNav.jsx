@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../../utils';
 import {
@@ -268,6 +269,7 @@ export default function FloatingNav() {
   const [portalLabel, setPortalLabel] = useState(null);
   const [portalUrl, setPortalUrl] = useState(null);
   const [portalOpen, setPortalOpen] = useState(false);
+  const [joinOpen,   setJoinOpen]   = useState(false);
   const location = useLocation();
 
   const isPortalPage = PORTAL_PAGES.some(p => location.pathname === p || location.pathname.startsWith(p + '?'));
@@ -496,20 +498,81 @@ export default function FloatingNav() {
               }}>{portalLabel} →</Link>
             ) : (
               <>
-                <Link to={createPageUrl('Volunteer')} style={{
-                  fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
-                  color: 'rgba(26,26,46,0.8)', textDecoration: 'none',
-                  border: '0.5px solid rgba(26,26,46,0.25)', borderRadius: '25px',
-                  padding: '7px 18px', background: 'transparent',
-                }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'rgba(26,26,46,0.06)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >Volunteer</Link>
-                <Link to={createPageUrl('Join')} style={{
-                  fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
-                  color: '#fff', textDecoration: 'none', background: '#7413dc',
-                  borderRadius: '25px', padding: '8px 20px',
-                }}>Join Us →</Link>
+                {/* Login */}
+                <button
+                  onClick={() => base44.auth.redirectToLogin()}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
+                    color: 'rgba(26,26,46,0.8)', background: 'transparent',
+                    border: '0.5px solid rgba(26,26,46,0.25)', borderRadius: '25px',
+                    padding: '7px 18px', cursor: 'pointer', transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,26,46,0.06)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  Login
+                </button>
+
+                {/* Join Us dropdown */}
+                <DropdownMenu open={joinOpen} onOpenChange={setJoinOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <button style={{
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '14px',
+                      color: '#fff', background: '#7413dc',
+                      border: 'none', borderRadius: '25px',
+                      padding: '8px 20px', cursor: 'pointer', transition: 'background 0.2s',
+                    }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#5c0fb0'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '#7413dc'; }}
+                    >
+                      Join Us
+                      <motion.span animate={{ rotate: joinOpen ? 90 : 0 }} transition={{ duration: 0.2, ease: 'easeInOut' }} style={{ display: 'inline-flex' }}>
+                        <ChevronRight size={16} />
+                      </motion.span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" sideOffset={10} style={{ zIndex: 1100, padding: '8px', width: '300px', borderRadius: '16px', border: '1px solid rgba(116,19,220,0.12)', boxShadow: '0 20px 60px rgba(0,0,0,0.12)' }}>
+                    {/* Join Scouts card */}
+                    <Link to={createPageUrl('Join')} style={{ textDecoration: 'none', display: 'block' }} onClick={() => setJoinOpen(false)}>
+                      <div style={{ display: 'flex', gap: '12px', padding: '12px', borderRadius: '12px', cursor: 'pointer', transition: 'background 0.15s' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.05)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>
+                        <div style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg, #7413dc, #5c0fb0)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>🏕️</div>
+                        <div>
+                          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: '14px', color: '#1a1a2e', margin: '0 0 3px' }}>Join the Scouts</p>
+                          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.5)', margin: '0 0 8px' }}>Adventure awaits — ages 4 to 18</p>
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                            {[['🐿️','Squirrels','4-6'],['🦫','Beavers','6-8'],['🐼','Cubs','8-10'],['🔭','Scouts','10-14']].map(([em,n,a]) => (
+                              <span key={n} style={{ fontSize: '10px', background: 'rgba(116,19,220,0.08)', color: '#7413dc', padding: '2px 7px', borderRadius: '20px', fontFamily: 'DM Sans, sans-serif' }}>{em} {n} {a}</span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+
+                    <div style={{ height: '1px', background: 'rgba(0,0,0,0.06)', margin: '2px 8px' }} />
+
+                    {/* Volunteer card */}
+                    <Link to={createPageUrl('Volunteer')} style={{ textDecoration: 'none', display: 'block' }} onClick={() => setJoinOpen(false)}>
+                      <div style={{ display: 'flex', gap: '12px', padding: '12px', borderRadius: '12px', cursor: 'pointer', transition: 'background 0.15s' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,72,81,0.05)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>
+                        <div style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg, #004851, #006672)', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>⭐</div>
+                        <div>
+                          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: '14px', color: '#1a1a2e', margin: '0 0 3px' }}>Become a Volunteer</p>
+                          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.5)', margin: '0 0 8px' }}>Shape young lives in your community</p>
+                          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                            {['🎓 No experience needed','🤝 Flexible hours','🌟 DBS provided'].map(t => (
+                              <span key={t} style={{ fontSize: '10px', background: 'rgba(0,72,81,0.08)', color: '#004851', padding: '2px 7px', borderRadius: '20px', fontFamily: 'DM Sans, sans-serif' }}>{t}</span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             )}
           </div>
