@@ -74,19 +74,27 @@ export default function OSMSectionPicker({ value, sectionType, onChange, classNa
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72 p-0" align="start">
-        <Command>
+        <Command
+          filter={(value, search) => {
+            const s = sections.find(sec => sec.sectionid === value);
+            if (!s) return 0;
+            const text = `${s.sectionname} ${s.sectionType} ${s.groupname || ''}`.toLowerCase();
+            return text.includes(search.toLowerCase()) ? 1 : 0;
+          }}
+        >
           <CommandInput placeholder="Search sections…" className="text-sm" />
-          <CommandList>
+          <CommandList className="max-h-52 overflow-y-auto">
             <CommandEmpty>No sections found.</CommandEmpty>
             {sections.map(s => (
               <CommandItem
                 key={s.sectionid}
-                value={`${s.sectionname} ${s.sectionType} ${s.sectionid}`}
-                onSelect={() => {
-                  onChange(s.sectionid, s.sectionType);
+                value={s.sectionid}
+                onSelect={(val) => {
+                  const found = sections.find(sec => sec.sectionid === val);
+                  if (found) onChange(found.sectionid, found.sectionType);
                   setOpen(false);
                 }}
-                className="text-sm"
+                className="text-sm cursor-pointer"
               >
                 <div>
                   <p className="font-medium">{s.sectionname}</p>

@@ -18,6 +18,8 @@ export default function SectionSettingsTab({ sections, leaders, queryClient }) {
   const [saving, setSaving] = useState({});
   const [meetingEdits, setMeetingEdits] = useState({});
   const [osmEdits, setOsmEdits] = useState({});
+  const [osmTermsBySection, setOsmTermsBySection] = useState({});
+  const [osmTermsLoading, setOsmTermsLoading] = useState({});
 
   // Sort sections by canonical order
   const sortedSections = [...sections].sort(
@@ -83,6 +85,21 @@ export default function SectionSettingsTab({ sections, leaders, queryClient }) {
       toast.error('Failed: ' + e.message);
     } finally {
       setSaving(s => ({ ...s, [`meet_${sectionId}`]: false }));
+    }
+  };
+
+  const fetchOSMTerms = async (sectionId, osmSectionId) => {
+    if (!osmSectionId) return;
+    setOsmTermsLoading(t => ({ ...t, [sectionId]: true }));
+    try {
+      const res = await base44.functions.invoke('getOSMTerms', { osm_section_id_override: osmSectionId });
+      const terms = res?.data?.terms || [];
+      setOsmTermsBySection(t => ({ ...t, [sectionId]: terms }));
+      if (terms.length === 0) toast.error('No terms returned from OSM for this section.');
+    } catch (e) {
+      toast.error('Could not fetch terms: ' + e.message);
+    } finally {
+      setOsmTermsLoading(t => ({ ...t, [sectionId]: false }));
     }
   };
 
@@ -283,10 +300,43 @@ export default function SectionSettingsTab({ sections, leaders, queryClient }) {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
-                    <Label className="text-xs">Current Term ID</Label>
-                    <Input value={edit.osm_term_id} onChange={e => setOsmField(section.id, 'osm_term_id', e.target.value)} placeholder="e.g. 67890" className="h-8 text-sm" />
-                    <p className="text-[10px] text-gray-400 mt-0.5">From OSM → Admin → Terms</p>
+                  <div className="sm:col-span-2">
+                    <Label className="text-xs">Active OSM Term</Label>
+                    <div className="flex gap-2 items-center">
+                      {osmTermsBySection[section.id]?.length > 0 ? (
+                        <Select
+                          value={edit.osm_term_id || '__none__'}
+                          onValueChange={v => setOsmField(section.id, 'osm_term_id', v === '__none__' ? '' : v)}
+                        >
+                          <SelectTrigger className="h-8 text-sm flex-1">
+                            <SelectValue placeholder="Select term…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {osmTermsBySection[section.id].map(t => (
+                              <SelectItem key={t.termid} value={t.termid}>
+                                {t.name} ({t.startdate})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          value={edit.osm_term_id}
+                          onChange={e => setOsmField(section.id, 'osm_term_id', e.target.value)}
+                          placeholder="Enter ID or fetch below…"
+                          className="h-8 text-sm flex-1"
+                        />
+                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 px-2 text-xs flex-shrink-0"
+                        disabled={osmTermsLoading[section.id] || !edit.osm_section_id}
+                        onClick={() => fetchOSMTerms(section.id, edit.osm_section_id)}
+                      >
+                        {osmTermsLoading[section.id] ? '…' : 'Fetch terms'}
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 {isDirty && (
