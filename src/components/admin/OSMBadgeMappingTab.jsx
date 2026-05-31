@@ -18,7 +18,7 @@ const CATEGORY_COLOURS = {
 
 const delay = ms => new Promise(r => setTimeout(r, ms));
 
-function BadgeRow({ label, subLabel, imageUrl, category, currentValue, currentLevel, uniqueOsmBadges, saving, suggesting, onSelect, onLevelChange, onSave, onSuggest, isDirty }) {
+function BadgeRow({ label, subLabel, imageUrl, category, currentValue, currentLevel, uniqueOsmBadges, saving, suggesting, onSelect, onLevelChange, onSave, onSuggest, isDirty, hideLevelPicker }) {
   const linkedOsm = uniqueOsmBadges.find(o => String(o.badge_id) === String(currentValue));
   const isLinkedToStaged = linkedOsm?.badge_type === 'Staged';
 
@@ -68,7 +68,7 @@ function BadgeRow({ label, subLabel, imageUrl, category, currentValue, currentLe
         </Select>
       </div>
 
-      {isLinkedToStaged && (
+      {isLinkedToStaged && !hideLevelPicker && (
         <div className="flex-shrink-0">
           <Select value={String(currentLevel || 1)} onValueChange={v => onLevelChange(parseInt(v))}>
             <SelectTrigger className="h-8 text-xs w-24">
@@ -464,6 +464,7 @@ export default function OSMBadgeMappingTab() {
                     isDirty={dirty}
                     onSelect={v => setPending(familyKey, v, null)}
                     onLevelChange={() => {}}
+                    hideLevelPicker={true}
                     onSave={() => handleSaveFamily(familyKey, badges)}
                     onSuggest={() => handleAISuggest(familyLabel, familyKey, null)}
                   />
