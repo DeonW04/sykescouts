@@ -51,35 +51,25 @@ function translateCompletionRule(config = {}, description = '') {
 }
 
 function parseOSMResponse(rawData) {
-  // Normalise — OSM wraps the useful data under various keys
-  const details = rawData.details || rawData.badge || {};
-  const modules = rawData.modules || {};
-  const config = rawData.config || {};
-  const moduleLetters = Object.keys(modules).sort();
+  // OSM getBadgeRecords response has a nested `data` object with details, requirements, modules
+  const inner = rawData.data || rawData;
+  const details = inner.details || {};
+  const modules = inner.modules || {};
+  const flatReqs = Array.isArray(inner.requirements) ? inner.requirements : [];
 
-  // Find requirements — check config[letter] arrays first, then structure, then flat array
-  let reqsByModule = {};
-  for (const letter of moduleLetters) {
-    if (Array.isArray(config[letter])) {
-      reqsByModule[letter] = config[letter];
-    }
+  // Group flat requirements by module letter
+  const reqsByModule = {};
+  for (const r of flatReqs) {
+    const m = (r.module || 'a').toLowerCase();
+    if (!reqsByModule[m]) reqsByModule[m] = [];
+    reqsByModule[m].push(r);
   }
-  if (!Object.keys(reqsByModule).length && rawData.structure) {
-    for (const [l, v] of Object.entries(rawData.structure)) {
-      if (Array.isArray(v)) reqsByModule[l] = v;
-    }
-  }
-  if (!Object.keys(reqsByModule).length) {
-    const flat = rawData.requirements || rawData.badge_requirements || [];
-    for (const r of flat) {
-      const m = r.module || 'a';
-      if (!reqsByModule[m]) reqsByModule[m] = [];
-      reqsByModule[m].push(r);
-    }
-  }
+
+  // Build module letter list — union of modules obj keys and req keys
+  const allLetters = [...new Set([...Object.keys(modules), ...Object.keys(reqsByModule)])].sort();
 
   const parsedModules = {};
-  for (const letter of moduleLetters) {
+  for (const letter of allLetters) {
     const reqs = reqsByModule[letter] || [];
     const modInfo = modules[letter] || {};
     const grouped = groupSameas(reqs);
@@ -89,14 +79,9 @@ function parseOSMResponse(rawData) {
       requirements: grouped,
     };
   }
-  // Fallback — if no module keys from OSM, create a single module 'a' from any flat reqs
-  if (!moduleLetters.length) {
-    const flat = reqsByModule['a'] || rawData.requirements || [];
-    const grouped = groupSameas(flat);
-    if (grouped.length) {
-      parsedModules['a'] = { name: 'Module A', required: grouped.length, requirements: grouped };
-    }
-  }
+
+  // Derive config for completion rule from details.config if present
+  const config = details.config || {};
 
   return { details, config, parsedModules };
 }
