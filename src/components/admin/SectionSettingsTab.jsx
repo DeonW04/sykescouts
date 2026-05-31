@@ -104,13 +104,15 @@ export default function SectionSettingsTab({ sections, leaders, queryClient }) {
   };
 
   const setOsmField = (sectionId, field, value) => {
-    const s = sections.find(sec => sec.id === sectionId);
-    const current = osmEdits[sectionId] ?? {
-      osm_section_id: s?.osm_section_id || '',
-      osm_section_type: s?.osm_section_type || s?.name || '',
-      osm_term_id: s?.osm_term_id || '',
-    };
-    setOsmEdits(prev => ({ ...prev, [sectionId]: { ...current, [field]: value } }));
+    setOsmEdits(prev => {
+      const s = sections.find(sec => sec.id === sectionId);
+      const current = prev[sectionId] ?? {
+        osm_section_id: s?.osm_section_id || '',
+        osm_section_type: s?.osm_section_type || s?.name || '',
+        osm_term_id: s?.osm_term_id || '',
+      };
+      return { ...prev, [sectionId]: { ...current, [field]: value } };
+    });
   };
 
   const handleSaveOSM = async (sectionId) => {
