@@ -41,6 +41,10 @@
       "type": "string",
       "description": "OSM badge_version (e.g. '0'). Defaults to 0 if not set."
     },
+    "osm_badge_type_id": {
+      "type": "number",
+      "description": "Numeric type from OSM (1 = Challenge, 2 = Activity, 3 = Staged, 4 = Core). Stored for API reference."
+    },
     "badge_family_id": {
       "type": "string",
       "description": "For staged badges - groups stages together"
@@ -51,7 +55,11 @@
     },
     "image_url": {
       "type": "string",
-      "description": "Badge image URL (uploaded file)"
+      "description": "Badge image URL (uploaded file or local path)"
+    },
+    "badge_image_local": {
+      "type": "string",
+      "description": "Local/stored path to the downloaded badge image. Set during OSM import. Use this as the canonical image reference rather than the external CDN URL."
     },
     "description": {
       "type": "string",
@@ -68,6 +76,20 @@
       ],
       "default": "all_modules",
       "description": "How the badge is completed"
+    },
+    "badge_group": {
+      "type": "string",
+      "description": "OSM group_name field (e.g. 'Pre 2025', 'Events', 'Fun Badges'). Empty string if OSM returns no group."
+    },
+    "at_home": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the badge can be completed at home. From the OSM at_home field."
+    },
+    "is_latest_version": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this is the current version of the badge in OSM. OSM latest=1 means this IS the latest."
     },
     "special_type": {
       "type": "string",

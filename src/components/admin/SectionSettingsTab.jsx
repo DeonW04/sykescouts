@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Users, Clock, ToggleLeft, RefreshCw } from 'lucide-react';
+import OSMSectionPicker from './OSMSectionPicker';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const SECTION_ORDER = ['squirrels', 'beavers', 'cubs', 'scouts', 'explorers'];
@@ -258,10 +259,16 @@ export default function SectionSettingsTab({ sections, leaders, queryClient }) {
               <div key={section.id} className="p-4 border rounded-lg bg-gray-50 space-y-3">
                 <p className="font-semibold text-sm">{section.display_name}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <Label className="text-xs">OSM Section ID</Label>
-                    <Input value={edit.osm_section_id} onChange={e => setOsmField(section.id, 'osm_section_id', e.target.value)} placeholder="e.g. 12345" className="h-8 text-sm" />
-                    <p className="text-[10px] text-gray-400 mt-0.5">Numeric ID from OSM</p>
+                  <div className="sm:col-span-3">
+                    <Label className="text-xs">OSM Section</Label>
+                    <OSMSectionPicker
+                      value={edit.osm_section_id}
+                      sectionType={edit.osm_section_type}
+                      onChange={(sectionId, sectionType) => {
+                        setOsmField(section.id, 'osm_section_id', sectionId);
+                        if (sectionType) setOsmField(section.id, 'osm_section_type', sectionType);
+                      }}
+                    />
                   </div>
                   <div>
                     <Label className="text-xs">OSM Section Type</Label>

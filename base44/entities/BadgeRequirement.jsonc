@@ -1,0 +1,48 @@
+{
+  "name": "BadgeRequirement",
+  "type": "object",
+  "properties": {
+    "badge_id": {
+      "type": "string",
+      "description": "Badge ID"
+    },
+    "module_id": {
+      "type": "string",
+      "description": "Module ID"
+    },
+    "name": {
+      "type": "string",
+      "description": "Short requirement name/title (from OSM name field)"
+    },
+    "text": {
+      "type": "string",
+      "description": "Full requirement description text (from OSM tooltip field)"
+    },
+    "required_completions": {
+      "type": "number",
+      "default": 1,
+      "description": "Number of times requirement must be completed. Derived from sameas grouping during OSM import."
+    },
+    "osm_requirement_id": {
+      "type": "number",
+      "description": "The requirement_id from OSM. Critical for future sync operations and for sameas grouping during import."
+    },
+    "nights_away_required": {
+      "type": "number",
+      "description": "Number of nights away required for this requirement"
+    },
+    "order": {
+      "type": "number",
+      "description": "Display order within module"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Leader notes"
+    }
+  },
+  "required": [
+    "badge_id",
+    "module_id",
+    "text"
+  ]
+}

@@ -75,6 +75,7 @@ const SECTIONS = [
       { key: 'manage-badges',    label: 'Manage Badges',        icon: Award },
       { key: 'badge-bulk-award', label: 'Badge Bulk Award',     icon: Award },
       { key: 'import-badges',    label: 'Import Badges',        icon: Upload, navigate: '/ImportBadges' },
+      { key: 'osm-badge-import', label: 'Import from OSM',      icon: Upload, navigate: '/OSMBadgeImport' },
     ]},
   { key: 'website', label: 'Website Content',  icon: Globe,    description: 'Pages & media',
     pages: [
