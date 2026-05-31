@@ -46,8 +46,9 @@ Deno.serve(async (req) => {
     const osmSection   = settings.osm_section;
     const now          = new Date().toISOString();
 
-    // For staged badges, stage_number is the completion level. For non-staged, level=1.
-    const stageLevel = badgeDef.category === 'staged' && badgeDef.stage_number ? badgeDef.stage_number : 1;
+    // Use stage_number as the OSM level — works for staged badges AND non-staged badges
+    // that are mapped to a staged OSM badge (e.g. Joining In core badge → Staged OSM badge at level N).
+    const stageLevel = badgeDef.stage_number || 1;
 
     // Check for existing pending records for this member + OSM badge + level to avoid duplicates
     const existingPending = await base44.asServiceRole.entities.PendingBadgeSync.filter({});
