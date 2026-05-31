@@ -23,10 +23,11 @@ Deno.serve(async (req) => {
 
   const contentType = imageResp.headers.get('content-type') || 'image/png';
   const arrayBuffer = await imageResp.arrayBuffer();
-  const blob = new Blob([arrayBuffer], { type: contentType });
+  const ext = contentType.includes('png') ? 'png' : contentType.includes('gif') ? 'gif' : 'jpg';
+  const file = new File([arrayBuffer], `badge.${ext}`, { type: contentType });
 
   // Upload to Base44 storage
-  const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file: blob });
+  const { file_url } = await base44.asServiceRole.integrations.Core.UploadFile({ file });
   console.log('[downloadOSMBadgeImage] stored at:', file_url);
 
   return Response.json({ success: true, file_url });
