@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
-  const { sectionId, sectionType } = body;
+  const { sectionId, sectionType, termId } = body;
   if (!sectionId || !sectionType) return Response.json({ error: 'sectionId and sectionType required' }, { status: 400 });
 
   const settingsList = await base44.asServiceRole.entities.OSMSyncSettings.list();
@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
   const base = 'https://www.onlinescoutmanager.co.uk/ext/badges/records/';
 
   const fetchType = async (typeId) => {
-    const url = `${base}?action=getAvailableBadges&section=${encodeURIComponent(sectionType)}&sectionid=${sectionId}&type_id=${typeId}&payload=1&context=none&member_id=0`;
+    const url = `${base}?action=getAvailableBadges&section=${encodeURIComponent(sectionType)}&section_id=${sectionId}&term_id=${termId || 0}&type_id=${typeId}`;
     try {
       const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
       if (!resp.ok) {

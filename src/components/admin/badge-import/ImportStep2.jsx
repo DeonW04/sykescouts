@@ -72,6 +72,7 @@ export default function ImportStep2({ section, term, onNext, onBack }) {
     const res = await base44.functions.invoke('getOSMBadgeList', {
       sectionId: section.osm_section_id,
       sectionType: section.osm_section_type || section.name,
+      termId: term?.termid || 0,
     });
     if (!res?.data?.success) {
       setError(res?.data?.error || 'Failed to fetch badges from OSM.');
