@@ -1,6 +1,6 @@
 Deno.serve(async (req) => {
   const url = new URL(req.url);
-  const baseUrl = `https://sykescouts.org/`;
+  const baseUrl = `https://sykescouts.org`;
 
   const pages = [
     { path: '/', priority: '1.0', changefreq: 'weekly' },
