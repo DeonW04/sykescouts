@@ -120,7 +120,7 @@ WebkitBackdropFilter: 'blur(6px) saturate(150%)',
               color: '#7413dc',
               marginBottom: '18px',
             }}>
-              40th Rochdale · Est. 2021
+              40th Rochdale · Est. 2019
             </p>
 
             <h1 className="hero-h1" style={{
