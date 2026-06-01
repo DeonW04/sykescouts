@@ -21,7 +21,7 @@ export default function PublicFooter() {
               />
             </Link>
             <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, margin: 0 }}>
-              Inspiring adventure in Syke since 2021.
+              Inspiring adventure in Syke since 2019.
             </p>
             <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(255,255,255,0.35)', marginTop: '8px' }}>
               A registered Scout Group — 40th Rochdale.
