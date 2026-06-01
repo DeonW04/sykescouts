@@ -1,6 +1,6 @@
 Deno.serve(async (req) => {
   const url = new URL(req.url);
-  const baseUrl = `${url.protocol}//${url.host}`;
+  const baseUrl = `https://sykescouts.org/`;
 
   const pages = [
     { path: '/', priority: '1.0', changefreq: 'weekly' },
@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${pages.map(page => `  <url>
-    <loc>${baseUrl}${page.path}</loc>
+    <loc>${page.path}</loc>
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>
   </url>`).join('\n')}
