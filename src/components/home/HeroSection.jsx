@@ -141,7 +141,7 @@ WebkitBackdropFilter: 'blur(6px) saturate(150%)',
               color: '#7413dc',
               margin: '0 0 24px',
             }}>
-              Since 2021.
+              Since 2019.
             </h1>
 
             <p className="hero-body" style={{
@@ -155,7 +155,7 @@ WebkitBackdropFilter: 'blur(6px) saturate(150%)',
               marginLeft: 'auto',
               marginRight: 'auto',
             }}>
-              We climb, kayak, build, code, camp, and surprise ourselves every single week. This is Scouts — just not as you remember it.
+              We climb, kayak, build, camp, and surprise ourselves every single week. This is Scouts — just not as you remember it.
             </p>
 
             <div className="hero-btns" style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap' }}>
