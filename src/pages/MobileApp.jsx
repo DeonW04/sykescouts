@@ -143,15 +143,24 @@ function ParentApp({ user, activeTab, onTabChange }) {
     enabled: !!user?.email,
   });
 
-  // Auto-select if only one child and none selected
-  React.useEffect(() => {
-    if (children.length === 1 && !selectedChildId) {
-      setSelectedChildId(children[0].id);
-      localStorage.setItem('selected_child_id', children[0].id);
-    }
-  }, [children, selectedChildId]);
-
   const selectedChild = children.find(c => c.id === selectedChildId) || null;
+
+  // Auto-select the only child, OR recover when the stored id no longer matches a child.
+  React.useEffect(() => {
+    if (children.length === 0) return;
+    // If the current selection is invalid (stale id, different account, etc)...
+    if (!selectedChild) {
+      // ...and there is exactly one child, pick it automatically.
+      if (children.length === 1) {
+        setSelectedChildId(children[0].id);
+        localStorage.setItem('selected_child_id', children[0].id);
+      } else if (selectedChildId) {
+        // A stored id that matches nothing — clear it so the picker is shown cleanly.
+        localStorage.removeItem('selected_child_id');
+        setSelectedChildId(null);
+      }
+    }
+  }, [children, selectedChild, selectedChildId]);
 
   const handleSelectChild = (childId) => {
     setSelectedChildId(childId);
@@ -159,8 +168,9 @@ function ParentApp({ user, activeTab, onTabChange }) {
     setShowChildSelect(false);
   };
 
-  // Show child selector when: multiple children and none selected, or explicitly requested
-  const needsChildSelect = children.length > 0 && (!selectedChild || showChildSelect);
+  // Show child selector when: multiple children and none selected, or explicitly requested.
+  // For a single-child parent we never show the picker — auto-select handles it.
+  const needsChildSelect = children.length > 1 && (!selectedChild || showChildSelect);
 
   if (needsChildSelect) {
     return (

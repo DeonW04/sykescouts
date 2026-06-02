@@ -30,15 +30,16 @@ export const SectionProvider = ({ children }) => {
 
   const changeSection = (newSectionId) => {
     if (newSectionId === selectedSection) return;
-    // Persist immediately so navigation before animation completes still picks up new section
+    // Commit the new section immediately so the whole app is always in sync —
+    // the overlay is purely visual and must never gate the actual state change.
     localStorage.setItem('syke_active_section', newSectionId);
     setPreviousSection(selectedSection);
     setPendingSectionId(newSectionId);
+    setSelectedSection(newSectionId);
     setTransitioning(true);
   };
 
   const onTransitionComplete = () => {
-    setSelectedSection(pendingSectionId);
     setPreviousSection(null);
     setPendingSectionId(null);
     setTransitioning(false);
