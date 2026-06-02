@@ -38,7 +38,7 @@ export default function BadgeCluster({
 
   // Sizes
   const W = 92;              // challenge badge width (px)
-  const AWARD_W = 116;       // gold/silver award width — larger focal point
+  const AWARD_W = 100;       // gold/silver award width — larger focal point
 
   // Pointy-top hex geometry for tessellation.
   // The PNGs have transparent padding around the hex artwork, so to make the
