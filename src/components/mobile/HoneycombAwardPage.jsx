@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import { X, CheckCircle, Circle, Trophy, ChevronDown, ChevronUp, Star, ArrowLeft } from 'lucide-react';
 
 // ─── SVG circular progress ring ───────────────────────────────────────────────
-function ProgressRing({ percentage, size = 56, strokeWidth = 4, color = '#ffffff' }) {
+function ProgressRing({ percentage, size, strokeWidth = 3, color = '#f59e0b' }) {
   const radius = (size - strokeWidth * 2) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percentage / 100) * circumference;
   return (
-    <svg width={size} height={size} className="absolute inset-0" style={{ transform: 'rotate(-90deg)' }}>
-      <circle
-        cx={size / 2} cy={size / 2} r={radius}
-        fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth={strokeWidth}
-      />
+    <svg
+      width={size}
+      height={size}
+      style={{ position: 'absolute', top: 0, left: 0, transform: 'rotate(-90deg)' }}
+    >
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth={strokeWidth} />
       <circle
         cx={size / 2} cy={size / 2} r={radius}
         fill="none" stroke={color} strokeWidth={strokeWidth}
@@ -24,187 +25,243 @@ function ProgressRing({ percentage, size = 56, strokeWidth = 4, color = '#ffffff
 }
 
 // ─── A single hexagonal badge cell ────────────────────────────────────────────
-function HexBadge({ badge, isEarned, percentage, onClick, borderColor, isAward = false }) {
-  const size = isAward ? 80 : 68;
+// All hexes are the same size. The hex shape is drawn with a flat-top polygon.
+const HEX_SIZE = 68; // width of hex
+const HEX_HEIGHT = HEX_SIZE * 0.866; // height
+
+function HexBadge({ badge, isEarned, percentage, onClick, accentColor, isAward = false }) {
+  const borderCol = isEarned ? '#22c55e' : (percentage > 0 ? accentColor : 'rgba(100,116,139,0.5)');
+  const bgColor = isEarned
+    ? 'linear-gradient(145deg, #14532d, #166534)'
+    : 'linear-gradient(145deg, #1e293b, #334155)';
+
+  // Image fills most of the hex interior
+  const imgSize = HEX_SIZE * 0.58;
+  // Progress ring sits just inside the hex border
+  const ringSize = HEX_SIZE * 0.82;
+  const ringOffset = (HEX_SIZE - ringSize) / 2;
 
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center gap-1 active:scale-95 transition-transform focus:outline-none"
-      style={{ WebkitTapHighlightColor: 'transparent' }}
+      style={{
+        width: HEX_SIZE,
+        height: HEX_HEIGHT,
+        position: 'relative',
+        WebkitTapHighlightColor: 'transparent',
+        background: 'none',
+        border: 'none',
+        padding: 0,
+        cursor: 'pointer',
+        flexShrink: 0,
+      }}
     >
-      {/* Hexagon shape via clip-path */}
+      {/* Hex shape */}
       <div
-        className="relative flex items-center justify-center"
         style={{
-          width: size,
-          height: size * 0.866 * 1.15,
+          position: 'absolute',
+          inset: 0,
           clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-          background: isEarned
-            ? `linear-gradient(145deg, #1e3a8a, #3730a3)`
-            : 'linear-gradient(145deg, #374151, #4b5563)',
-          boxShadow: isEarned
-            ? `0 0 0 3px ${borderColor}`
-            : '0 0 0 3px rgba(100,116,139,0.6)',
+          background: bgColor,
+          filter: isEarned ? 'none' : (percentage === 0 ? 'brightness(0.7)' : 'none'),
+        }}
+      />
+
+      {/* Hex border (slightly larger, behind) */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: -2,
+          clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+          background: borderCol,
+          zIndex: -1,
+        }}
+      />
+
+      {/* Badge image — centred, circular crop to avoid square look */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: imgSize,
+          height: imgSize,
+          borderRadius: '50%',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        {/* Badge image */}
         {badge?.image_url ? (
           <img
             src={badge.image_url}
-            alt={badge.name}
-            className="rounded-sm object-contain"
+            alt={badge?.name}
             style={{
-              width: size * 0.62,
-              height: size * 0.62 * 0.866 * 1.15,
-              filter: isEarned ? 'none' : 'grayscale(100%) brightness(0.55)',
-              opacity: isEarned ? 1 : 0.7,
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              filter: isEarned ? 'none' : 'grayscale(100%) brightness(0.5)',
+              opacity: isEarned ? 1 : (percentage > 0 ? 0.65 : 0.45),
             }}
           />
         ) : (
-          <Trophy
-            style={{ width: size * 0.4, height: size * 0.4, color: isEarned ? '#fbbf24' : '#9ca3af' }}
-          />
-        )}
-
-        {/* Progress ring overlay when not earned and has progress */}
-        {!isEarned && percentage > 0 && (
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ clipPath: 'inherit' }}
-          >
-            <ProgressRing
-              percentage={percentage}
-              size={size - 4}
-              strokeWidth={3}
-              color={borderColor}
-            />
-            <span
-              className="absolute font-bold text-white z-10"
-              style={{ fontSize: size * 0.16 }}
-            >
-              {percentage}%
-            </span>
-          </div>
-        )}
-
-        {/* Tick if earned */}
-        {isEarned && (
-          <div className="absolute bottom-1 right-1 bg-green-500 rounded-full p-0.5 shadow-lg z-10">
-            <CheckCircle style={{ width: size * 0.2, height: size * 0.2, color: 'white' }} />
-          </div>
+          <Trophy style={{ width: imgSize * 0.6, height: imgSize * 0.6, color: isEarned ? '#fbbf24' : '#6b7280' }} />
         )}
       </div>
 
-      {/* Badge name below hex */}
-      <p
-        className="text-center font-semibold leading-tight"
-        style={{
-          fontSize: isAward ? 10 : 8.5,
-          color: isEarned ? '#f9fafb' : '#9ca3af',
-          maxWidth: size + 8,
-          lineHeight: 1.2,
-        }}
-      >
-        {isAward ? badge?.name?.replace("Chief Scout's ", '') : badge?.name?.replace(' Challenge', '')}
-      </p>
+      {/* Progress ring — contained within hex, sits on top of image */}
+      {!isEarned && percentage > 0 && (
+        <div style={{ position: 'absolute', top: ringOffset, left: ringOffset, width: ringSize, height: ringSize }}>
+          <ProgressRing percentage={percentage} size={ringSize} strokeWidth={3} color={accentColor} />
+          {/* Percentage text */}
+          <span
+            style={{
+              position: 'absolute',
+              bottom: 4,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontSize: 9,
+              fontWeight: 800,
+              color: 'white',
+              background: 'rgba(0,0,0,0.6)',
+              borderRadius: 4,
+              padding: '1px 3px',
+              lineHeight: 1,
+            }}
+          >
+            {percentage}%
+          </span>
+        </div>
+      )}
+
+      {/* Green tick if earned */}
+      {isEarned && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 2,
+            right: 4,
+            background: '#22c55e',
+            borderRadius: '50%',
+            padding: 1,
+            display: 'flex',
+          }}
+        >
+          <CheckCircle style={{ width: 12, height: 12, color: 'white' }} />
+        </div>
+      )}
     </button>
+  );
+}
+
+// ─── Badge name label below hex ────────────────────────────────────────────────
+function HexLabel({ badge, isEarned, isAward }) {
+  const name = isAward
+    ? badge?.name?.replace("Chief Scout's ", '').replace(' Award', ' Award')
+    : badge?.name?.replace(' Challenge', '');
+  return (
+    <p
+      style={{
+        textAlign: 'center',
+        fontSize: 9,
+        fontWeight: 700,
+        color: isEarned ? '#f9fafb' : '#6b7280',
+        width: HEX_SIZE + 8,
+        lineHeight: 1.2,
+        marginTop: 3,
+        overflow: 'hidden',
+        display: '-webkit-box',
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical',
+      }}
+    >
+      {name}
+    </p>
   );
 }
 
 // ─── Criteria modal for a single badge ────────────────────────────────────────
 function BadgeCriteriaSheet({ badge, modules, requirements, reqProgress, child, onClose, accentColor }) {
   const [openModules, setOpenModules] = useState({});
-
   if (!badge) return null;
 
   const badgeModules = modules.filter(m => m.badge_id === badge.id).sort((a, b) => (a.order || 0) - (b.order || 0));
   const isReqDone = (reqId) => reqProgress.some(p => p.requirement_id === reqId && p.completed && p.member_id === child?.id);
   const totalReqs = badgeModules.reduce((s, m) => s + requirements.filter(r => r.module_id === m.id).length, 0);
-  const doneReqs = badgeModules.reduce((s, m) => {
-    const reqs = requirements.filter(r => r.module_id === m.id);
-    return s + reqs.filter(r => isReqDone(r.id)).length;
-  }, 0);
+  const doneReqs = badgeModules.reduce((s, m) => s + requirements.filter(r => r.module_id === m.id && isReqDone(r.id)).length, 0);
   const pct = totalReqs > 0 ? Math.round((doneReqs / totalReqs) * 100) : 0;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col" style={{ background: 'rgba(0,0,0,0.6)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column' }}>
       <div
-        className="absolute bottom-0 left-0 right-0 flex flex-col rounded-t-3xl overflow-hidden"
-        style={{ maxHeight: '90vh', background: '#0f172a' }}
+        style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          maxHeight: '90vh', background: '#0f172a',
+          borderRadius: '24px 24px 0 0', overflow: 'hidden',
+          display: 'flex', flexDirection: 'column',
+        }}
       >
         {/* Header */}
-        <div
-          className="flex-shrink-0 px-5 pt-5 pb-4"
-          style={{ background: `linear-gradient(135deg, ${accentColor}22, ${accentColor}44)`, borderBottom: `1px solid ${accentColor}33` }}
-        >
-          <div className="flex items-center gap-3 mb-3">
+        <div style={{ flexShrink: 0, padding: '20px 20px 16px', background: `linear-gradient(135deg, ${accentColor}22, ${accentColor}44)`, borderBottom: `1px solid ${accentColor}33` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
             {badge.image_url && (
-              <img src={badge.image_url} alt={badge.name} className="w-14 h-14 rounded-xl object-contain flex-shrink-0" />
+              <img src={badge.image_url} alt={badge.name} style={{ width: 48, height: 48, borderRadius: 12, objectFit: 'contain', flexShrink: 0 }} />
             )}
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold uppercase tracking-wider mb-0.5" style={{ color: accentColor }}>Challenge Badge</p>
-              <h3 className="text-lg font-extrabold text-white leading-tight">{badge.name}</h3>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: accentColor, marginBottom: 2 }}>Challenge Badge</p>
+              <h3 style={{ fontSize: 17, fontWeight: 800, color: 'white', lineHeight: 1.2 }}>{badge.name}</h3>
             </div>
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 flex-shrink-0">
-              <X className="w-4 h-4 text-white" />
+            <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <X style={{ width: 16, height: 16, color: 'white' }} />
             </button>
           </div>
-
-          {/* Progress bar */}
           {totalReqs > 0 && (
             <div>
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs text-white/60">Progress</span>
-                <span className="text-xs font-bold text-white">{doneReqs}/{totalReqs} complete</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Progress</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'white' }}>{doneReqs}/{totalReqs} complete</span>
               </div>
-              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all"
-                  style={{ width: `${pct}%`, background: accentColor }}
-                />
+              <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 999, width: `${pct}%`, background: accentColor, transition: 'width 0.4s' }} />
               </div>
             </div>
           )}
         </div>
 
         {/* Scrollable requirements */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-          {badge.description && (
-            <p className="text-sm text-white/60 leading-relaxed px-1">{badge.description}</p>
-          )}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {badge.description && <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>{badge.description}</p>}
           {badgeModules.length > 0 ? badgeModules.map(mod => {
             const modReqs = requirements.filter(r => r.module_id === mod.id).sort((a, b) => (a.order || 0) - (b.order || 0));
             const modDone = modReqs.filter(r => isReqDone(r.id)).length;
-            const isOpen = openModules[mod.id] !== false; // default open
+            const isOpen = openModules[mod.id] !== false;
             const allDone = modReqs.length > 0 && modDone === modReqs.length;
 
             return (
-              <div key={mod.id} className="rounded-2xl overflow-hidden" style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div key={mod.id} style={{ borderRadius: 16, overflow: 'hidden', background: '#1e293b', border: '1px solid rgba(255,255,255,0.07)' }}>
                 <button
                   onClick={() => setOpenModules(p => ({ ...p, [mod.id]: !isOpen }))}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
                 >
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold ${allDone ? 'bg-green-500' : 'bg-white/10 text-white/60'}`}>
-                    {allDone ? <CheckCircle className="w-3.5 h-3.5 text-white" /> : `${modDone}/${modReqs.length}`}
+                  <div style={{ width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 10, fontWeight: 700, background: allDone ? '#22c55e' : 'rgba(255,255,255,0.1)', color: allDone ? 'white' : 'rgba(255,255,255,0.5)' }}>
+                    {allDone ? <CheckCircle style={{ width: 14, height: 14, color: 'white' }} /> : `${modDone}/${modReqs.length}`}
                   </div>
-                  <p className="flex-1 text-sm font-semibold text-white">{mod.name}</p>
-                  {isOpen ? <ChevronUp className="w-4 h-4 text-white/40" /> : <ChevronDown className="w-4 h-4 text-white/40" />}
+                  <p style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'white' }}>{mod.name}</p>
+                  {isOpen ? <ChevronUp style={{ width: 16, height: 16, color: 'rgba(255,255,255,0.3)' }} /> : <ChevronDown style={{ width: 16, height: 16, color: 'rgba(255,255,255,0.3)' }} />}
                 </button>
                 {isOpen && (
-                  <div className="border-t border-white/5 divide-y divide-white/5">
+                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                     {modReqs.map((req, idx) => {
                       const done = isReqDone(req.id);
                       return (
-                        <div key={req.id} className="flex items-start gap-3 px-4 py-3">
-                          <div className="flex-shrink-0 mt-0.5">
-                            {done
-                              ? <CheckCircle className="w-4 h-4 text-green-400" />
-                              : <Circle className="w-4 h-4 text-white/20" />
-                            }
+                        <div key={req.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                          <div style={{ flexShrink: 0, marginTop: 1 }}>
+                            {done ? <CheckCircle style={{ width: 15, height: 15, color: '#4ade80' }} /> : <Circle style={{ width: 15, height: 15, color: 'rgba(255,255,255,0.2)' }} />}
                           </div>
-                          <p className={`text-sm leading-snug flex-1 ${done ? 'text-green-300 font-medium' : 'text-white/70'}`}>
-                            <span className="font-bold text-white/40 mr-1">{idx + 1}.</span>
+                          <p style={{ fontSize: 13, lineHeight: 1.45, flex: 1, color: done ? '#86efac' : 'rgba(255,255,255,0.65)', fontWeight: done ? 600 : 400 }}>
+                            <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.3)', marginRight: 4 }}>{idx + 1}.</span>
                             {req.text || req.description}
                           </p>
                         </div>
@@ -215,7 +272,7 @@ function BadgeCriteriaSheet({ badge, modules, requirements, reqProgress, child, 
               </div>
             );
           }) : (
-            <p className="text-center text-white/40 text-sm py-6">No detailed criteria available yet.</p>
+            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.35)', fontSize: 13, padding: '24px 0' }}>No detailed criteria available yet.</p>
           )}
         </div>
       </div>
@@ -223,98 +280,60 @@ function BadgeCriteriaSheet({ badge, modules, requirements, reqProgress, child, 
   );
 }
 
-// ─── Award overview sheet (click on the top hexagon) ──────────────────────────
-function AwardOverviewSheet({ badge, isSilver, modules, requirements, reqProgress, awards, badgeProgress, child, onClose }) {
-  const accentColor = isSilver ? '#94a3b8' : '#f59e0b';
+// ─── Award overview sheet ──────────────────────────────────────────────────────
+function AwardOverviewSheet({ badge, isSilver, awards, badgeProgress, child, onClose, accentColor }) {
   const sectionLabel = isSilver ? 'Cubs' : 'Scouts';
   const challengeCount = isSilver ? 7 : 9;
-
   const isEarned = awards.some(a => a.member_id === child?.id && a.badge_id === badge?.id)
     || badgeProgress.some(p => p.member_id === child?.id && p.badge_id === badge?.id && p.status === 'completed');
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col" style={{ background: 'rgba(0,0,0,0.7)' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column' }}>
       <div
-        className="absolute bottom-0 left-0 right-0 flex flex-col rounded-t-3xl overflow-hidden"
-        style={{ maxHeight: '85vh', background: '#0f172a' }}
+        style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          maxHeight: '85vh', background: '#0f172a',
+          borderRadius: '24px 24px 0 0', overflow: 'hidden',
+          display: 'flex', flexDirection: 'column',
+        }}
       >
-        {/* Gradient header */}
-        <div
-          className="flex-shrink-0 px-5 pt-6 pb-5 text-center"
-          style={{
-            background: isEarned
-              ? `linear-gradient(135deg, ${accentColor}55, ${accentColor}99)`
-              : `linear-gradient(135deg, #1e293b, #334155)`,
-            borderBottom: `2px solid ${accentColor}55`,
-          }}
-        >
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10"
-          >
-            <X className="w-4 h-4 text-white" />
+        <div style={{ flexShrink: 0, padding: '24px 20px 20px', textAlign: 'center', background: isEarned ? `linear-gradient(135deg, ${accentColor}55, ${accentColor}99)` : 'linear-gradient(135deg, #1e293b, #334155)', borderBottom: `2px solid ${accentColor}55`, position: 'relative' }}>
+          <button onClick={onClose} style={{ position: 'absolute', top: 12, right: 12, width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <X style={{ width: 16, height: 16, color: 'white' }} />
           </button>
-
           {badge?.image_url && (
-            <img src={badge.image_url} alt={badge.name}
-              className="w-20 h-20 object-contain mx-auto rounded-2xl mb-3 shadow-2xl"
-              style={{ filter: isEarned ? 'none' : 'grayscale(60%) brightness(0.7)' }}
-            />
+            <img src={badge.image_url} alt={badge.name} style={{ width: 80, height: 80, objectFit: 'contain', margin: '0 auto 12px', borderRadius: 16, display: 'block', filter: isEarned ? 'none' : 'grayscale(60%) brightness(0.7)' }} />
           )}
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: accentColor }}>
-              {sectionLabel} · Highest Award
-            </p>
-          </div>
-          <h2 className="text-xl font-extrabold text-white mb-1">{badge?.name}</h2>
+          <p style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2, color: accentColor, marginBottom: 4 }}>{sectionLabel} · Highest Award</p>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: 'white', marginBottom: 6 }}>{badge?.name}</h2>
           {isEarned && (
-            <span className="inline-flex items-center gap-1 text-xs font-extrabold px-3 py-1 rounded-full shadow" style={{ background: accentColor, color: '#0f172a' }}>
-              <Star className="w-3 h-3" /> ACHIEVED!
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 999, background: accentColor, color: '#0f172a' }}>
+              <Star style={{ width: 12, height: 12 }} /> ACHIEVED!
             </span>
           )}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
-          <div className="rounded-2xl p-4 space-y-3" style={{ background: '#1e293b' }}>
-            <p className="text-sm font-bold text-white">To earn this award, you must complete:</p>
-
-            <div className="flex items-start gap-3 p-3 rounded-xl" style={{ background: '#0f172a' }}>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-extrabold" style={{ background: accentColor, color: '#0f172a' }}>1</div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ borderRadius: 16, padding: 16, background: '#1e293b', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>To earn this award, you must complete:</p>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: 12, background: '#0f172a' }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13, fontWeight: 800, background: accentColor, color: '#0f172a' }}>1</div>
               <div>
-                <p className="text-sm font-bold text-white">All {challengeCount} Challenge Badges</p>
-                <p className="text-xs text-white/50 mt-0.5">Every challenge badge for {sectionLabel} must be completed</p>
+                <p style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>All {challengeCount} Challenge Badges</p>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>Every challenge badge for {sectionLabel} must be completed</p>
               </div>
             </div>
-
-            {!isSilver && (
-              <div className="flex items-start gap-3 p-3 rounded-xl" style={{ background: '#0f172a' }}>
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-extrabold" style={{ background: accentColor, color: '#0f172a' }}>2</div>
-                <div>
-                  <p className="text-sm font-bold text-white">At least 8 Activity Badges</p>
-                  <p className="text-xs text-white/50 mt-0.5">Choose any activity badges that interest you</p>
-                </div>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: 12, background: '#0f172a' }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13, fontWeight: 800, background: accentColor, color: '#0f172a' }}>2</div>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>{isSilver ? 'Nights Away & Activity badges' : 'At least 8 Activity Badges'}</p>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{isSilver ? 'Complete the nights away requirement and activity badges' : 'Choose any activity badges that interest you'}</p>
               </div>
-            )}
-
-            {isSilver && (
-              <div className="flex items-start gap-3 p-3 rounded-xl" style={{ background: '#0f172a' }}>
-                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-extrabold" style={{ background: accentColor, color: '#0f172a' }}>2</div>
-                <div>
-                  <p className="text-sm font-bold text-white">Nights Away &amp; Activity badges</p>
-                  <p className="text-xs text-white/50 mt-0.5">Complete the nights away requirement and activity badges</p>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
-
-          {badge?.description && (
-            <p className="text-sm text-white/60 leading-relaxed">{badge.description}</p>
-          )}
-
-          <div className="rounded-2xl p-4" style={{ background: '#1e293b', borderLeft: `3px solid ${accentColor}` }}>
-            <p className="text-xs text-white/50 leading-relaxed">
-              The {badge?.name} is the pinnacle of achievement for {sectionLabel}. It demonstrates exceptional commitment, skill, and dedication to Scouting values. Tap each badge in the grid to view its specific requirements and track your progress.
+          <div style={{ borderRadius: 16, padding: 16, background: '#1e293b', borderLeft: `3px solid ${accentColor}` }}>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+              The {badge?.name} is the pinnacle of achievement for {sectionLabel}. Tap each badge in the grid to view its specific requirements and track progress.
             </p>
           </div>
         </div>
@@ -324,39 +343,25 @@ function AwardOverviewSheet({ badge, isSilver, modules, requirements, reqProgres
 }
 
 // ─── Main Honeycomb Award Page ─────────────────────────────────────────────────
-export default function HoneycombAwardPage({
-  badge,           // chief scout award BadgeDefinition
-  child,
-  badges,          // all badge definitions
-  modules,
-  requirements,
-  reqProgress,
-  awards,
-  badgeProgress,
-  onClose,
-  isSilver,
-}) {
+export default function HoneycombAwardPage({ badge, child, badges, modules, requirements, reqProgress, awards, badgeProgress, onClose, isSilver }) {
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [showOverview, setShowOverview] = useState(false);
 
   const sectionName = isSilver ? 'cubs' : 'scouts';
   const accentColor = isSilver ? '#94a3b8' : '#f59e0b';
-  const borderColor = isSilver ? '#94a3b8' : '#ef4444';
   const bgGradient = isSilver
     ? 'linear-gradient(160deg, #1e293b 0%, #0f172a 50%, #1a1f35 100%)'
-    : 'linear-gradient(160deg, #1a0a00 0%, #0f172a 50%, #1a0a00 100%)';
+    : 'linear-gradient(160deg, #1a0800 0%, #0f172a 50%, #1a0800 100%)';
   const title = isSilver ? 'Silver Award' : 'Gold Award';
   const subtitle = isSilver ? 'Seven Challenge Awards' : 'Nine Challenge Awards';
 
-  // Challenge badges for this section (no chief scout award itself)
   const challengeBadges = badges
     .filter(b => b.category === 'challenge' && b.section === sectionName && !b.is_chief_scout_award)
     .sort((a, b) => (a.display_priority || 0) - (b.display_priority || 0) || a.name.localeCompare(b.name));
 
-  const isEarned = (badgeId) => {
-    if (awards.some(a => a.member_id === child?.id && a.badge_id === badgeId)) return true;
-    return badgeProgress.some(p => p.member_id === child?.id && p.badge_id === badgeId && p.status === 'completed');
-  };
+  const isEarned = (badgeId) =>
+    awards.some(a => a.member_id === child?.id && a.badge_id === badgeId) ||
+    badgeProgress.some(p => p.member_id === child?.id && p.badge_id === badgeId && p.status === 'completed');
 
   const getBadgePercentage = (badgeId) => {
     const badgeMods = modules.filter(m => m.badge_id === badgeId);
@@ -366,8 +371,7 @@ export default function HoneycombAwardPage({
       if (mod.completion_rule === 'x_of_n_required') {
         const needed = mod.required_count || modReqs.length;
         total += needed;
-        const done = reqProgress.filter(p => p.member_id === child?.id && p.module_id === mod.id && p.completed).length;
-        completed += Math.min(done, needed);
+        completed += Math.min(reqProgress.filter(p => p.member_id === child?.id && p.module_id === mod.id && p.completed).length, needed);
       } else {
         total += modReqs.length;
         completed += reqProgress.filter(p => p.member_id === child?.id && p.module_id === mod.id && p.completed).length;
@@ -377,154 +381,149 @@ export default function HoneycombAwardPage({
   };
 
   const awardEarned = isEarned(badge?.id);
+  const earnedCount = challengeBadges.filter(b => b && isEarned(b.id)).length;
+  const totalCount = challengeBadges.length;
 
-  // Build honeycomb rows based on section
-  // Cubs: 1 (award) + 2 + 3 + 2 = 8 cells (7 challenge + 1 award)
-  // Scouts: 1 (award) + 2 + 3 + 4 = 10 cells (9 challenge + 1 award)
+  // ── Honeycomb layout ──────────────────────────────────────────────────────────
+  // We use a CSS grid approach with proper hex offset.
+  // Each row is offset by half a hex width for true honeycomb interlocking.
+  // All hexes including the award badge are the same size.
+  //
+  // Layout:
+  //   Cubs  (7): row1=[award], row2=[0,1], row3=[2,3,4], row4=[5,6]
+  //   Scouts(9): row1=[award], row2=[0,1], row3=[2,3,4], row4=[5,6,7,8]
+
   const rows = isSilver
     ? [
-        [null], // award hex — rendered separately as top
+        [{ _isAward: true }],
         [challengeBadges[0], challengeBadges[1]],
         [challengeBadges[2], challengeBadges[3], challengeBadges[4]],
         [challengeBadges[5], challengeBadges[6]],
       ]
     : [
-        [null], // award hex
+        [{ _isAward: true }],
         [challengeBadges[0], challengeBadges[1]],
         [challengeBadges[2], challengeBadges[3], challengeBadges[4]],
         [challengeBadges[5], challengeBadges[6], challengeBadges[7], challengeBadges[8]],
       ];
 
-  // Count earned challenges
-  const earnedCount = challengeBadges.filter(b => b && isEarned(b.id)).length;
-  const totalCount = challengeBadges.length;
+  const GAP_H = 4;   // horizontal gap between hex centres beyond normal
+  const GAP_V = 3;   // vertical overlap reduction (negative margin)
 
-  // Hex dimensions and offset math
-  const HEX_W = 72;
-  const HEX_H = HEX_W * 0.866;
-  const GAP = 4;
+  // Horizontal spacing between hex centres
+  const colSpacing = HEX_SIZE + GAP_H;
+  // Vertical spacing: hex rows overlap so they mesh together
+  const rowSpacing = HEX_HEIGHT * 0.75 + GAP_V;
+
+  // Max row width (for container width calculation)
+  const maxCols = Math.max(...rows.map(r => r.length));
+  const containerWidth = maxCols * colSpacing + HEX_SIZE * 0.5 + 32;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col overflow-hidden" style={{ background: bgGradient }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: bgGradient }}>
       {/* Top bar */}
-      <div
-        className="flex-shrink-0 flex items-center gap-3 px-4 pb-3"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 12px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
-      >
-        <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 flex-shrink-0">
-          <ArrowLeft className="w-5 h-5 text-white" />
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', paddingTop: 'calc(env(safe-area-inset-top) + 12px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <ArrowLeft style={{ width: 20, height: 20, color: 'white' }} />
         </button>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-extrabold text-white leading-tight">{title}</h1>
-          <p className="text-xs text-white/50 mt-0.5">{child?.full_name}</p>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 style={{ fontSize: 18, fontWeight: 800, color: 'white', lineHeight: 1.2 }}>{title}</h1>
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 1 }}>{child?.full_name}</p>
         </div>
-        {/* Progress pill */}
-        <div
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
-          style={{ background: `${accentColor}22`, color: accentColor, border: `1px solid ${accentColor}44` }}
-        >
-          <span>{earnedCount}/{totalCount}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 999, background: `${accentColor}22`, border: `1px solid ${accentColor}44` }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: accentColor }}>{earnedCount}/{totalCount}</span>
         </div>
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto pb-8">
-        {/* Section title */}
-        <div className="text-center pt-6 pb-2">
-          <h2 className="text-2xl font-extrabold" style={{ color: accentColor }}>
-            {isSilver ? 'Cubs' : 'Scouts'}
-          </h2>
-          <p className="text-sm text-white/50 mt-0.5">{subtitle}</p>
+      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 32 }}>
+
+        {/* Section heading */}
+        <div style={{ textAlign: 'center', paddingTop: 20, paddingBottom: 8 }}>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: accentColor }}>{isSilver ? 'Cubs' : 'Scouts'}</h2>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{subtitle}</p>
         </div>
 
-        {/* Overall progress arc */}
-        <div className="mx-6 mb-4">
-          <div className="flex items-center justify-between text-xs mb-1.5">
-            <span className="text-white/50">Challenge badges completed</span>
-            <span className="font-bold" style={{ color: accentColor }}>{earnedCount} of {totalCount}</span>
+        {/* Overall progress bar */}
+        <div style={{ margin: '0 24px 16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>Challenge badges completed</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: accentColor }}>{earnedCount} of {totalCount}</span>
           </div>
-          <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all"
-              style={{ width: `${totalCount > 0 ? (earnedCount / totalCount) * 100 : 0}%`, background: accentColor }}
-            />
+          <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: 999, width: `${totalCount > 0 ? (earnedCount / totalCount) * 100 : 0}%`, background: accentColor, transition: 'width 0.5s' }} />
           </div>
         </div>
 
         {/* ── Honeycomb Grid ── */}
-        <div className="flex flex-col items-center gap-0" style={{ padding: '0 16px' }}>
-
-          {/* Row 0: Award hexagon (top, centred, larger) */}
-          <div className="flex justify-center mb-0" style={{ marginBottom: -HEX_H * 0.25 }}>
-            <HexBadge
-              badge={badge}
-              isEarned={awardEarned}
-              percentage={0}
-              onClick={() => setShowOverview(true)}
-              borderColor={accentColor}
-              isAward={true}
-            />
-          </div>
-
-          {/* Remaining rows */}
-          {rows.slice(1).map((row, rowIdx) => {
-            // Odd offset for honeycomb stagger on alternating rows
-            // Row 1 (2 cells): no offset — sits under award
-            // Row 2 (3 cells): shift right by half-cell
-            // Row 3 (2 or 4 cells): no offset
-            const stagger = rowIdx === 1; // row with 3 items gets a slight offset
-            const cellW = HEX_W + GAP;
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 8 }}>
+          {rows.map((row, rowIdx) => {
+            // Row 1 (2 items): offset right by half-hex so it sits between award and row below
+            // Row 2 (3 items): base position
+            // Row 3 (2 or 4 items): offset right by half-hex
+            // Offset logic: even-length rows shift right by half hex
+            const isOffsetRow = row.length % 2 === 0;
+            const offsetX = isOffsetRow ? colSpacing / 2 : 0;
 
             return (
               <div
                 key={rowIdx}
-                className="flex justify-center"
                 style={{
-                  gap: GAP,
-                  marginTop: -HEX_H * 0.22,
-                  // Stagger: 3-cell row shifts by half a hex for honeycomb effect
-                  marginLeft: stagger ? cellW * 0.5 : 0,
+                  display: 'flex',
+                  flexDirection: 'row',
+                  gap: GAP_H,
+                  marginTop: rowIdx === 0 ? 0 : -(HEX_HEIGHT * 0.26),
+                  marginLeft: offsetX,
+                  alignItems: 'flex-start',
                 }}
               >
-                {row.map((b, idx) => (
-                  <HexBadge
-                    key={b?.id || idx}
-                    badge={b}
-                    isEarned={b ? isEarned(b.id) : false}
-                    percentage={b ? getBadgePercentage(b.id) : 0}
-                    onClick={() => b && setSelectedBadge(b)}
-                    borderColor={borderColor}
-                    isAward={false}
-                  />
-                ))}
+                {row.map((b, colIdx) => {
+                  const isAward = b?._isAward;
+                  const actualBadge = isAward ? badge : b;
+                  const earned = actualBadge ? isEarned(actualBadge.id) : false;
+                  const pct = (!isAward && actualBadge) ? getBadgePercentage(actualBadge.id) : 0;
+
+                  return (
+                    <div key={colIdx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <HexBadge
+                        badge={actualBadge}
+                        isEarned={earned}
+                        percentage={pct}
+                        onClick={() => isAward ? setShowOverview(true) : (actualBadge && setSelectedBadge(actualBadge))}
+                        accentColor={accentColor}
+                        isAward={isAward}
+                      />
+                      <HexLabel badge={actualBadge} isEarned={earned} isAward={isAward} />
+                    </div>
+                  );
+                })}
               </div>
             );
           })}
         </div>
 
         {/* Legend */}
-        <div className="flex items-center justify-center gap-6 mt-6 px-6">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-xs text-white/50">Earned</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, marginTop: 24, padding: '0 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e' }} />
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>Earned</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full" style={{ background: borderColor }} />
-            <span className="text-xs text-white/50">In progress</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: accentColor }} />
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>In progress</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-gray-600" />
-            <span className="text-xs text-white/50">Not started</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#4b5563' }} />
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>Not started</span>
           </div>
         </div>
 
-        {/* Hint */}
-        <p className="text-center text-white/30 text-[11px] mt-3 px-6">
+        <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.25)', fontSize: 11, marginTop: 8 }}>
           Tap any badge to see its requirements
         </p>
       </div>
 
-      {/* Badge criteria sheet */}
+      {/* Modals */}
       {selectedBadge && (
         <BadgeCriteriaSheet
           badge={selectedBadge}
@@ -533,22 +532,18 @@ export default function HoneycombAwardPage({
           reqProgress={reqProgress}
           child={child}
           onClose={() => setSelectedBadge(null)}
-          accentColor={borderColor}
+          accentColor={accentColor}
         />
       )}
-
-      {/* Award overview sheet */}
       {showOverview && (
         <AwardOverviewSheet
           badge={badge}
           isSilver={isSilver}
-          modules={modules}
-          requirements={requirements}
-          reqProgress={reqProgress}
           awards={awards}
           badgeProgress={badgeProgress}
           child={child}
           onClose={() => setShowOverview(false)}
+          accentColor={accentColor}
         />
       )}
     </div>
