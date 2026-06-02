@@ -44,8 +44,8 @@ export default function BadgeCluster({
   // The PNGs have transparent padding around the hex artwork, so to make the
   // visible hexes nearly touch we overlap the canvases significantly.
   const H = W * 1.1547;      // full height of a pointy-top hex
-  const colStep = W * 0.90;  // horizontal centre-to-centre (overlap canvases)
-  const rowStep = H * 0.60;  // vertical centre-to-centre (tight interlock)
+  const colStep = W * 0.78;  // horizontal centre-to-centre (overlap canvases)
+  const rowStep = H * 0.54;  // vertical centre-to-centre (tight interlock)
 
   // Build the rows
   const rows = isSilver
