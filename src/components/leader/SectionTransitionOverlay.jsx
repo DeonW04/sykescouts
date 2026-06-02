@@ -24,7 +24,7 @@ export default function SectionTransitionOverlay({ toSection, onComplete }) {
   return (
     <motion.div
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center"
-      style={{ backgroundColor: '#0f172a' }}
+      style={{ backgroundColor: '#ffffffff' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
