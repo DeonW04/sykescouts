@@ -4,7 +4,7 @@ import BadgeCluster from './award/BadgeCluster';
 
 // ─── Criteria modal for a single badge ────────────────────────────────────────
 function BadgeCriteriaSheet({ badge, modules, requirements, reqProgress, child, onClose, accentColor }) {
-  const [openModules, setOpenModules] = useState({});
+  const [openModules, setOpenModules] = useState({}); // collapsed by default
   if (!badge) return null;
 
   const badgeModules = modules.filter(m => m.badge_id === badge.id).sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -14,11 +14,11 @@ function BadgeCriteriaSheet({ badge, modules, requirements, reqProgress, child, 
   const pct = totalReqs > 0 ? Math.round((doneReqs / totalReqs) * 100) : 0;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
       <div
+        onClick={(e) => e.stopPropagation()}
         style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          maxHeight: '90vh', background: '#0f172a',
+          maxHeight: '88dvh', background: '#0f172a',
           borderRadius: '24px 24px 0 0', overflow: 'hidden',
           display: 'flex', flexDirection: 'column',
         }}
@@ -51,12 +51,12 @@ function BadgeCriteriaSheet({ badge, modules, requirements, reqProgress, child, 
         </div>
 
         {/* Scrollable requirements */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '16px', paddingBottom: 'calc(env(safe-area-inset-bottom) + 24px)', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {badge.description && <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>{badge.description}</p>}
           {badgeModules.length > 0 ? badgeModules.map(mod => {
             const modReqs = requirements.filter(r => r.module_id === mod.id).sort((a, b) => (a.order || 0) - (b.order || 0));
             const modDone = modReqs.filter(r => isReqDone(r.id)).length;
-            const isOpen = openModules[mod.id] !== false;
+            const isOpen = openModules[mod.id] === true; // collapsed by default
             const allDone = modReqs.length > 0 && modDone === modReqs.length;
 
             return (

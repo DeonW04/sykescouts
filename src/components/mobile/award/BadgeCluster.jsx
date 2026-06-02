@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import BadgeHex from './BadgeHex';
 
 // ─── Badge cluster — fixed-coordinate uniform layout ──────────────────────────
@@ -33,14 +33,19 @@ export default function BadgeCluster({
   onBadgeClick,      // (badge) => void
   onAwardClick,      // () => void
 }) {
+  const wrapRef = useRef(null);
+  const [scale, setScale] = useState(1);
+
   // Sizes
   const W = 92;              // challenge badge width (px)
   const AWARD_W = 116;       // gold/silver award width — larger focal point
 
-  // Pointy-top hex geometry for tessellation
+  // Pointy-top hex geometry for tessellation.
+  // The PNGs have transparent padding around the hex artwork, so to make the
+  // visible hexes nearly touch we overlap the canvases significantly.
   const H = W * 1.1547;      // full height of a pointy-top hex
-  const colStep = W + 1;     // horizontal centre-to-centre (touching, ~1px gap)
-  const rowStep = H * 0.75 - 1; // vertical centre-to-centre (interlock, slight overlap)
+  const colStep = W * 0.84;  // horizontal centre-to-centre (overlap canvases)
+  const rowStep = H * 0.60;  // vertical centre-to-centre (tight interlock)
 
   // Build the rows
   const rows = isSilver
@@ -58,8 +63,21 @@ export default function BadgeCluster({
       ];
 
   const maxCols = Math.max(...rows.map(r => r.length));
-  const clusterWidth = maxCols * colStep;
-  const clusterHeight = rows.length * rowStep + (H - rowStep) + (AWARD_W - W);
+  // Full pixel width of the widest row including the badge width itself
+  const clusterWidth = (maxCols - 1) * colStep + W;
+  const clusterHeight = (rows.length - 1) * rowStep + H + (AWARD_W - W);
+
+  // Scale the cluster down to fit the screen width on mobile
+  useEffect(() => {
+    const fit = () => {
+      const avail = wrapRef.current?.offsetWidth || window.innerWidth;
+      const target = Math.min(1, (avail - 24) / clusterWidth);
+      setScale(target);
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [clusterWidth]);
 
   // Compute absolute positions (centre x of each badge), centring each row
   const items = [];
@@ -88,8 +106,9 @@ export default function BadgeCluster({
   });
 
   return (
-    <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '0 8px' }}>
-      <div style={{ position: 'relative', width: clusterWidth, height: clusterHeight }}>
+    <div ref={wrapRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+      <div style={{ width: clusterWidth * scale, height: clusterHeight * scale, position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, width: clusterWidth, height: clusterHeight, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
         {items.map(item => (
           <BadgeHex
             key={item.key}
@@ -103,6 +122,7 @@ export default function BadgeCluster({
             accentColor={accentColor}
           />
         ))}
+        </div>
       </div>
     </div>
   );
