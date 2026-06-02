@@ -37,7 +37,7 @@ export default function BadgeCluster({
   const [scale, setScale] = useState(1);
 
   // Sizes
-  const W = 92;              // challenge badge width (px)
+  const W = 85;              // challenge badge width (px)
   const AWARD_W = 92;       // gold/silver award width — larger focal point
 
   // Pointy-top hex geometry for tessellation.
