@@ -65,7 +65,7 @@ export default function BadgeCluster({
   const maxCols = Math.max(...rows.map(r => r.length));
   // Full pixel width of the widest row including the badge width itself
   const clusterWidth = (maxCols - 1) * colStep + W;
-  const clusterHeight = (rows.length - 1) * rowStep + H + (AWARD_W - W);
+  const clusterHeight = (rows.length - 1) * rowStep + H + (AWARD_W - W) + 5;
 
   // Scale the cluster down to fit the screen width on mobile
   useEffect(() => {
@@ -92,7 +92,7 @@ export default function BadgeCluster({
       const bw = isAward ? AWARD_W : W;
       const cx = startX + colIdx * colStep;     // centre x
       // y baseline: award row pushed up a touch since it's bigger
-      const cy = rowIdx * rowStep + (AWARD_W - W) / 2;
+      const cy = rowIdx * rowStep + (AWARD_W - W) / 2 + (rowIdx > 0 ? 5 : 0);
 
       items.push({
         key: isAward ? 'award' : (badge?.id || `${rowIdx}-${colIdx}`),
