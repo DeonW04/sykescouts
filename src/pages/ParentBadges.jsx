@@ -406,11 +406,19 @@ export default function ParentBadges() {
   const childSectionRecord = sections.find(s => s.id === child.section_id);
   const childSectionName = childSectionRecord?.name;
 
-  // Get all badges for the child's section
-  const allSectionBadges = badges.filter(b => 
-    (b.section === childSectionName || b.section === 'all') && 
+  // Get all badges for the child's section (exclude blanket — handled separately)
+  const allSectionBadges = badges.filter(b =>
+    (b.section === childSectionName || b.section === 'all') &&
     !b.is_chief_scout_award &&
-    b.category !== 'special'
+    b.category !== 'special' &&
+    b.category !== 'blanket'
+  );
+
+  // Blanket badges: only show earned ones
+  const earnedBlanketBadges = badges.filter(b =>
+    b.category === 'blanket' &&
+    (b.section === childSectionName || b.section === 'all') &&
+    isBadgeComplete(b.id)
   );
 
   // Special family badges to be shown in bottom strip
@@ -561,9 +569,14 @@ export default function ParentBadges() {
 
   const totalHikesAway = child.total_hikes_away || 0;
 
-  // Check if eligible for gold award
-  const isScout = child.section_id; // Would need to check if scouts section
-  const goldAward = badges.find(b => b.is_chief_scout_award && b.section === 'scouts');
+  // Section-aware chief scout award
+  const chiefScoutAward = badges.find(b => b.is_chief_scout_award && b.section === childSectionName)
+    || badges.find(b => b.is_chief_scout_award);
+  const awardPageUrl = childSectionName === 'cubs' ? 'ParentSilverAward' : 'ParentGoldAward';
+  const awardLabel = childSectionName === 'cubs' ? "Chief Scout's Silver Award" : "Chief Scout's Gold Award";
+  const awardDescription = childSectionName === 'cubs' ? "The highest award in Cubs - View progress" : "The highest award in Scouts - View progress";
+  // Legacy alias for backward compat
+  const goldAward = chiefScoutAward;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -583,23 +596,28 @@ export default function ParentBadges() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        {/* Gold Award Button for Scouts */}
-        {goldAward && (
+        {/* Chief Scout Award Button — section-aware */}
+        {chiefScoutAward && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <Card 
-              onClick={() => navigate(createPageUrl('ParentGoldAward'))}
-              className="cursor-pointer bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 border-3 border-amber-300 hover:shadow-xl transition-all hover:scale-[1.02]"
+            <Card
+              onClick={() => navigate(createPageUrl(awardPageUrl))}
+              className={`cursor-pointer border-3 hover:shadow-xl transition-all hover:scale-[1.02] ${
+                childSectionName === 'cubs'
+                  ? 'bg-gradient-to-r from-gray-500 via-slate-400 to-gray-500 border-gray-300'
+                  : 'bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 border-amber-300'
+              }`}
             >
               <CardContent className="p-6">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
-                    <Trophy className="w-10 h-10 text-amber-500" />
+                    {chiefScoutAward.image_url
+                      ? <img src={chiefScoutAward.image_url} alt={awardLabel} className="w-12 h-12 rounded-full object-contain" />
+                      : <Trophy className={`w-10 h-10 ${childSectionName === 'cubs' ? 'text-gray-500' : 'text-amber-500'}`} />
+                    }
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-white mb-1">Chief Scout's Gold Award</h3>
-                    <p className="text-yellow-100">
-                      The highest award in Scouts - View progress
-                    </p>
+                    <h3 className="text-2xl font-bold text-white mb-1">{awardLabel}</h3>
+                    <p className="text-white/80">{awardDescription}</p>
                   </div>
                   <div className="text-white">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -672,6 +690,38 @@ export default function ParentBadges() {
         </div>
 
 
+
+        {/* Earned Blanket Badges */}
+        {earnedBlanketBadges.length > 0 && (
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-1 w-12 bg-gradient-to-r from-amber-800 to-transparent rounded-full"></div>
+              <h2 className="text-2xl font-bold">Blanket Badges</h2>
+              <span className="text-xs bg-amber-100 text-amber-800 font-semibold px-2 py-1 rounded-full">🏕️ Camp Blanket</span>
+            </div>
+            <Card className="bg-amber-50 border-amber-200">
+              <CardContent className="p-4">
+                <div className="flex flex-wrap gap-2">
+                  {earnedBlanketBadges.map(badge => {
+                    const bp = { type: 'single', badge, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } };
+                    return (
+                      <motion.button
+                        key={badge.id}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        onClick={() => setSelectedBadge(bp)}
+                        className="w-14 h-14 rounded-lg overflow-hidden hover:ring-2 hover:ring-amber-500 transition-all hover:scale-110 bg-white"
+                        title={badge.name}
+                      >
+                        <img src={badge.image_url} alt={badge.name} className="w-full h-full object-contain p-1" />
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Activity Awards - between Earned and In Progress */}
         {(nightsAwayBadges.length > 0 || hikesAwayBadges.length > 0 || joiningInBadges.length > 0) && (
@@ -1079,19 +1129,25 @@ export default function ParentBadges() {
                               <CheckCircle className="w-3 h-3" /> Earned
                             </Badge>
                           )}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 gap-1"
-                            onClick={() => {
-                              setUniformPositionHighlight(selectedBadge.badge.uniform_position || null);
-                              setSelectedBadge(null);
-                              setUniformDialog(true);
-                            }}
-                          >
-                            <MapPin className="w-3 h-3" />
-                            Where does this go on my uniform?
-                          </Button>
+                          {selectedBadge.badge.category === 'blanket' ? (
+                            <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-800 font-semibold px-2 py-1 rounded-full">
+                              🏕️ This badge goes on your camp blanket
+                            </span>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 gap-1"
+                              onClick={() => {
+                                setUniformPositionHighlight(selectedBadge.badge.uniform_position || null);
+                                setSelectedBadge(null);
+                                setUniformDialog(true);
+                              }}
+                            >
+                              <MapPin className="w-3 h-3" />
+                              Where does this go on my uniform?
+                            </Button>
+                          )}
                         </div>
                         {selectedBadge.badge.description && (
                           <p className="text-gray-600 mt-2">{selectedBadge.badge.description}</p>

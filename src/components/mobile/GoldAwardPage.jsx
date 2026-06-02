@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, CheckCircle, Circle, Trophy, Star, ChevronDown, ChevronUp } from 'lucide-react';
 
-export default function GoldAwardPage({ badge, child, modules, requirements, reqProgress, awards, badgeProgress, onClose }) {
+export default function GoldAwardPage({ badge, child, modules, requirements, reqProgress, awards, badgeProgress, onClose, isSilver }) {
   const [openModules, setOpenModules] = useState({});
 
   const isEarned = awards.some(a => a.member_id === child?.id && a.badge_id === badge.id)
@@ -63,7 +63,7 @@ export default function GoldAwardPage({ badge, child, modules, requirements, req
               <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center text-4xl flex-shrink-0">🏆</div>
             )}
             <div>
-              <p className="text-white/70 text-xs font-bold uppercase tracking-wider mb-1">Chief Scout's Award</p>
+              <p className="text-white/70 text-xs font-bold uppercase tracking-wider mb-1">{isSilver ? "Chief Scout's Silver Award" : "Chief Scout's Award"}</p>
               <h1 className="text-xl font-extrabold text-white leading-tight drop-shadow">{badge.name}</h1>
               {badge.description && (
                 <p className="text-white/80 text-xs mt-1.5 leading-relaxed">{badge.description}</p>
@@ -89,7 +89,7 @@ export default function GoldAwardPage({ badge, child, modules, requirements, req
       {/* How to earn it */}
       <div className="flex-1 overflow-y-auto px-4 py-5 space-y-4">
         {/* Info card */}
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+        <div className={`${isSilver ? 'bg-gray-50 border-gray-200' : 'bg-amber-50 border-amber-200'} border rounded-2xl p-4`}>
           <div className="flex items-center gap-2 mb-2">
             <Trophy className="w-4 h-4 text-amber-600 flex-shrink-0" />
             <p className="text-sm font-bold text-amber-800">How to earn the {badge.name}</p>

@@ -25,7 +25,8 @@
         "activity",
         "staged",
         "core",
-        "special"
+        "special",
+        "blanket"
       ],
       "description": "Badge category"
     },
@@ -123,7 +124,7 @@
         "right_chest_upper",
         "right_chest_lower"
       ],
-      "description": "Where this badge is worn on the uniform"
+      "description": "Where this badge is worn on the uniform. Not applicable for blanket badges."
     },
     "active": {
       "type": "boolean",

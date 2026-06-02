@@ -38,6 +38,14 @@ const CATEGORY_CONFIG = {
     dot: 'bg-yellow-500',
     icon: '🏆',
   },
+  blanket: {
+    label: 'Blanket Badges',
+    color: 'from-amber-700 to-amber-900',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+    dot: 'bg-amber-700',
+    icon: '🏕️',
+  },
 };
 
 function BadgeCard({ badge, isEarned, inProgress, percentage, onClick }) {
@@ -128,10 +136,13 @@ function BadgeCategorySection({ title, icon, badges, isEarned, isInProgress, get
   );
 }
 
-function GoldAwardBanner({ child, badges, awards, badgeProgress, sections, onLearnMore }) {
-  const chiefScoutBadges = badges.filter(b => b.is_chief_scout_award);
-  const chiefScoutAward = chiefScoutBadges[0];
+function GoldAwardBanner({ child, badges, awards, badgeProgress, sections, onLearnMore, childSectionName }) {
+  // Find the chief scout award matching the child's section specifically
+  const chiefScoutAward = badges.find(b => b.is_chief_scout_award && b.section === childSectionName)
+    || badges.find(b => b.is_chief_scout_award);
   if (!chiefScoutAward) return null;
+  const awardLabel = childSectionName === 'cubs' ? "Chief Scout's Silver Award" : chiefScoutAward.name;
+  const isSilver = childSectionName === 'cubs';
 
   const isEarned = awards.some(a => a.member_id === child?.id && a.badge_id === chiefScoutAward.id)
     || badgeProgress.some(p => p.member_id === child?.id && p.badge_id === chiefScoutAward.id && p.status === 'completed');
@@ -140,8 +151,8 @@ function GoldAwardBanner({ child, badges, awards, badgeProgress, sections, onLea
     <button onClick={onLearnMore} className="w-full text-left active:scale-[0.98] transition-transform">
       <div className="rounded-2xl overflow-hidden relative" style={{
         background: isEarned
-          ? 'linear-gradient(135deg, #f59e0b 0%, #ef4444 35%, #8b5cf6 70%, #06b6d4 100%)'
-          : 'linear-gradient(135deg, #78350f 0%, #92400e 40%, #b45309 70%, #d97706 100%)'
+          ? (isSilver ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 35%, #475569 70%, #334155 100%)' : 'linear-gradient(135deg, #f59e0b 0%, #ef4444 35%, #8b5cf6 70%, #06b6d4 100%)')
+          : (isSilver ? 'linear-gradient(135deg, #374151 0%, #4b5563 40%, #6b7280 70%, #9ca3af 100%)' : 'linear-gradient(135deg, #78350f 0%, #92400e 40%, #b45309 70%, #d97706 100%)')
       }}>
         {/* Decorative sparkle overlay */}
         <div className="absolute inset-0 opacity-20"
@@ -160,7 +171,7 @@ function GoldAwardBanner({ child, badges, awards, badgeProgress, sections, onLea
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="font-bold text-white text-base drop-shadow">{chiefScoutAward.name}</p>
+              <p className="font-bold text-white text-base drop-shadow">{awardLabel}</p>
               {isEarned && (
                 <span className="bg-white text-yellow-600 text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow">
                   ⭐ Achieved!
@@ -310,13 +321,20 @@ export default function MobileBadges({ selectedChild }) {
     setSelectedBadge(nextStage || highestEarned);
   };
 
-  const goldAwardBadge = badges.find(b => b.is_chief_scout_award);
+  const goldAwardBadge = badges.find(b => b.is_chief_scout_award && b.section === childSectionName)
+    || badges.find(b => b.is_chief_scout_award);
 
   // Group by category
   const challengeBadges = sectionBadges.filter(b => b.category === 'challenge' && !b.is_chief_scout_award);
   const activityBadges = sectionBadges.filter(b => b.category === 'activity' && !b.is_chief_scout_award);
   // Core: exclude chief scout award, only show earned badges
   const coreBadges = sectionBadges.filter(b => b.category === 'core' && !b.is_chief_scout_award && isEarned(b.id));
+  // Blanket badges: only show awarded ones to parents
+  const blanketBadges = badges.filter(b =>
+    b.category === 'blanket' &&
+    (b.section === childSectionName || b.section === 'all') &&
+    isEarned(b.id)
+  );
 
   return (
     <div className="flex flex-col">
@@ -331,6 +349,7 @@ export default function MobileBadges({ selectedChild }) {
           awards={awards}
           badgeProgress={badgeProgress}
           onClose={() => setShowGoldAward(false)}
+          isSilver={childSectionName === 'cubs'}
         />
       )}
       {/* Badge criteria modal */}
@@ -356,13 +375,14 @@ export default function MobileBadges({ selectedChild }) {
       </div>
 
       <div className="px-4 py-5 space-y-4">
-        {/* Gold Award / Chief Scout Banner */}
+        {/* Chief Scout Award Banner — section-aware */}
         <GoldAwardBanner
           child={child}
           badges={badges}
           awards={awards}
           badgeProgress={badgeProgress}
           sections={sections}
+          childSectionName={childSectionName}
           onLearnMore={() => setShowGoldAward(true)}
         />
 
@@ -413,6 +433,20 @@ export default function MobileBadges({ selectedChild }) {
           getBadgePercentage={getBadgePercentage}
           onBadgeClick={setSelectedBadge}
         />
+
+        {/* Blanket Badges — only show earned ones */}
+        {blanketBadges.length > 0 && (
+          <BadgeCategorySection
+            title={CATEGORY_CONFIG.blanket.label}
+            icon={CATEGORY_CONFIG.blanket.icon}
+            badges={blanketBadges}
+            showCounter={false}
+            isEarned={isEarned}
+            isInProgress={() => false}
+            getBadgePercentage={() => 0}
+            onBadgeClick={setSelectedBadge}
+          />
+        )}
 
         {sectionBadges.length === 0 && (
           <div className="text-center py-12 text-gray-400">

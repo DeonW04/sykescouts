@@ -317,7 +317,7 @@ export default function LeaderBadges() {
           </div>
         ) : (
           <div>
-            {['challenge', 'activity', 'staged', 'core'].map(category => {
+            {['challenge', 'activity', 'staged', 'core', 'blanket'].map(category => {
                       const categoryBadges = filteredBadges.filter(b => b.category === category);
                       if (categoryBadges.length === 0) return null;
 
@@ -387,6 +387,8 @@ export default function LeaderBadges() {
                           if (b.is_chief_scout_award) return 1;
                           return a.name.localeCompare(b.name);
                         });
+                      } else if (category === 'blanket') {
+                        displayBadges = [...categoryBadges].sort((a, b) => a.name.localeCompare(b.name));
                       } else {
                         displayBadges = [...categoryBadges].sort((a, b) => a.name.localeCompare(b.name));
                       }
@@ -395,7 +397,7 @@ export default function LeaderBadges() {
 
                       return (
                         <div key={category} className="mb-8">
-                          <h2 className="text-2xl font-bold mb-4 capitalize">{category} Badges</h2>
+                          <h2 className="text-2xl font-bold mb-4 capitalize">{category === 'blanket' ? 'Blanket Badges' : `${category} Badges`}</h2>
                           <div className="grid grid-cols-3 lg:grid-cols-5 gap-3">
                             {displayBadges.map(badge => {
                               const isStaged = badge.category === 'staged';
@@ -418,7 +420,10 @@ export default function LeaderBadges() {
                                       if (badge.badge_family_id === 'nights_away') navigate(createPageUrl('NightsAwayBadgeDetail'));
                                       else if (badge.badge_family_id === 'hikes_away') navigate(createPageUrl('HikesAwayBadgeDetail'));
                                       else navigate(createPageUrl('StagedBadgeDetail') + `?familyId=${badge.badge_family_id}`);
-                                    } else if (badge.is_chief_scout_award) navigate(createPageUrl('GoldAwardDetail'));
+                                    } else if (badge.is_chief_scout_award) {
+                                      if (badge.section === 'cubs') navigate(createPageUrl('SilverAwardDetail'));
+                                      else navigate(createPageUrl('GoldAwardDetail'));
+                                    }
                                     else if (!isFamilyPlaceholder) navigate(createPageUrl('BadgeDetail') + `?id=${badge.id}`);
                                   }}
                                 >

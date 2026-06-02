@@ -44,6 +44,8 @@ import WhatsAppTemplates from './pages/WhatsAppTemplates';
 import GalleryUpload from './pages/GalleryUpload';
 import AccountSettings from './pages/AccountSettings';
 import OSMBadgeImport from './pages/OSMBadgeImport';
+import SilverAwardDetail from './pages/SilverAwardDetail';
+import ParentSilverAward from './pages/ParentSilverAward';
 
 // Public-only pages that should never be shown in PWA mode
 const PUBLIC_PAGES = ['/', '/Home', '/About', '/Contact', '/Gallery', '/Join', '/Sections', '/Parents', '/Volunteer', '/SharedPage'];
@@ -164,6 +166,8 @@ const AuthenticatedApp = () => {
       <Route path="/GalleryUpload" element={<GalleryUpload />} />
       <Route path="/AccountSettings" element={<AccountSettings />} />
       <Route path="/OSMBadgeImport" element={<OSMBadgeImport />} />
+      <Route path="/SilverAwardDetail" element={<LayoutWrapper currentPageName="SilverAwardDetail"><SilverAwardDetail /></LayoutWrapper>} />
+      <Route path="/ParentSilverAward" element={<LayoutWrapper currentPageName="ParentSilverAward"><ParentSilverAward /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </PWAGate>
