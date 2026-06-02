@@ -18,7 +18,7 @@ function BadgeCriteriaSheet({ badge, modules, requirements, reqProgress, child, 
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          maxHeight: '88dvh', background: '#0f172a',
+          height: '88dvh', maxHeight: '88dvh', background: '#0f172a',
           borderRadius: '24px 24px 0 0', overflow: 'hidden',
           display: 'flex', flexDirection: 'column',
         }}
@@ -60,7 +60,7 @@ function BadgeCriteriaSheet({ badge, modules, requirements, reqProgress, child, 
             const allDone = modReqs.length > 0 && modDone === modReqs.length;
 
             return (
-              <div key={mod.id} style={{ borderRadius: 16, overflow: 'hidden', background: '#1e293b', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div key={mod.id} style={{ flexShrink: 0, borderRadius: 16, overflow: 'hidden', background: '#1e293b', border: '1px solid rgba(255,255,255,0.07)' }}>
                 <button
                   onClick={() => setOpenModules(p => ({ ...p, [mod.id]: !isOpen }))}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}
@@ -76,7 +76,7 @@ function BadgeCriteriaSheet({ badge, modules, requirements, reqProgress, child, 
                     {modReqs.map((req, idx) => {
                       const done = isReqDone(req.id);
                       return (
-                        <div key={req.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <div key={req.id} style={{ flexShrink: 0, display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                           <div style={{ flexShrink: 0, marginTop: 1 }}>
                             {done ? <CheckCircle style={{ width: 15, height: 15, color: '#4ade80' }} /> : <Circle style={{ width: 15, height: 15, color: 'rgba(255,255,255,0.2)' }} />}
                           </div>
