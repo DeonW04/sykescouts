@@ -18,7 +18,7 @@ import {
   LayoutDashboard, Users, Settings, Globe, RefreshCw, Zap,
   BarChart2, Bell, Mail, Shield, Award, Calendar, Image, Camera,
   MessageCircle, CreditCard, ChevronRight, ArrowLeft, Layers,
-  TestTube, Edit, X, Upload, Play, Send, Activity, TrendingUp, ChevronDown
+  TestTube, Edit, X, Upload, Play, Send, Activity, TrendingUp, ChevronDown, Archive
 } from 'lucide-react';
 import {
   ResponsiveContainer, PieChart as RPieChart, Pie, Cell,
@@ -44,6 +44,7 @@ import SubscriptionPricingTab from '../components/admin/SubscriptionPricingTab';
 import OSMBadgeMappingTab from '../components/admin/OSMBadgeMappingTab';
 import ParentPortalAnalyticsPanel from '../components/admin/ParentPortalAnalyticsPanel';
 import ManageBadgesPanel from '../components/admin/ManageBadgesPanel';
+import ArchivedMembersPanel from '../components/admin/ArchivedMembersPanel';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const SECTION_STYLES = {
@@ -76,6 +77,7 @@ const SECTIONS = [
       { key: 'badge-bulk-award', label: 'Badge Bulk Award',     icon: Award },
       { key: 'import-badges',    label: 'Import Badges',        icon: Upload, navigate: '/ImportBadges' },
       { key: 'osm-badge-import', label: 'Import from OSM',      icon: Upload, navigate: '/OSMBadgeImport' },
+      { key: 'archived-members',  label: 'Archived Members',     icon: Archive },
     ]},
   { key: 'website', label: 'Website Content',  icon: Globe,    description: 'Pages & media',
     pages: [
@@ -502,6 +504,7 @@ export default function AdminSettings() {
       case 'wa-setup':      return <WhatsAppSetupTab />;
       case 'wa-test':       return <WhatsAppTestTab />;
       case 'manage-badges': return <ManageBadgesPanel />;
+      case 'archived-members': return <ArchivedMembersPanel />;
       case 'badge-bulk-award': return (
         <Card className="border-green-200 bg-green-50">
           <CardHeader><CardTitle className="flex items-center gap-2 text-green-900"><Award className="w-5 h-5" />Badge Bulk Award</CardTitle>
