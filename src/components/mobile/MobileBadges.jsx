@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Award, CheckCircle, Circle, Trophy, ChevronDown, ChevronUp } from 'lucide-react';
 import BadgeCriteriaModal from './BadgeCriteriaModal';
-import GoldAwardPage from './GoldAwardPage';
+import HoneycombAwardPage from './HoneycombAwardPage';
 
 const CATEGORY_CONFIG = {
   challenge: {
@@ -340,9 +340,10 @@ export default function MobileBadges({ selectedChild }) {
     <div className="flex flex-col">
       {/* Gold Award full-page view */}
       {showGoldAward && goldAwardBadge && (
-        <GoldAwardPage
+        <HoneycombAwardPage
           badge={goldAwardBadge}
           child={child}
+          badges={badges}
           modules={modules}
           requirements={requirements}
           reqProgress={reqProgress}

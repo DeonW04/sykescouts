@@ -10,10 +10,14 @@ import { Progress } from '@/components/ui/progress';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import HoneycombAwardPage from '../components/mobile/HoneycombAwardPage';
 
 export default function ParentGoldAward() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [selectedBadge, setSelectedBadge] = useState(null);
+  const isMobile = window.innerWidth < 768;
 
   React.useEffect(() => {
     loadUserData();
@@ -88,6 +92,26 @@ export default function ParentGoldAward() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full" />
       </div>
+    );
+  }
+
+  // On mobile: render the immersive honeycomb view
+  const goldAwardBadgeMobile = badges.find(b => b.is_chief_scout_award && b.section === 'scouts')
+    || badges.find(b => b.is_chief_scout_award);
+  if (isMobile && goldAwardBadgeMobile) {
+    return (
+      <HoneycombAwardPage
+        badge={goldAwardBadgeMobile}
+        child={child}
+        badges={badges}
+        modules={modules}
+        requirements={requirements}
+        reqProgress={reqProgress}
+        awards={awards}
+        badgeProgress={badgeProgress}
+        onClose={() => navigate(-1)}
+        isSilver={false}
+      />
     );
   }
 
