@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Award, CheckCircle, Circle, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Award, CheckCircle, Circle, ChevronDown, ChevronUp, X, Trophy } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 // ─── Badge criteria modal ─────────────────────────────────────────────────────
 // When a staged family is passed (allStages), shows a stage dropdown at the top.
@@ -208,8 +210,39 @@ function BadgeCategorySection({ title, icon, badges, isEarned, isInProgress, get
   );
 }
 
+// ─── Chief Scout Award Banner ─────────────────────────────────────────────────
+function ChiefScoutBanner({ badge, isSilver, onClick }) {
+  if (!badge) return null;
+  const label = isSilver ? "Chief Scout's Silver Award" : (badge.name || "Chief Scout's Gold Award");
+  return (
+    <button onClick={onClick} className="w-full text-left active:scale-[0.98] transition-transform">
+      <div className="rounded-2xl overflow-hidden relative" style={{
+        background: isSilver
+          ? 'linear-gradient(135deg, #374151 0%, #4b5563 40%, #6b7280 70%, #9ca3af 100%)'
+          : 'linear-gradient(135deg, #78350f 0%, #92400e 40%, #b45309 70%, #d97706 100%)'
+      }}>
+        <div className="relative flex items-center gap-4 p-4">
+          <div className="flex-shrink-0">
+            {badge.image_url
+              ? <img src={badge.image_url} alt={badge.name} className="w-14 h-14 object-contain rounded-xl shadow-lg" />
+              : <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center text-3xl">🏆</div>
+            }
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-white text-sm drop-shadow">{label}</p>
+            <p className="text-white/75 text-xs mt-0.5">The highest award for this section</p>
+            <p className="text-white/60 text-[10px] mt-1.5 font-semibold tracking-wide">TAP TO VIEW PROGRESS →</p>
+          </div>
+          <Trophy className="w-7 h-7 text-white/50 flex-shrink-0" />
+        </div>
+      </div>
+    </button>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function LeaderBadges({ sections }) {
+  const navigate = useNavigate();
   const [selectedMemberId, setSelectedMemberId] = useState('none');
   const [sectionFilter, setSectionFilter] = useState('all');
   // modal state: { badge, allStages }
@@ -371,6 +404,19 @@ export default function LeaderBadges({ sections }) {
   const activityBadges = sectionBadges.filter(b => b.category === 'activity' && !b.is_chief_scout_award);
   // Core: show ALL core badges (not just earned), never show counters
   const coreBadges = sectionBadges.filter(b => b.category === 'core' && !b.is_chief_scout_award);
+  // Blanket badges
+  const blanketBadges = sectionBadges.filter(b => b.category === 'blanket');
+
+  // Chief Scout Award for the active section
+  const chiefScoutAward = activeSectionName
+    ? (sectionBadges.find(b => b.is_chief_scout_award && b.section === activeSectionName) || sectionBadges.find(b => b.is_chief_scout_award))
+    : badges.find(b => b.is_chief_scout_award);
+  const isSilverSection = (activeSectionName || chiefScoutAward?.section) === 'cubs';
+
+  const handleChiefScoutClick = () => {
+    if (isSilverSection) navigate(createPageUrl('SilverAwardDetail'));
+    else navigate(createPageUrl('GoldAwardDetail'));
+  };
 
   return (
     <div className="flex flex-col">
@@ -434,6 +480,15 @@ export default function LeaderBadges({ sections }) {
       </div>
 
       <div className="px-4 pb-5 space-y-3">
+        {/* Chief Scout Award Banner */}
+        {chiefScoutAward && (
+          <ChiefScoutBanner
+            badge={chiefScoutAward}
+            isSilver={isSilverSection}
+            onClick={handleChiefScoutClick}
+          />
+        )}
+
         {/* Challenge — show counters */}
         <BadgeCategorySection
           title="Challenge Badges" icon="🎯"
@@ -469,6 +524,17 @@ export default function LeaderBadges({ sections }) {
           onBadgeClick={b => setModal({ badge: b, allStages: null })}
           showCounter={false}
         />
+
+        {/* Blanket Badges */}
+        {blanketBadges.length > 0 && (
+          <BadgeCategorySection
+            title="Blanket Badges" icon="🏕️"
+            badges={blanketBadges}
+            isEarned={earnedFn} isInProgress={inProgFn} getPercentage={pctFn}
+            onBadgeClick={b => setModal({ badge: b, allStages: null })}
+            showCounter={false}
+          />
+        )}
 
         {sectionBadges.length === 0 && (
           <div className="text-center py-12 text-gray-400">

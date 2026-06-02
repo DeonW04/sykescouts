@@ -411,7 +411,7 @@ export default function LeaderBadges() {
                               return (
                                 <Card
                                   key={badge.id}
-                                  className={`hover:shadow-lg transition-shadow ${!isFamilyPlaceholder && !badge.is_chief_scout_award ? 'cursor-pointer' : ''}`}
+                                  className={`hover:shadow-lg transition-shadow cursor-pointer`}
                                   onClick={() => {
                                     if (isNightsAwayFamily) navigate(createPageUrl('NightsAwayBadgeDetail'));
                                     else if (isHikesAwayFamily) navigate(createPageUrl('HikesAwayBadgeDetail'));
