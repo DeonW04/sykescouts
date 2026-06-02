@@ -102,7 +102,14 @@ Deno.serve(async (req) => {
     const badgeVersion = String(osmBadge.badge_version ?? '0');
 
     // Fetch per-requirement records for this badge from OSM
-    const recordsUrl = `https://www.onlinescoutmanager.co.uk/ext/badges/records/?action=getBadgeRecords&term_id=${osm_term_id}&section=${osm_section}&badge_id=${osmBadge.badge_id}&badge_version=${badgeVersion}&sectionid=${osm_section_id}&section_id=${osm_section_id}&access_token=${osm_access_token}`;
+    // type_id: 1=Challenge, 2=Activity, 3=Staged, 4=Core — derived from badge category
+    const typeId = osmBadge.badge_type_id || (
+      osmBadge.badge_type === 'challenge' ? 1 :
+      osmBadge.badge_type === 'activity'  ? 2 :
+      osmBadge.badge_type === 'staged'    ? 3 :
+      osmBadge.badge_type === 'core'      ? 4 : 2
+    );
+    const recordsUrl = `https://www.onlinescoutmanager.co.uk/ext/badges/records/?action=getBadgeRecords&term_id=${osm_term_id}&section=${osm_section}&badge_id=${osmBadge.badge_id}&section_id=${osm_section_id}&badge_version=${badgeVersion}&payload=1&type_id=${typeId}`;
 
     let memberRow = null;
     let structureFields = [];
@@ -111,17 +118,52 @@ Deno.serve(async (req) => {
       const recordsResp = await fetch(recordsUrl, { headers: { 'Authorization': `Bearer ${osm_access_token}` } });
       if (recordsResp.ok) {
         const recordsData = await recordsResp.json();
-        // Find this member's row
-        memberRow = (recordsData.data || []).find(row => String(row.scoutid) === String(scoutid)) || null;
-        // Flatten structure fields
-        for (const section of (recordsData.structure || [])) {
-          for (const row of (section.rows || [])) {
-            const f = String(row.field || '');
-            if (f && f !== 'scoutid' && f !== 'completed' && f !== 'awarded' && f !== 'total') {
-              structureFields.push(f);
+        const inner = recordsData?.data;
+
+        // Log structure of FIRST badge to diagnose format
+        if (badgesWithProgress.indexOf(osmBadge) === 0) {
+          console.log(`[FORMAT CHECK badge ${osmBadge.badge_id}] top-level keys:`, Object.keys(recordsData || {}));
+          if (inner && !Array.isArray(inner)) {
+            console.log(`[FORMAT CHECK] data sub-keys:`, Object.keys(inner).slice(0, 10));
+            if (inner.requirements?.length > 0) console.log(`[FORMAT CHECK] sample requirement:`, JSON.stringify(inner.requirements[0]));
+            const memberEntry = inner[String(scoutid)];
+            console.log(`[FORMAT CHECK] member entry by scoutid key:`, memberEntry ? JSON.stringify(memberEntry).slice(0, 200) : 'NOT FOUND');
+          } else if (Array.isArray(inner)) {
+            console.log(`[FORMAT CHECK] data is array, length:`, inner.length);
+            const found = inner.find(r => String(r.scoutid) === String(scoutid));
+            console.log(`[FORMAT CHECK] member found in array:`, found ? 'YES' : 'NO');
+            if (recordsData.structure) console.log(`[FORMAT CHECK] structure[0].rows sample:`, JSON.stringify(recordsData.structure[0]?.rows?.slice(0,2)));
+          }
+        }
+
+        if (inner && !Array.isArray(inner) && inner.requirements) {
+          // payload=1 format: { data: { requirements: [{requirement_id, ...}], [scoutid]: {requirement_id: val} } }
+          // Member completion data is keyed by requirement_id (same value stored as osm_requirement_id in our DB)
+          const requirements = inner.requirements || [];
+          memberRow = inner[String(scoutid)] || null;
+          // Use requirement_id (the value stored in our osm_requirement_id field) NOT r.field
+          structureFields = requirements
+            .map(r => String(r.requirement_id ?? r.field ?? ''))
+            .filter(f => f && f !== 'undefined' && f !== '' && f !== 'scoutid' && f !== 'completed' && f !== 'awarded' && f !== 'total');
+          if (badgesWithProgress.indexOf(osmBadge) === 0) {
+            console.log(`[DEBUG] First req object:`, JSON.stringify(requirements[0]));
+            console.log(`[DEBUG] structureFields sample:`, structureFields.slice(0, 3));
+            console.log(`[DEBUG] memberRow keys:`, memberRow ? Object.keys(memberRow).slice(0, 5) : 'NOT FOUND');
+          }
+        } else if (Array.isArray(inner)) {
+          // array format: data is [{scoutid, field: val}]
+          memberRow = inner.find(row => String(row.scoutid) === String(scoutid)) || null;
+          for (const section of (recordsData.structure || [])) {
+            for (const row of (section.rows || [])) {
+              const f = String(row.field || '');
+              if (f && f !== 'scoutid' && f !== 'completed' && f !== 'awarded' && f !== 'total') {
+                structureFields.push(f);
+              }
             }
           }
         }
+      } else {
+        console.warn(`getBadgeRecords HTTP ${recordsResp.status} for badge ${osmBadge.badge_id}`);
       }
     } catch (e) {
       console.warn(`Failed to fetch records for badge ${osmBadge.badge_id}:`, e.message);
