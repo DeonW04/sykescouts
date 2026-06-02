@@ -1,0 +1,74 @@
+{
+  "name": "ChildRegistration",
+  "type": "object",
+  "properties": {
+    "child_name": {
+      "type": "string",
+      "description": "Full name of the child"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date",
+      "description": "Child's date of birth"
+    },
+    "parent_name": {
+      "type": "string",
+      "description": "Parent/Guardian full name"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Parent/Guardian email address"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone number"
+    },
+    "address": {
+      "type": "string",
+      "description": "Home address"
+    },
+    "section_interest": {
+      "type": "string",
+      "enum": [
+        "squirrels",
+        "beavers",
+        "cubs",
+        "scouts",
+        "explorers"
+      ],
+      "description": "Which section the child is interested in"
+    },
+    "medical_info": {
+      "type": "string",
+      "description": "Any medical conditions or allergies"
+    },
+    "additional_info": {
+      "type": "string",
+      "description": "Any additional information"
+    },
+    "consent_photos": {
+      "type": "boolean",
+      "description": "Consent for photos to be taken"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "contacted",
+        "enrolled",
+        "waitlist"
+      ],
+      "default": "pending",
+      "description": "Registration status"
+    }
+  },
+  "required": [
+    "child_name",
+    "date_of_birth",
+    "parent_name",
+    "email",
+    "phone",
+    "section_interest"
+  ]
+}

@@ -19,50 +19,51 @@ Deno.serve(async (req) => {
   const osm_section   = osm_section_type_override || settings.osm_section;
   const osm_term_id   = osm_term_id_override       || settings.osm_term_id;
 
-  const url = `https://www.onlinescoutmanager.co.uk/ext/badges/badgesbyperson/?action=loadBadgesByMember&section=${osm_section || 'scouts'}&sectionid=${osm_section_id}&term_id=${osm_term_id}&access_token=${osm_access_token}`;
+  // --- Step 1: Get badge summary for this member ---
+  const summaryUrl = `https://www.onlinescoutmanager.co.uk/ext/badges/badgesbyperson/?action=loadBadgesByMember&section=${osm_section || 'scouts'}&sectionid=${osm_section_id}&term_id=${osm_term_id}&access_token=${osm_access_token}`;
+  const summaryResp = await fetch(summaryUrl, { headers: { 'Authorization': `Bearer ${osm_access_token}` } });
 
-  const resp = await fetch(url, {
-    headers: { 'Authorization': `Bearer ${osm_access_token}` }
-  });
-
-  if (!resp.ok) {
-    const body2 = await resp.text().catch(() => '');
-    console.warn(`OSM badges HTTP ${resp.status}:`, body2.slice(0, 200));
-    return Response.json({ success: true, badges_awarded: 0, skipped: true, reason: `OSM API ${resp.status}` });
+  if (!summaryResp.ok) {
+    return Response.json({ success: true, badges_awarded: 0, skipped: true, reason: `OSM summary API ${summaryResp.status}` });
   }
 
-  let osmData;
-  try {
-    osmData = await resp.json();
-  } catch (e) {
-    return Response.json({ success: true, badges_awarded: 0, skipped: true, reason: 'non-JSON response' });
+  let summaryData;
+  try { summaryData = await summaryResp.json(); } catch (e) {
+    return Response.json({ success: true, badges_awarded: 0, skipped: true, reason: 'non-JSON summary response' });
   }
 
-  if (osmData.status === false || osmData.ok === false) {
-    return Response.json({ success: true, badges_awarded: 0, skipped: true, reason: 'OSM reported failure' });
+  if (summaryData.status === false || summaryData.ok === false) {
+    return Response.json({ success: true, badges_awarded: 0, skipped: true, reason: 'OSM summary reported failure' });
   }
 
-  const allMemberData = Array.isArray(osmData.data) ? osmData.data : [];
+  const allMemberData = Array.isArray(summaryData.data) ? summaryData.data : [];
   const memberBadgeData = allMemberData.find(m => String(m.scoutid) === String(scoutid));
 
   if (!memberBadgeData) {
     return Response.json({ success: true, badges_awarded: 0, message: 'No badge data found for this member in OSM' });
   }
 
-  // awarded > 0: for normal badges means complete (awarded=1), for staged means stage N reached
-  const earnedBadges = (memberBadgeData.badges || []).filter(
-    b => parseInt(b.awarded) > 0 || String(b.completed) === '1'
+  const allOsmBadges = memberBadgeData.badges || [];
+  // Only process badges that have some progress
+  const badgesWithProgress = allOsmBadges.filter(b =>
+    parseInt(b.awarded) > 0 || String(b.completed) === '1' || parseInt(b.completed) > 0
   );
 
-  console.log(`Found ${earnedBadges.length} earned badges for scoutid ${scoutid} (from ${(memberBadgeData.badges || []).length} total)`);
+  console.log(`Member ${member_id}: ${badgesWithProgress.length} badges with progress (out of ${allOsmBadges.length} total)`);
 
-  if (earnedBadges.length === 0) {
-    return Response.json({ success: true, badges_awarded: 0, message: 'No earned badges in OSM' });
+  if (badgesWithProgress.length === 0) {
+    return Response.json({ success: true, badges_awarded: 0, requirements_set: 0, message: 'No badge progress found in OSM' });
   }
 
-  // Load all app BadgeDefinitions indexed by osm_badge_id
-  // For each OSM badge_id, there may be multiple BadgeDefinitions (one per stage for staged badges)
-  const appBadgeDefs = await base44.asServiceRole.entities.BadgeDefinition.filter({ active: true });
+  // --- Step 2: Load all app data upfront ---
+  const [appBadgeDefs, allBadgeRequirements, existingAwards, existingProgress] = await Promise.all([
+    base44.asServiceRole.entities.BadgeDefinition.filter({ active: true }),
+    base44.asServiceRole.entities.BadgeRequirement.filter({}),
+    base44.asServiceRole.entities.MemberBadgeAward.filter({ member_id }),
+    base44.asServiceRole.entities.MemberRequirementProgress.filter({ member_id }),
+  ]);
+
+  // Index BadgeDefinitions by osm_badge_id
   const badgeDefsByOsmId = {};
   for (const bd of appBadgeDefs) {
     if (!bd.osm_badge_id) continue;
@@ -71,69 +72,129 @@ Deno.serve(async (req) => {
     badgeDefsByOsmId[key].push(bd);
   }
 
-  // Get existing awards to avoid duplicates
-  const existingAwards = await base44.asServiceRole.entities.MemberBadgeAward.filter({ member_id });
+  // Index requirements by badge_id + osm_requirement_id (as string)
+  const reqByBadgeAndOsmField = {};
+  for (const r of allBadgeRequirements) {
+    if (!r.osm_requirement_id) continue;
+    const key = `${r.badge_id}__${String(r.osm_requirement_id)}`;
+    reqByBadgeAndOsmField[key] = r;
+  }
+
+  // Index existing awards and progress to avoid duplicates
   const alreadyAwardedIds = new Set(existingAwards.map(a => a.badge_id).filter(Boolean));
+  const alreadyProgressIds = new Set(existingProgress.map(p => p.requirement_id).filter(Boolean));
 
   const today = new Date().toISOString().split('T')[0];
   let badgesAwarded = 0;
-  let badgesSkipped = 0;   // no app badge linked
-  let badgesUnmapped = 0;  // no BadgeDefinition found for this OSM badge_id
+  let requirementsSet = 0;
+  let badgesUnmapped = 0;
 
-  const awardBadge = async (badgeDefId) => {
-    if (alreadyAwardedIds.has(badgeDefId)) return;
-    await base44.asServiceRole.entities.MemberBadgeAward.create({
-      member_id,
-      badge_id:       badgeDefId,
-      awarded_date:   today,
-      completed_date: today,
-      awarded_by:     'OSM Import',
-    });
-    alreadyAwardedIds.add(badgeDefId);
-    badgesAwarded++;
-  };
-
-  for (const osmBadge of earnedBadges) {
+  // --- Step 3: Process each badge ---
+  for (const osmBadge of badgesWithProgress) {
     const matchingDefs = badgeDefsByOsmId[String(osmBadge.badge_id)];
-
     if (!matchingDefs || matchingDefs.length === 0) {
-      console.log(`No BadgeDefinition with osm_badge_id=${osmBadge.badge_id} (${osmBadge.badge_name || ''})`);
+      console.log(`No BadgeDefinition for osm_badge_id=${osmBadge.badge_id} (${osmBadge.badge_name || ''})`);
       badgesUnmapped++;
       continue;
     }
 
-    const awardedStage = parseInt(osmBadge.awarded);
-    const isStaged = matchingDefs.some(d => d.stage_number != null) && awardedStage > 1;
+    const awardedStage = parseInt(osmBadge.awarded) || 0;
+    const badgeVersion = String(osmBadge.badge_version ?? '0');
 
-    if (isStaged) {
-      // Award all stages up to and including the earned stage number
-      const stageDefs = matchingDefs
-        .filter(d => d.stage_number != null && d.stage_number >= 1 && d.stage_number <= awardedStage)
-        .sort((a, b) => a.stage_number - b.stage_number);
+    // Fetch per-requirement records for this badge from OSM
+    const recordsUrl = `https://www.onlinescoutmanager.co.uk/ext/badges/records/?action=getBadgeRecords&term_id=${osm_term_id}&section=${osm_section}&badge_id=${osmBadge.badge_id}&badge_version=${badgeVersion}&sectionid=${osm_section_id}&section_id=${osm_section_id}&access_token=${osm_access_token}`;
 
-      if (stageDefs.length === 0) {
-        // Stage badges exist but none match — award whatever is available
-        for (const d of matchingDefs) await awardBadge(d.id);
-      } else {
-        for (const d of stageDefs) await awardBadge(d.id);
+    let memberRow = null;
+    let structureFields = [];
+
+    try {
+      const recordsResp = await fetch(recordsUrl, { headers: { 'Authorization': `Bearer ${osm_access_token}` } });
+      if (recordsResp.ok) {
+        const recordsData = await recordsResp.json();
+        // Find this member's row
+        memberRow = (recordsData.data || []).find(row => String(row.scoutid) === String(scoutid)) || null;
+        // Flatten structure fields
+        for (const section of (recordsData.structure || [])) {
+          for (const row of (section.rows || [])) {
+            const f = String(row.field || '');
+            if (f && f !== 'scoutid' && f !== 'completed' && f !== 'awarded' && f !== 'total') {
+              structureFields.push(f);
+            }
+          }
+        }
       }
-    } else {
-      // Normal badge or stage 1 — award all matching defs (usually just one)
-      for (const d of matchingDefs) {
-        if (!d.stage_number || d.stage_number <= awardedStage) {
-          await awardBadge(d.id);
+    } catch (e) {
+      console.warn(`Failed to fetch records for badge ${osmBadge.badge_id}:`, e.message);
+    }
+
+    // Process each matching BadgeDefinition (could be multiple stages)
+    for (const badgeDef of matchingDefs) {
+      const isStaged = badgeDef.stage_number != null;
+
+      // Determine if this badge/stage should be awarded
+      const shouldAward = isStaged
+        ? awardedStage >= badgeDef.stage_number
+        : awardedStage > 0 || String(osmBadge.completed) === '1';
+
+      if (shouldAward && !alreadyAwardedIds.has(badgeDef.id)) {
+        await base44.asServiceRole.entities.MemberBadgeAward.create({
+          member_id,
+          badge_id:       badgeDef.id,
+          awarded_date:   today,
+          completed_date: today,
+          awarded_by:     'OSM Import',
+          award_status:   'awarded',
+        });
+        alreadyAwardedIds.add(badgeDef.id);
+        badgesAwarded++;
+      }
+
+      // Set individual requirement progress from OSM records
+      if (memberRow && structureFields.length > 0) {
+        for (const field of structureFields) {
+          const appReq = reqByBadgeAndOsmField[`${badgeDef.id}__${field}`];
+          if (!appReq) continue;
+          if (alreadyProgressIds.has(appReq.id)) continue;
+
+          const rawVal = memberRow[field];
+          // OSM marks completion as "y", a date string, or "1"; blank/"0"/"no" = incomplete
+          const isDone = rawVal && rawVal !== '0' && rawVal !== '' && rawVal !== 'no' && rawVal !== 'false';
+          if (!isDone) continue;
+
+          // Extract date if OSM stored a date string (YYYY-MM-DD or DD/MM/YYYY)
+          let completedDate = today;
+          if (typeof rawVal === 'string' && rawVal !== 'y' && rawVal !== '1') {
+            const isoMatch = rawVal.match(/^(\d{4}-\d{2}-\d{2})/);
+            const ukMatch  = rawVal.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+            if (isoMatch) completedDate = isoMatch[1];
+            else if (ukMatch) completedDate = `${ukMatch[3]}-${ukMatch[2]}-${ukMatch[1]}`;
+          }
+
+          await base44.asServiceRole.entities.MemberRequirementProgress.create({
+            member_id,
+            badge_id:        badgeDef.id,
+            module_id:       appReq.module_id,
+            requirement_id:  appReq.id,
+            completion_count: 1,
+            completed:       true,
+            completed_date:  completedDate,
+            source:          'manual',
+            completed_by:    'OSM Import',
+          });
+          alreadyProgressIds.add(appReq.id);
+          requirementsSet++;
         }
       }
     }
   }
 
-  console.log(`Badge import for member ${member_id}: ${badgesAwarded} awarded, ${badgesSkipped} skipped, ${badgesUnmapped} unmapped (no osm_badge_id set)`);
+  console.log(`Badge import for member ${member_id}: ${badgesAwarded} badges awarded, ${requirementsSet} requirements set, ${badgesUnmapped} unmapped`);
 
   return Response.json({
     success: true,
-    badges_awarded: badgesAwarded,
-    badges_skipped: badgesSkipped,
-    badges_unmapped: badgesUnmapped,
-    total_osm_earned: earnedBadges.length,
+    badges_awarded:   badgesAwarded,
+    requirements_set: requirementsSet,
+    badges_unmapped:  badgesUnmapped,
+    total_osm_badges_with_progress: badgesWithProgress.length,
   });
 });

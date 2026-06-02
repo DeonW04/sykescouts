@@ -1,0 +1,34 @@
+{
+  "name": "ProgrammeBadgeCriteria",
+  "type": "object",
+  "properties": {
+    "programme_id": {
+      "type": "string",
+      "description": "Programme session ID"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Event ID"
+    },
+    "badge_id": {
+      "type": "string",
+      "description": "Badge ID (specific stage for staged badges)"
+    },
+    "requirement_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of requirement IDs covered"
+    },
+    "counts_as_hike_away": {
+      "type": "boolean",
+      "default": false,
+      "description": "Does this activity count as a hike away"
+    }
+  },
+  "required": [
+    "badge_id",
+    "requirement_ids"
+  ]
+}

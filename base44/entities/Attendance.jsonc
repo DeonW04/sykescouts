@@ -1,0 +1,43 @@
+{
+  "name": "Attendance",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string",
+      "description": "Member ID"
+    },
+    "section_id": {
+      "type": "string",
+      "description": "Section ID"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Meeting date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "present",
+        "absent",
+        "apologies",
+        "excused"
+      ],
+      "description": "Attendance status"
+    },
+    "recorded_by": {
+      "type": "string",
+      "description": "Leader who recorded attendance"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "member_id",
+    "section_id",
+    "date",
+    "status"
+  ]
+}

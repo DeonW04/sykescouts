@@ -1,0 +1,24 @@
+{
+  "name": "ParentRegistrationCache",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Parent email address"
+    },
+    "is_registered": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the parent has completed registration"
+    },
+    "last_checked": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this status was last verified"
+    }
+  },
+  "required": [
+    "email"
+  ]
+}

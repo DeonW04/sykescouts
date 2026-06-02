@@ -1,0 +1,55 @@
+{
+  "name": "BadgeProgress",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string",
+      "description": "Member ID"
+    },
+    "badge_id": {
+      "type": "string",
+      "description": "Badge ID"
+    },
+    "started_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date started"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date completed"
+    },
+    "awarded_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date badge was awarded"
+    },
+    "requirements_completed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Completed requirement IDs"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed",
+        "awarded"
+      ],
+      "default": "not_started",
+      "description": "Progress status"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Progress notes"
+    }
+  },
+  "required": [
+    "member_id",
+    "badge_id"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "name": "RiskAssessment",
+  "type": "object",
+  "properties": {
+    "activity_name": {
+      "type": "string",
+      "description": "Name of activity, event, and location"
+    },
+    "assessment_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of risk assessment"
+    },
+    "next_review_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of next review"
+    },
+    "assessor_name": {
+      "type": "string",
+      "description": "Name of person doing this risk assessment"
+    },
+    "activity_description": {
+      "type": "string",
+      "description": "Description of the activity for AI context"
+    },
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "hazard": {
+            "type": "string",
+            "description": "What could go wrong? What hazard and risks identified?"
+          },
+          "who_at_risk": {
+            "type": "string",
+            "description": "Who is at risk?"
+          },
+          "controls": {
+            "type": "string",
+            "description": "What are you going to do about it? Controls and communication"
+          },
+          "review_notes": {
+            "type": "string",
+            "description": "Review & revise - what has changed?"
+          }
+        }
+      },
+      "default": [],
+      "description": "Array of identified risks"
+    }
+  },
+  "required": [
+    "activity_name"
+  ]
+}

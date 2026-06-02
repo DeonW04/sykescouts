@@ -1,0 +1,89 @@
+{
+  "name": "CommunicationPage",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "weekly_message",
+        "monthly_newsletter",
+        "event_update"
+      ],
+      "description": "Type of communication page"
+    },
+    "title": {
+      "type": "string",
+      "description": "Page title"
+    },
+    "page_id": {
+      "type": "string",
+      "description": "Unique public page ID for sharing"
+    },
+    "description": {
+      "type": "string",
+      "description": "Page description"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "published",
+        "archived"
+      ],
+      "default": "draft",
+      "description": "Publication status"
+    },
+    "section_id": {
+      "type": "string",
+      "description": "Section this communication relates to (optional)"
+    },
+    "event_update_mode": {
+      "type": "string",
+      "enum": [
+        "mid_event",
+        "post_event"
+      ],
+      "description": "For event updates: mid-event or post-event"
+    },
+    "linked_event_id": {
+      "type": "string",
+      "description": "For event updates: linked event ID"
+    },
+    "blocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "order": {
+            "type": "number"
+          },
+          "data": {
+            "type": "object"
+          }
+        }
+      },
+      "description": "Page blocks"
+    },
+    "view_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times page was viewed"
+    },
+    "published_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date published"
+    }
+  },
+  "required": [
+    "type",
+    "title",
+    "page_id"
+  ]
+}

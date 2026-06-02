@@ -1,0 +1,30 @@
+{
+  "name": "LeaderAttendance",
+  "type": "object",
+  "properties": {
+    "programme_id": {
+      "type": "string",
+      "description": "Programme ID if linked to meeting"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Event ID if linked to event"
+    },
+    "leader_id": {
+      "type": "string",
+      "description": "Leader ID"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "attending",
+        "busy"
+      ],
+      "description": "Leader attendance status"
+    }
+  },
+  "required": [
+    "leader_id",
+    "status"
+  ]
+}

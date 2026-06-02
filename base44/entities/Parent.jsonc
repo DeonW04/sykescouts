@@ -1,0 +1,34 @@
+{
+  "name": "Parent",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Link to User entity"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone number"
+    },
+    "address": {
+      "type": "string",
+      "description": "Home address"
+    },
+    "emergency_contact_name": {
+      "type": "string",
+      "description": "Emergency contact name"
+    },
+    "emergency_contact_phone": {
+      "type": "string",
+      "description": "Emergency contact phone"
+    },
+    "emergency_contact_relationship": {
+      "type": "string",
+      "description": "Relationship to parent"
+    }
+  },
+  "required": [
+    "user_id",
+    "phone"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "name": "EventAttendance",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "Event ID"
+    },
+    "member_id": {
+      "type": "string",
+      "description": "Member ID"
+    },
+    "rsvp_status": {
+      "type": "string",
+      "enum": [
+        "not_responded",
+        "attending",
+        "not_attending",
+        "maybe"
+      ],
+      "default": "not_responded",
+      "description": "RSVP status"
+    },
+    "consent_given": {
+      "type": "boolean",
+      "default": false,
+      "description": "Parent consent given"
+    },
+    "consent_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date consent given"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "not_required",
+        "pending",
+        "paid",
+        "refunded"
+      ],
+      "default": "pending",
+      "description": "Payment status"
+    },
+    "payment_id": {
+      "type": "string",
+      "description": "Link to Payment record"
+    },
+    "attended": {
+      "type": "boolean",
+      "description": "Did they actually attend"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "event_id",
+    "member_id"
+  ]
+}

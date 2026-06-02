@@ -1,0 +1,36 @@
+{
+  "name": "ParentVolunteer",
+  "type": "object",
+  "properties": {
+    "programme_id": {
+      "type": "string",
+      "description": "Programme ID if linked to meeting"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Event ID if linked to event"
+    },
+    "parent_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Parent email"
+    },
+    "parent_name": {
+      "type": "string",
+      "description": "Parent name"
+    },
+    "response": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no"
+      ],
+      "description": "Volunteer response"
+    }
+  },
+  "required": [
+    "parent_email",
+    "parent_name",
+    "response"
+  ]
+}

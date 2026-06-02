@@ -1,0 +1,31 @@
+{
+  "name": "PageView",
+  "type": "object",
+  "properties": {
+    "page_id": {
+      "type": "string",
+      "description": "Communication page ID"
+    },
+    "viewed_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When page was viewed"
+    },
+    "viewer_ip": {
+      "type": "string",
+      "description": "Viewer IP address"
+    },
+    "viewer_email": {
+      "type": "string",
+      "description": "Viewer email if identified"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Session identifier"
+    }
+  },
+  "required": [
+    "page_id",
+    "viewed_date"
+  ]
+}

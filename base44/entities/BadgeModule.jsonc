@@ -1,0 +1,35 @@
+{
+  "name": "BadgeModule",
+  "type": "object",
+  "properties": {
+    "badge_id": {
+      "type": "string",
+      "description": "Badge ID"
+    },
+    "name": {
+      "type": "string",
+      "description": "Module name"
+    },
+    "order": {
+      "type": "number",
+      "description": "Display order"
+    },
+    "completion_rule": {
+      "type": "string",
+      "enum": [
+        "all_required",
+        "x_of_n_required"
+      ],
+      "default": "all_required",
+      "description": "Module completion rule"
+    },
+    "required_count": {
+      "type": "number",
+      "description": "Required count for x_of_n_required"
+    }
+  },
+  "required": [
+    "badge_id",
+    "name"
+  ]
+}

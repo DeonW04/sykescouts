@@ -1,0 +1,23 @@
+{
+  "name": "PendingBadgeNotification",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string",
+      "description": "Member who was awarded the badge"
+    },
+    "badge_id": {
+      "type": "string",
+      "description": "Badge that was awarded"
+    },
+    "award_id": {
+      "type": "string",
+      "description": "The MemberBadgeAward record ID, used to match on delete"
+    }
+  },
+  "required": [
+    "member_id",
+    "badge_id",
+    "award_id"
+  ]
+}

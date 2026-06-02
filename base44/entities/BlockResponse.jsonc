@@ -1,0 +1,42 @@
+{
+  "name": "BlockResponse",
+  "type": "object",
+  "properties": {
+    "page_id": {
+      "type": "string",
+      "description": "Communication page ID"
+    },
+    "block_id": {
+      "type": "string",
+      "description": "Block ID within the page"
+    },
+    "response_type": {
+      "type": "string",
+      "enum": [
+        "question",
+        "vote",
+        "text_input"
+      ],
+      "description": "Type of interactive block"
+    },
+    "response_data": {
+      "type": "object",
+      "description": "Response data (varies by type)"
+    },
+    "respondent_email": {
+      "type": "string",
+      "description": "Email of respondent if identified"
+    },
+    "response_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When response was submitted"
+    }
+  },
+  "required": [
+    "page_id",
+    "block_id",
+    "response_type",
+    "response_data"
+  ]
+}

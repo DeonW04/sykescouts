@@ -1,0 +1,42 @@
+{
+  "name": "StockAdjustmentLog",
+  "type": "object",
+  "properties": {
+    "badge_id": {
+      "type": "string",
+      "description": "Badge ID"
+    },
+    "adjustment_amount": {
+      "type": "number",
+      "description": "Amount adjusted (positive or negative)"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Reason for adjustment"
+    },
+    "adjusted_by": {
+      "type": "string",
+      "description": "User who made the adjustment"
+    },
+    "adjustment_type": {
+      "type": "string",
+      "enum": [
+        "award",
+        "restock",
+        "correction",
+        "undo_award"
+      ],
+      "description": "Type of adjustment"
+    },
+    "related_award_id": {
+      "type": "string",
+      "description": "Related award ID if applicable"
+    }
+  },
+  "required": [
+    "badge_id",
+    "adjustment_amount",
+    "adjusted_by",
+    "adjustment_type"
+  ]
+}

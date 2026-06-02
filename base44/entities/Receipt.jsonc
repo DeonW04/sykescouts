@@ -1,0 +1,58 @@
+{
+  "name": "Receipt",
+  "type": "object",
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "description": "4-character receipt ID"
+    },
+    "receipt_image_url": {
+      "type": "string",
+      "description": "URL of uploaded receipt image"
+    },
+    "value": {
+      "type": "number",
+      "description": "Receipt value in GBP"
+    },
+    "meeting_id": {
+      "type": "string",
+      "description": "Associated meeting ID (null if generic expense)"
+    },
+    "section_id": {
+      "type": "string",
+      "description": "Section ID this receipt relates to"
+    },
+    "is_generic_expense": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is a generic expense"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes about the receipt"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "reimbursed"
+      ],
+      "default": "pending",
+      "description": "Reimbursement status"
+    },
+    "leader_id": {
+      "type": "string",
+      "description": "ID of leader who uploaded the receipt"
+    },
+    "leader_name": {
+      "type": "string",
+      "description": "Name of leader who uploaded the receipt"
+    }
+  },
+  "required": [
+    "receipt_id",
+    "receipt_image_url",
+    "value",
+    "leader_id"
+  ]
+}

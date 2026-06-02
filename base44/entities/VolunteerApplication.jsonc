@@ -1,0 +1,78 @@
+{
+  "name": "VolunteerApplication",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Applicant's full name"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email address"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone number"
+    },
+    "address": {
+      "type": "string",
+      "description": "Home address"
+    },
+    "occupation": {
+      "type": "string",
+      "description": "Current occupation"
+    },
+    "previous_scouting": {
+      "type": "boolean",
+      "description": "Previous scouting experience"
+    },
+    "previous_scouting_details": {
+      "type": "string",
+      "description": "Details of previous scouting experience"
+    },
+    "skills": {
+      "type": "string",
+      "description": "Skills or interests that could benefit the group"
+    },
+    "availability": {
+      "type": "string",
+      "description": "Days/times available to volunteer"
+    },
+    "why_volunteer": {
+      "type": "string",
+      "description": "Why they want to volunteer"
+    },
+    "section_preference": {
+      "type": "string",
+      "enum": [
+        "any",
+        "squirrels",
+        "beavers",
+        "cubs",
+        "scouts",
+        "explorers",
+        "admin"
+      ],
+      "description": "Preferred section to help with"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "contacted",
+        "interviewing",
+        "approved",
+        "declined"
+      ],
+      "default": "pending",
+      "description": "Application status"
+    }
+  },
+  "required": [
+    "full_name",
+    "email",
+    "phone",
+    "why_volunteer"
+  ]
+}

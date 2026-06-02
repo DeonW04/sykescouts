@@ -1,0 +1,123 @@
+{
+  "name": "UniformConfig",
+  "type": "object",
+  "properties": {
+    "section": {
+      "type": "string",
+      "enum": [
+        "beavers",
+        "cubs",
+        "scouts"
+      ],
+      "description": "Which section this uniform config belongs to"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "URL of the uniform diagram image"
+    },
+    "dot_positions": {
+      "type": "object",
+      "description": "Map of position key -> {x, y} as percentage of image dimensions",
+      "properties": {
+        "left_sleeve_upper": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          }
+        },
+        "left_sleeve_lower": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          }
+        },
+        "right_sleeve": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          }
+        },
+        "left_chest_upper": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          }
+        },
+        "left_chest_lower": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          }
+        },
+        "right_chest_upper": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          }
+        },
+        "right_chest_lower": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "section_example_images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "position": {
+            "type": "string"
+          },
+          "image_url": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Example photos of each area of the uniform"
+    }
+  },
+  "required": [
+    "section"
+  ]
+}

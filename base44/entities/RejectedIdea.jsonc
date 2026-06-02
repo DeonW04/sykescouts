@@ -1,0 +1,26 @@
+{
+  "name": "RejectedIdea",
+  "type": "object",
+  "properties": {
+    "section_id": {
+      "type": "string",
+      "description": "Section ID"
+    },
+    "title": {
+      "type": "string",
+      "description": "Rejected idea title \u2014 used to prevent AI regeneration"
+    },
+    "description": {
+      "type": "string",
+      "description": "Original description"
+    },
+    "rejected_by_id": {
+      "type": "string",
+      "description": "User who rejected it"
+    }
+  },
+  "required": [
+    "section_id",
+    "title"
+  ]
+}

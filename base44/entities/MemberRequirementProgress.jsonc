@@ -1,0 +1,62 @@
+{
+  "name": "MemberRequirementProgress",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string",
+      "description": "Member ID"
+    },
+    "badge_id": {
+      "type": "string",
+      "description": "Badge ID"
+    },
+    "module_id": {
+      "type": "string",
+      "description": "Module ID"
+    },
+    "requirement_id": {
+      "type": "string",
+      "description": "Requirement ID"
+    },
+    "completion_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times completed"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Is fully completed (reached required count)"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date fully completed"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "programme"
+      ],
+      "description": "How it was completed"
+    },
+    "programme_id": {
+      "type": "string",
+      "description": "Programme session ID if auto-awarded"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Event ID if awarded from event"
+    },
+    "completed_by": {
+      "type": "string",
+      "description": "Leader who marked it complete"
+    }
+  },
+  "required": [
+    "member_id",
+    "badge_id",
+    "requirement_id"
+  ]
+}

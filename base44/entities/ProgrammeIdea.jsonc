@@ -1,0 +1,112 @@
+{
+  "name": "ProgrammeIdea",
+  "type": "object",
+  "properties": {
+    "section_id": {
+      "type": "string",
+      "description": "Section ID this idea belongs to"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "meeting",
+        "event"
+      ],
+      "description": "Meeting or event idea"
+    },
+    "title": {
+      "type": "string",
+      "description": "Idea title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Full description of the idea"
+    },
+    "notes": {
+      "type": "string",
+      "description": "User-added freetext notes"
+    },
+    "resources": {
+      "type": "string",
+      "description": "Resources and equipment needed for this idea"
+    },
+    "badge_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Related badge definition IDs"
+    },
+    "incidental_badge_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Badge IDs that this activity might incidentally cover"
+    },
+    "incidental_badge_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Badge names that this activity might incidentally cover"
+    },
+    "suggested_week": {
+      "type": "string",
+      "description": "Suggested week/date from AI"
+    },
+    "pos_x": {
+      "type": "number",
+      "description": "X position on board (0-100 percent)"
+    },
+    "pos_y": {
+      "type": "number",
+      "description": "Y position on board (0-100 percent)"
+    },
+    "rotation": {
+      "type": "number",
+      "description": "Slight random rotation in degrees"
+    },
+    "color": {
+      "type": "string",
+      "description": "Post-it background colour class"
+    },
+    "added_by_id": {
+      "type": "string",
+      "description": "User ID who added the idea"
+    },
+    "added_by_name": {
+      "type": "string",
+      "description": "Display name of who added it"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "ai_generated"
+      ],
+      "default": "manual"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "added_to_programme"
+      ],
+      "default": "active"
+    },
+    "linked_programme_id": {
+      "type": "string",
+      "description": "Programme meeting this idea is linked to"
+    },
+    "ai_rationale": {
+      "type": "string",
+      "description": "AI rationale for why this idea was suggested"
+    }
+  },
+  "required": [
+    "section_id",
+    "type",
+    "title"
+  ]
+}

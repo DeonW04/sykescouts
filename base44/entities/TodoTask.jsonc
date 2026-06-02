@@ -1,0 +1,40 @@
+{
+  "name": "TodoTask",
+  "type": "object",
+  "properties": {
+    "programme_id": {
+      "type": "string",
+      "description": "Programme ID if linked to meeting"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Event ID if linked to event"
+    },
+    "task": {
+      "type": "string",
+      "description": "Task description"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "User assigned to this task"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Due date for task"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Task completion status"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When task was completed"
+    }
+  },
+  "required": [
+    "task"
+  ]
+}

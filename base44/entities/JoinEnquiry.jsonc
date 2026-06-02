@@ -1,0 +1,63 @@
+{
+  "name": "JoinEnquiry",
+  "type": "object",
+  "properties": {
+    "enquiry_type": {
+      "type": "string",
+      "enum": [
+        "member",
+        "volunteer"
+      ],
+      "description": "Type of enquiry"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Full name"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email address"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "uncontacted",
+        "contacted",
+        "complete"
+      ],
+      "default": "uncontacted",
+      "description": "Contact status"
+    },
+    "form_data": {
+      "type": "object",
+      "description": "Full form responses"
+    },
+    "created_member_id": {
+      "type": "string",
+      "description": "Link to created Member entity"
+    },
+    "created_volunteer_id": {
+      "type": "string",
+      "description": "Link to created VolunteerApplication entity"
+    },
+    "last_contacted": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last contact date"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal notes"
+    }
+  },
+  "required": [
+    "enquiry_type",
+    "full_name",
+    "email"
+  ]
+}

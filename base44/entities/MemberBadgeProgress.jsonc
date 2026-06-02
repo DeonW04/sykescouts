@@ -1,0 +1,33 @@
+{
+  "name": "MemberBadgeProgress",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string",
+      "description": "Member ID"
+    },
+    "badge_id": {
+      "type": "string",
+      "description": "Badge ID"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed"
+      ],
+      "default": "not_started",
+      "description": "Progress status"
+    },
+    "completion_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date completed"
+    }
+  },
+  "required": [
+    "member_id",
+    "badge_id"
+  ]
+}

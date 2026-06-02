@@ -1,0 +1,50 @@
+{
+  "name": "NightsAwayLog",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string",
+      "description": "Member ID"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Event ID (if applicable)"
+    },
+    "nights_count": {
+      "type": "number",
+      "description": "Number of nights"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Start date of camp"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "End date of camp"
+    },
+    "location": {
+      "type": "string",
+      "description": "Camp location"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    },
+    "verified": {
+      "type": "boolean",
+      "default": true,
+      "description": "Verified by leader"
+    },
+    "verified_by": {
+      "type": "string",
+      "description": "Leader who verified"
+    }
+  },
+  "required": [
+    "member_id",
+    "nights_count",
+    "start_date"
+  ]
+}

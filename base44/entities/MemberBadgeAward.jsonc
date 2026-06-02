@@ -1,0 +1,42 @@
+{
+  "name": "MemberBadgeAward",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string",
+      "description": "Member ID"
+    },
+    "badge_id": {
+      "type": "string",
+      "description": "Badge ID"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date badge was completed"
+    },
+    "awarded_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date badge was awarded"
+    },
+    "awarded_by": {
+      "type": "string",
+      "description": "Leader who awarded the badge"
+    },
+    "award_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "awarded"
+      ],
+      "default": "pending",
+      "description": "Award status"
+    }
+  },
+  "required": [
+    "member_id",
+    "badge_id",
+    "completed_date"
+  ]
+}
