@@ -116,7 +116,7 @@ export default function LoginPanel({ onClose }) {
 
       {/* OSM SSO button (purple) */}
       <button
-        onClick={() => base44.auth.redirectToLogin(window.location.pathname + window.location.search)}
+        onClick={() => base44.auth.loginWithProvider('sso', window.location.pathname + window.location.search)}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
           fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '14px',

@@ -405,8 +405,10 @@ export default function FloatingNav() {
         onLogin={() => setLoginOpen(true)}
       />
 
-      {/* Mobile login bottom sheet */}
-      <LoginDropdown variant="mobile" open={loginOpen} onClose={() => setLoginOpen(false)} />
+      {/* Mobile login bottom sheet — only on mobile */}
+      <div className="md:hidden">
+        <LoginDropdown variant="mobile" open={loginOpen} onClose={() => setLoginOpen(false)} />
+      </div>
 
       {/* ── Outer wrapper ── */}
       <div style={{
