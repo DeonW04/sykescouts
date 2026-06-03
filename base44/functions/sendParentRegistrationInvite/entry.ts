@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-const FROM_ADDRESS = 'noreply@sykescouts.org';
+const FROM_ADDRESS = 'deon@sykescouts.org';
 const APP_BASE_URL = 'https://sykescouts.org';
 const LOGO_URL = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png';
 
