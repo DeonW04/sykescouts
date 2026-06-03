@@ -14,6 +14,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PORTAL_NAV_GROUPS } from '@/lib/navConfig';
+import LoginDropdown from './LoginDropdown';
 
 // Portal nav groups — single source of truth in lib/navConfig
 const portalGroups = PORTAL_NAV_GROUPS;
@@ -45,7 +46,7 @@ const PORTAL_PAGES = [
 ];
 
 // ── Mobile Sidebar Drawer ──────────────────────────────────────────────────────
-function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, user, portalLabel, portalUrl, isPortalPage }) {
+function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, user, portalLabel, portalUrl, isPortalPage, onLogin }) {
   const location = useLocation();
   const [expandedGroup, setExpandedGroup] = useState(null);
   const [showPortal, setShowPortal] = useState(isPortalPage);
@@ -148,7 +149,7 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, user, porta
                   </button>
                 ) : !user ? (
                   <button
-                    onClick={() => { base44.auth.redirectToLogin(); onClose(); }}
+                    onClick={() => { onClose(); onLogin(); }}
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
                       fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
@@ -270,6 +271,7 @@ export default function FloatingNav() {
   const [portalUrl, setPortalUrl] = useState(null);
   const [portalOpen, setPortalOpen] = useState(false);
   const [joinOpen,   setJoinOpen]   = useState(false);
+  const [loginOpen,  setLoginOpen]  = useState(false);
   const location = useLocation();
 
   const isPortalPage = PORTAL_PAGES.some(p => location.pathname === p || location.pathname.startsWith(p + '?'));
@@ -400,7 +402,11 @@ export default function FloatingNav() {
         portalLabel={portalLabel}
         portalUrl={portalUrl}
         isPortalPage={isPortalPage}
+        onLogin={() => setLoginOpen(true)}
       />
+
+      {/* Mobile login bottom sheet */}
+      <LoginDropdown variant="mobile" open={loginOpen} onClose={() => setLoginOpen(false)} />
 
       {/* ── Outer wrapper ── */}
       <div style={{
@@ -500,16 +506,16 @@ export default function FloatingNav() {
               <>
                 {/* Login */}
                 <button
-                  onClick={() => base44.auth.redirectToLogin()}
+                  onClick={() => setLoginOpen(v => !v)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '6px',
                     fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
-                    color: 'rgba(26,26,46,0.8)', background: 'transparent',
-                    border: '0.5px solid rgba(26,26,46,0.25)', borderRadius: '25px',
+                    color: loginOpen ? '#7413dc' : 'rgba(26,26,46,0.8)', background: loginOpen ? 'rgba(116,19,220,0.06)' : 'transparent',
+                    border: `0.5px solid ${loginOpen ? 'rgba(116,19,220,0.3)' : 'rgba(26,26,46,0.25)'}`, borderRadius: '25px',
                     padding: '7px 18px', cursor: 'pointer', transition: 'all 0.2s',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(26,26,46,0.06)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                  onMouseEnter={e => { if (!loginOpen) e.currentTarget.style.background = 'rgba(26,26,46,0.06)'; }}
+                  onMouseLeave={e => { if (!loginOpen) e.currentTarget.style.background = 'transparent'; }}
                 >
                   Login
                 </button>
@@ -700,6 +706,12 @@ export default function FloatingNav() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Desktop login dropdown — anchored below the nav bar, right side.
+          Rendered outside the overflow-hidden wrapper so it isn't clipped. */}
+      <div className="hidden md:block">
+        <LoginDropdown variant="desktop" open={loginOpen} onClose={() => setLoginOpen(false)} />
       </div>
     </>
   );
