@@ -1,0 +1,64 @@
+{
+  "name": "RegistrationInvite",
+  "type": "object",
+  "properties": {
+    "token": {
+      "type": "string",
+      "description": "Unique random token embedded in the registration link"
+    },
+    "member_id": {
+      "type": "string",
+      "description": "Member (child) this invite links the parent to"
+    },
+    "parent_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email address the invite was sent to"
+    },
+    "parent_name": {
+      "type": "string",
+      "description": "Parent's name for personalisation"
+    },
+    "child_name": {
+      "type": "string",
+      "description": "Child's full name for display"
+    },
+    "parent_slot": {
+      "type": "string",
+      "enum": [
+        "parent_one",
+        "parent_two"
+      ],
+      "description": "Which parent slot on the member this invite corresponds to"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "expired"
+      ],
+      "default": "pending",
+      "description": "Invite status"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the invite link expires"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the parent completed registration"
+    },
+    "sent_by": {
+      "type": "string",
+      "description": "User ID of the leader who sent the invite"
+    }
+  },
+  "required": [
+    "token",
+    "member_id",
+    "parent_email"
+  ]
+}

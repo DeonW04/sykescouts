@@ -453,10 +453,12 @@ export default function MemberDetail() {
                       onClick={async () => {
                         setSendingInvite(true);
                         try {
-                          await base44.functions.invoke('sendParentPortalInvite', {
+                          await base44.functions.invoke('sendParentRegistrationInvite', {
                             parentEmail: member.parent_one_email,
                             parentName: member.parent_one_name || 'Parent',
-                            childName: member.full_name
+                            childName: member.full_name,
+                            memberId: member.id,
+                            parentSlot: 'parent_one',
                           });
                           toast.success('Invitation sent');
                           queryClient.invalidateQueries({ queryKey: ['parent-registration'] });
@@ -511,10 +513,12 @@ export default function MemberDetail() {
                       onClick={async () => {
                         setSendingInvite(true);
                         try {
-                          await base44.functions.invoke('sendParentPortalInvite', {
+                          await base44.functions.invoke('sendParentRegistrationInvite', {
                             parentEmail: member.parent_two_email,
                             parentName: member.parent_two_name || 'Parent',
-                            childName: member.full_name
+                            childName: member.full_name,
+                            memberId: member.id,
+                            parentSlot: 'parent_two',
                           });
                           toast.success('Invitation sent');
                           queryClient.invalidateQueries({ queryKey: ['parent-registration'] });

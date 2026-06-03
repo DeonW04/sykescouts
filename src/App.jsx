@@ -31,6 +31,7 @@ import SignaturePage from './pages/SignaturePage';
 import QuizBuilder from './pages/QuizBuilder';
 import MobileApp from './pages/MobileApp';
 import CompleteRegistration from './pages/CompleteRegistration';
+import Register from './pages/Register';
 import { usePWA } from './hooks/usePWA';
 import PWAInstallGate from './components/pwa/PWAInstallGate';
 import { useEffect } from 'react';
@@ -145,6 +146,7 @@ const AuthenticatedApp = () => {
       <Route path="/ParentPortalAnalytics" element={<LayoutWrapper currentPageName="ParentPortalAnalytics"><ParentPortalAnalytics /></LayoutWrapper>} />
       <Route path="/ConsentFormBuilder" element={<LayoutWrapper currentPageName="ConsentFormBuilder"><ConsentFormBuilder /></LayoutWrapper>} />
       <Route path="/CompleteRegistration" element={<CompleteRegistration />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/TreasurerDashboard" element={<TreasurerDashboard />} />
       <Route path="/TreasurerLedger" element={<TreasurerLedger />} />
       <Route path="/TreasurerMemberPayments" element={<TreasurerMemberPayments />} />
