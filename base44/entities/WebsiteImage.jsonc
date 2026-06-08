@@ -9,7 +9,9 @@
         "activities",
         "sections",
         "cta",
-        "about"
+        "about",
+        "contact",
+        "login"
       ],
       "description": "Which section/page this image belongs to"
     },

@@ -31,8 +31,8 @@ function UploadButton({ onUpload, uploading, label = 'Upload image', id }) {
   );
 }
 
-// Hero slideshow
-function HeroImages({ images, onUpload, onDelete, onReorder, uploading }) {
+// Slideshow image manager (used for both the hero and login backgrounds)
+function HeroImages({ images, onUpload, onDelete, onReorder, uploading, title = 'Hero Slideshow Images', description = 'These photos crossfade behind the hero headline. Drag to reorder. Minimum 1 image required.', minImages = 1, uploadId = 'hero-upload', emptyText = 'No hero images yet. Upload at least one.' }) {
   const [dragIdx, setDragIdx] = useState(null);
   const sorted = [...images].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -51,11 +51,9 @@ function HeroImages({ images, onUpload, onDelete, onReorder, uploading }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-purple-900">
           <Image className="w-5 h-5" />
-          Hero Slideshow Images
+          {title}
         </CardTitle>
-        <p className="text-sm text-gray-500">
-          These photos crossfade behind the hero headline. Drag to reorder. Minimum 1 image required.
-        </p>
+        <p className="text-sm text-gray-500">{description}</p>
       </CardHeader>
       <CardContent className="space-y-3">
         {sorted.map((img, idx) => (
@@ -75,7 +73,7 @@ function HeroImages({ images, onUpload, onDelete, onReorder, uploading }) {
             </div>
             <button
               onClick={() => {
-                if (sorted.length <= 1) { toast.error('You must keep at least one hero image.'); return; }
+                if (sorted.length <= minImages) { toast.error(`You must keep at least ${minImages} image${minImages === 1 ? '' : 's'}.`); return; }
                 onDelete(img.id);
               }}
               className="p-1.5 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0"
@@ -87,12 +85,12 @@ function HeroImages({ images, onUpload, onDelete, onReorder, uploading }) {
         {sorted.length === 0 && (
           <div className="border-2 border-dashed border-purple-200 rounded-lg p-8 text-center">
             <Image className="w-8 h-8 text-purple-200 mx-auto mb-2" />
-            <p className="text-sm text-gray-400">No hero images yet. Upload at least one.</p>
+            <p className="text-sm text-gray-400">{emptyText}</p>
           </div>
         )}
         <UploadButton
-          id="hero-upload"
-          onUpload={(f) => onUpload('hero', f, sorted.length)}
+          id={uploadId}
+          onUpload={(f) => onUpload(f, sorted.length)}
           uploading={uploading}
           label="+ Add image"
         />
@@ -283,6 +281,7 @@ export default function PublicWebsiteSettings() {
   });
 
   const heroImages = allImages.filter(i => i.page === 'hero').sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const loginImages = allImages.filter(i => i.page === 'login').sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const activityImages = allImages.filter(i => i.page === 'activities').sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const getFixed = (page, label) => allImages.find(i => i.page === page && (label ? i.label === label : true));
 
@@ -314,6 +313,28 @@ export default function PublicWebsiteSettings() {
   };
 
   const handleHeroReorder = async (reorderedList) => {
+    await Promise.all(reorderedList.map((img, idx) => base44.entities.WebsiteImage.update(img.id, { order: idx })));
+    invalidate();
+  };
+
+  const handleLoginUpload = async (file, order) => {
+    setUploading(true);
+    try {
+      const file_url = await uploadFile(file);
+      await base44.entities.WebsiteImage.create({ page: 'login', image_url: file_url, order });
+      invalidate();
+      toast.success('Login background added');
+    } catch (e) { toast.error('Upload failed'); }
+    finally { setUploading(false); }
+  };
+
+  const handleLoginDelete = async (id) => {
+    await base44.entities.WebsiteImage.delete(id);
+    invalidate();
+    toast.success('Image removed');
+  };
+
+  const handleLoginReorder = async (reorderedList) => {
     await Promise.all(reorderedList.map((img, idx) => base44.entities.WebsiteImage.update(img.id, { order: idx })));
     invalidate();
   };

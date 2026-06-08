@@ -271,7 +271,10 @@ export default function MobileApp() {
     );
   }
 
-  if (!user) return null;
+  if (!user) {
+    window.location.replace('/login?next=/app');
+    return null;
+  }
 
   if (!user.onboarding_complete && role === 'parent') {
     return <MobileOnboarding user={user} onComplete={() => window.location.reload()} />;

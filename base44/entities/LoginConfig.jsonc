@@ -1,0 +1,19 @@
+{
+  "name": "LoginConfig",
+  "type": "object",
+  "properties": {
+    "background_images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of background image URLs. If more than one, they display as a slideshow on the login page."
+    },
+    "slideshow_interval_seconds": {
+      "type": "number",
+      "default": 6,
+      "description": "Seconds between slideshow transitions"
+    }
+  },
+  "required": []
+}

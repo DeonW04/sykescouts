@@ -1,0 +1,46 @@
+{
+  "name": "AccessRequest",
+  "type": "object",
+  "properties": {
+    "section_id": {
+      "type": "string",
+      "description": "Section the parent selected"
+    },
+    "section_name": {
+      "type": "string",
+      "description": "Section display name for reference"
+    },
+    "child_name": {
+      "type": "string",
+      "description": "Name of the child as entered by the parent"
+    },
+    "parent_email": {
+      "type": "string",
+      "format": "email",
+      "description": "Parent's email address"
+    },
+    "action_token": {
+      "type": "string",
+      "description": "Unique token embedded in the leader's email button to approve and send a registration link"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Request status"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When a leader approved and sent the registration link"
+    }
+  },
+  "required": [
+    "child_name",
+    "parent_email"
+  ]
+}

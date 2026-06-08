@@ -32,6 +32,8 @@ import QuizBuilder from './pages/QuizBuilder';
 import MobileApp from './pages/MobileApp';
 import CompleteRegistration from './pages/CompleteRegistration';
 import Register from './pages/Register';
+import Login from './pages/Login';
+import ApproveAccess from './pages/ApproveAccess';
 import { usePWA } from './hooks/usePWA';
 import PWAInstallGate from './components/pwa/PWAInstallGate';
 import { useEffect } from 'react';
@@ -71,7 +73,7 @@ const PWAGate = ({ children }) => {
   // --- PWA mode: redirect away from public pages ---
   if (isPWA && isPublicPage) {
     if (!isSignedIn) {
-      base44.auth.redirectToLogin('/app');
+      window.location.replace('/login?next=/app');
     } else {
       window.location.replace('/app');
     }
@@ -147,6 +149,8 @@ const AuthenticatedApp = () => {
       <Route path="/ConsentFormBuilder" element={<LayoutWrapper currentPageName="ConsentFormBuilder"><ConsentFormBuilder /></LayoutWrapper>} />
       <Route path="/CompleteRegistration" element={<CompleteRegistration />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/approve-access" element={<ApproveAccess />} />
       <Route path="/TreasurerDashboard" element={<TreasurerDashboard />} />
       <Route path="/TreasurerLedger" element={<TreasurerLedger />} />
       <Route path="/TreasurerMemberPayments" element={<TreasurerMemberPayments />} />

@@ -135,7 +135,7 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     if (!checkingAuth) {
       if (!user && protectedPages.includes(currentPageName) && !publicPages.includes(currentPageName)) {
-        base44.auth.redirectToLogin(window.location.pathname + window.location.search);
+        window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
         return;
       }
       if (user && user.role !== 'admin' && adminPages.includes(currentPageName)) {
@@ -239,7 +239,7 @@ export default function Layout({ children, currentPageName }) {
                         </Button>
                       </Link>
                       <button
-                        onClick={() => base44.auth.redirectToLogin()}
+                        onClick={() => { window.location.href = '/login'; }}
                         className="px-6 py-2 bg-[#004851] hover:bg-[#003840] text-white rounded-lg font-medium transition-colors"
                       >
                         Parent / Leader Sign In
@@ -290,7 +290,7 @@ export default function Layout({ children, currentPageName }) {
                     </Button>
                   </Link>
                   <button
-                    onClick={() => base44.auth.redirectToLogin()}
+                    onClick={() => { window.location.href = '/login'; }}
                     className="flex-1 px-3 py-1.5 bg-[#004851] hover:bg-[#003840] text-white rounded-lg font-medium transition-colors text-xs"
                   >
                     Sign In
