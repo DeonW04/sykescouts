@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { CheckCircle2, XCircle, Clock, FileText, ListChecks, Bell, Users, CreditCard, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, FileText, ListChecks, Bell, Users, CreditCard, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import PaymentVerifyDialog from '@/components/leader/PaymentVerifyDialog';
 
 const fmt = n => `£${(n || 0).toFixed(2)}`;
 const ATTENDING_VALUES = new Set(['yes', 'Yes, attending', 'attending']);
@@ -13,10 +14,7 @@ export default function EventDetailPanel({ event, onClose }) {
   const hasCost = (event.cost || 0) > 0;
   const [tab, setTab] = useState(hasCost ? 'finances' : 'attendance');
   const [expandedMember, setExpandedMember] = useState(null);
-  const [registerByIdFor, setRegisterByIdFor] = useState(null);
-  const [paymentIntentInput, setPaymentIntentInput] = useState('');
-  const [registeringId, setRegisteringId] = useState(false);
-  const [registerError, setRegisterError] = useState('');
+  const [verifyFor, setVerifyFor] = useState(null);
   const [reminderSent, setReminderSent] = useState({});
 
   const TABS = [
@@ -89,66 +87,41 @@ export default function EventDetailPanel({ event, onClose }) {
     toast.success('Reminder sent');
   };
 
-  const handleRegisterById = async (member) => {
-    if (!paymentIntentInput.trim()) return;
-    setRegisteringId(true);
-    setRegisterError('');
-    try {
-      const result = await base44.functions.invoke('verifyStripePaymentById', {
-        payment_intent_id: paymentIntentInput.trim(),
-        member_id: member.id,
+  const handleConfirmPayment = async (member, payment) => {
+    const amount = payment?.amount || event.cost || 0;
+    const cardBrand = payment?.card_brand || '';
+    const cardLast4 = payment?.card_last4 || '';
+    const reference = payment?.payment_intent_id;
+
+    // Create ledger entry
+    await base44.entities.LedgerEntry.create({
+      date: todayStr,
+      type: 'income',
+      category: 'event_payments',
+      amount,
+      description: `Stripe payment for ${event.title} — ${member.full_name}`,
+      reference,
+      linked_member_id: member.id,
+      linked_event_id: event.id,
+      entered_by: currentUser?.email,
+    });
+
+    // Update or create EventPaymentStatus
+    const existing = paymentStatuses.find(ps => ps.member_id === member.id);
+    if (existing) {
+      await base44.entities.EventPaymentStatus.update(existing.id, {
+        status: 'paid', paid_at: todayStr, stripe_payment_intent_id: reference, card_brand: cardBrand, card_last4: cardLast4,
       });
-      if (result.data?.error) throw new Error(result.data.error);
-
-      const amount = result.data?.amount || event.cost || 0;
-      const cardBrand = result.data?.card_brand || '';
-      const cardLast4 = result.data?.card_last4 || '';
-
-      // Create ledger entry
-      await base44.entities.LedgerEntry.create({
-        date: todayStr,
-        type: 'income',
-        category: 'event_payments',
-        amount,
-        description: `Stripe payment for ${event.title} — ${member.full_name}`,
-        reference: paymentIntentInput.trim(),
-        linked_member_id: member.id,
-        linked_event_id: event.id,
-        entered_by: currentUser?.email,
+    } else {
+      await base44.entities.EventPaymentStatus.create({
+        event_id: event.id, member_id: member.id, status: 'paid', paid_at: todayStr, stripe_payment_intent_id: reference, card_brand: cardBrand, card_last4: cardLast4,
       });
-
-      // Update or create EventPaymentStatus
-      const existing = paymentStatuses.find(ps => ps.member_id === member.id);
-      if (existing) {
-        await base44.entities.EventPaymentStatus.update(existing.id, {
-          status: 'paid',
-          paid_at: todayStr,
-          stripe_payment_intent_id: paymentIntentInput.trim(),
-          card_brand: cardBrand,
-          card_last4: cardLast4,
-        });
-      } else {
-        await base44.entities.EventPaymentStatus.create({
-          event_id: event.id,
-          member_id: member.id,
-          status: 'paid',
-          paid_at: todayStr,
-          stripe_payment_intent_id: paymentIntentInput.trim(),
-          card_brand: cardBrand,
-          card_last4: cardLast4,
-        });
-      }
-
-      await refetchPS();
-      queryClient.invalidateQueries({ queryKey: ['edp-ledger-income', event.id] });
-      setRegisterByIdFor(null);
-      setPaymentIntentInput('');
-      toast.success('Payment registered successfully');
-    } catch (err) {
-      setRegisterError(err.message || 'Failed to verify payment');
-    } finally {
-      setRegisteringId(false);
     }
+
+    await refetchPS();
+    queryClient.invalidateQueries({ queryKey: ['edp-ledger-income', event.id] });
+    setVerifyFor(null);
+    toast.success('Payment registered successfully');
   };
 
   const responseColor = (val) => {
@@ -203,7 +176,6 @@ export default function EventDetailPanel({ event, onClose }) {
                 {attendingMembers.map(member => {
                   const { status, ps } = getPayStatus(member.id);
                   const isExpanded = expandedMember === member.id;
-                  const isRegisterMode = registerByIdFor === member.id;
                   const reminder = reminderSent[member.id];
 
                   return (
@@ -241,53 +213,24 @@ export default function EventDetailPanel({ event, onClose }) {
                             </div>
                           ) : (
                             <div className="pt-3 space-y-3">
-                              {!isRegisterMode ? (
-                                <div className="flex flex-col gap-2">
-                                  {reminder ? (
-                                    <p className="text-xs text-gray-400 text-center">Reminder sent at {reminder}</p>
-                                  ) : (
-                                    <button
-                                      onClick={() => sendReminder(member)}
-                                      className="w-full py-2.5 border border-[#7413dc] text-[#7413dc] rounded-xl text-sm font-semibold"
-                                    >
-                                      Send reminder
-                                    </button>
-                                  )}
+                              <div className="flex flex-col gap-2">
+                                {reminder ? (
+                                  <p className="text-xs text-gray-400 text-center">Reminder sent at {reminder}</p>
+                                ) : (
                                   <button
-                                    onClick={() => { setRegisterByIdFor(member.id); setPaymentIntentInput(''); setRegisterError(''); }}
-                                    className="w-full py-2.5 bg-[#7413dc] text-white rounded-xl text-sm font-semibold"
+                                    onClick={() => sendReminder(member)}
+                                    className="w-full py-2.5 border border-[#7413dc] text-[#7413dc] rounded-xl text-sm font-semibold"
                                   >
-                                    Register payment by ID
+                                    Send reminder
                                   </button>
-                                </div>
-                              ) : (
-                                <div className="space-y-2">
-                                  <p className="text-xs font-semibold text-gray-600">Enter Stripe Payment Intent ID:</p>
-                                  <input
-                                    value={paymentIntentInput}
-                                    onChange={e => { setPaymentIntentInput(e.target.value); setRegisterError(''); }}
-                                    placeholder="pi_..."
-                                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-[#7413dc]"
-                                  />
-                                  {registerError && <p className="text-xs text-red-500">{registerError}</p>}
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => { setRegisterByIdFor(null); setPaymentIntentInput(''); setRegisterError(''); }}
-                                      className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-semibold"
-                                    >
-                                      Cancel
-                                    </button>
-                                    <button
-                                      onClick={() => handleRegisterById(member)}
-                                      disabled={!paymentIntentInput.trim() || registeringId}
-                                      className="flex-1 py-2.5 bg-[#7413dc] text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-                                    >
-                                      {registeringId && <Loader2 className="w-4 h-4 animate-spin" />}
-                                      {registeringId ? 'Verifying...' : 'Submit'}
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
+                                )}
+                                <button
+                                  onClick={() => setVerifyFor(member)}
+                                  className="w-full py-2.5 bg-[#7413dc] text-white rounded-xl text-sm font-semibold"
+                                >
+                                  Register payment by ID
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -423,6 +366,17 @@ export default function EventDetailPanel({ event, onClose }) {
           </div>
         )}
       </div>
+
+      {verifyFor && (
+        <PaymentVerifyDialog
+          member={verifyFor}
+          expectedAmount={event.cost || 0}
+          eventId={event.id}
+          accent="#7413dc"
+          onConfirm={({ payment }) => handleConfirmPayment(verifyFor, payment)}
+          onClose={() => setVerifyFor(null)}
+        />
+      )}
     </div>
   );
 }
