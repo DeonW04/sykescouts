@@ -73,8 +73,11 @@ export default function LeaderNav() {
     { icon: Image, label: 'Gallery', page: 'LeaderGallery', color: 'bg-pink-500' },
   ];
 
-  const currentPage = location.pathname.split('/').pop();
-  
+  const isPageActive = (page) => {
+    const url = createPageUrl(page);
+    return location.pathname === url || location.pathname.startsWith(url + '/');
+  };
+
   return (
     <motion.div 
       initial={{ y: -20, opacity: 0 }}
@@ -106,8 +109,8 @@ export default function LeaderNav() {
           <nav className="flex items-center justify-center gap-2 md:gap-1">
             {navItems.map((item, index) => {
               const isActive = item.dropdown 
-                ? item.dropdown.some(sub => currentPage === sub.page)
-                : currentPage === item.page;
+                ? item.dropdown.some(sub => isPageActive(sub.page))
+                : isPageActive(item.page);
               
               return (
                 <motion.div

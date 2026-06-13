@@ -104,7 +104,7 @@ export default function WhatsAppSchedules() {
               <p className="text-sm text-gray-500">Schedule automated messages to group chats</p>
             </div>
           </div>
-          <Link to="/WhatsAppTemplates">
+          <Link to="/leader/whatsapp/templates">
             <button className="flex items-center gap-1.5 text-sm text-[#7413dc] border border-[#7413dc] rounded-lg px-3 py-1.5 hover:bg-purple-50 transition-colors">
               <Wand2 className="w-4 h-4" /> Templates
             </button>

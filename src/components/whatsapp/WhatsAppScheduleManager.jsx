@@ -427,7 +427,7 @@ export default function WhatsAppScheduleManager({ meetingId, eventId, title = 't
             })}
           </div>
           <div className="pt-1">
-            <Link to="/WhatsAppTemplates" className="text-xs text-gray-400 hover:text-[#7413dc]">Manage templates →</Link>
+            <Link to="/leader/whatsapp/templates" className="text-xs text-gray-400 hover:text-[#7413dc]">Manage templates →</Link>
           </div>
         </DialogContent>
       </Dialog>

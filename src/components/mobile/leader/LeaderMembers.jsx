@@ -146,7 +146,7 @@ function MemberCard({ member }) {
 
           {/* More info button */}
           <button
-            onClick={() => { window.location.href = `/MemberDetail?id=${member.id}`; }}
+            onClick={() => { window.location.href = `/leader/members/detail?id=${member.id}`; }}
             className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-[#004851] text-white rounded-xl text-sm font-semibold"
           >
             <ExternalLink className="w-4 h-4" /> More info

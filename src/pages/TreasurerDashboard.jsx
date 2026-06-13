@@ -156,7 +156,7 @@ export default function TreasurerDashboard() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">Recent Transactions</CardTitle>
-          <Link to="/TreasurerLedger" className="text-xs text-[#004851] hover:underline flex items-center gap-1">
+          <Link to={createPageUrl('TreasurerLedger')} className="text-xs text-[#004851] hover:underline flex items-center gap-1">
             View all <ArrowRight className="w-3 h-3" />
           </Link>
         </CardHeader>

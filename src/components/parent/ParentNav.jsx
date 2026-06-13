@@ -21,8 +21,6 @@ export default function ParentNav() {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  const currentPage = location.pathname.replace('/', '');
-
   return (
     <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -40,7 +38,8 @@ export default function ParentNav() {
           {/* Nav Links */}
           <div className="flex items-center gap-1">
             {navItems.map((item) => {
-              const isActive = currentPage === item.page || location.pathname === `/${item.page}`;
+              const url = createPageUrl(item.page);
+              const isActive = location.pathname === url || location.pathname.startsWith(url + '/');
               return (
                 <Link
                   key={item.page}

@@ -29,21 +29,9 @@ const parentNavLinks = [
 
 const STRIP_RADIUS = '24px';
 
-const PORTAL_PAGES = [
-  '/LeaderDashboard', '/LeaderMembers', '/LeaderProgramme', '/LeaderEvents',
-  '/LeaderAttendance', '/LeaderBadges', '/LeaderGallery', '/MeetingDetail',
-  '/EventDetail', '/MemberDetail', '/BadgeDetail', '/AwardBadges', '/ManageBadges',
-  '/RiskAssessments', '/RiskAssessmentDetail', '/Communications', '/WeeklyMessage',
-  '/WeeklyMessageList', '/MonthlyNewsletter', '/MonthlyNewsletterList', '/EventUpdate',
-  '/EventUpdateList', '/IdeasBoard', '/JoinEnquiries', '/ArchivedMembers',
-  '/BadgeStockManagement', '/NightsAwayTracking', '/ConsentForms', '/ConsentFormBuilder',
-  '/SectionAccounting', '/AdminSettings', '/ParentDashboard', '/MyChild',
-  '/ParentProgramme', '/ParentEvents', '/ParentEventDetail', '/ParentBadges', '/ParentGoldAward',
-  '/AIProgrammePlanner', '/ParentPortal', '/RiskAssessmentHistory',
-  '/ManageStagedBadge', '/EditBadgeStructure', '/PORHelper',
-  '/StagedBadgeDetail', '/GoldAwardDetail', '/HikesAwayBadgeDetail', '/NightsAwayBadgeDetail',
-  '/JoiningInBadgeDetail', '/WhatsAppSchedules', '/WhatsAppTemplates',
-];
+// Portal page paths — any /leader, /parent, /treasurer, /admin or /account route
+// counts as a portal page (drives the expandable portal strip).
+const PORTAL_PREFIXES = ['/leader', '/parent', '/treasurer', '/admin', '/account'];
 
 // ── Mobile Sidebar Drawer ──────────────────────────────────────────────────────
 function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, user, portalLabel, portalUrl, isPortalPage, onLogin }) {
@@ -167,12 +155,12 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, user, porta
             <>
               {isLeader ? (
                 <>
-                  <Link to={createPageUrl('LeaderDashboard')} onClick={onClose} style={linkStyle(location.pathname === '/LeaderDashboard')}>
+                  <Link to={createPageUrl('LeaderDashboard')} onClick={onClose} style={linkStyle(location.pathname === createPageUrl('LeaderDashboard'))}>
                     <LayoutDashboard size={15} /> Dashboard
                   </Link>
 
                   {portalGroups.map(group => {
-                    const isGroupActive = group.links.some(({ page }) => location.pathname === '/' + page || location.pathname.startsWith('/' + page));
+                    const isGroupActive = group.links.some(({ page }) => location.pathname === createPageUrl(page) || location.pathname.startsWith(createPageUrl(page) + '/'));
                     return (
                       <div key={group.label}>
                         <button
@@ -194,7 +182,7 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, user, porta
                           <div style={{ paddingLeft: '12px', marginBottom: '4px' }}>
                             {group.links.map(({ label, page, icon: Icon, adminOnly }) => {
                               if (adminOnly && !isAdmin) return null;
-                              const active = location.pathname === '/' + page || location.pathname.startsWith('/' + page);
+                              const active = location.pathname === createPageUrl(page) || location.pathname.startsWith(createPageUrl(page) + '/');
                               return (
                                 <Link key={page} to={createPageUrl(page)} onClick={onClose} style={{
                                   display: 'flex', alignItems: 'center', gap: '8px',
@@ -214,7 +202,7 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, user, porta
                   })}
 
                   {isAdmin && (
-                    <Link to={createPageUrl('AdminSettings')} onClick={onClose} style={linkStyle(location.pathname === '/AdminSettings')}>
+                    <Link to={createPageUrl('AdminSettings')} onClick={onClose} style={linkStyle(location.pathname === createPageUrl('AdminSettings'))}>
                       <Settings size={15} /> Admin Area
                     </Link>
                   )}
@@ -222,11 +210,11 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, user, porta
               ) : isParent ? (
                 /* ── PARENT PORTAL MOBILE ── */
                 <>
-                  <Link to={createPageUrl('ParentDashboard')} onClick={onClose} style={linkStyle(location.pathname === '/ParentDashboard')}>
+                  <Link to={createPageUrl('ParentDashboard')} onClick={onClose} style={linkStyle(location.pathname === createPageUrl('ParentDashboard'))}>
                     <LayoutDashboard size={15} /> Dashboard
                   </Link>
                   {parentNavLinks.map(({ label, page, icon: Icon }) => {
-                    const active = location.pathname === '/' + page || location.pathname.startsWith('/' + page);
+                    const active = location.pathname === createPageUrl(page) || location.pathname.startsWith(createPageUrl(page) + '/');
                     return (
                       <Link key={page} to={createPageUrl(page)} onClick={onClose} style={linkStyle(active)}>
                         <Icon size={15} /> {label}
@@ -274,7 +262,7 @@ export default function FloatingNav() {
   const [loginOpen,  setLoginOpen]  = useState(false);
   const location = useLocation();
 
-  const isPortalPage = PORTAL_PAGES.some(p => location.pathname === p || location.pathname.startsWith(p + '?'));
+  const isPortalPage = PORTAL_PREFIXES.some(p => location.pathname.startsWith(p));
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -625,7 +613,7 @@ export default function FloatingNav() {
                 {isLeader ? (
                   /* Leader groups with dropdowns */
                   portalGroups.map((group) => {
-                    const isGroupActive = group.links.some(({ page }) => location.pathname === '/' + page || location.pathname.startsWith('/' + page));
+                    const isGroupActive = group.links.some(({ page }) => location.pathname === createPageUrl(page) || location.pathname.startsWith(createPageUrl(page) + '/'));
                     return (
                       <DropdownMenu key={group.label}>
                         <DropdownMenuTrigger asChild>
@@ -665,7 +653,7 @@ export default function FloatingNav() {
                 ) : (
                   /* Parent flat links — no dropdowns */
                   parentNavLinks.map(({ label, page, icon: Icon }) => {
-                    const active = location.pathname === '/' + page || location.pathname.startsWith('/' + page);
+                    const active = location.pathname === createPageUrl(page) || location.pathname.startsWith(createPageUrl(page) + '/');
                     return (
                       <Link
                         key={page}

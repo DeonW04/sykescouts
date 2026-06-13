@@ -49,13 +49,65 @@ import AccountSettings from './pages/AccountSettings';
 import OSMBadgeImport from './pages/OSMBadgeImport';
 import SilverAwardDetail from './pages/SilverAwardDetail';
 import ParentSilverAward from './pages/ParentSilverAward';
+import { ROUTE_MAP } from '@/lib/routeMap';
 
 // Public-only pages that should never be shown in PWA mode
-const PUBLIC_PAGES = ['/', '/Home', '/About', '/Contact', '/Gallery', '/Join', '/Sections', '/Parents', '/Volunteer', '/SharedPage'];
+const PUBLIC_PAGES = [
+  '/', '/Home', '/About', '/Contact', '/Gallery', '/Join', '/Sections', '/Parents', '/Volunteer', '/SharedPage',
+  '/about', '/contact', '/gallery', '/join', '/parents', '/volunteer', '/shared',
+];
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
 const MainPage = mainPageKey ? Pages[mainPageKey] : <></>;
+
+// All page components keyed by PageName — combines auto-registered Pages with
+// the explicitly-imported ones, so grouped routes can resolve every page.
+const ALL_PAGES = {
+  ...Pages,
+  AIProgrammePlanner,
+  TreasurerDashboard,
+  TreasurerLedger,
+  TreasurerMemberPayments,
+  TreasurerEventFinances,
+  TreasurerReceiptAllocation,
+  TreasurerReimbursements,
+  TreasurerBudgets,
+  TreasurerRecurringPayments,
+  TreasurerFunds,
+  TreasurerReports,
+  TreasurerProgrammeFinances,
+  SectionAccounting,
+  PORHelper,
+  ParentPortalAnalytics,
+  ConsentForms,
+  ConsentFormBuilder,
+  QuizBuilder,
+  WhatsAppSchedules,
+  WhatsAppTemplates,
+  GalleryUpload,
+  AccountSettings,
+  OSMBadgeImport,
+  SilverAwardDetail,
+  ParentSilverAward,
+  MobileDashboardDemo,
+};
+
+// Pages that render standalone (no LayoutWrapper) on their original routes —
+// they manage their own chrome/auth. Keep that behaviour for grouped routes too.
+const STANDALONE_PAGES = new Set([
+  'TreasurerDashboard', 'TreasurerLedger', 'TreasurerMemberPayments',
+  'TreasurerEventFinances', 'TreasurerReceiptAllocation', 'TreasurerReimbursements',
+  'TreasurerBudgets', 'TreasurerRecurringPayments', 'TreasurerFunds',
+  'TreasurerReports', 'TreasurerProgrammeFinances',
+  'GalleryUpload', 'AccountSettings', 'OSMBadgeImport', 'MobileDashboardDemo',
+]);
+
+// Grouped routes built from ROUTE_MAP. Excludes paths handled explicitly
+// elsewhere (Home "/", and pages kept on their original path).
+const GROUPED_ROUTES = Object.entries(ROUTE_MAP).filter(
+  ([name, path]) => path !== '/' && ALL_PAGES[name]
+);
 
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
@@ -131,6 +183,14 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
+      {/* New grouped URLs — same page components & layout, mapped from ROUTE_MAP */}
+      {GROUPED_ROUTES.map(([name, path]) => {
+        const Page = ALL_PAGES[name];
+        const element = STANDALONE_PAGES.has(name)
+          ? <Page />
+          : <LayoutWrapper currentPageName={name}><Page /></LayoutWrapper>;
+        return <Route key={path} path={path} element={element} />;
+      })}
       <Route path="/AIProgrammePlanner" element={
         <LayoutWrapper currentPageName="AIProgrammePlanner">
           <AIProgrammePlanner />

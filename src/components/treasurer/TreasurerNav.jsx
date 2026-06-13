@@ -7,17 +7,17 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { label: 'Dashboard', path: '/TreasurerDashboard', icon: LayoutDashboard },
-  { label: 'Ledger', path: '/TreasurerLedger', icon: BookOpen },
-  { label: 'Member Payments', path: '/TreasurerMemberPayments', icon: Users },
-  { label: 'Event Finances', path: '/TreasurerEventFinances', icon: Calendar },
-  { label: 'Programme Finances', path: '/TreasurerProgrammeFinances', icon: BookMarked },
-  { label: 'Receipt Allocation', path: '/TreasurerReceiptAllocation', icon: Receipt },
-  { label: 'Reimbursements', path: '/TreasurerReimbursements', icon: RefreshCw },
-  { label: 'Budgets', path: '/TreasurerBudgets', icon: Wallet },
-  { label: 'Recurring Payments', path: '/TreasurerRecurringPayments', icon: Repeat },
-  { label: 'Fund Management', path: '/TreasurerFunds', icon: Landmark },
-  { label: 'Reports', path: '/TreasurerReports', icon: BarChart3 },
+  { label: 'Dashboard', path: createPageUrl('TreasurerDashboard'), icon: LayoutDashboard },
+  { label: 'Ledger', path: createPageUrl('TreasurerLedger'), icon: BookOpen },
+  { label: 'Member Payments', path: createPageUrl('TreasurerMemberPayments'), icon: Users },
+  { label: 'Event Finances', path: createPageUrl('TreasurerEventFinances'), icon: Calendar },
+  { label: 'Programme Finances', path: createPageUrl('TreasurerProgrammeFinances'), icon: BookMarked },
+  { label: 'Receipt Allocation', path: createPageUrl('TreasurerReceiptAllocation'), icon: Receipt },
+  { label: 'Reimbursements', path: createPageUrl('TreasurerReimbursements'), icon: RefreshCw },
+  { label: 'Budgets', path: createPageUrl('TreasurerBudgets'), icon: Wallet },
+  { label: 'Recurring Payments', path: createPageUrl('TreasurerRecurringPayments'), icon: Repeat },
+  { label: 'Fund Management', path: createPageUrl('TreasurerFunds'), icon: Landmark },
+  { label: 'Reports', path: createPageUrl('TreasurerReports'), icon: BarChart3 },
 ];
 
 export default function TreasurerNav() {
