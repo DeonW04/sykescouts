@@ -33,26 +33,21 @@ export default function MyChild() {
     setUser(currentUser);
   };
 
-  const { data: children = [], isLoading } = useQuery({
-    queryKey: ['children', user?.email],
+  const { data: portal, isLoading } = useQuery({
+    queryKey: ['parent-portal', user?.email],
     queryFn: async () => {
-      if (!user?.email) return [];
-      const allMembers = await base44.entities.Member.filter({});
-      return allMembers.filter(m => 
-        m.parent_one_email === user.email || m.parent_two_email === user.email
-      );
+      const res = await base44.functions.invoke('getParentPortalData', {});
+      return res.data;
     },
     enabled: !!user?.email,
   });
 
-  const { data: sections = [] } = useQuery({
-    queryKey: ['sections'],
-    queryFn: () => base44.entities.Section.filter({ active: true }),
-  });
+  const children = portal?.children || [];
+  const sections = portal?.sections || [];
 
   const updateMemberMutation = useMutation({
     mutationFn: async ({ id, data }) => {
-      return base44.entities.Member.update(id, data);
+      return base44.functions.invoke('updateMyChild', { memberId: id, data });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['children'] });
@@ -93,12 +88,6 @@ export default function MyChild() {
     updateMemberMutation.mutate({ id, data });
   };
 
-  const { data: allUsers = [] } = useQuery({
-    queryKey: ['users'],
-    queryFn: () => base44.entities.User.list(),
-    enabled: !!user,
-  });
-
   const calculateAge = (dob) => {
     const birthDate = new Date(dob);
     const today = new Date();
@@ -120,9 +109,6 @@ export default function MyChild() {
   }
 
   const child = children[0];
-
-  const parent1HasAccount = child && child.parent_one_email && allUsers.some(u => u.email === child.parent_one_email);
-  const parent2HasAccount = child && child.parent_two_email && allUsers.some(u => u.email === child.parent_two_email);
 
   if (!child) {
     return (

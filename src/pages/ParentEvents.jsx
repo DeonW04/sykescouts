@@ -29,65 +29,41 @@ export default function ParentEvents() {
   const loadUser = async () => {
     const currentUser = await base44.auth.me();
     setUser(currentUser);
-    const kids = await base44.entities.Member.filter({ parent_one_email: currentUser.email });
-    const kids2 = await base44.entities.Member.filter({ parent_two_email: currentUser.email });
-    setChildren([...kids, ...kids2]);
   };
+
+  const { data: portal, refetch: refetchPortal } = useQuery({
+    queryKey: ['parent-portal', user?.email],
+    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
+    enabled: !!user?.email,
+  });
+
+  const { data: reference } = useQuery({
+    queryKey: ['parent-reference', user?.email],
+    queryFn: async () => (await base44.functions.invoke('getParentReferenceData', {})).data,
+    enabled: !!user?.email,
+  });
+
+  useEffect(() => { if (portal?.children) setChildren(portal.children); }, [portal]);
 
   const childSectionIds = [...new Set(children.map(c => c.section_id).filter(Boolean))];
   const childIds = children.map(c => c.id);
   const child = children[0];
 
-  const { data: events = [] } = useQuery({
-    queryKey: ['events', childSectionIds],
-    queryFn: async () => {
-      const allEvents = await base44.entities.Event.filter({ published: true });
-      return allEvents.filter(e => e.section_ids?.some(sid => childSectionIds.includes(sid))).sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
-    },
-    enabled: childSectionIds.length > 0,
-  });
+  const events = (reference?.events || [])
+    .slice()
+    .sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+  const sections = portal?.sections || [];
 
-  const { data: sections = [] } = useQuery({
-    queryKey: ['sections'],
-    queryFn: () => base44.entities.Section.filter({ active: true }),
-  });
+  const paymentStatuses = portal?.eventPaymentStatuses || [];
+  const paymentOverrides = (portal?.paymentOverrides || []).filter(o => o.event_id);
+  const refetchPaymentStatuses = refetchPortal;
 
-  // Payment queries
-  const { data: paymentStatuses = [], refetch: refetchPaymentStatuses } = useQuery({
-    queryKey: ['event-payment-statuses-portal', childIds.join(',')],
-    queryFn: async () => {
-      const all = await base44.entities.EventPaymentStatus.filter({});
-      return all.filter(ps => childIds.includes(ps.member_id));
-    },
-    enabled: childIds.length > 0,
-  });
-
-  const { data: paymentOverrides = [] } = useQuery({
-    queryKey: ['event-payment-overrides-portal', childIds.join(',')],
-    queryFn: async () => {
-      const all = await base44.entities.MeetingPaymentOverride.filter({});
-      return all.filter(o => childIds.includes(o.member_id) && o.event_id);
-    },
-    enabled: childIds.length > 0,
-  });
-
-  const { data: attendanceData = { actions: [], responses: [] } } = useQuery({
-    queryKey: ['event-attendance-portal', events.map(e => e.id).join(','), childIds.join(',')],
-    queryFn: async () => {
-      const costEvents = events.filter(e => (e.cost || 0) > 0);
-      if (!costEvents.length) return { actions: [], responses: [] };
-      const allActions = await base44.entities.ActionRequired.filter({});
-      const relevantActions = allActions.filter(a => a.action_purpose === 'attendance' && costEvents.some(e => e.id === a.event_id));
-      if (!relevantActions.length) return { actions: relevantActions, responses: [] };
-      const allResponses = await base44.entities.ActionResponse.filter({});
-      const relevantResponses = allResponses.filter(r =>
-        relevantActions.some(a => a.id === r.action_required_id) &&
-        (childIds.includes(r.member_id) || childIds.includes(r.child_member_id))
-      );
-      return { actions: relevantActions, responses: relevantResponses };
-    },
-    enabled: events.length > 0 && childIds.length > 0,
-  });
+  // Build attendance data from the scoped portal/reference payloads
+  const _costEventIds = new Set(events.filter(e => (e.cost || 0) > 0).map(e => e.id));
+  const attendanceData = {
+    actions: (reference?.attendanceActions || []).filter(a => a.event_id && _costEventIds.has(a.event_id)),
+    responses: portal?.actionResponses || [],
+  };
 
   // Payment helpers
   const getPaymentStatus = (eventId) => paymentStatuses.find(ps => ps.event_id === eventId && childIds.includes(ps.member_id));

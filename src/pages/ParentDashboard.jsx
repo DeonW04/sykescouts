@@ -107,87 +107,42 @@ export default function ParentDashboard() {
     setUser(currentUser);
   };
 
-  const { data: children = [] } = useQuery({
-    queryKey: ['children', user?.email],
-    queryFn: async () => {
-      if (!user?.email) return [];
-      const allMembers = await base44.entities.Member.filter({});
-      return allMembers.filter(m => 
-        m.parent_one_email === user.email || m.parent_two_email === user.email
-      );
-    },
+  const { data: portal } = useQuery({
+    queryKey: ['parent-portal', user?.email],
+    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
     enabled: !!user?.email,
   });
 
-  const { data: upcomingEvents = [] } = useQuery({
-    queryKey: ['upcoming-events', children],
-    queryFn: async () => {
-      if (children.length === 0) return [];
-      const sectionIds = [...new Set(children.map(c => c.section_id))];
-      const events = await base44.entities.Event.filter({ published: true });
-      const upcoming = events.filter(e => 
-        e.section_ids?.some(sid => sectionIds.includes(sid)) &&
-        new Date(e.start_date) > new Date()
-      ).sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
-      return upcoming;
-    },
-    enabled: children.length > 0,
+  const { data: reference } = useQuery({
+    queryKey: ['parent-reference', user?.email],
+    queryFn: async () => (await base44.functions.invoke('getParentReferenceData', {})).data,
+    enabled: !!user?.email,
   });
 
-  const { data: nextMeeting } = useQuery({
-    queryKey: ['next-meeting', children],
-    queryFn: async () => {
-      if (children.length === 0) return null;
-      const sectionIds = [...new Set(children.map(c => c.section_id))];
-      const programmes = await base44.entities.Programme.filter({ shown_in_portal: true });
-      const upcoming = programmes.filter(p => 
-        sectionIds.includes(p.section_id) &&
-        new Date(p.date) > new Date()
-      ).sort((a, b) => new Date(a.date) - new Date(b.date));
-      return upcoming[0] || null;
-    },
-    enabled: children.length > 0,
-  });
-
+  const children = portal?.children || [];
   const childIds = children.map(c => c.id);
 
-  const { data: eventPaymentStatuses = [] } = useQuery({
-    queryKey: ['dashboard-event-payment-statuses', childIds.join(',')],
-    queryFn: async () => {
-      const all = await base44.entities.EventPaymentStatus.filter({});
-      return all.filter(ps => childIds.includes(ps.member_id));
-    },
-    enabled: childIds.length > 0,
-  });
+  const upcomingEvents = (reference?.events || [])
+    .filter(e => new Date(e.start_date) > new Date())
+    .sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
 
-  const { data: meetingPaymentStatus } = useQuery({
-    queryKey: ['dashboard-meeting-payment-status', childIds.join(','), nextMeeting?.id],
-    queryFn: async () => {
-      if (!childIds.length || !nextMeeting?.id) return null;
-      const records = await base44.entities.MeetingPaymentStatus.filter({ meeting_id: nextMeeting.id, member_id: childIds[0] });
-      return records[0] || null;
-    },
-    enabled: childIds.length > 0 && !!nextMeeting?.id && nextMeeting?.has_cost && nextMeeting?.cost > 0,
-  });
+  const nextMeeting = (() => {
+    const progs = (reference?.programmes || [])
+      .filter(p => p.shown_in_portal && new Date(p.date) > new Date())
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+    return progs[0] || null;
+  })();
 
-  const { data: dashAttendanceActions = [] } = useQuery({
-    queryKey: ['dashboard-attendance-actions', upcomingEvents.map(e => e.id).join(',')],
-    queryFn: async () => {
-      if (!upcomingEvents.length) return [];
-      const all = await base44.entities.ActionRequired.filter({});
-      return all.filter(a => a.action_purpose === 'attendance' && upcomingEvents.some(e => e.id === a.event_id));
-    },
-    enabled: upcomingEvents.length > 0,
-  });
+  const eventPaymentStatuses = portal?.eventPaymentStatuses || [];
 
-  const { data: dashAttendanceResponses = [] } = useQuery({
-    queryKey: ['dashboard-attendance-responses', childIds.join(',')],
-    queryFn: async () => {
-      const all = await base44.entities.ActionResponse.filter({});
-      return all.filter(r => childIds.includes(r.member_id) || childIds.includes(r.child_member_id));
-    },
-    enabled: childIds.length > 0,
-  });
+  const meetingPaymentStatus = (nextMeeting
+    ? (portal?.meetingPaymentStatuses || []).find(ps => ps.meeting_id === nextMeeting.id && childIds.includes(ps.member_id))
+    : null) || null;
+
+  const dashAttendanceActions = (reference?.attendanceActions || [])
+    .filter(a => a.event_id && upcomingEvents.some(e => e.id === a.event_id));
+
+  const dashAttendanceResponses = portal?.actionResponses || [];
 
   const isAttendingEvent = (eventId) => {
     const action = dashAttendanceActions.find(a => a.event_id === eventId);
@@ -230,53 +185,28 @@ export default function ParentDashboard() {
     }
   }
 
-  const { data: badgeProgress = [] } = useQuery({
-    queryKey: ['badge-progress', children],
-    queryFn: async () => {
-      if (children.length === 0) return [];
-      const allProgress = await base44.entities.BadgeProgress.filter({});
-      return allProgress.filter(p => children.some(c => c.id === p.member_id));
-    },
-    enabled: children.length > 0,
-  });
+  const badgeProgress = portal?.badgeProgress || [];
 
   const { data: actionsRequired = [] } = useQuery({
-    queryKey: ['actions-required', children],
+    queryKey: ['actions-required', children, reference?.programmes, portal?.actionResponses],
     queryFn: async () => {
-      if (children.length === 0) return [];
-      const sectionIds = [...new Set(children.map(c => c.section_id))];
+      if (children.length === 0 || !reference || !portal) return [];
       const childIds = children.map(c => c.id);
-      
-      // Get all programmes for these sections
-      const programmes = await base44.entities.Programme.filter({});
-      const relevantProgrammes = programmes.filter(p => sectionIds.includes(p.section_id));
+
+      // Programmes/events are already scoped to the children's sections server-side.
+      const relevantProgrammes = reference.programmes || [];
       const relevantProgrammeIds = relevantProgrammes.map(p => p.id);
-      
-      // Get all actions (programmes and events)
+      const relevantEvents = reference.events || [];
+      const relevantEventIds = relevantEvents.map(e => e.id);
+
+      // All actions for these programmes/events
       const allActions = await base44.entities.ActionRequired.filter({});
       const programmeActions = allActions.filter(a => relevantProgrammeIds.includes(a.programme_id));
-      
-      // Get event actions for children's events
-      const eventAttendances = await base44.entities.EventAttendance.filter({});
-      const childEventIds = eventAttendances
-        .filter(a => children.some(c => c.id === a.member_id))
-        .map(a => a.event_id);
-      const eventActions = allActions.filter(a => a.event_id && childEventIds.includes(a.event_id));
-      
+      const eventActions = allActions.filter(a => a.event_id && relevantEventIds.includes(a.event_id));
       const relevantActions = [...programmeActions, ...eventActions];
-      
-      // Fetch ALL responses for this parent's children — match by member_id, NOT
-      // parent_email, so that responses entered manually by a leader (which use
-      // 'admin@manual.entry' as the email) are still counted as completed.
-      const allResponses = await base44.entities.ActionResponse.filter({});
-      const childResponses = allResponses.filter(r =>
-        childIds.includes(r.member_id) || childIds.includes(r.child_member_id)
-      );
-      
-      // Fetch events for event-based actions
-      const eventIds = [...new Set(relevantActions.map(a => a.event_id).filter(Boolean))];
-      const allEvents = eventIds.length > 0 ? await base44.entities.Event.filter({ published: true }) : [];
-      const relevantEvents = allEvents.filter(e => eventIds.includes(e.id));
+
+      // Responses are already scoped to this parent's children (server-side).
+      const childResponses = portal.actionResponses || [];
 
       // Add programme/event details to each action
       const actionsWithDetails = relevantActions.map(action => ({

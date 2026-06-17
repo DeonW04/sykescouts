@@ -137,8 +137,8 @@ function ParentApp({ user, activeTab, onTabChange }) {
     queryKey: ['mobile-children', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
-      const all = await base44.entities.Member.filter({});
-      return all.filter(m => m.parent_one_email === user.email || m.parent_two_email === user.email);
+      const res = await base44.functions.invoke('getParentPortalData', {});
+      return res.data?.children || [];
     },
     enabled: !!user?.email,
   });

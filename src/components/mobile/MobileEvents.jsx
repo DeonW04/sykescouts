@@ -209,38 +209,33 @@ export default function MobileEvents({ selectedChild, user }) {
     enabled: childSectionIds.length > 0,
   });
 
-  const { data: paymentStatuses = [] } = useQuery({
-    queryKey: ['event-payment-statuses', childIds.join(',')],
-    queryFn: async () => {
-      const all = await base44.entities.EventPaymentStatus.filter({});
-      return all.filter(ps => childIds.includes(ps.member_id));
-    },
+  const { data: portal } = useQuery({
+    queryKey: ['parent-portal'],
+    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
     enabled: childIds.length > 0,
   });
 
-  const { data: paymentOverrides = [] } = useQuery({
-    queryKey: ['event-payment-overrides', childIds.join(',')],
-    queryFn: async () => {
-      const all = await base44.entities.MeetingPaymentOverride.filter({});
-      return all.filter(o => childIds.includes(o.member_id) && o.event_id);
-    },
-    enabled: childIds.length > 0,
-  });
+  const paymentStatuses = (portal?.eventPaymentStatuses || []).filter(ps => childIds.includes(ps.member_id));
+  const paymentOverrides = (portal?.paymentOverrides || []).filter(o => childIds.includes(o.member_id) && o.event_id);
+  const invalidatePortal = () => queryClient.invalidateQueries({ queryKey: ['parent-portal'] });
 
-  const { data: attendanceData = { actions: [], responses: [] } } = useQuery({
-    queryKey: ['event-attendance-data', events.map(e => e.id).join(','), childIds.join(',')],
+  // Attendance actions for cost events come from the event_id-scoped ActionRequired query;
+  // responses are the parent-scoped responses returned by the portal function.
+  const { data: costEventActions = [] } = useQuery({
+    queryKey: ['mobile-cost-event-actions', events.map(e => e.id).join(',')],
     queryFn: async () => {
-      const costEvents = events.filter(e => (e.cost || 0) > 0);
-      if (!costEvents.length) return { actions: [], responses: [] };
-      const allActions = await base44.entities.ActionRequired.filter({});
-      const relevantActions = allActions.filter(a => a.action_purpose === 'attendance' && costEvents.some(e => e.id === a.event_id));
-      if (!relevantActions.length) return { actions: relevantActions, responses: [] };
-      const allResponses = await base44.entities.ActionResponse.filter({});
-      const relevantResponses = allResponses.filter(r => relevantActions.some(a => a.id === r.action_required_id) && childIds.includes(r.member_id));
-      return { actions: relevantActions, responses: relevantResponses };
+      const costEventIds = new Set(events.filter(e => (e.cost || 0) > 0).map(e => e.id));
+      if (costEventIds.size === 0) return [];
+      const all = await base44.entities.ActionRequired.filter({ action_purpose: 'attendance' });
+      return all.filter(a => a.event_id && costEventIds.has(a.event_id));
     },
     enabled: events.length > 0 && childIds.length > 0,
   });
+
+  const attendanceData = {
+    actions: costEventActions,
+    responses: (portal?.actionResponses || []).filter(r => childIds.includes(r.member_id)),
+  };
 
   const { data: eventActions = [] } = useQuery({
     queryKey: ['mobile-event-actions-detail', selectedEvent?.id],
@@ -248,15 +243,10 @@ export default function MobileEvents({ selectedChild, user }) {
     enabled: !!selectedEvent,
   });
 
-  const { data: actionResponses = [] } = useQuery({
-    queryKey: ['mobile-event-responses-detail', selectedEvent?.id, childIds.join(',')],
-    queryFn: async () => {
-      const all = await base44.entities.ActionResponse.filter({});
-      const actionIds = eventActions.map(a => a.id);
-      return all.filter(r => actionIds.includes(r.action_required_id) && childIds.includes(r.member_id));
-    },
-    enabled: !!selectedEvent && eventActions.length > 0,
-  });
+  const actionResponses = (() => {
+    const actionIds = new Set(eventActions.map(a => a.id));
+    return (portal?.actionResponses || []).filter(r => actionIds.has(r.action_required_id) && childIds.includes(r.member_id));
+  })();
 
   const saveResponseMutation = useMutation({
     mutationFn: async ({ actionId, memberId, value, parentEmail }) => {

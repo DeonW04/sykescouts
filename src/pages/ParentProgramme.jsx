@@ -24,80 +24,38 @@ export default function ParentProgramme() {
   const loadUser = async () => {
     const currentUser = await base44.auth.me();
     setUser(currentUser);
-    const kids = await base44.entities.Member.filter({ parent_one_email: currentUser.email });
-    const kids2 = await base44.entities.Member.filter({ parent_two_email: currentUser.email });
-    setChildren([...kids, ...kids2]);
   };
+
+  const { data: portal, refetch: refetchPortal } = useQuery({
+    queryKey: ['parent-portal', user?.email],
+    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
+    enabled: !!user?.email,
+  });
+
+  const { data: reference } = useQuery({
+    queryKey: ['parent-reference', user?.email],
+    queryFn: async () => (await base44.functions.invoke('getParentReferenceData', {})).data,
+    enabled: !!user?.email,
+  });
+
+  useEffect(() => { if (portal?.children) setChildren(portal.children); }, [portal]);
 
   const childSectionIds = [...new Set(children.map(c => c.section_id).filter(Boolean))];
   const childIds = children.map(c => c.id);
   const child = children[0];
 
-  const { data: terms = [] } = useQuery({
-    queryKey: ['terms', childSectionIds],
-    queryFn: () => base44.entities.Term.filter({ active: true }),
-    enabled: childSectionIds.length > 0,
-  });
+  const terms = reference?.terms || [];
+  const sections = portal?.sections || [];
+  const programmes = reference?.programmes || [];
+  const badges = reference?.badges || [];
+  const badgeCriteria = reference?.badgeCriteria || [];
+  const requirements = reference?.badgeRequirements || [];
 
-  const { data: sections = [] } = useQuery({
-    queryKey: ['sections'],
-    queryFn: () => base44.entities.Section.filter({ active: true }),
-  });
-
-  const { data: programmes = [] } = useQuery({
-    queryKey: ['programmes'],
-    queryFn: () => base44.entities.Programme.filter({ published: true }),
-  });
-
-  const { data: badges = [] } = useQuery({
-    queryKey: ['badges'],
-    queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
-  });
-
-  const { data: badgeCriteria = [] } = useQuery({
-    queryKey: ['badge-criteria'],
-    queryFn: () => base44.entities.ProgrammeBadgeCriteria.filter({}),
-  });
-
-  const { data: requirements = [] } = useQuery({
-    queryKey: ['requirements'],
-    queryFn: () => base44.entities.BadgeRequirement.filter({}),
-  });
-
-  // Payment queries
-  const { data: meetingPaymentStatuses = [], refetch: refetchPaymentStatuses } = useQuery({
-    queryKey: ['meeting-payment-statuses-portal', childIds.join(',')],
-    queryFn: async () => {
-      const all = await base44.entities.MeetingPaymentStatus.filter({});
-      return all.filter(ps => childIds.includes(ps.member_id));
-    },
-    enabled: childIds.length > 0,
-  });
-
-  const { data: paymentOverrides = [] } = useQuery({
-    queryKey: ['meeting-payment-overrides-portal', childIds.join(',')],
-    queryFn: async () => {
-      const all = await base44.entities.MeetingPaymentOverride.filter({});
-      return all.filter(o => childIds.includes(o.member_id) && o.programme_id);
-    },
-    enabled: childIds.length > 0,
-  });
-
-  const { data: attendanceActions = [] } = useQuery({
-    queryKey: ['meeting-attendance-actions-portal'],
-    queryFn: () => base44.entities.ActionRequired.filter({ action_purpose: 'attendance' }),
-    enabled: childIds.length > 0,
-    select: data => data.filter(a => a.programme_id),
-  });
-
-  const { data: attendanceResponses = [] } = useQuery({
-    queryKey: ['meeting-attendance-responses-portal', childIds.join(',')],
-    queryFn: async () => {
-      const all = await base44.entities.ActionResponse.filter({});
-      return all.filter(r => childIds.includes(r.member_id) || childIds.includes(r.child_member_id));
-    },
-    enabled: childIds.length > 0,
-  });
+  const meetingPaymentStatuses = portal?.meetingPaymentStatuses || [];
+  const paymentOverrides = (portal?.paymentOverrides || []).filter(o => o.programme_id);
+  const attendanceActions = (reference?.attendanceActions || []).filter(a => a.programme_id);
+  const attendanceResponses = portal?.actionResponses || [];
+  const refetchPaymentStatuses = refetchPortal;
 
   // Payment helpers
   const getMeetingPayStatus = (progId) => meetingPaymentStatuses.find(ps => ps.meeting_id === progId && childIds.includes(ps.member_id));

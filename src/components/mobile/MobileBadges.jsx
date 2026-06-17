@@ -206,35 +206,15 @@ export default function MobileBadges({ selectedChild }) {
     queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
   });
 
-  const { data: badgeProgress = [] } = useQuery({
-    queryKey: ['mobile-badge-progress', child?.id],
-    queryFn: async () => {
-      if (!child) return [];
-      const all = await base44.entities.MemberBadgeProgress.filter({});
-      return all.filter(p => p.member_id === child.id);
-    },
+  const { data: portal } = useQuery({
+    queryKey: ['parent-portal'],
+    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
     enabled: !!child,
   });
 
-  const { data: awards = [] } = useQuery({
-    queryKey: ['mobile-awards', child?.id],
-    queryFn: async () => {
-      if (!child) return [];
-      const all = await base44.entities.MemberBadgeAward.filter({});
-      return all.filter(a => a.member_id === child.id);
-    },
-    enabled: !!child,
-  });
-
-  const { data: reqProgress = [] } = useQuery({
-    queryKey: ['mobile-req-progress', child?.id],
-    queryFn: async () => {
-      if (!child) return [];
-      const all = await base44.entities.MemberRequirementProgress.filter({});
-      return all.filter(p => p.member_id === child.id);
-    },
-    enabled: !!child,
-  });
+  const badgeProgress = (portal?.badgeProgress || []).filter(p => p.member_id === child?.id);
+  const awards = (portal?.awards || []).filter(a => a.member_id === child?.id);
+  const reqProgress = (portal?.requirementProgress || []).filter(p => p.member_id === child?.id);
 
   const { data: modules = [] } = useQuery({
     queryKey: ['modules'],

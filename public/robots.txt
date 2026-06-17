@@ -1,0 +1,38 @@
+# Only public marketing pages may be indexed.
+# All portal/app areas (parent, leader, treasurer, admin, app) are private.
+
+User-agent: *
+Allow: /$
+Allow: /About
+Allow: /Sections
+Allow: /Parents
+Allow: /Gallery
+Allow: /Contact
+Allow: /Join
+Allow: /Volunteer
+
+# Disallow everything private
+Disallow: /parent
+Disallow: /leader
+Disallow: /treasurer
+Disallow: /admin
+Disallow: /account
+Disallow: /app
+Disallow: /ipad
+Disallow: /sign
+Disallow: /login
+Disallow: /register
+Disallow: /CompleteRegistration
+Disallow: /MyChild
+Disallow: /ParentDashboard
+Disallow: /ParentProgramme
+Disallow: /ParentEvents
+Disallow: /ParentEventDetail
+Disallow: /ParentBadges
+Disallow: /ParentGoldAward
+Disallow: /ParentSilverAward
+Disallow: /LeaderDashboard
+Disallow: /MemberDetail
+Disallow: /AdminSettings
+
+Sitemap: https://sykescouts.org/functions/sitemap

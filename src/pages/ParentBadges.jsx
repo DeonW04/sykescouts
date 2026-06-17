@@ -112,82 +112,32 @@ export default function ParentBadges() {
     setUser(currentUser);
   };
 
-  const { data: children = [] } = useQuery({
-    queryKey: ['children', user?.email],
-    queryFn: async () => {
-      if (!user?.email) return [];
-      const allMembers = await base44.entities.Member.filter({});
-      return allMembers.filter(m => 
-        m.parent_one_email === user.email || m.parent_two_email === user.email
-      );
-    },
+  const { data: portal } = useQuery({
+    queryKey: ['parent-portal', user?.email],
+    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
     enabled: !!user?.email,
   });
 
-  const { data: badges = [], isSuccess: badgesLoaded } = useQuery({
-    queryKey: ['badges'],
-    queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
+  const { data: reference } = useQuery({
+    queryKey: ['parent-reference', user?.email],
+    queryFn: async () => (await base44.functions.invoke('getParentReferenceData', {})).data,
+    enabled: !!user?.email,
   });
 
-  const { data: badgeProgress = [] } = useQuery({
-    queryKey: ['badge-progress', children],
-    queryFn: async () => {
-      if (children.length === 0) return [];
-      const allProgress = await base44.entities.MemberBadgeProgress.filter({});
-      return allProgress.filter(p => children.some(c => c.id === p.member_id));
-    },
-    enabled: children.length > 0,
-  });
+  const children = portal?.children || [];
+  const sections = portal?.sections || [];
+  const badgeProgress = portal?.badgeProgress || [];
+  const reqProgress = portal?.requirementProgress || [];
+  const awards = portal?.awards || [];
+  const nightsAwayLogs = portal?.nightsAwayLogs || [];
 
-  const { data: modules = [] } = useQuery({
-    queryKey: ['modules'],
-    queryFn: () => base44.entities.BadgeModule.filter({}),
-  });
+  const badges = reference?.badges || [];
+  const modules = reference?.badgeModules || [];
+  const requirements = reference?.badgeRequirements || [];
+  const uniformConfigs = reference?.uniformConfigs || [];
 
-  const { data: requirements = [] } = useQuery({
-    queryKey: ['requirements'],
-    queryFn: () => base44.entities.BadgeRequirement.filter({}),
-  });
-
-  const { data: reqProgress = [] } = useQuery({
-    queryKey: ['req-progress', children],
-    queryFn: async () => {
-      if (children.length === 0) return [];
-      const allReqProgress = await base44.entities.MemberRequirementProgress.filter({});
-      return allReqProgress.filter(p => children.some(c => c.id === p.member_id));
-    },
-    enabled: children.length > 0,
-  });
-
-  const { data: awards = [], isSuccess: awardsLoaded } = useQuery({
-    queryKey: ['awards', children],
-    queryFn: async () => {
-      if (children.length === 0) return [];
-      const allAwards = await base44.entities.MemberBadgeAward.filter({});
-      return allAwards.filter(a => children.some(c => c.id === a.member_id));
-    },
-    enabled: children.length > 0,
-  });
-
-  const { data: sections = [] } = useQuery({
-    queryKey: ['sections'],
-    queryFn: () => base44.entities.Section.filter({ active: true }),
-  });
-
-  const { data: nightsAwayLogs = [] } = useQuery({
-    queryKey: ['nights-away', children],
-    queryFn: async () => {
-      if (children.length === 0) return [];
-      const logs = await base44.entities.NightsAwayLog.filter({});
-      return logs.filter(l => children.some(c => c.id === l.member_id));
-    },
-    enabled: children.length > 0,
-  });
-
-  const { data: uniformConfigs = [] } = useQuery({
-    queryKey: ['uniform-configs'],
-    queryFn: () => base44.entities.UniformConfig.filter({}),
-  });
+  const badgesLoaded = !!reference;
+  const awardsLoaded = !!portal;
 
   useEffect(() => {
     if (newBadgesCheckedRef.current) return;
