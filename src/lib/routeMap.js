@@ -31,6 +31,7 @@ export const ROUTE_MAP = {
   JoinEnquiries: '/leader/join-enquiries',
   IdeasBoard: '/leader/ideas',
   ParentPortalAnalytics: '/leader/analytics',
+  ParentPortal: '/leader/parentportal',
   NightsAwayTracking: '/leader/nights-away',
 
   // --- Leader: members ---
@@ -111,7 +112,6 @@ export const ROUTE_MAP = {
   ParentBadges: '/parent/badges',
   ParentGoldAward: '/parent/gold-award',
   ParentSilverAward: '/parent/silver-award',
-  ParentPortal: '/parent/portal',
 
   // --- Account ---
   AccountSettings: '/account/settings',
