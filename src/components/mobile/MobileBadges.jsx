@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useParentPortal } from '../../hooks/useParentPortal';
 import { Award, CheckCircle, Circle, Trophy, ChevronDown, ChevronUp } from 'lucide-react';
 import BadgeCriteriaModal from './BadgeCriteriaModal';
 import HoneycombAwardPage from './HoneycombAwardPage';
@@ -206,11 +207,7 @@ export default function MobileBadges({ selectedChild }) {
     queryFn: () => base44.entities.BadgeDefinition.filter({ active: true }),
   });
 
-  const { data: portal } = useQuery({
-    queryKey: ['parent-portal'],
-    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
-    enabled: !!child,
-  });
+  const { data: portal } = useParentPortal({ enabled: !!child });
 
   const badgeProgress = (portal?.badgeProgress || []).filter(p => p.member_id === child?.id);
   const awards = (portal?.awards || []).filter(a => a.member_id === child?.id);

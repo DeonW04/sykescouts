@@ -1,6 +1,7 @@
-import React, { useState, createContext, useContext } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, createContext, useContext, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useParentPortal, prefetchParentPortal } from '../hooks/useParentPortal';
 import { useAppRole } from '../hooks/useAppRole';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import PushNotificationPrompt from '../components/pwa/PushNotificationPrompt';
@@ -133,15 +134,15 @@ function ParentApp({ user, activeTab, onTabChange }) {
     }).catch(() => {});
   }, [activeTab, user?.id]);
 
-  const { data: children = [] } = useQuery({
-    queryKey: ['mobile-children', user?.email],
-    queryFn: async () => {
-      if (!user?.email) return [];
-      const res = await base44.functions.invoke('getParentPortalData', {});
-      return res.data?.children || [];
-    },
-    enabled: !!user?.email,
-  });
+  const queryClient = useQueryClient();
+
+  // Warm the portal cache once on login so every tab loads instantly.
+  useEffect(() => {
+    if (user?.email) prefetchParentPortal(queryClient);
+  }, [user?.email, queryClient]);
+
+  const { data: portal } = useParentPortal({ enabled: !!user?.email });
+  const children = portal?.children || [];
 
   const selectedChild = children.find(c => c.id === selectedChildId) || null;
 

@@ -5,6 +5,7 @@ import { Tent, MapPin, CalendarDays, ChevronRight, Clock, CheckCircle, Pencil } 
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import InlinePayment from './InlinePayment';
+import { useParentPortal } from '../../hooks/useParentPortal';
 
 const typeColors = {
   Camp: 'bg-green-100 text-green-700',
@@ -209,11 +210,7 @@ export default function MobileEvents({ selectedChild, user }) {
     enabled: childSectionIds.length > 0,
   });
 
-  const { data: portal } = useQuery({
-    queryKey: ['parent-portal'],
-    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
-    enabled: childIds.length > 0,
-  });
+  const { data: portal } = useParentPortal({ enabled: childIds.length > 0 });
 
   const paymentStatuses = (portal?.eventPaymentStatuses || []).filter(ps => childIds.includes(ps.member_id));
   const paymentOverrides = (portal?.paymentOverrides || []).filter(o => childIds.includes(o.member_id) && o.event_id);

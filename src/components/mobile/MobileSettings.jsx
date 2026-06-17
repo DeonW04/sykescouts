@@ -7,6 +7,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { toast } from 'sonner';
 import { format, isBefore, addDays } from 'date-fns';
+import { useParentPortal } from '../../hooks/useParentPortal';
 
 const SW_URL = '/sw.js';
 
@@ -131,11 +132,7 @@ function PaymentMethodsSection({ user }) {
   useEffect(() => { getStripePromise().then(p => { if (p) setStripePromise(p); }); }, []);
 
   // Find the child record (server-scoped to this parent's own children only)
-  const { data: portal } = useQuery({
-    queryKey: ['parent-portal'],
-    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
-    enabled: !!user?.email,
-  });
+  const { data: portal } = useParentPortal({ enabled: !!user?.email });
   const myChildren = portal?.children || [];
 
   const primaryChild = myChildren[0];
@@ -253,11 +250,7 @@ function PaymentHistorySection({ user }) {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
 
-  const { data: portal } = useQuery({
-    queryKey: ['parent-portal'],
-    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
-    enabled: !!user?.email,
-  });
+  const { data: portal } = useParentPortal({ enabled: !!user?.email });
   const myChildren = portal?.children || [];
 
   const primaryChild = myChildren[0];
@@ -314,11 +307,7 @@ function PaymentHistorySection({ user }) {
 
 function ParentAccountSection({ user }) {
   const queryClient = useQueryClient();
-  const { data: portal } = useQuery({
-    queryKey: ['parent-portal'],
-    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
-    enabled: !!user?.email,
-  });
+  const { data: portal } = useParentPortal({ enabled: !!user?.email });
   const myChildren = portal?.children || [];
 
   const saveDisplayName = async (value) => {
