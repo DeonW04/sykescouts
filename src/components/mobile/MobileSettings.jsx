@@ -130,16 +130,13 @@ function PaymentMethodsSection({ user }) {
 
   useEffect(() => { getStripePromise().then(p => { if (p) setStripePromise(p); }); }, []);
 
-  // Find the child record
-  const { data: myChildren = [] } = useQuery({
-    queryKey: ['settings-children', user?.email],
-    queryFn: async () => {
-      if (!user?.email) return [];
-      const all = await base44.entities.Member.filter({});
-      return all.filter(m => m.parent_one_email === user.email || m.parent_two_email === user.email);
-    },
+  // Find the child record (server-scoped to this parent's own children only)
+  const { data: portal } = useQuery({
+    queryKey: ['parent-portal'],
+    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
     enabled: !!user?.email,
   });
+  const myChildren = portal?.children || [];
 
   const primaryChild = myChildren[0];
 
@@ -256,15 +253,12 @@ function PaymentHistorySection({ user }) {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
 
-  const { data: myChildren = [] } = useQuery({
-    queryKey: ['settings-children-history', user?.email],
-    queryFn: async () => {
-      if (!user?.email) return [];
-      const all = await base44.entities.Member.filter({});
-      return all.filter(m => m.parent_one_email === user.email || m.parent_two_email === user.email);
-    },
+  const { data: portal } = useQuery({
+    queryKey: ['parent-portal'],
+    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
     enabled: !!user?.email,
   });
+  const myChildren = portal?.children || [];
 
   const primaryChild = myChildren[0];
 
@@ -320,15 +314,12 @@ function PaymentHistorySection({ user }) {
 
 function ParentAccountSection({ user }) {
   const queryClient = useQueryClient();
-  const { data: myChildren = [] } = useQuery({
-    queryKey: ['settings-children', user?.email],
-    queryFn: async () => {
-      if (!user?.email) return [];
-      const all = await base44.entities.Member.filter({});
-      return all.filter(m => m.parent_one_email === user.email || m.parent_two_email === user.email);
-    },
+  const { data: portal } = useQuery({
+    queryKey: ['parent-portal'],
+    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
     enabled: !!user?.email,
   });
+  const myChildren = portal?.children || [];
 
   const saveDisplayName = async (value) => {
     await base44.auth.updateMe({ display_name: value });
@@ -338,7 +329,7 @@ function ParentAccountSection({ user }) {
       if (child.parent_two_email === user.email) { updates.parent_two_name = value; const parts = value.trim().split(' '); updates.parent_two_first_name = parts[0] || ''; updates.parent_two_surname = parts.slice(1).join(' ') || ''; }
       if (Object.keys(updates).length > 0) await base44.entities.Member.update(child.id, updates);
     }
-    queryClient.invalidateQueries({ queryKey: ['settings-children'] });
+    queryClient.invalidateQueries({ queryKey: ['parent-portal'] });
     toast.success('Display name updated');
     setTimeout(() => window.location.reload(), 500);
   };

@@ -257,7 +257,7 @@ export default function MobileEvents({ selectedChild, user }) {
         await base44.entities.ActionResponse.create({ action_required_id: actionId, member_id: memberId, parent_email: parentEmail || '', response_value: value, responded_at: new Date().toISOString() });
       }
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['mobile-event-responses-detail', selectedEvent?.id] }); toast.success('Response saved!'); },
+    onSuccess: () => { invalidatePortal(); toast.success('Response saved!'); },
     onError: () => toast.error('Failed to save response'),
   });
 
@@ -271,7 +271,7 @@ export default function MobileEvents({ selectedChild, user }) {
     const resp = attendanceData.responses.find(r => r.action_required_id === action.id && childIds.includes(r.member_id));
     return !!(resp && ['Yes, attending', 'yes', 'attending'].includes(resp.response_value));
   };
-  const invalidatePayments = () => queryClient.invalidateQueries({ queryKey: ['event-payment-statuses', childIds.join(',')] });
+  const invalidatePayments = () => invalidatePortal();
 
   const now = new Date();
   const upcoming = events.filter(e => new Date(e.start_date) >= now);

@@ -43,14 +43,12 @@ export default function AccountSettings() {
     })();
   }, []);
 
-  const { data: children = [] } = useQuery({
-    queryKey: ['account-settings-children', user?.email],
-    queryFn: async () => {
-      const all = await base44.entities.Member.filter({});
-      return all.filter(m => m.parent_one_email === user.email || m.parent_two_email === user.email);
-    },
+  const { data: portal } = useQuery({
+    queryKey: ['parent-portal'],
+    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
     enabled: !!user?.email && role === 'parent',
   });
+  const children = portal?.children || [];
 
   const child = children[0];
   const isParentOne = !!child && child.parent_one_email === user?.email;
@@ -95,7 +93,7 @@ export default function AccountSettings() {
     } else if (role === 'leader' && leader) {
       await base44.entities.Leader.update(leader.id, { phone, display_name: displayName });
     }
-    queryClient.invalidateQueries({ queryKey: ['account-settings-children'] });
+    queryClient.invalidateQueries({ queryKey: ['parent-portal'] });
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
     toast.success('Changes saved');
