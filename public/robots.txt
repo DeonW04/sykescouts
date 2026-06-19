@@ -1,8 +1,5 @@
-# Only public marketing pages may be indexed.
-# All portal/app areas (parent, leader, treasurer, admin, app) are private.
-
 User-agent: *
-Allow: /$
+Allow: /
 Allow: /About
 Allow: /Sections
 Allow: /Parents
@@ -11,28 +8,56 @@ Allow: /Contact
 Allow: /Join
 Allow: /Volunteer
 
-# Disallow everything private
-Disallow: /parent
-Disallow: /leader
-Disallow: /treasurer
-Disallow: /admin
-Disallow: /account
+# Block internal / portal / authenticated areas
+Disallow: /login
+Disallow: /register
 Disallow: /app
 Disallow: /ipad
 Disallow: /sign
-Disallow: /login
-Disallow: /register
+Disallow: /approve-access
+Disallow: /receipt-submit
+Disallow: /public-ra
+Disallow: /leader/
+Disallow: /parent/
+Disallow: /treasurer/
+Disallow: /Leader
+Disallow: /Parent
+Disallow: /Treasurer
+Disallow: /Member
+Disallow: /Meeting
+Disallow: /Event
+Disallow: /Badge
+Disallow: /Award
+Disallow: /Manage
+Disallow: /Edit
+Disallow: /Admin
+Disallow: /Communications
+Disallow: /WeeklyMessage
+Disallow: /MonthlyNewsletter
+Disallow: /EventUpdate
+Disallow: /RiskAssessment
+Disallow: /NightsAway
+Disallow: /HikesAway
+Disallow: /JoiningIn
+Disallow: /Staged
+Disallow: /Gold
+Disallow: /Silver
+Disallow: /ConsentForm
+Disallow: /SectionAccounting
+Disallow: /PORHelper
+Disallow: /IdeasBoard
+Disallow: /AIProgrammePlanner
+Disallow: /JoinEnquiries
+Disallow: /ArchivedMembers
+Disallow: /BadgeStockManagement
+Disallow: /WhatsApp
+Disallow: /OSMBadgeImport
+Disallow: /ImportBadges
+Disallow: /QuizBuilder
+Disallow: /GalleryUpload
+Disallow: /AccountSettings
 Disallow: /CompleteRegistration
-Disallow: /MyChild
-Disallow: /ParentDashboard
-Disallow: /ParentProgramme
-Disallow: /ParentEvents
-Disallow: /ParentEventDetail
-Disallow: /ParentBadges
-Disallow: /ParentGoldAward
-Disallow: /ParentSilverAward
-Disallow: /LeaderDashboard
-Disallow: /MemberDetail
-Disallow: /AdminSettings
+Disallow: /MobileDashboardDemo
+Disallow: /testpage
 
 Sitemap: https://sykescouts.org/functions/sitemap
