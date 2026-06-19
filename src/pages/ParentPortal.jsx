@@ -10,10 +10,18 @@ import { toast } from 'sonner';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Helmet } from 'react-helmet-async';
 
 export default function ParentPortal() {
   const queryClient = useQueryClient();
+
+  // Set noindex without react-helmet (this page renders outside HelmetProvider)
+  React.useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'robots';
+    meta.content = 'noindex, nofollow';
+    document.head.appendChild(meta);
+    return () => { document.head.removeChild(meta); };
+  }, []);
   const [refreshing, setRefreshing] = useState(false);
   const [showMissingDataModal, setShowMissingDataModal] = useState(false);
 
@@ -157,10 +165,6 @@ export default function ParentPortal() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Helmet>
-        <meta name="robots" content="noindex, nofollow" />
-        <meta name="googlebot" content="noindex, nofollow" />
-      </Helmet>
       <FloatingNav />
       <NavBarSpacer />
       <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
