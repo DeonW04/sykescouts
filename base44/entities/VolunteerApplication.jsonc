@@ -74,5 +74,33 @@
     "email",
     "phone",
     "why_volunteer"
-  ]
+  ],
+  "rls": {
+    "create": null,
+    "read": {
+      "user_condition": {
+        "role": {
+          "$in": [
+            "admin",
+            "glv"
+          ]
+        }
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": {
+          "$in": [
+            "admin",
+            "glv"
+          ]
+        }
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
