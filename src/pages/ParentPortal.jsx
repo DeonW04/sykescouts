@@ -10,9 +10,13 @@ import { toast } from 'sonner';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useAppRole } from '@/hooks/useAppRole';
+import { Lock } from 'lucide-react';
 
 export default function ParentPortal() {
   const queryClient = useQueryClient();
+  const { role, isLoading: roleLoading } = useAppRole();
+  const isLeader = role === 'leader';
 
   // Set noindex without react-helmet (this page renders outside HelmetProvider)
   React.useEffect(() => {
@@ -45,11 +49,13 @@ export default function ParentPortal() {
   const { data: members = [] } = useQuery({
     queryKey: ['members'],
     queryFn: () => base44.entities.Member.filter({ active: true }),
+    enabled: isLeader,
   });
 
   const { data: parents = [] } = useQuery({
     queryKey: ['parents'],
     queryFn: () => base44.entities.Parent.filter({}),
+    enabled: isLeader,
   });
 
   const sendInviteMutation = useMutation({
@@ -95,11 +101,13 @@ export default function ParentPortal() {
   const { data: registrationCache = [] } = useQuery({
     queryKey: ['parent-registration-cache'],
     queryFn: () => base44.entities.ParentRegistrationCache.filter({}),
+    enabled: isLeader,
   });
 
   const { data: pushSubscriptions = [] } = useQuery({
     queryKey: ['push-subscriptions'],
     queryFn: () => base44.entities.PushSubscription.list(),
+    enabled: isLeader,
   });
 
   const [testingPush, setTestingPush] = useState(null);
@@ -162,6 +170,32 @@ export default function ParentPortal() {
   const percentRegistered = stats.totalMembers > 0
     ? Math.round(((stats.parentOneRegistered + stats.parentTwoRegistered) / (stats.totalMembers * 2)) * 100)
     : 0;
+
+  // Block access until we know the user is a leader/admin — protects members' personal data
+  if (roleLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isLeader) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-8 h-8 text-red-500" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">Access Restricted</h1>
+          <p className="text-gray-500 mb-6">This area is for section leaders only. If you're a parent, please use your Parent Portal instead.</p>
+          <Button onClick={() => { window.location.href = '/app'; }} className="bg-[#7413dc] hover:bg-[#5c0fb0] text-white">
+            Go to My Portal
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

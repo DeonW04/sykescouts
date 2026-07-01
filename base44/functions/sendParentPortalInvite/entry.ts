@@ -101,6 +101,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Only leaders / admins may send parent portal invites
+    let isLeader = user.role === 'admin';
+    if (!isLeader) {
+      const leaders = await base44.asServiceRole.entities.Leader.filter({ user_id: user.id });
+      isLeader = leaders.length > 0;
+    }
+    if (!isLeader) {
+      return Response.json({ error: 'Leader access required' }, { status: 403 });
+    }
+
     const { parentEmail, parentName, childName } = await req.json();
     console.log('📝 Params received:', { parentEmail, parentName, childName });
 
