@@ -487,35 +487,33 @@ export default function LeaderProgramme() {
                             )}
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
-                            {!isPast && (
-                              isNoMeeting ? (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    markNoMeetingMutation.mutate({ date: dateStr, unmark: true, existingProg: programme });
-                                  }}
-                                  disabled={markNoMeetingMutation.isPending}
-                                  className="text-red-600 hover:bg-red-100 text-xs"
-                                >
-                                  Unmark
-                                </Button>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setNoMeetingDialog(dateStr);
-                                    setNoMeetingReason('');
-                                  }}
-                                  className="text-gray-400 hover:text-red-600 hover:bg-red-50 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                  <Ban className="w-3.5 h-3.5 mr-1" />
-                                  No Meeting
-                                </Button>
-                              )
+                            {isNoMeeting ? (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  markNoMeetingMutation.mutate({ date: dateStr, unmark: true, existingProg: programme });
+                                }}
+                                disabled={markNoMeetingMutation.isPending}
+                                className="text-red-600 hover:bg-red-100 text-xs"
+                              >
+                                Unmark
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setNoMeetingDialog(dateStr);
+                                  setNoMeetingReason('');
+                                }}
+                                className="text-gray-400 hover:text-red-600 hover:bg-red-50 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Ban className="w-3.5 h-3.5 mr-1" />
+                                No Meeting
+                              </Button>
                             )}
                             {!isNoMeeting && (
                               <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-[#7413dc] group-hover:translate-x-1 transition-all" />
