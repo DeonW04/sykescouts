@@ -23,14 +23,26 @@ Deno.serve(async (req) => {
 
     console.log('OSM callback - state received:', state);
 
-    // Extract code_verifier from state
+    // Extract code_verifier and returnTo from state
     let codeVerifier;
+    let returnTo;
     try {
       const decoded = JSON.parse(atob(decodeURIComponent(state)));
       codeVerifier = decoded.cv;
+      returnTo = decoded.returnTo;
     } catch (e) {
       return Response.redirect(`https://sykescouts.org/AdminSettings?tab=osm&osm_error=${encodeURIComponent('Invalid state: ' + e.message)}`, 302);
     }
+
+    // Only allow same-origin return URLs; fall back to Admin Settings otherwise
+    const buildReturnUrl = (extraParam) => {
+      let base = 'https://sykescouts.org/AdminSettings';
+      if (returnTo && returnTo.startsWith('https://sykescouts.org/')) {
+        base = returnTo.split('#')[0];
+      }
+      const sep = base.includes('?') ? '&' : '?';
+      return `${base}${sep}${extraParam}`;
+    };
     if (!codeVerifier) {
       return Response.redirect(`https://sykescouts.org/AdminSettings?tab=osm&osm_error=Missing%20code%20verifier%20in%20state`, 302);
     }
@@ -93,9 +105,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Redirect to OSM settings panel with success message
+    // Redirect back to the page the flow was triggered from, with success message
     console.log('OSM OAuth callback complete - tokens saved successfully');
-    return Response.redirect(`https://sykescouts.org/AdminSettings?osm_connected=true`, 302);
+    return Response.redirect(buildReturnUrl('osm_connected=true'), 302);
   } catch (error) {
     console.error('OSM OAuth callback error:', error);
     return Response.redirect(`https://sykescouts.org/AdminSettings?osm_error=${encodeURIComponent(error.message)}`, 302);
