@@ -16,6 +16,7 @@ import NavBarSpacer from '../components/public/NavBarSpacer';
 import { useSectionContext } from '../components/leader/SectionContext';
 import AIPlannerModal from '../components/aiPlanner/AIPlannerModal';
 import ProgrammeSyncModal from '../components/osm/ProgrammeSyncModal';
+import { isOSMExpired, startOSMLogin } from '../components/osm/OSMExpiredBanner';
 import { toast } from 'sonner';
 
 export default function LeaderProgramme() {
@@ -27,7 +28,39 @@ export default function LeaderProgramme() {
   const [noMeetingDialog, setNoMeetingDialog] = useState(null); // date string or null
   const [noMeetingReason, setNoMeetingReason] = useState('');
   const [showOsmSync, setShowOsmSync] = useState(false);
+  const [checkingOsm, setCheckingOsm] = useState(false);
   const queryClient = useQueryClient();
+
+  // If we've just returned from an OSM reconnect that was started by the
+  // Sync button, auto-reopen the sync modal.
+  React.useEffect(() => {
+    if (sessionStorage.getItem('osm_reconnect_retry') === '1') {
+      sessionStorage.removeItem('osm_reconnect_retry');
+      setShowOsmSync(true);
+    }
+  }, []);
+
+  // Sync button handler — verify OSM connection first, run login flow if expired
+  const handleSyncClick = async () => {
+    if (!osmConfig?.osm_term_id) {
+      toast.warning('Set up OSM term link in Admin Settings first');
+      return;
+    }
+    setCheckingOsm(true);
+    try {
+      const expired = await isOSMExpired();
+      if (expired) {
+        toast.info('Connecting to OSM…');
+        await startOSMLogin({ retryFlag: true }); // redirects away; modal reopens on return
+        return;
+      }
+      setShowOsmSync(true);
+    } catch (e) {
+      toast.error('Could not connect to OSM: ' + e.message);
+    } finally {
+      setCheckingOsm(false);
+    }
+  };
 
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
@@ -181,12 +214,13 @@ export default function LeaderProgramme() {
           <div className="flex gap-2 flex-wrap">
             {currentTerm && (
               <Button
-                onClick={() => osmConfig?.osm_term_id ? setShowOsmSync(true) : toast.warning('Set up OSM term link in Admin Settings first')}
+                onClick={handleSyncClick}
+                disabled={checkingOsm}
                 variant="outline"
                 className={`font-semibold ${osmConfig?.osm_term_id ? 'border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white' : 'text-gray-400 cursor-default'}`}
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Sync with OSM
+                <RefreshCw className={`w-4 h-4 mr-2 ${checkingOsm ? 'animate-spin' : ''}`} />
+                {checkingOsm ? 'Checking OSM…' : 'Sync with OSM'}
               </Button>
             )}
             <Button

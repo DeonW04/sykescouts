@@ -9,34 +9,43 @@ import { toast } from 'sonner';
  * onReconnected() is called after the OAuth flow completes and the user
  * returns to the page — giving the parent a chance to retry the sync.
  */
+/**
+ * Kicks off the OSM OAuth login flow, redirecting the browser to OSM.
+ * Set retryFlag=true to store a sessionStorage marker so the caller can
+ * auto-resume its action when the user returns after reconnecting.
+ * Throws on failure so callers can handle their own loading state.
+ */
+export async function startOSMLogin({ retryFlag = false } = {}) {
+  const res = await base44.functions.invoke('getOSMClientId', {});
+  if (res.data.error) throw new Error('Could not get OSM client ID: ' + res.data.error);
+  const clientId = res.data.client_id;
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  const codeVerifier = btoa(String.fromCharCode(...array)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
+  const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  if (retryFlag) sessionStorage.setItem('osm_reconnect_retry', '1');
+  const state = btoa(JSON.stringify({ returnTo: window.location.href, cv: codeVerifier }));
+  const redirectUri = 'https://sykescouts.org/functions/osmOAuthCallback';
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'section:member:write section:badge:write section:programme:write',
+    state,
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
+  });
+  window.location.href = `https://www.onlinescoutmanager.co.uk/oauth/authorize?${params.toString()}`;
+}
+
 export default function OSMExpiredBanner({ onReconnected }) {
   const [reconnecting, setReconnecting] = useState(false);
 
   const handleReconnect = async () => {
     setReconnecting(true);
     try {
-      const res = await base44.functions.invoke('getOSMClientId', {});
-      if (res.data.error) { toast.error('Could not get OSM client ID: ' + res.data.error); setReconnecting(false); return; }
-      const clientId = res.data.client_id;
-      const array = new Uint8Array(32);
-      crypto.getRandomValues(array);
-      const codeVerifier = btoa(String.fromCharCode(...array)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
-      const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-      // Store a "pending retry" flag so when we return we can auto-retry
-      if (onReconnected) sessionStorage.setItem('osm_reconnect_retry', '1');
-      const state = btoa(JSON.stringify({ returnTo: window.location.href, cv: codeVerifier }));
-      const redirectUri = 'https://sykescouts.org/functions/osmOAuthCallback';
-      const params = new URLSearchParams({
-        client_id: clientId,
-        redirect_uri: redirectUri,
-        response_type: 'code',
-        scope: 'section:member:write section:badge:write section:programme:write',
-        state,
-        code_challenge: codeChallenge,
-        code_challenge_method: 'S256',
-      });
-      window.location.href = `https://www.onlinescoutmanager.co.uk/oauth/authorize?${params.toString()}`;
+      await startOSMLogin({ retryFlag: !!onReconnected });
     } catch (e) {
       toast.error('Reconnect failed: ' + e.message);
       setReconnecting(false);
