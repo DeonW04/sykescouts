@@ -103,26 +103,32 @@ export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId,
       if (osmRes.data.error) throw new Error(osmRes.data.error);
 
       const osmItems = osmRes.data.items || [];
-      // Filter app programmes to the linked term's date range
+      // Filter app programmes to the linked term's date range.
+      // Normalise to the YYYY-MM-DD portion so a full ISO datetime term
+      // boundary doesn't wrongly exclude meetings via string comparison.
+      const dayOnly = (d) => (d ? String(d).split('T')[0] : d);
+      const startDay = dayOnly(termStartDate);
+      const endDay = dayOnly(termEndDate);
       const appItems = appProgrammes.filter(p => {
         if (!p.date) return false;
-        if (termStartDate && p.date < termStartDate) return false;
-        if (termEndDate && p.date > termEndDate) return false;
+        const pDay = dayOnly(p.date);
+        if (startDay && pDay < startDay) return false;
+        if (endDay && pDay > endDay) return false;
         return true;
       });
 
-      // Build combined date set
+      // Build combined date set (day-only keys so OSM and app dates align)
       const dateSet = new Set();
-      osmItems.forEach(o => o.meetingdate && dateSet.add(o.meetingdate));
-      appItems.forEach(a => a.date && dateSet.add(a.date));
+      osmItems.forEach(o => o.meetingdate && dateSet.add(dayOnly(o.meetingdate)));
+      appItems.forEach(a => a.date && dateSet.add(dayOnly(a.date)));
 
       const sortedDates = [...dateSet].sort();
       const built = [];
       const initActions = {};
 
       for (const date of sortedDates) {
-        const osmItem = osmItems.find(o => o.meetingdate === date);
-        const appItem = appItems.find(a => a.date === date);
+        const osmItem = osmItems.find(o => dayOnly(o.meetingdate) === date);
+        const appItem = appItems.find(a => dayOnly(a.date) === date);
         const linked = osmItem && appItem && appItem.osm_evening_id && String(appItem.osm_evening_id) === String(osmItem.eveningid);
 
         let defaultAction = 'skip';

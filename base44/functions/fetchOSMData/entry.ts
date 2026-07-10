@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     const settings = settingsArr[0];
 
     if (!settings || !settings.osm_access_token) {
-      return Response.json({ error: 'OSM not connected' }, { status: 400 });
+      return Response.json({ error: 'OSM not connected', auth_expired: true }, { status: 400 });
     }
 
     const accessToken = settings.osm_access_token;
@@ -38,6 +38,11 @@ Deno.serve(async (req) => {
 
     console.log('Response status:', sectionsRes.status);
 
+    // A 401/403 from OSM means the token is genuinely expired/invalid
+    if (sectionsRes.status === 401 || sectionsRes.status === 403) {
+      return Response.json({ error: 'OSM authorization expired', auth_expired: true }, { status: 401 });
+    }
+
     const text = await sectionsRes.text();
     console.log('Actual response length:', text.length);
     console.log('First 300 chars:', text.substring(0, 300));
@@ -45,7 +50,8 @@ Deno.serve(async (req) => {
     if (!text.trim()) {
       console.error('OSM returned empty response');
       return Response.json({
-        error: 'OSM returned empty response. Token may be invalid or expired.'
+        error: 'OSM returned empty response. Token may be invalid or expired.',
+        auth_expired: true
       }, { status: 500 });
     }
 

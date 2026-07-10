@@ -75,14 +75,16 @@ export default function OSMExpiredBanner({ onReconnected }) {
 }
 
 /**
- * Helper: given any caught error or response error string, check whether
- * the OSM connection is alive. Returns true if connection is dead (expired).
+ * Helper: checks whether the OSM connection is genuinely expired/unauthorized.
+ * Only returns true on a real auth failure (auth_expired flag) — NOT on
+ * config/data errors, which would otherwise trigger a false re-login loop.
  */
 export async function isOSMExpired() {
   try {
     const res = await base44.functions.invoke('fetchOSMData', {});
-    return !!res.data?.error;
-  } catch {
-    return true;
+    return res.data?.auth_expired === true;
+  } catch (e) {
+    // Only a 401 counts as expired; other failures are not auth issues
+    return e?.response?.status === 401;
   }
 }
