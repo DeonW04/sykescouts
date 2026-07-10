@@ -96,7 +96,11 @@ export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId,
       setSectionOsmOverrides(overrides);
 
       const [osmRes, appProgrammes] = await Promise.all([
-        base44.functions.invoke('getOSMProgrammeSummary', { ...overrides }),
+        base44.functions.invoke('getOSMProgrammeSummary', {
+          ...overrides,
+          term_start_date: termStartDate,
+          term_end_date: termEndDate,
+        }),
         base44.entities.Programme.filter({ section_id: sectionId }),
       ]);
 
@@ -183,7 +187,12 @@ export default function ProgrammeSyncModal({ open, onClose, termName, osmTermId,
     }));
     setSyncing(true);
     try {
-      const res = await base44.functions.invoke('bulkSyncProgramme', { selections, ...sectionOsmOverrides });
+      const res = await base44.functions.invoke('bulkSyncProgramme', {
+        selections,
+        ...sectionOsmOverrides,
+        term_start_date: termStartDate,
+        term_end_date: termEndDate,
+      });
       if (res.data.error) throw new Error(res.data.error);
       setResult(res.data);
       setPendingSelections(null);

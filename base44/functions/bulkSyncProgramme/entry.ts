@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Admin access required' }, { status: 403 });
     }
 
-    const { selections, osm_section_id_override, osm_term_id_override } = await req.json();
+    const { selections, osm_section_id_override, osm_term_id_override, term_start_date, term_end_date } = await req.json();
     if (!Array.isArray(selections)) {
       return Response.json({ error: 'selections must be an array' }, { status: 400 });
     }
@@ -44,7 +44,28 @@ Deno.serve(async (req) => {
 
     const accessToken = settings.osm_access_token;
     const sectionId   = osm_section_id_override || settings.osm_section_id;
-    const termId      = osm_term_id_override     || settings.osm_term_id;
+    let termId        = osm_term_id_override     || settings.osm_term_id;
+
+    // Resolve the OSM term that overlaps the open app term's dates, so
+    // pulling meeting details targets the correct (past/current/future) term.
+    if (term_start_date && term_end_date && sectionId) {
+      const dayOnly = (d) => String(d).split('T')[0];
+      const appStart = dayOnly(term_start_date);
+      const appEnd = dayOnly(term_end_date);
+      try {
+        const termsUrl = `https://www.onlinescoutmanager.co.uk/api.php?action=getTerms&sectionid=${sectionId}`;
+        const termsRes = await fetch(termsUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+        if (termsRes.ok) {
+          const termsData = await termsRes.json();
+          const sectionTerms = termsData[sectionId] || termsData[String(sectionId)] || [];
+          const termsArray = Array.isArray(sectionTerms) ? sectionTerms : Object.values(sectionTerms);
+          const match = termsArray.find(t => dayOnly(t.startdate) <= appEnd && dayOnly(t.enddate) >= appStart);
+          if (match?.termid) termId = String(match.termid);
+        }
+      } catch (e) {
+        console.error('[bulkSyncProgramme] term resolve failed:', e.message);
+      }
+    }
 
     const allSections = await base44.asServiceRole.entities.Section.filter({});
 

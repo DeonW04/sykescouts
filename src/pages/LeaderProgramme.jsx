@@ -9,7 +9,7 @@ import { Calendar, ChevronRight, Sparkles, Clock, List, Download, ArrowRight, Wa
 import AllTermsDialog from '../components/programme/AllTermsDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 
 export default function LeaderProgramme() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { selectedSection } = useSectionContext();
   const [showAllTermsDialog, setShowAllTermsDialog] = useState(false);
   const [selectedTerm, setSelectedTerm] = useState(null);
@@ -81,6 +82,38 @@ export default function LeaderProgramme() {
   }) || terms.find(t => new Date(t.start_date) > new Date()) || terms[0];
 
   const currentSection = sections.find(s => s.id === selectedSection);
+
+  // On load, restore the term from the ?term= URL param (so pressing back
+  // returns to the previously-viewed term rather than the current one).
+  React.useEffect(() => {
+    if (terms.length === 0) return;
+    const params = new URLSearchParams(location.search);
+    const urlTermId = params.get('term');
+    if (urlTermId && urlTermId !== selectedTerm?.id) {
+      const match = terms.find(t => t.id === urlTermId);
+      if (match) setSelectedTerm(match);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [terms, location.search]);
+
+  // Keep the URL in sync with the term currently being viewed.
+  React.useEffect(() => {
+    if (!currentTerm) return;
+    const params = new URLSearchParams(location.search);
+    if (params.get('term') !== currentTerm.id) {
+      params.set('term', currentTerm.id);
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTerm?.id]);
+
+  // Called when a term is chosen from the All Terms dialog.
+  const handleSelectTerm = (term) => {
+    setSelectedTerm(term);
+    const params = new URLSearchParams(location.search);
+    params.set('term', term.id);
+    navigate(`${location.pathname}?${params.toString()}`);
+  };
 
   const { data: meetings = [] } = useQuery({
     queryKey: ['term-meetings', currentTerm?.id],
@@ -585,7 +618,7 @@ export default function LeaderProgramme() {
         open={showAllTermsDialog}
         onOpenChange={setShowAllTermsDialog}
         terms={terms}
-        onSelectTerm={setSelectedTerm}
+        onSelectTerm={handleSelectTerm}
         onCreateNew={() => {}}
       />
 
