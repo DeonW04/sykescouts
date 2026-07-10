@@ -103,7 +103,14 @@ export default function LeaderHome({ user, leader, sections, allSections, select
                     <Calendar className="w-5 h-5 text-green-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm truncate">{m.title}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{m.title}</p>
+                      {allSections.find(s => s.id === m.section_id) && (
+                        <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wide bg-[#7413dc]/10 text-[#7413dc] px-2 py-0.5 rounded-full">
+                          {allSections.find(s => s.id === m.section_id).display_name}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 mt-0.5">{format(new Date(m.date), 'EEE, d MMM')}</p>
                     {(m.optional_location || m.optional_start_time) && (
                       <div className="flex items-center gap-1 mt-1">

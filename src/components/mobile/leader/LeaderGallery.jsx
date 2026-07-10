@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 export default function LeaderGallery({ sections, user }) {
   const queryClient = useQueryClient();
   const [uploadStates, setUploadStates] = useState([]); // [{status: 'pending'|'uploading'|'done'|'error'}]
+  const [selectedSectionId, setSelectedSectionId] = useState(sections.length === 1 ? sections[0].id : '');
   const [selectedProgrammeId, setSelectedProgrammeId] = useState('');
   const [selectedEventId, setSelectedEventId] = useState('');
   const [caption, setCaption] = useState('');
@@ -45,6 +46,9 @@ export default function LeaderGallery({ sections, user }) {
     },
   });
 
+  const filteredProgrammes = selectedSectionId ? programmes.filter(p => p.section_id === selectedSectionId) : [];
+  const filteredEvents = selectedSectionId ? events.filter(e => e.section_ids?.includes(selectedSectionId)) : [];
+
   const handleFilesSelected = (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -68,8 +72,8 @@ export default function LeaderGallery({ sections, user }) {
       try {
         const { file_url } = await base44.integrations.Core.UploadFile({ file: selectedFiles[i] });
 
-        // Derive section_id (required field)
-        let sectionId = sections[0]?.id || 'all';
+        // Derive section_id (required field) — prefer the explicitly selected section
+        let sectionId = selectedSectionId || sections[0]?.id || 'all';
         if (selectedProgrammeId) {
           const prog = programmes.find(p => p.id === selectedProgrammeId);
           if (prog?.section_id) sectionId = prog.section_id;
@@ -188,12 +192,25 @@ export default function LeaderGallery({ sections, user }) {
             </div>
           )}
 
+          {/* Select section first */}
+          {sections.length > 1 && (
+            <div>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1">Section</label>
+              <select value={selectedSectionId} onChange={e => { setSelectedSectionId(e.target.value); setSelectedProgrammeId(''); setSelectedEventId(''); }} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pink-400 bg-white appearance-none">
+                <option value="">Select a section...</option>
+                {sections.map(s => (
+                  <option key={s.id} value={s.id}>{s.display_name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Link to meeting */}
           <div>
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1">Link to Meeting</label>
-            <select value={selectedProgrammeId} onChange={e => { setSelectedProgrammeId(e.target.value); setSelectedEventId(''); }} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pink-400 bg-white appearance-none">
-              <option value="">Select a meeting...</option>
-              {programmes.map(p => (
+            <select value={selectedProgrammeId} onChange={e => { setSelectedProgrammeId(e.target.value); setSelectedEventId(''); }} disabled={!selectedSectionId} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pink-400 bg-white appearance-none disabled:bg-gray-50 disabled:text-gray-400">
+              <option value="">{selectedSectionId ? 'Select a meeting...' : 'Select a section first'}</option>
+              {filteredProgrammes.map(p => (
                 <option key={p.id} value={p.id}>{format(new Date(p.date), 'd MMM yyyy')} — {p.title}</option>
               ))}
             </select>
@@ -208,9 +225,9 @@ export default function LeaderGallery({ sections, user }) {
           {/* Link to event */}
           <div>
             <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1">Link to Event</label>
-            <select value={selectedEventId} onChange={e => { setSelectedEventId(e.target.value); setSelectedProgrammeId(''); }} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pink-400 bg-white appearance-none">
-              <option value="">Select an event...</option>
-              {events.map(e => (
+            <select value={selectedEventId} onChange={e => { setSelectedEventId(e.target.value); setSelectedProgrammeId(''); }} disabled={!selectedSectionId} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pink-400 bg-white appearance-none disabled:bg-gray-50 disabled:text-gray-400">
+              <option value="">{selectedSectionId ? 'Select an event...' : 'Select a section first'}</option>
+              {filteredEvents.map(e => (
                 <option key={e.id} value={e.id}>{e.title} — {format(new Date(e.start_date), 'd MMM yyyy')}</option>
               ))}
             </select>
