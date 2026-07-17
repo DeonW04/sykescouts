@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import { addMonths, format, parseISO, addDays } from 'date-fns';
+import SearchableSelect from '@/components/treasurer/SearchableSelect';
 
 const CATEGORIES = ['subs', 'event_payments', 'donations', 'fundraising', 'equipment', 'food', 'transport', 'hall_hire', 'badges', 'reimbursement', 'other'];
 const fmt = n => `£${(n || 0).toFixed(2)}`;
@@ -262,44 +263,63 @@ export default function TreasurerLedger() {
           </div>
 
           {/* Filters */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-3">
-            <div className="relative col-span-2 sm:col-span-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input className="pl-9" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-3 mt-4">
+            <div className="col-span-2 sm:col-span-3 lg:col-span-2">
+              <Label className="text-xs text-gray-500 mb-1 block">Search</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input className="pl-9" placeholder="Search description or reference..." value={search} onChange={e => setSearch(e.target.value)} />
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Input type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} placeholder="From" className="text-sm" title="From date" />
-              <Input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} placeholder="To" className="text-sm" title="To date" />
+            <div>
+              <Label className="text-xs text-gray-500 mb-1 block">Date from</Label>
+              <Input type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} className="text-sm" />
             </div>
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All types</SelectItem>
-                <SelectItem value="income">Income</SelectItem>
-                <SelectItem value="expense">Expense</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All categories</SelectItem>
-                {CATEGORIES.map(c => <SelectItem key={c} value={c}>{catLabel(c)}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={filterSection} onValueChange={setFilterSection}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All sections</SelectItem>
-                {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={filterMember} onValueChange={setFilterMember}>
-              <SelectTrigger><SelectValue placeholder="All members" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value={null}>All members</SelectItem>
-                {members.map(m => <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div>
+              <Label className="text-xs text-gray-500 mb-1 block">Date to</Label>
+              <Input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} className="text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500 mb-1 block">Type</Label>
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All types</SelectItem>
+                  <SelectItem value="income">Income</SelectItem>
+                  <SelectItem value="expense">Expense</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500 mb-1 block">Category</Label>
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All categories</SelectItem>
+                  {CATEGORIES.map(c => <SelectItem key={c} value={c}>{catLabel(c)}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500 mb-1 block">Section</Label>
+              <Select value={filterSection} onValueChange={setFilterSection}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All sections</SelectItem>
+                  {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500 mb-1 block">Member</Label>
+              <SearchableSelect
+                value={filterMember}
+                onChange={v => setFilterMember(v === '_all' ? '' : v)}
+                options={[{ value: '_all', label: 'All members' }, ...members.map(m => ({ value: m.id, label: m.full_name }))]}
+                placeholder="All members"
+                emptyText="No members found"
+              />
+            </div>
           </div>
         </CardHeader>
 
@@ -307,14 +327,25 @@ export default function TreasurerLedger() {
           {filtered.length === 0 ? (
             <p className="text-center text-gray-500 py-8">No entries found</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="w-full">
+              <table className="w-full table-fixed text-sm">
+                <colgroup>
+                  <col className="w-[9%]" />
+                  <col className="w-[22%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[16%]" />
+                  <col className="w-[8%]" />
+                  <col className="w-[6%]" />
+                  <col className="w-[4%]" />
+                </colgroup>
                 <thead>
                   <tr className="border-b bg-gray-50">
-                    <th className="text-left py-2 px-2 font-semibold text-gray-600 cursor-pointer whitespace-nowrap" onClick={() => toggleSort('date')}>Date<SortIcon field="date" /></th>
+                    <th className="text-left py-2 px-2 font-semibold text-gray-600 cursor-pointer" onClick={() => toggleSort('date')}>Date<SortIcon field="date" /></th>
                     <th className="text-left py-2 px-2 font-semibold text-gray-600">Description</th>
-                    <th className="text-left py-2 px-2 font-semibold text-gray-600 cursor-pointer whitespace-nowrap" onClick={() => toggleSort('category')}>Category<SortIcon field="category" /></th>
-                    <th className="text-right py-2 px-2 font-semibold text-gray-600 cursor-pointer whitespace-nowrap" onClick={() => toggleSort('amount')}>Amount<SortIcon field="amount" /></th>
+                    <th className="text-left py-2 px-2 font-semibold text-gray-600 cursor-pointer" onClick={() => toggleSort('category')}>Category<SortIcon field="category" /></th>
+                    <th className="text-right py-2 px-2 font-semibold text-gray-600 cursor-pointer" onClick={() => toggleSort('amount')}>Amount<SortIcon field="amount" /></th>
                     <th className="text-left py-2 px-2 font-semibold text-gray-600">Member</th>
                     <th className="text-left py-2 px-2 font-semibold text-gray-600">Event / Meeting</th>
                     <th className="text-left py-2 px-2 font-semibold text-gray-600">Reference</th>
@@ -328,20 +359,20 @@ export default function TreasurerLedger() {
                     const evName = entry.linked_event_id ? (events.find(ev => ev.id === entry.linked_event_id)?.title || '') : entry.linked_meeting_id ? (programmes.find(p => p.id === entry.linked_meeting_id)?.title || '') : '';
                     return (
                       <tr key={entry.id} className="border-b hover:bg-gray-50">
-                        <td className="py-2 px-2 text-gray-600 whitespace-nowrap">{entry.date}</td>
-                        <td className="py-2 px-2 max-w-[200px] truncate">{entry.description}</td>
+                        <td className="py-2 px-2 text-gray-600 truncate" title={entry.date}>{entry.date}</td>
+                        <td className="py-2 px-2 truncate" title={entry.description}>{entry.description}</td>
                         <td className="py-2 px-2"><Badge variant="outline" className="text-xs whitespace-nowrap">{catLabel(entry.category)}</Badge></td>
                         <td className={`py-2 px-2 text-right font-semibold whitespace-nowrap ${entry.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                           {entry.type === 'income' ? '+' : '-'}{fmt(entry.amount)}
                         </td>
-                        <td className="py-2 px-2 text-gray-700">{memberName}</td>
-                        <td className="py-2 px-2 text-gray-500 max-w-[150px] truncate" title={evName}>{evName}</td>
-                        <td className="py-2 px-2 text-gray-400 text-xs font-mono">{entry.reference}</td>
-                        <td className="py-2 px-2 text-gray-500 text-xs">{displayEnteredBy(entry.entered_by)}</td>
-                        <td className="py-2 px-2">
-                          <div className="flex gap-1">
-                            <Button size="sm" variant="ghost" onClick={() => openEdit(entry)}><Edit className="w-3 h-3" /></Button>
-                            <Button size="sm" variant="ghost" className="text-red-500" onClick={() => handleDelete(entry.id)}><Trash2 className="w-3 h-3" /></Button>
+                        <td className="py-2 px-2 text-gray-700 truncate" title={memberName}>{memberName}</td>
+                        <td className="py-2 px-2 text-gray-500 truncate" title={evName}>{evName}</td>
+                        <td className="py-2 px-2 text-gray-400 text-xs font-mono truncate" title={entry.reference}>{entry.reference}</td>
+                        <td className="py-2 px-2 text-gray-500 text-xs truncate" title={displayEnteredBy(entry.entered_by)}>{displayEnteredBy(entry.entered_by)}</td>
+                        <td className="py-2 px-1">
+                          <div className="flex gap-0.5">
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openEdit(entry)}><Edit className="w-3 h-3" /></Button>
+                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500" onClick={() => handleDelete(entry.id)}><Trash2 className="w-3 h-3" /></Button>
                           </div>
                         </td>
                       </tr>
@@ -386,10 +417,13 @@ export default function TreasurerLedger() {
               <div className="space-y-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm font-semibold text-blue-800">Subscription Payment</p>
                 <div><Label>Member</Label>
-                  <Select value={form.linked_member_id} onValueChange={v => setField('linked_member_id', v)}>
-                    <SelectTrigger><SelectValue placeholder="Select member..." /></SelectTrigger>
-                    <SelectContent>{members.map(m => <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    value={form.linked_member_id}
+                    onChange={v => setField('linked_member_id', v)}
+                    options={members.map(m => ({ value: m.id, label: m.full_name }))}
+                    placeholder="Select member..."
+                    emptyText="No members found"
+                  />
                 </div>
                 <div><Label>Duration</Label>
                   <Select value={String(subsDuration)} onValueChange={v => setSubsDuration(parseInt(v))}>
@@ -405,19 +439,27 @@ export default function TreasurerLedger() {
               <div className="space-y-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm font-semibold text-green-800">Event / Meeting Payment</p>
                 <div><Label>Member</Label>
-                  <Select value={form.linked_member_id} onValueChange={v => { setField('linked_member_id', v); setSelectedEventOrMeeting(''); }}>
-                    <SelectTrigger><SelectValue placeholder="Select member..." /></SelectTrigger>
-                    <SelectContent>{members.map(m => <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    value={form.linked_member_id}
+                    onChange={v => { setField('linked_member_id', v); setSelectedEventOrMeeting(''); }}
+                    options={members.map(m => ({ value: m.id, label: m.full_name }))}
+                    placeholder="Select member..."
+                    emptyText="No members found"
+                  />
                 </div>
                 {form.linked_member_id && (
                   <div><Label>Event / Meeting</Label>
-                    <Select value={selectedEventOrMeeting} onValueChange={v => { setSelectedEventOrMeeting(v); const item = eligibleEventMeetings.find(i => `${i.type}:${i.id}` === v); if (item && !form.amount) setField('amount', String(item.cost)); }}>
-                      <SelectTrigger><SelectValue placeholder="Select event or meeting..." /></SelectTrigger>
-                      <SelectContent>
-                        {eligibleEventMeetings.length === 0 ? <SelectItem value="_none" disabled>No eligible events/meetings found</SelectItem> : eligibleEventMeetings.map(i => <SelectItem key={`${i.type}:${i.id}`} value={`${i.type}:${i.id}`}>{i.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    {eligibleEventMeetings.length === 0 ? (
+                      <p className="text-xs text-gray-500 mt-1">No eligible events/meetings found</p>
+                    ) : (
+                      <SearchableSelect
+                        value={selectedEventOrMeeting}
+                        onChange={v => { setSelectedEventOrMeeting(v); const item = eligibleEventMeetings.find(i => `${i.type}:${i.id}` === v); if (item && !form.amount) setField('amount', String(item.cost)); }}
+                        options={eligibleEventMeetings.map(i => ({ value: `${i.type}:${i.id}`, label: i.label }))}
+                        placeholder="Select event or meeting..."
+                        emptyText="No events/meetings found"
+                      />
+                    )}
                   </div>
                 )}
                 {selectedItem && (
@@ -433,23 +475,25 @@ export default function TreasurerLedger() {
             {form.type === 'expense' && form.category !== 'event_payments' && form.category !== 'subs' && (
               <div className="space-y-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                 <Label className="text-xs font-semibold text-gray-700">Link to Meeting / Event (optional)</Label>
-                <Select value={selectedEventOrMeeting} onValueChange={v => {
-                  setSelectedEventOrMeeting(v === '_none' ? '' : v);
-                  if (v && v !== '_none') {
-                    const [type, id] = v.split(':');
-                    if (type === 'meeting') { const mtg = programmes.find(p => p.id === id); if (mtg) { const matchingTerm = terms.find(t => mtg.date >= t.start_date && mtg.date <= t.end_date); if (matchingTerm) setField('linked_term_id', matchingTerm.id); } }
-                    else if (type === 'event') { const ev = events.find(e => e.id === id); if (ev && ev.term_id) setField('linked_term_id', ev.term_id); }
-                  }
-                }}>
-                  <SelectTrigger className="text-sm"><SelectValue placeholder="None (general expense)" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="_none">None (general expense)</SelectItem>
-                    <SelectItem value="_meetings_header" disabled className="font-semibold text-xs text-gray-400">— Meetings —</SelectItem>
-                    {programmes.filter(p => { const term = activeTerm; if (!term) return false; return p.date >= term.start_date && p.date <= term.end_date; }).map(p => <SelectItem key={`meeting:${p.id}`} value={`meeting:${p.id}`}>Meeting: {p.title} ({p.date})</SelectItem>)}
-                    <SelectItem value="_events_header" disabled className="font-semibold text-xs text-gray-400">— Events —</SelectItem>
-                    {events.slice(0, 30).map(ev => <SelectItem key={`event:${ev.id}`} value={`event:${ev.id}`}>Event: {ev.title}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  value={selectedEventOrMeeting || '_none'}
+                  onChange={v => {
+                    setSelectedEventOrMeeting(v === '_none' ? '' : v);
+                    if (v && v !== '_none') {
+                      const [type, id] = v.split(':');
+                      if (type === 'meeting') { const mtg = programmes.find(p => p.id === id); if (mtg) { const matchingTerm = terms.find(t => mtg.date >= t.start_date && mtg.date <= t.end_date); if (matchingTerm) setField('linked_term_id', matchingTerm.id); } }
+                      else if (type === 'event') { const ev = events.find(e => e.id === id); if (ev && ev.term_id) setField('linked_term_id', ev.term_id); }
+                    }
+                  }}
+                  options={[
+                    { value: '_none', label: 'None (general expense)' },
+                    ...programmes.filter(p => { const term = activeTerm; if (!term) return false; return p.date >= term.start_date && p.date <= term.end_date; }).map(p => ({ value: `meeting:${p.id}`, label: `Meeting: ${p.title} (${p.date})` })),
+                    ...events.slice(0, 30).map(ev => ({ value: `event:${ev.id}`, label: `Event: ${ev.title}` })),
+                  ]}
+                  placeholder="None (general expense)"
+                  emptyText="No events/meetings found"
+                  className="text-sm"
+                />
               </div>
             )}
 
