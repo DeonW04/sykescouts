@@ -97,6 +97,7 @@ export const ROUTE_MAP = {
   TreasurerProgrammeFinances: '/treasurer/payments/programme',
   TreasurerReceiptAllocation: '/treasurer/receipts/allocate',
   TreasurerReimbursements: '/treasurer/receipts/reimburse',
+  TreasurerCashTaken: '/treasurer/receipts/cash',
   TreasurerBudgets: '/treasurer/budgets',
   TreasurerRecurringPayments: '/treasurer/groupfinances/recurring',
   TreasurerFunds: '/treasurer/groupfinances/funds',

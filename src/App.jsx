@@ -20,6 +20,7 @@ import TreasurerRecurringPayments from './pages/TreasurerRecurringPayments';
 import TreasurerFunds from './pages/TreasurerFunds';
 import TreasurerReports from './pages/TreasurerReports';
 import TreasurerProgrammeFinances from './pages/TreasurerProgrammeFinances';
+import TreasurerCashTaken from './pages/TreasurerCashTaken';
 import SectionAccounting from './pages/SectionAccounting';
 import PORHelper from './pages/PORHelper';
 import QRReceiptSubmit from './pages/QRReceiptSubmit';
@@ -79,6 +80,7 @@ const ALL_PAGES = {
   TreasurerFunds,
   TreasurerReports,
   TreasurerProgrammeFinances,
+  TreasurerCashTaken,
   SectionAccounting,
   PORHelper,
   ParentPortalAnalytics,
@@ -101,7 +103,7 @@ const STANDALONE_PAGES = new Set([
   'TreasurerDashboard', 'TreasurerLedger', 'TreasurerMemberPayments',
   'TreasurerEventFinances', 'TreasurerReceiptAllocation', 'TreasurerReimbursements',
   'TreasurerBudgets', 'TreasurerRecurringPayments', 'TreasurerFunds',
-  'TreasurerReports', 'TreasurerProgrammeFinances', 'SectionAccounting',
+  'TreasurerReports', 'TreasurerProgrammeFinances', 'TreasurerCashTaken', 'SectionAccounting',
   'GalleryUpload', 'AccountSettings', 'OSMBadgeImport', 'MobileDashboardDemo',
 ]);
 
@@ -225,6 +227,7 @@ const AuthenticatedApp = () => {
       <Route path="/TreasurerFunds" element={<TreasurerFunds />} />
       <Route path="/TreasurerReports" element={<TreasurerReports />} />
       <Route path="/TreasurerProgrammeFinances" element={<TreasurerProgrammeFinances />} />
+      <Route path="/TreasurerCashTaken" element={<TreasurerCashTaken />} />
       <Route path="/SectionAccounting" element={<LayoutWrapper currentPageName="SectionAccounting"><SectionAccounting /></LayoutWrapper>} />
       <Route path="/PORHelper" element={<LayoutWrapper currentPageName="PORHelper"><PORHelper /></LayoutWrapper>} />
       <Route path="/receipt-submit" element={<QRReceiptSubmit />} />

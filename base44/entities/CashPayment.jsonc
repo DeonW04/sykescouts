@@ -1,0 +1,104 @@
+{
+  "name": "CashPayment",
+  "type": "object",
+  "properties": {
+    "member_id": {
+      "type": "string",
+      "description": "Member the cash payment was taken against"
+    },
+    "member_name": {
+      "type": "string",
+      "description": "Member full name for display"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Cash amount taken in GBP"
+    },
+    "linked_event_id": {
+      "type": "string",
+      "description": "Event this cash payment relates to"
+    },
+    "linked_meeting_id": {
+      "type": "string",
+      "description": "Meeting/programme this cash payment relates to"
+    },
+    "context_label": {
+      "type": "string",
+      "description": "Display label of the event/meeting the cash was taken for"
+    },
+    "taken_by_leader_id": {
+      "type": "string",
+      "description": "Leader ID who originally took the cash"
+    },
+    "taken_by_name": {
+      "type": "string",
+      "description": "Display name of the leader who took the cash"
+    },
+    "taken_by_email": {
+      "type": "string",
+      "description": "Email of the user who took the cash"
+    },
+    "holder_type": {
+      "type": "string",
+      "enum": [
+        "leader",
+        "treasurer"
+      ],
+      "default": "leader",
+      "description": "Whether a leader or the treasurer currently holds the cash"
+    },
+    "current_holder_leader_id": {
+      "type": "string",
+      "description": "Leader ID currently in possession of the cash (when holder_type is leader)"
+    },
+    "current_holder_name": {
+      "type": "string",
+      "description": "Display name of whoever currently holds the cash"
+    },
+    "paid_in": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the cash has been paid into the bank"
+    },
+    "paid_in_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the cash was paid into the bank"
+    },
+    "paid_in_by": {
+      "type": "string",
+      "description": "Email of the user who marked the cash as paid in"
+    },
+    "ledger_entry_id": {
+      "type": "string",
+      "description": "Linked income ledger entry created when the cash was taken"
+    },
+    "taken_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the cash payment was taken"
+    }
+  },
+  "required": [
+    "amount"
+  ],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": true,
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "treasurer"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -5,6 +5,7 @@ import { CheckCircle2, XCircle, Clock, FileText, ListChecks, Bell, Users, Credit
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import PaymentVerifyDialog from '@/components/leader/PaymentVerifyDialog';
+import CashPaymentDialog from '@/components/leader/CashPaymentDialog';
 
 const fmt = n => `£${(n || 0).toFixed(2)}`;
 const ATTENDING_VALUES = new Set(['yes', 'Yes, attending', 'attending']);
@@ -15,6 +16,7 @@ export default function EventDetailPanel({ event, onClose }) {
   const [tab, setTab] = useState(hasCost ? 'finances' : 'attendance');
   const [expandedMember, setExpandedMember] = useState(null);
   const [verifyFor, setVerifyFor] = useState(null);
+  const [cashFor, setCashFor] = useState(null);
   const [reminderSent, setReminderSent] = useState({});
 
   const TABS = [
@@ -124,6 +126,23 @@ export default function EventDetailPanel({ event, onClose }) {
     toast.success('Payment registered successfully');
   };
 
+  const handleConfirmCash = async (member, payment) => {
+    const amount = payment?.amount || event.cost || 0;
+    // Ledger entry + CashPayment record already created inside the dialog.
+    // Here we only update the member's event payment status to paid.
+    const existing = paymentStatuses.find(ps => ps.member_id === member.id);
+    if (existing) {
+      await base44.entities.EventPaymentStatus.update(existing.id, { status: 'paid', paid_at: todayStr, card_brand: 'cash', card_last4: '' });
+    } else {
+      await base44.entities.EventPaymentStatus.create({
+        event_id: event.id, member_id: member.id, status: 'paid', paid_at: todayStr, card_brand: 'cash', card_last4: '',
+      });
+    }
+    await refetchPS();
+    queryClient.invalidateQueries({ queryKey: ['edp-ledger-income', event.id] });
+    setCashFor(null);
+  };
+
   const responseColor = (val) => {
     if (!val) return 'bg-gray-50 text-gray-400';
     const v = val.toLowerCase();
@@ -229,6 +248,12 @@ export default function EventDetailPanel({ event, onClose }) {
                                   className="w-full py-2.5 bg-[#7413dc] text-white rounded-xl text-sm font-semibold"
                                 >
                                   Register payment by ID
+                                </button>
+                                <button
+                                  onClick={() => setCashFor(member)}
+                                  className="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold"
+                                >
+                                  Take cash payment
                                 </button>
                               </div>
                             </div>
@@ -375,6 +400,18 @@ export default function EventDetailPanel({ event, onClose }) {
           accent="#7413dc"
           onConfirm={({ payment }) => handleConfirmPayment(verifyFor, payment)}
           onClose={() => setVerifyFor(null)}
+        />
+      )}
+
+      {cashFor && (
+        <CashPaymentDialog
+          member={cashFor}
+          expectedAmount={event.cost || 0}
+          eventId={event.id}
+          contextLabel={event.title}
+          accent="#16a34a"
+          onConfirm={({ payment }) => handleConfirmCash(cashFor, payment)}
+          onClose={() => setCashFor(null)}
         />
       )}
     </div>

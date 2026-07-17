@@ -8,7 +8,7 @@
  */
 import {
   BookOpen, Users, Calendar, BookMarked, Receipt, RefreshCw,
-  Wallet, BarChart3, Repeat, Landmark,
+  Wallet, BarChart3, Repeat, Landmark, Banknote,
 } from 'lucide-react';
 
 export const TREASURER_NAV_GROUPS = [
@@ -29,6 +29,7 @@ export const TREASURER_NAV_GROUPS = [
     links: [
       { label: 'Receipt Allocation', page: 'TreasurerReceiptAllocation', icon: Receipt },
       { label: 'Reimbursements',     page: 'TreasurerReimbursements', icon: RefreshCw },
+      { label: 'Cash Taken',         page: 'TreasurerCashTaken', icon: Banknote },
     ],
   },
   {

@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import {
-  ChevronDown, ArrowRight, AlertCircle, Receipt, RefreshCw, TrendingUp, Wallet,
+  ChevronDown, ArrowRight, AlertCircle, Receipt, RefreshCw, TrendingUp, Wallet, Banknote,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
@@ -71,6 +71,7 @@ export default function TreasurerDashboard() {
   const { data: meetingPaymentStatuses = [] } = useQuery({ queryKey: ['all-mps-dash'], queryFn: () => base44.entities.MeetingPaymentStatus.filter({}) });
   const { data: allocations = [] } = useQuery({ queryKey: ['receipt-allocations-dash'], queryFn: () => base44.entities.ReceiptAllocation.filter({}) });
   const { data: reimbursements = [] } = useQuery({ queryKey: ['reimbursements-dash'], queryFn: () => base44.entities.Reimbursement.filter({}) });
+  const { data: cashPayments = [] } = useQuery({ queryKey: ['cash-payments-dash'], queryFn: () => base44.entities.CashPayment.filter({}) });
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -93,6 +94,9 @@ export default function TreasurerDashboard() {
 
   const reimbursementsDue = reimbursements.filter(r => r.approval_status === 'approved' && r.payment_status === 'unpaid');
   const reimbursementsDueTotal = reimbursementsDue.reduce((s, r) => s + (r.amount || 0), 0);
+
+  const cashOutstanding = cashPayments.filter(c => !c.paid_in);
+  const cashOutstandingTotal = cashOutstanding.reduce((s, c) => s + (c.amount || 0), 0);
 
   // Income chart: last 12 months by month + category
   const chartData = useMemo(() => {
@@ -125,6 +129,7 @@ export default function TreasurerDashboard() {
     { label: 'Outstanding Payments', value: String(outstandingCount), sublabel: outstandingCount === 1 ? '1 member unpaid' : `${outstandingCount} members unpaid`, color: outstandingCount > 0 ? '#ef4444' : '#22c55e', bg: outstandingCount > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', icon: AlertCircle, to: createPageUrl('TreasurerMemberPayments') },
     { label: 'Unallocated Receipts', value: String(unallocated.length), sublabel: fmt(unallocatedTotal) + ' awaiting', color: unallocated.length > 0 ? '#f97316' : '#22c55e', bg: unallocated.length > 0 ? 'rgba(249,115,22,0.1)' : 'rgba(34,197,94,0.1)', icon: Receipt, to: createPageUrl('TreasurerReceiptAllocation') },
     { label: 'Reimbursements Due', value: String(reimbursementsDue.length), sublabel: fmt(reimbursementsDueTotal) + ' to pay', color: reimbursementsDue.length > 0 ? '#7413dc' : '#22c55e', bg: reimbursementsDue.length > 0 ? 'rgba(116,19,220,0.1)' : 'rgba(34,197,94,0.1)', icon: RefreshCw, to: createPageUrl('TreasurerReimbursements') },
+    { label: 'Cash Outstanding', value: fmt(cashOutstandingTotal), sublabel: cashOutstanding.length === 1 ? '1 payment not paid in' : `${cashOutstanding.length} payments not paid in`, color: cashOutstandingTotal > 0 ? '#eab308' : '#22c55e', bg: cashOutstandingTotal > 0 ? 'rgba(234,179,8,0.12)' : 'rgba(34,197,94,0.1)', icon: Banknote, to: createPageUrl('TreasurerCashTaken') },
   ];
 
   return (
@@ -148,8 +153,8 @@ export default function TreasurerDashboard() {
             <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>40th Rochdale (Syke) Scouts</p>
           </div>
 
-          {/* 3 stat cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '12px' }}>
+          {/* stat cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4" style={{ gap: '12px' }}>
             {statCards.map(c => <StatCard key={c.label} {...c} />)}
           </div>
         </div>
