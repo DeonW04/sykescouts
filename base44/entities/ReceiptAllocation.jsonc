@@ -34,6 +34,16 @@
       ],
       "description": "How it was paid"
     },
+    "expense_scope": {
+      "type": "string",
+      "enum": [
+        "single",
+        "group",
+        "split"
+      ],
+      "default": "single",
+      "description": "single = one section/meeting/event or general; group = whole group expense; split = shared between two sections"
+    },
     "linked_event_id": {
       "type": "string",
       "description": "Linked event ID"
@@ -42,9 +52,42 @@
       "type": "string",
       "description": "Linked meeting/programme ID"
     },
+    "section_id": {
+      "type": "string",
+      "description": "Primary section this expense is allocated to"
+    },
+    "split_section_id": {
+      "type": "string",
+      "description": "Second section ID when splitting between two sections"
+    },
+    "split_amount": {
+      "type": "number",
+      "description": "Amount allocated to the second section when splitting (remainder goes to the primary section)"
+    },
+    "split_meeting_id": {
+      "type": "string",
+      "description": "Optional second meeting ID when splitting between two sections for a meeting"
+    },
+    "linked_term_id": {
+      "type": "string",
+      "description": "Optional linked term ID for budget allocation"
+    },
+    "budget_allocated": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this expense is allocated to a section budget"
+    },
     "leader_id": {
       "type": "string",
       "description": "Leader ID if paid personally"
+    },
+    "leader_name": {
+      "type": "string",
+      "description": "Display name of the leader who submitted the receipt"
+    },
+    "submitted_by": {
+      "type": "string",
+      "description": "Email of the user who submitted the receipt"
     },
     "allocated_by": {
       "type": "string",
@@ -83,20 +126,7 @@
     "payment_method"
   ],
   "rls": {
-    "create": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "treasurer"
-          }
-        }
-      ]
-    },
+    "create": true,
     "read": {
       "$or": [
         {
@@ -108,6 +138,19 @@
           "user_condition": {
             "role": "treasurer"
           }
+        },
+        {
+          "user_condition": {
+            "role": "glv"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "team_leader"
+          }
+        },
+        {
+          "data.submitted_by": "{{user.email}}"
         }
       ]
     },
