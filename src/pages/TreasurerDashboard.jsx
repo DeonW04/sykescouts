@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import {
-  ChevronDown, ArrowRight, AlertCircle, Receipt, RefreshCw, TrendingUp, Wallet, Banknote,
+  ChevronDown, ArrowRight, Receipt, RefreshCw, TrendingUp, Wallet, Banknote,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
@@ -67,8 +67,6 @@ export default function TreasurerDashboard() {
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
   const { data: ledger = [] } = useQuery({ queryKey: ['ledger-dash'], queryFn: () => base44.entities.LedgerEntry.list('-date', 1000) });
   const { data: terms = [] } = useQuery({ queryKey: ['terms'], queryFn: () => base44.entities.Term.list() });
-  const { data: eventPaymentStatuses = [] } = useQuery({ queryKey: ['all-eps-dash'], queryFn: () => base44.entities.EventPaymentStatus.filter({}) });
-  const { data: meetingPaymentStatuses = [] } = useQuery({ queryKey: ['all-mps-dash'], queryFn: () => base44.entities.MeetingPaymentStatus.filter({}) });
   const { data: allocations = [] } = useQuery({ queryKey: ['receipt-allocations-dash'], queryFn: () => base44.entities.ReceiptAllocation.filter({}) });
   const { data: reimbursements = [] } = useQuery({ queryKey: ['reimbursements-dash'], queryFn: () => base44.entities.Reimbursement.filter({}) });
   const { data: cashPayments = [] } = useQuery({ queryKey: ['cash-payments-dash'], queryFn: () => base44.entities.CashPayment.filter({}) });
@@ -83,11 +81,7 @@ export default function TreasurerDashboard() {
   const termIncome = ledger.filter(e => e.type === 'income' && e.date >= termRange.start && e.date <= termRange.end);
   const totalTermIncome = termIncome.reduce((s, e) => s + (e.amount || 0), 0);
 
-  const outstanding = [
-    ...eventPaymentStatuses.filter(p => p.status === 'unpaid' || p.status === 'overdue'),
-    ...meetingPaymentStatuses.filter(p => p.status === 'unpaid' || p.status === 'overdue'),
-  ];
-  const outstandingCount = outstanding.length;
+  const cashInBank = ledger.reduce((s, e) => s + (e.type === 'income' ? (e.amount || 0) : -(e.amount || 0)), 0);
 
   const unallocated = allocations.filter(r => r.status === 'unallocated');
   const unallocatedTotal = unallocated.reduce((s, r) => s + (r.amount || 0), 0);
@@ -126,7 +120,7 @@ export default function TreasurerDashboard() {
   };
 
   const statCards = [
-    { label: 'Outstanding Payments', value: String(outstandingCount), sublabel: outstandingCount === 1 ? '1 member unpaid' : `${outstandingCount} members unpaid`, color: outstandingCount > 0 ? '#ef4444' : '#22c55e', bg: outstandingCount > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', icon: AlertCircle, to: createPageUrl('TreasurerMemberPayments') },
+    { label: 'Cash in Bank', value: fmt(cashInBank), sublabel: 'Ledger net total', color: cashInBank >= 0 ? '#22c55e' : '#ef4444', bg: cashInBank >= 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', icon: Wallet, to: createPageUrl('TreasurerLedger') },
     { label: 'Unallocated Receipts', value: String(unallocated.length), sublabel: fmt(unallocatedTotal) + ' awaiting', color: unallocated.length > 0 ? '#f97316' : '#22c55e', bg: unallocated.length > 0 ? 'rgba(249,115,22,0.1)' : 'rgba(34,197,94,0.1)', icon: Receipt, to: createPageUrl('TreasurerReceiptAllocation') },
     { label: 'Reimbursements Due', value: String(reimbursementsDue.length), sublabel: fmt(reimbursementsDueTotal) + ' to pay', color: reimbursementsDue.length > 0 ? '#7413dc' : '#22c55e', bg: reimbursementsDue.length > 0 ? 'rgba(116,19,220,0.1)' : 'rgba(34,197,94,0.1)', icon: RefreshCw, to: createPageUrl('TreasurerReimbursements') },
     { label: 'Cash Outstanding', value: fmt(cashOutstandingTotal), sublabel: cashOutstanding.length === 1 ? '1 payment not paid in' : `${cashOutstanding.length} payments not paid in`, color: cashOutstandingTotal > 0 ? '#eab308' : '#22c55e', bg: cashOutstandingTotal > 0 ? 'rgba(234,179,8,0.12)' : 'rgba(34,197,94,0.1)', icon: Banknote, to: createPageUrl('TreasurerCashTaken') },
