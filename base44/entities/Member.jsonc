@@ -276,6 +276,16 @@
           }
         },
         {
+          "user_condition": {
+            "role": "treasurer"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "glv"
+          }
+        },
+        {
           "data.parent_one_email": "{{user.email}}"
         },
         {
@@ -288,6 +298,11 @@
         {
           "user_condition": {
             "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "treasurer"
           }
         },
         {
