@@ -5,6 +5,7 @@
     "User.Read",
     "profile",
     "openid",
-    "email"
+    "email",
+    "offline_access"
   ]
 }
