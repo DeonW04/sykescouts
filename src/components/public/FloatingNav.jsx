@@ -38,7 +38,7 @@ const STRIP_RADIUS = '24px';
 const PORTAL_PREFIXES = ['/leader', '/parent', '/treasurer', '/admin', '/account'];
 
 // ── Mobile Sidebar Drawer ──────────────────────────────────────────────────────
-function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, isTreasurer, user, portalLabel, portalUrl, isPortalPage, onLogin }) {
+function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, isTreasurer, isTreasurerRole, user, portalLabel, portalUrl, isPortalPage, onLogin }) {
   const location = useLocation();
   const [expandedGroup, setExpandedGroup] = useState(null);
   const [showPortal, setShowPortal] = useState(isPortalPage);
@@ -211,11 +211,13 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, isTreasurer
                       </div>
                     );
                   })}
-                  <div style={{ marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
-                    <Link to={createPageUrl('LeaderDashboard')} onClick={onClose} style={linkStyle(false)}>
-                      <ChevronRight size={15} style={{ transform: 'rotate(180deg)' }} /> Back to Leader Portal
-                    </Link>
-                  </div>
+                  {!isTreasurerRole && (
+                    <div style={{ marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
+                      <Link to={createPageUrl('LeaderDashboard')} onClick={onClose} style={linkStyle(false)}>
+                        <ChevronRight size={15} style={{ transform: 'rotate(180deg)' }} /> Back to Leader Portal
+                      </Link>
+                    </div>
+                  )}
                 </>
               ) : isLeader ? (
                 <>
@@ -319,6 +321,7 @@ export default function FloatingNav() {
   const [isLeader, setIsLeader] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isParent, setIsParent] = useState(false);
+  const [isTreasurerRole, setIsTreasurerRole] = useState(false);
   const [portalLabel, setPortalLabel] = useState(null);
   const [portalUrl, setPortalUrl] = useState(null);
   const [portalOpen, setPortalOpen] = useState(false);
@@ -327,7 +330,7 @@ export default function FloatingNav() {
   const location = useLocation();
 
   const isPortalPage = PORTAL_PREFIXES.some(p => location.pathname.startsWith(p));
-  const isTreasurer = isTreasurerPath(location.pathname);
+  const isTreasurer = isTreasurerRole || isTreasurerPath(location.pathname);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -347,6 +350,7 @@ export default function FloatingNav() {
         setPortalUrl(createPageUrl('LeaderDashboard'));
       } else {
         if (me.role === 'treasurer') {
+          setIsTreasurerRole(true);
           setPortalLabel('Treasurer Portal');
           setPortalUrl(createPageUrl('TreasurerDashboard'));
           return;
@@ -444,7 +448,7 @@ export default function FloatingNav() {
     </DropdownMenu>
   );
 
-  const showStrip = isLeader || isParent;
+  const showStrip = isLeader || isParent || isTreasurer;
 
   return (
     <>
@@ -457,6 +461,7 @@ export default function FloatingNav() {
         isAdmin={isAdmin}
         isParent={isParent}
         isTreasurer={isTreasurer}
+        isTreasurerRole={isTreasurerRole}
         user={user}
         portalLabel={portalLabel}
         portalUrl={portalUrl}
@@ -555,6 +560,23 @@ export default function FloatingNav() {
               >
                 <LayoutDashboard size={15} />
                 Parent Portal
+                <ChevronDown size={14} style={{ transform: (isPortalPage || portalOpen) ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }} />
+              </button>
+            ) : isTreasurer ? (
+              <button
+                onClick={() => setPortalOpen(v => !v)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  background: (isPortalPage || portalOpen) ? '#7413dc' : 'rgba(116,19,220,0.08)',
+                  color: (isPortalPage || portalOpen) ? '#fff' : '#7413dc',
+                  border: 'none', borderRadius: '25px',
+                  padding: '8px 18px', fontSize: '14px', fontWeight: 500,
+                  cursor: 'pointer', transition: 'all 0.25s ease',
+                  fontFamily: 'DM Sans, sans-serif',
+                }}
+              >
+                <LayoutDashboard size={15} />
+                Treasurer Portal
                 <ChevronDown size={14} style={{ transform: (isPortalPage || portalOpen) ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }} />
               </button>
             ) : portalLabel ? (
@@ -804,7 +826,7 @@ export default function FloatingNav() {
 
               {/* Right side */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                {isTreasurer ? (
+                {isTreasurer && !isTreasurerRole ? (
                   <Link
                     to={createPageUrl('LeaderDashboard')}
                     style={{ ...stripBtnStyle, textDecoration: 'none', color: 'rgba(26,26,46,0.65)' }}
