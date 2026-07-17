@@ -14,10 +14,14 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PORTAL_NAV_GROUPS } from '@/lib/navConfig';
+import { TREASURER_NAV_GROUPS } from '@/lib/treasurerNavConfig';
 import LoginDropdown from './LoginDropdown';
 
 // Portal nav groups — single source of truth in lib/navConfig
 const portalGroups = PORTAL_NAV_GROUPS;
+
+// Any /treasurer route counts as a treasurer page (drives the treasurer strip)
+const isTreasurerPath = (pathname) => pathname.startsWith('/treasurer') || pathname.startsWith('/Treasurer');
 
 // Parent portal nav links (flat — no dropdowns)
 const parentNavLinks = [
@@ -34,7 +38,7 @@ const STRIP_RADIUS = '24px';
 const PORTAL_PREFIXES = ['/leader', '/parent', '/treasurer', '/admin', '/account'];
 
 // ── Mobile Sidebar Drawer ──────────────────────────────────────────────────────
-function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, user, portalLabel, portalUrl, isPortalPage, onLogin }) {
+function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, isTreasurer, user, portalLabel, portalUrl, isPortalPage, onLogin }) {
   const location = useLocation();
   const [expandedGroup, setExpandedGroup] = useState(null);
   const [showPortal, setShowPortal] = useState(isPortalPage);
@@ -96,7 +100,7 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, user, porta
             )}
             <div>
               <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '10px', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 3px' }}>
-                {showPortal ? (portalLabel || 'Portal') : '40th Rochdale Scouts'}
+                {showPortal ? (isTreasurer ? 'Treasurer Portal' : (portalLabel || 'Portal')) : '40th Rochdale Scouts'}
               </p>
               <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '16px', color: '#fff', margin: 0 }}>
                 {showPortal ? (() => { const n = user?.full_name?.split(' ')[0] || 'Menu'; return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase(); })() : 'Menu'}
@@ -153,7 +157,67 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, user, porta
           ) : (
             /* ── PORTAL VIEW ── */
             <>
-              {isLeader ? (
+              {isTreasurer ? (
+                /* ── TREASURER PORTAL MOBILE ── */
+                <>
+                  <Link to={createPageUrl('TreasurerDashboard')} onClick={onClose} style={linkStyle(location.pathname === createPageUrl('TreasurerDashboard'))}>
+                    <LayoutDashboard size={15} /> Dashboard
+                  </Link>
+                  {TREASURER_NAV_GROUPS.map(group => {
+                    if (group.page) {
+                      const active = location.pathname === createPageUrl(group.page) || location.pathname.startsWith(createPageUrl(group.page) + '/');
+                      return (
+                        <Link key={group.label} to={createPageUrl(group.page)} onClick={onClose} style={linkStyle(active)}>
+                          <group.icon size={15} /> {group.label}
+                        </Link>
+                      );
+                    }
+                    const isGroupActive = group.links.some(({ page }) => location.pathname === createPageUrl(page) || location.pathname.startsWith(createPageUrl(page) + '/'));
+                    return (
+                      <div key={group.label}>
+                        <button
+                          onClick={() => setExpandedGroup(expandedGroup === group.label ? null : group.label)}
+                          style={{
+                            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '10px 12px', borderRadius: '10px', background: isGroupActive ? 'rgba(116,19,220,0.2)' : 'transparent', border: 'none',
+                            cursor: 'pointer', marginBottom: '2px',
+                            color: isGroupActive ? '#fff' : 'rgba(255,255,255,0.65)',
+                            fontFamily: 'DM Sans, sans-serif', fontSize: '14px', fontWeight: isGroupActive ? 600 : 500,
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <group.icon size={15} /> {group.label}
+                          </div>
+                          <ChevronRight size={13} style={{ transform: expandedGroup === group.label ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s', color: 'rgba(255,255,255,0.3)' }} />
+                        </button>
+                        {expandedGroup === group.label && (
+                          <div style={{ paddingLeft: '12px', marginBottom: '4px' }}>
+                            {group.links.map(({ label, page, icon: Icon }) => {
+                              const active = location.pathname === createPageUrl(page) || location.pathname.startsWith(createPageUrl(page) + '/');
+                              return (
+                                <Link key={page} to={createPageUrl(page)} onClick={onClose} style={{
+                                  display: 'flex', alignItems: 'center', gap: '8px',
+                                  fontFamily: 'DM Sans, sans-serif', fontSize: '13px', fontWeight: 500,
+                                  color: active ? '#fff' : 'rgba(255,255,255,0.55)', textDecoration: 'none',
+                                  padding: '8px 12px', borderRadius: '8px', marginBottom: '1px',
+                                  background: active ? 'rgba(116,19,220,0.3)' : 'transparent',
+                                }}>
+                                  <Icon size={13} style={{ flexShrink: 0 }} /> {label}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <div style={{ marginTop: '10px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '10px' }}>
+                    <Link to={createPageUrl('LeaderDashboard')} onClick={onClose} style={linkStyle(false)}>
+                      <ChevronRight size={15} style={{ transform: 'rotate(180deg)' }} /> Back to Leader Portal
+                    </Link>
+                  </div>
+                </>
+              ) : isLeader ? (
                 <>
                   <Link to={createPageUrl('LeaderDashboard')} onClick={onClose} style={linkStyle(location.pathname === createPageUrl('LeaderDashboard'))}>
                     <LayoutDashboard size={15} /> Dashboard
@@ -263,6 +327,7 @@ export default function FloatingNav() {
   const location = useLocation();
 
   const isPortalPage = PORTAL_PREFIXES.some(p => location.pathname.startsWith(p));
+  const isTreasurer = isTreasurerPath(location.pathname);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -386,6 +451,7 @@ export default function FloatingNav() {
         isLeader={isLeader}
         isAdmin={isAdmin}
         isParent={isParent}
+        isTreasurer={isTreasurer}
         user={user}
         portalLabel={portalLabel}
         portalUrl={portalUrl}
@@ -594,7 +660,7 @@ export default function FloatingNav() {
 
               {/* Dashboard button */}
               <Link
-                to={createPageUrl(isLeader ? 'LeaderDashboard' : 'ParentDashboard')}
+                to={createPageUrl(isTreasurer ? 'TreasurerDashboard' : isLeader ? 'LeaderDashboard' : 'ParentDashboard')}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '5px',
                   fontWeight: 600, fontSize: '12px', color: '#7413dc',
@@ -610,7 +676,60 @@ export default function FloatingNav() {
 
               {/* Centre nav */}
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
-                {isLeader ? (
+                {isTreasurer ? (
+                  /* Treasurer groups — mix of direct links and dropdowns */
+                  TREASURER_NAV_GROUPS.map((group) => {
+                    if (group.page) {
+                      const active = location.pathname === createPageUrl(group.page) || location.pathname.startsWith(createPageUrl(group.page) + '/');
+                      return (
+                        <Link
+                          key={group.label}
+                          to={createPageUrl(group.page)}
+                          style={{
+                            ...stripBtnStyle, textDecoration: 'none',
+                            background: active ? 'rgba(116,19,220,0.1)' : 'none',
+                            color: active ? '#7413dc' : 'rgba(26,26,46,0.65)',
+                            fontWeight: active ? 600 : 500,
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.07)'; e.currentTarget.style.color = '#7413dc'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = active ? 'rgba(116,19,220,0.1)' : 'none'; e.currentTarget.style.color = active ? '#7413dc' : 'rgba(26,26,46,0.65)'; }}
+                        >
+                          <group.icon size={13} /> {group.label}
+                        </Link>
+                      );
+                    }
+                    const isGroupActive = group.links.some(({ page }) => location.pathname === createPageUrl(page) || location.pathname.startsWith(createPageUrl(page) + '/'));
+                    return (
+                      <DropdownMenu key={group.label}>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            style={{
+                              ...stripBtnStyle,
+                              background: isGroupActive ? 'rgba(116,19,220,0.1)' : 'none',
+                              color: isGroupActive ? '#7413dc' : 'rgba(26,26,46,0.65)',
+                              fontWeight: isGroupActive ? 600 : 500,
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.07)'; e.currentTarget.style.color = '#7413dc'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = isGroupActive ? 'rgba(116,19,220,0.1)' : 'none'; e.currentTarget.style.color = isGroupActive ? '#7413dc' : 'rgba(26,26,46,0.65)'; }}
+                          >
+                            <group.icon size={13} />
+                            {group.label}
+                            <ChevronDown size={11} />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="center" style={{ zIndex: 1100 }}>
+                          {group.links.map(({ label, page, icon: Icon }) => (
+                            <DropdownMenuItem key={page} asChild>
+                              <Link to={createPageUrl(page)} className="flex items-center gap-2 cursor-pointer">
+                                <Icon className="w-4 h-4" /> {label}
+                              </Link>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    );
+                  })
+                ) : isLeader ? (
                   /* Leader groups with dropdowns */
                   portalGroups.map((group) => {
                     const isGroupActive = group.links.some(({ page }) => location.pathname === createPageUrl(page) || location.pathname.startsWith(createPageUrl(page) + '/'));
@@ -680,7 +799,16 @@ export default function FloatingNav() {
 
               {/* Right side */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                {isLeader && isAdmin && (
+                {isTreasurer ? (
+                  <Link
+                    to={createPageUrl('LeaderDashboard')}
+                    style={{ ...stripBtnStyle, textDecoration: 'none', color: 'rgba(26,26,46,0.65)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.07)'; e.currentTarget.style.color = '#7413dc'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'rgba(26,26,46,0.65)'; }}
+                  >
+                    <ChevronRight size={13} style={{ transform: 'rotate(180deg)' }} /> Leader Portal
+                  </Link>
+                ) : isLeader && isAdmin && (
                   <Link
                     to={createPageUrl('AdminSettings')}
                     style={{ ...stripBtnStyle, textDecoration: 'none', color: 'rgba(26,26,46,0.65)' }}

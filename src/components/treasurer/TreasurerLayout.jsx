@@ -1,32 +1,29 @@
 import React from 'react';
-import TreasurerNav from './TreasurerNav';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '../../utils';
+import FloatingNav from '../public/FloatingNav';
+import NavBarSpacer from '../public/NavBarSpacer';
 
 export default function TreasurerLayout({ children, title }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <TreasurerNav />
-      <div className="lg:ml-64">
-        {title && (
-          <div className="bg-gradient-to-r from-[#004851] to-[#1a472a] text-white px-6 py-6">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60 mb-0.5">Treasurer Portal</p>
-                <h1 className="text-2xl font-bold">{title}</h1>
-              </div>
-              <Link
-                to={createPageUrl('LeaderDashboard')}
-                className="hidden sm:flex items-center gap-2 text-white/70 hover:text-white text-sm transition-colors border border-white/20 px-3 py-1.5 rounded-lg hover:bg-white/10"
-              >
-                ← Back to Leader Portal
-              </Link>
-            </div>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #f8f7ff 0%, #f0eeff 50%, #f0fdf4 100%)', fontFamily: 'DM Sans, sans-serif' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+      `}</style>
+
+      <FloatingNav />
+      <NavBarSpacer />
+
+      {/* Hero header */}
+      {title && (
+        <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 16px' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Treasurer Portal</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(20px, 4vw, 32px)', color: '#1a1a2e', margin: 0, lineHeight: 1.15 }}>{title}</h1>
           </div>
-        )}
-        <div className="p-4 lg:p-6 max-w-7xl mx-auto">
-          {children}
         </div>
+      )}
+
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 16px 48px' }}>
+        {children}
       </div>
     </div>
   );

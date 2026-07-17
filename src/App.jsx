@@ -100,7 +100,7 @@ const STANDALONE_PAGES = new Set([
   'TreasurerDashboard', 'TreasurerLedger', 'TreasurerMemberPayments',
   'TreasurerEventFinances', 'TreasurerReceiptAllocation', 'TreasurerReimbursements',
   'TreasurerBudgets', 'TreasurerRecurringPayments', 'TreasurerFunds',
-  'TreasurerReports', 'TreasurerProgrammeFinances',
+  'TreasurerReports', 'TreasurerProgrammeFinances', 'SectionAccounting',
   'GalleryUpload', 'AccountSettings', 'OSMBadgeImport', 'MobileDashboardDemo',
 ]);
 
