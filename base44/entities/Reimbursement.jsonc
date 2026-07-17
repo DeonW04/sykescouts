@@ -84,5 +84,83 @@
     "leader_id",
     "amount",
     "description"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "treasurer"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "glv"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "treasurer"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "glv"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "treasurer"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "glv"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "treasurer"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "glv"
+          }
+        }
+      ]
+    }
+  }
 }
