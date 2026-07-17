@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, XCircle, Clock, Banknote, Plus } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Banknote, Plus, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
 const fmt = (n) => `£${(n || 0).toFixed(2)}`;
@@ -22,6 +22,7 @@ export default function TreasurerReimbursements() {
   const [newDialog, setNewDialog] = useState(false);
   const [form, setForm] = useState({ leader_id: '', amount: '', description: '', category: 'other', linked_event_id: '' });
   const [saving, setSaving] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const { data: reimbursements = [] } = useQuery({
     queryKey: ['reimbursements'],
@@ -29,10 +30,16 @@ export default function TreasurerReimbursements() {
   });
   const { data: leaders = [] } = useQuery({ queryKey: ['leaders'], queryFn: () => base44.entities.Leader.filter({}) });
   const { data: events = [] } = useQuery({ queryKey: ['events'], queryFn: () => base44.entities.Event.list('-start_date', 100) });
+  const { data: allocations = [] } = useQuery({ queryKey: ['receipt-allocations'], queryFn: () => base44.entities.ReceiptAllocation.list('-created_date', 300) });
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
 
   const getLeader = (id) => leaders.find(l => l.id === id);
   const getEvent = (id) => events.find(e => e.id === id);
+  const getReceiptUrl = (r) => {
+    if (r.receipt_url) return r.receipt_url;
+    const alloc = allocations.find(a => a.id === r.linked_receipt_id);
+    return alloc?.receipt_url || null;
+  };
 
   const isGLVOrTreasurer = user?.role === 'admin' || user?.role === 'treasurer' || user?.role === 'glv';
 
@@ -123,14 +130,27 @@ export default function TreasurerReimbursements() {
   const RCard = ({ r }) => {
     const leader = getLeader(r.leader_id);
     const event = getEvent(r.linked_event_id);
+    const receiptUrl = getReceiptUrl(r);
     return (
       <div className="border rounded-lg p-4 space-y-2">
         <div className="flex justify-between items-start flex-wrap gap-2">
-          <div>
-            <p className="font-semibold">{leader?.display_name || 'Unknown leader'}</p>
-            <p className="text-sm text-gray-600">{r.description}</p>
-            {event && <p className="text-xs text-gray-400">Event: {event.title}</p>}
-            {r.rejection_reason && <p className="text-xs text-red-500 mt-1">Reason: {r.rejection_reason}</p>}
+          <div className="flex gap-3">
+            {receiptUrl && (
+              <button onClick={() => setImagePreview(receiptUrl)} className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border">
+                <img src={receiptUrl} alt="Receipt" className="w-full h-full object-cover" />
+              </button>
+            )}
+            <div>
+              <p className="font-semibold">{leader?.display_name || 'Unknown leader'}</p>
+              <p className="text-sm text-gray-600">{r.description}</p>
+              {event && <p className="text-xs text-gray-400">Event: {event.title}</p>}
+              {receiptUrl && (
+                <button onClick={() => setImagePreview(receiptUrl)} className="text-xs text-blue-600 underline inline-flex items-center gap-1 mt-1">
+                  <Eye className="w-3 h-3" /> View receipt
+                </button>
+              )}
+              {r.rejection_reason && <p className="text-xs text-red-500 mt-1">Reason: {r.rejection_reason}</p>}
+            </div>
           </div>
           <div className="text-right">
             <p className="text-xl font-bold text-gray-800">{fmt(r.amount)}</p>
@@ -200,8 +220,15 @@ export default function TreasurerReimbursements() {
           <DialogHeader><DialogTitle>Pay Leader</DialogTitle></DialogHeader>
           {payDialog && (() => {
             const leader = getLeader(payDialog.leader_id);
+            const receiptUrl = getReceiptUrl(payDialog);
             return (
               <div className="space-y-4 py-2">
+                {receiptUrl && (
+                  <button onClick={() => setImagePreview(receiptUrl)} className="w-full">
+                    <img src={receiptUrl} alt="Receipt" className="w-full max-h-48 object-contain rounded-lg border bg-gray-50" />
+                    <span className="text-xs text-blue-600 underline mt-1 inline-block">Tap to enlarge</span>
+                  </button>
+                )}
                 <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                   <div className="flex justify-between"><span className="text-sm text-gray-500">Leader</span><span className="font-semibold">{leader?.display_name}</span></div>
                   <div className="flex justify-between"><span className="text-sm text-gray-500">Account Name</span><span className="font-semibold">{leader?.bank_account_name || 'Not set'}</span></div>
@@ -283,6 +310,16 @@ export default function TreasurerReimbursements() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Receipt Image Preview */}
+      {imagePreview && (
+        <Dialog open={!!imagePreview} onOpenChange={() => setImagePreview(null)}>
+          <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-auto">
+            <DialogHeader><DialogTitle>Receipt Image</DialogTitle></DialogHeader>
+            <img src={imagePreview} alt="Receipt" className="w-full h-auto max-h-[70vh] object-contain rounded-lg" />
+          </DialogContent>
+        </Dialog>
+      )}
     </TreasurerLayout>
   );
 }

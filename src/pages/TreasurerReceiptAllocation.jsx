@@ -9,10 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Receipt, CheckCircle, Upload, Plus, AlertTriangle, ExternalLink, Clock } from 'lucide-react';
+import { Receipt, CheckCircle, Upload, Plus, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { addDays, format } from 'date-fns';
+import SearchableSelect from '@/components/treasurer/SearchableSelect';
 
 const fmt = (n) => `£${(n || 0).toFixed(2)}`;
 const CATEGORIES = ['equipment', 'food', 'transport', 'hall_hire', 'badges', 'other'];
@@ -39,6 +40,7 @@ export default function TreasurerReceiptAllocation() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedEventOrMeeting, setSelectedEventOrMeeting] = useState('');
+  const [imagePreview, setImagePreview] = useState(null);
 
   const { data: allocations = [] } = useQuery({
     queryKey: ['receipt-allocations'],
@@ -53,6 +55,17 @@ export default function TreasurerReceiptAllocation() {
 
   const unallocated = allocations.filter(r => r.status === 'unallocated');
   const allocated = allocations.filter(r => r.status === 'allocated');
+
+  const sectionName = (id) => sections.find(s => s.id === id)?.display_name || 'section';
+  const scopeDetail = (r) => {
+    if (r.expense_scope === 'split' && r.section_id && r.split_section_id) {
+      const splitAmt = Number(r.split_amount || 0);
+      const primaryAmt = Math.max(0, (r.amount || 0) - splitAmt);
+      return `${sectionName(r.section_id)} ${fmt(primaryAmt)} · ${sectionName(r.split_section_id)} ${fmt(splitAmt)}`;
+    }
+    if (r.expense_scope !== 'group' && r.section_id) return sectionName(r.section_id);
+    return '';
+  };
 
   const today = new Date();
   const oneMonthAgo = addDays(today, -30);
@@ -158,12 +171,17 @@ export default function TreasurerReceiptAllocation() {
 
       await base44.entities.ReceiptAllocation.update(allocateDialog.id, updates);
 
+      const isSplit = allocateDialog.expense_scope === 'split' && allocateDialog.split_section_id && allocateDialog.split_amount;
+      const splitAmt = isSplit ? Number(allocateDialog.split_amount) : 0;
+      const primaryAmt = isSplit ? Math.max(0, updates.amount - splitAmt) : updates.amount;
+      const scopeSuffix = allocateDialog.expense_scope === 'group' ? ' (whole group)' : '';
+
       const ledgerEntry = await base44.entities.LedgerEntry.create({
         date: new Date().toISOString().split('T')[0],
         type: 'expense',
-        amount: updates.amount,
+        amount: primaryAmt,
         category: updates.category,
-        description: `Receipt: ${form.notes || updates.category}`,
+        description: `Receipt: ${form.notes || updates.category}${scopeSuffix}`,
         linked_event_id: updates.linked_event_id || null,
         linked_meeting_id: updates.linked_meeting_id || null,
         receipt_reference: allocateDialog.id,
@@ -172,6 +190,23 @@ export default function TreasurerReceiptAllocation() {
         section_id: allocateDialog.section_id || '',
         linked_term_id: allocateDialog.linked_term_id || '',
       });
+
+      // Second ledger entry for the other section when split
+      if (isSplit && splitAmt > 0) {
+        await base44.entities.LedgerEntry.create({
+          date: new Date().toISOString().split('T')[0],
+          type: 'expense',
+          amount: splitAmt,
+          category: updates.category,
+          description: `Receipt (split): ${form.notes || updates.category}`,
+          linked_event_id: updates.linked_event_id || null,
+          linked_meeting_id: allocateDialog.split_meeting_id || updates.linked_meeting_id || null,
+          receipt_reference: allocateDialog.id,
+          entered_by: user?.email,
+          section_id: allocateDialog.split_section_id || '',
+          linked_term_id: allocateDialog.linked_term_id || '',
+        });
+      }
 
       if (updates.payment_method === 'leader_paid_personally' && updates.leader_id) {
         await base44.entities.Reimbursement.create({
@@ -210,28 +245,44 @@ export default function TreasurerReceiptAllocation() {
       leader_id: r.leader_id || '',
       notes: r.notes || '',
       receipt_url: r.receipt_url || '',
+      budget_allocated: r.budget_allocated || false,
+      section_id: r.section_id || '',
+      linked_term_id: r.linked_term_id || '',
     });
     setSelectedEventOrMeeting(
       r.linked_event_id ? `event:${r.linked_event_id}` :
-      r.linked_meeting_id ? `meeting:${r.linked_meeting_id}` : ''
+      r.linked_meeting_id ? `meeting:${r.linked_meeting_id}` : '_none'
     );
     setAllocateDialog(r);
   };
 
-  const LinkedEventMeetingSelector = () => (
-    <div>
-      <Label>Linked Event / Meeting (optional)</Label>
-      <Select value={selectedEventOrMeeting} onValueChange={setSelectedEventOrMeeting}>
-        <SelectTrigger><SelectValue placeholder="None (general expense)" /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="_none">None (general expense)</SelectItem>
-          {linkableOptions.map(i => (
-            <SelectItem key={`${i.type}:${i.id}`} value={`${i.type}:${i.id}`}>{i.label}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
+  const LinkedEventMeetingSelector = () => {
+    // Always include whatever is currently linked, even if it falls outside
+    // the default recent/active-term window — so a leader's link is preserved.
+    const opts = [...linkableOptions];
+    if (selectedEventOrMeeting && selectedEventOrMeeting !== '_none' && !opts.some(i => `${i.type}:${i.id}` === selectedEventOrMeeting)) {
+      const [type, id] = selectedEventOrMeeting.split(':');
+      if (type === 'event') {
+        const ev = events.find(e => e.id === id);
+        if (ev) opts.unshift({ type: 'event', id, label: `Event: ${ev.title}` });
+      } else if (type === 'meeting') {
+        const mtg = programmes.find(p => p.id === id);
+        if (mtg) opts.unshift({ type: 'meeting', id, label: `Meeting: ${mtg.title} — ${mtg.date}` });
+      }
+    }
+    return (
+      <div>
+        <Label>Linked Event / Meeting (optional)</Label>
+        <SearchableSelect
+          value={selectedEventOrMeeting || '_none'}
+          onChange={setSelectedEventOrMeeting}
+          options={[{ value: '_none', label: 'None (general expense)' }, ...opts.map(i => ({ value: `${i.type}:${i.id}`, label: i.label }))]}
+          placeholder="None (general expense)"
+          emptyText="No events/meetings found"
+        />
+      </div>
+    );
+  };
 
   return (
     <TreasurerLayout title="Receipt Allocation">
@@ -259,8 +310,13 @@ export default function TreasurerReceiptAllocation() {
                 const leader = leaders.find(l => l.id === r.leader_id);
                 return (
                   <div key={r.id} className={`p-3 border rounded-lg ${isAwaitingReimbursement ? 'border-red-300 bg-red-50' : 'border-amber-200 bg-amber-50'}`}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      {r.receipt_url && (
+                        <button onClick={() => setImagePreview(r.receipt_url)} className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-white border">
+                          <img src={r.receipt_url} alt="Receipt" className="w-full h-full object-cover" />
+                        </button>
+                      )}
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-semibold">{fmt(r.amount)}</p>
                           {isAwaitingReimbursement && (
@@ -268,13 +324,13 @@ export default function TreasurerReceiptAllocation() {
                               <Clock className="w-3 h-3" /> Awaiting Reimbursement
                             </span>
                           )}
+                          {r.expense_scope === 'group' && <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-700">Whole group</Badge>}
+                          {r.expense_scope === 'split' && <Badge variant="outline" className="text-xs border-indigo-300 text-indigo-700">Split</Badge>}
                           {r.category && <span className="text-xs text-gray-500 capitalize">{r.category.replace(/_/g, ' ')}</span>}
                         </div>
+                        {scopeDetail(r) && <p className="text-xs text-gray-500 mt-0.5">{scopeDetail(r)}</p>}
                         {r.notes && <p className="text-xs text-gray-500 mt-0.5">{r.notes}</p>}
-                        {leader && <p className="text-xs text-red-600 mt-0.5">Leader: {leader.display_name}</p>}
-                        {r.receipt_url && (
-                          <a href={r.receipt_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline">View receipt</a>
-                        )}
+                        {(r.leader_name || leader) && <p className="text-xs text-red-600 mt-0.5">By: {leader?.display_name || r.leader_name}</p>}
                       </div>
                       <Button size="sm" onClick={() => openAllocate(r)} className={isAwaitingReimbursement ? 'bg-red-600 hover:bg-red-700' : 'bg-[#1a472a] hover:bg-[#13381f]'}>
                         {isAwaitingReimbursement ? 'Reimburse & Allocate' : 'Allocate'}
@@ -299,18 +355,26 @@ export default function TreasurerReceiptAllocation() {
                 const ev = events.find(e => e.id === r.linked_event_id);
                 const mtg = programmes.find(p => p.id === r.linked_meeting_id);
                 return (
-                  <div key={r.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <div className="flex items-center gap-2">
+                  <div key={r.id} className="flex items-center justify-between gap-3 p-3 border rounded-lg">
+                    {r.receipt_url && (
+                      <button onClick={() => setImagePreview(r.receipt_url)} className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-white border">
+                        <img src={r.receipt_url} alt="Receipt" className="w-full h-full object-cover" />
+                      </button>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-semibold">{fmt(r.amount)}</span>
                         <Badge variant="outline" className="text-xs capitalize">{r.category?.replace(/_/g, ' ')}</Badge>
                         <Badge variant="outline" className="text-xs">{r.payment_method?.replace(/_/g, ' ')}</Badge>
+                        {r.expense_scope === 'group' && <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-700">Whole group</Badge>}
+                        {r.expense_scope === 'split' && <Badge variant="outline" className="text-xs border-indigo-300 text-indigo-700">Split</Badge>}
                       </div>
+                      {scopeDetail(r) && <p className="text-xs text-gray-500 mt-0.5">{scopeDetail(r)}</p>}
                       {ev && <p className="text-xs text-gray-500 mt-0.5">Event: {ev.title}</p>}
                       {mtg && <p className="text-xs text-gray-500 mt-0.5">Meeting: {mtg.title} ({mtg.date})</p>}
                       {r.notes && <p className="text-xs text-gray-400">{r.notes}</p>}
                     </div>
-                    <p className="text-xs text-gray-400">{r.allocation_date}</p>
+                    <p className="text-xs text-gray-400 flex-shrink-0">{r.allocation_date}</p>
                   </div>
                 );
               })}
@@ -467,6 +531,16 @@ export default function TreasurerReceiptAllocation() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Receipt Image Preview */}
+      {imagePreview && (
+        <Dialog open={!!imagePreview} onOpenChange={() => setImagePreview(null)}>
+          <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-auto">
+            <DialogHeader><DialogTitle>Receipt Image</DialogTitle></DialogHeader>
+            <img src={imagePreview} alt="Receipt" className="w-full h-auto max-h-[70vh] object-contain rounded-lg" />
+          </DialogContent>
+        </Dialog>
+      )}
     </TreasurerLayout>
   );
 }

@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle2, Upload, Receipt, Camera } from 'lucide-react';
 
 const CATEGORIES = [
@@ -29,10 +30,19 @@ export default function QRReceiptSubmit() {
   const [paymentMethod, setPaymentMethod] = useState('leader_paid_personally');
   const [submitterName, setSubmitterName] = useState('');
   const [notes, setNotes] = useState('');
+  const [scope, setScope] = useState('single');
+  const [sectionId, setSectionId] = useState('');
+  const [splitSectionId, setSplitSectionId] = useState('');
+  const [splitAmount, setSplitAmount] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [preview, setPreview] = useState(null);
+
+  const { data: sections = [] } = useQuery({
+    queryKey: ['sections-public'],
+    queryFn: () => base44.entities.Section.filter({ active: true }),
+  });
 
   const handleFileChange = (e) => {
     const f = e.target.files[0];
@@ -50,6 +60,11 @@ export default function QRReceiptSubmit() {
     if (!amount || isNaN(parseFloat(amount))) { setError('Please enter a valid amount.'); return; }
     if (!category) { setError('Please select a category.'); return; }
     if (!submitterName.trim()) { setError('Please enter your name.'); return; }
+    if (scope === 'split') {
+      if (!sectionId || !splitSectionId) { setError('Please select both sections to split between.'); return; }
+      if (sectionId === splitSectionId) { setError('The two split sections must be different.'); return; }
+      if (!splitAmount || isNaN(parseFloat(splitAmount))) { setError('Please enter the amount for the second section.'); return; }
+    }
 
     setSubmitting(true);
     try {
@@ -59,9 +74,14 @@ export default function QRReceiptSubmit() {
         amount: parseFloat(amount),
         category,
         payment_method: paymentMethod,
+        expense_scope: scope,
+        section_id: scope === 'single' || scope === 'split' ? (sectionId || '') : '',
+        split_section_id: scope === 'split' ? splitSectionId : '',
+        split_amount: scope === 'split' && splitAmount ? parseFloat(splitAmount) : null,
         linked_meeting_id: linkedMeetingId || null,
         linked_event_id: linkedEventId || null,
         status: 'unallocated',
+        leader_name: submitterName,
         notes: notes ? `Submitted by ${submitterName}. ${notes}` : `Submitted by ${submitterName}`,
         allocation_date: new Date().toISOString().split('T')[0],
       });
@@ -182,6 +202,57 @@ export default function QRReceiptSubmit() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Expense scope */}
+              <div>
+                <Label className="text-sm font-medium">Who is this expense for?</Label>
+                <div className="grid grid-cols-3 gap-2 mt-1.5">
+                  {[
+                    { value: 'single', label: 'One section' },
+                    { value: 'group', label: 'Whole group' },
+                    { value: 'split', label: 'Split (2)' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setScope(opt.value)}
+                      className={`py-2 px-1 rounded-lg text-xs font-semibold border transition-colors ${scope === opt.value ? 'bg-[#004851] text-white border-[#004851]' : 'bg-white text-gray-600 border-gray-200'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {scope === 'single' && (
+                <div>
+                  <Label className="text-sm font-medium">Section (optional)</Label>
+                  <Select value={sectionId || '_none'} onValueChange={v => setSectionId(v === '_none' ? '' : v)}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select section..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">Not section-specific</SelectItem>
+                      {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {scope === 'split' && (
+                <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl space-y-3">
+                  <p className="text-xs text-indigo-800">Split between two sections. Enter how much goes to Section 2 — the rest stays with Section 1.</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select value={sectionId} onValueChange={setSectionId}>
+                      <SelectTrigger><SelectValue placeholder="Section 1" /></SelectTrigger>
+                      <SelectContent>{sections.map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <Select value={splitSectionId} onValueChange={setSplitSectionId}>
+                      <SelectTrigger><SelectValue placeholder="Section 2" /></SelectTrigger>
+                      <SelectContent>{sections.map(s => <SelectItem key={s.id} value={s.id}>{s.display_name}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <Input type="number" step="0.01" min="0" value={splitAmount} onChange={e => setSplitAmount(e.target.value)} placeholder="Amount to Section 2 (£)" />
+                </div>
+              )}
 
               {/* Payment Method */}
               <div>
