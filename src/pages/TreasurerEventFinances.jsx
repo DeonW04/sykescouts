@@ -15,7 +15,8 @@ const displayEB = eb => { if (!eb) return '—'; if (eb.toLowerCase().includes('
 const todayStr = new Date().toISOString().split('T')[0];
 
 export default function TreasurerEventFinances() {
-  const [selectedEventId, setSelectedEventId] = useState('');
+  const initialEventId = new URLSearchParams(window.location.search).get('event') || '';
+  const [selectedEventId, setSelectedEventId] = useState(initialEventId);
   const [reminderSent, setReminderSent] = useState({});
 
   const { data: events = [] } = useQuery({

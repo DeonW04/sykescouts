@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
-import { Edit, Plus } from 'lucide-react';
+import { Edit, Plus, List } from 'lucide-react';
 import { toast } from 'sonner';
+import BudgetBreakdownDialog from '@/components/treasurer/BudgetBreakdownDialog';
 
 const fmt = (n) => `£${(n || 0).toFixed(2)}`;
 
@@ -21,6 +22,7 @@ export default function TreasurerBudgets() {
   const [form, setForm] = useState({ section_id: '', term_id: '', term_label: '', budget_amount: '', notes: '' });
   const [saving, setSaving] = useState(false);
   const [selectedTermId, setSelectedTermId] = useState('');
+  const [breakdownSection, setBreakdownSection] = useState(null);
 
   const { data: sections = [] } = useQuery({ queryKey: ['sections'], queryFn: () => base44.entities.Section.filter({ active: true }) });
   const { data: terms = [] } = useQuery({ queryKey: ['terms'], queryFn: () => base44.entities.Term.list('-start_date', 50) });
@@ -153,7 +155,8 @@ export default function TreasurerBudgets() {
           const calcExpenses = getCalcExpenses(section.id);
           const calcIncome = getCalcIncome(section.id);
           const budgetAmount = budget?.budget_amount || 0;
-          const remaining = budgetAmount + calcIncome - calcExpenses;
+          const netIncome = calcIncome - calcExpenses;
+          const remaining = budgetAmount + netIncome;
           const spendPct = budgetAmount > 0 ? Math.min(100, (calcExpenses / budgetAmount) * 100) : 0;
 
           return (
@@ -164,28 +167,38 @@ export default function TreasurerBudgets() {
                   <Edit className="w-3 h-3 mr-1" />{budget ? 'Edit' : 'Set Budget'}
                 </Button>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
                 {budget ? (
                   <>
-                    {/* 4 boxes */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-center">
-                        <p className="text-xs text-gray-500">Budget</p>
-                        <p className="font-bold text-blue-700 text-lg">{fmt(budgetAmount)}</p>
+                    {/* Budget headline */}
+                    <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-center">
+                      <p className="text-xs text-gray-500">Budget</p>
+                      <p className="font-bold text-blue-700 text-2xl">{fmt(budgetAmount)}</p>
+                    </div>
+
+                    {/* Income / Expenses / Net / Remaining */}
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Calculated income</span>
+                        <span className="font-semibold text-green-600">{fmt(calcIncome)}</span>
                       </div>
-                      <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-center">
-                        <p className="text-xs text-gray-500">Calc Expenses</p>
-                        <p className="font-bold text-red-700 text-lg">{fmt(calcExpenses)}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500">Calculated expenses</span>
+                        <span className="font-semibold text-red-600">{fmt(calcExpenses)}</span>
                       </div>
-                      <div className="p-3 bg-green-50 border border-green-100 rounded-lg text-center">
-                        <p className="text-xs text-gray-500">Calc Income</p>
-                        <p className="font-bold text-green-700 text-lg">{fmt(calcIncome)}</p>
+                      <div className="flex justify-between items-center border-t pt-2">
+                        <span className="text-gray-600 font-medium">Net income / expense</span>
+                        <span className={`font-bold ${netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {netIncome >= 0 ? '+' : ''}{fmt(netIncome)}
+                        </span>
                       </div>
-                      <div className={`p-3 rounded-lg border text-center ${remaining >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-orange-50 border-orange-100'}`}>
-                        <p className="text-xs text-gray-500">Remaining Budget</p>
-                        <p className={`font-bold text-lg ${remaining >= 0 ? 'text-emerald-700' : 'text-orange-700'}`}>{fmt(remaining)}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600 font-medium">Remaining budget</span>
+                        <span className={`font-bold ${remaining >= 0 ? 'text-emerald-700' : 'text-orange-700'}`}>{fmt(remaining)}</span>
                       </div>
                     </div>
+
+                    {/* Progress */}
                     <div>
                       <div className="flex justify-between text-xs text-gray-500 mb-1">
                         <span>Spend vs Budget</span>
@@ -193,6 +206,11 @@ export default function TreasurerBudgets() {
                       </div>
                       <Progress value={spendPct} className="h-2" />
                     </div>
+
+                    <Button variant="outline" className="w-full" onClick={() => setBreakdownSection(section)}>
+                      <List className="w-4 h-4 mr-2" />View breakdown
+                    </Button>
+
                     {budget.notes && <p className="text-xs text-gray-400 italic">{budget.notes}</p>}
                   </>
                 ) : (
@@ -246,6 +264,18 @@ export default function TreasurerBudgets() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <BudgetBreakdownDialog
+        open={!!breakdownSection}
+        onOpenChange={(o) => { if (!o) setBreakdownSection(null); }}
+        section={breakdownSection}
+        activeTerm={activeTerm}
+        programmes={programmes}
+        events={events}
+        ledger={ledger}
+        allocations={allocations}
+        memberPayments={memberPayments}
+      />
     </TreasurerLayout>
   );
 }

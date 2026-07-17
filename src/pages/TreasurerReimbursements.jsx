@@ -41,7 +41,8 @@ export default function TreasurerReimbursements() {
     return alloc?.receipt_url || null;
   };
 
-  const isGLVOrTreasurer = user?.role === 'admin' || user?.role === 'treasurer' || user?.role === 'glv';
+  // Only GLV (and admin) can approve/reject reimbursements — treasurers only see "Pending Approval".
+  const canApprove = user?.role === 'admin' || user?.role === 'glv';
 
   const handleApprove = async (r) => {
     await base44.entities.Reimbursement.update(r.id, {
@@ -158,7 +159,7 @@ export default function TreasurerReimbursements() {
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
-          {r.approval_status === 'pending_approval' && isGLVOrTreasurer && (
+          {r.approval_status === 'pending_approval' && canApprove && (
             <>
               <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleApprove(r)}>
                 <CheckCircle className="w-3 h-3 mr-1" />Approve
