@@ -346,6 +346,11 @@ export default function FloatingNav() {
         setPortalLabel('Leader Portal');
         setPortalUrl(createPageUrl('LeaderDashboard'));
       } else {
+        if (me.role === 'treasurer') {
+          setPortalLabel('Treasurer Portal');
+          setPortalUrl(createPageUrl('TreasurerDashboard'));
+          return;
+        }
         const leaders = await base44.entities.Leader.filter({ user_id: me.id });
         if (leaders.length > 0) {
           setIsLeader(true);

@@ -64,8 +64,14 @@ export default function RegisterUser() {
       const res = await base44.auth.verifyOtp({ email: invite.email, otpCode: otp.trim() });
       const accessToken = res?.access_token || res?.data?.access_token;
       if (accessToken) base44.auth.setToken(accessToken);
-      await base44.functions.invoke('completeUserInvite', { token });
-      window.location.href = '/app';
+      const completeRes = await base44.functions.invoke('completeUserInvite', { token });
+      const finalRole = completeRes?.data?.role || invite.role;
+      const destination = finalRole === 'treasurer'
+        ? '/TreasurerDashboard'
+        : finalRole === 'admin'
+          ? '/AdminSettings'
+          : '/app';
+      window.location.href = destination;
     } catch (err) {
       setError('That code wasn\'t right. Please check your email and try again.');
       setLoading(false);

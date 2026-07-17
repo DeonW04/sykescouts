@@ -32,6 +32,12 @@ export function useAppRole() {
           return;
         }
 
+        // Treasurer / GLV have their own desktop-style portals — not the mobile tab app.
+        if (u.role === 'treasurer' || u.role === 'glv') {
+          setRole(u.role);
+          return;
+        }
+
         const leaders = await base44.entities.Leader.filter({ user_id: u.id });
         if (leaders.length > 0) {
           setRole('leader');

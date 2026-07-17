@@ -331,9 +331,16 @@ export default function AdminSettings() {
   const getImagesForPage = (page) => websiteImages.filter(img => img.page === page).sort((a, b) => (a.order || 0) - (b.order || 0));
 
   // ── User helpers ──────────────────────────────────────────────────────────────
+  const ROLE_TYPE_MAP = {
+    treasurer:   { type: 'Treasurer',   color: 'bg-amber-100 text-amber-800' },
+    glv:         { type: 'GLV',          color: 'bg-rose-100 text-rose-800' },
+    team_leader: { type: 'Team Leader',  color: 'bg-cyan-100 text-cyan-800' },
+  };
   const getUserType = (user) => {
     const userId = typeof user === 'string' ? user : user?.id;
+    const role   = typeof user === 'object' ? user?.role : null;
     if (typeof user === 'object' && user?.account_type === 'ipad') return { type: 'iPad',   color: 'bg-indigo-100 text-indigo-800' };
+    if (role && ROLE_TYPE_MAP[role])                               return ROLE_TYPE_MAP[role];
     if (leaders.some(l => l.user_id === userId))                   return { type: 'Leader', color: 'bg-blue-100 text-blue-800' };
     if (parents.some(p => p.user_id === userId))                   return { type: 'Parent', color: 'bg-green-100 text-green-800' };
     return { type: 'User', color: 'bg-gray-100 text-gray-800' };

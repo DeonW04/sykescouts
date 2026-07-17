@@ -277,6 +277,12 @@ export default function MobileApp() {
     return null;
   }
 
+  // Treasurer / GLV use the full desktop-style portal, not the mobile tab app.
+  if (role === 'treasurer' || role === 'glv') {
+    window.location.replace('/TreasurerDashboard');
+    return null;
+  }
+
   if (!user.onboarding_complete && role === 'parent') {
     return <MobileOnboarding user={user} onComplete={() => window.location.reload()} />;
   }
