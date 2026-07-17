@@ -81,7 +81,7 @@ export default function LeaderExpenses({ user }) {
           <p className="font-bold text-gray-900 text-sm">New Receipt</p>
 
           {/* Photo */}
-          <input ref={fileInputRef} type="file" accept="image/*,application/pdf" capture="environment" className="hidden" onChange={handleFileSelected} />
+          <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileSelected} />
           {previewUrl ? (
             <div className="relative">
               <img src={previewUrl} alt="Receipt" className="w-full rounded-xl object-cover max-h-48" />
