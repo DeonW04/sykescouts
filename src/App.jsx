@@ -32,6 +32,7 @@ import QuizBuilder from './pages/QuizBuilder';
 import MobileApp from './pages/MobileApp';
 import CompleteRegistration from './pages/CompleteRegistration';
 import Register from './pages/Register';
+import RegisterUser from './pages/RegisterUser';
 import Login from './pages/Login';
 import ApproveAccess from './pages/ApproveAccess';
 import { usePWA } from './hooks/usePWA';
@@ -210,6 +211,7 @@ const AuthenticatedApp = () => {
       <Route path="/ConsentFormBuilder" element={<LayoutWrapper currentPageName="ConsentFormBuilder"><ConsentFormBuilder /></LayoutWrapper>} />
       <Route path="/CompleteRegistration" element={<CompleteRegistration />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/register-user" element={<RegisterUser />} />
       <Route path="/login" element={<Login />} />
       <Route path="/approve-access" element={<ApproveAccess />} />
       <Route path="/TreasurerDashboard" element={<TreasurerDashboard />} />

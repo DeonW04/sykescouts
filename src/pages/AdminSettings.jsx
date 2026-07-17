@@ -303,6 +303,8 @@ export default function AdminSettings() {
   const [savingGifSize,       setSavingGifSize]       = useState(false);
   const [galleryView,         setGalleryView]         = useState('camps');
   const [galleryFolder,       setGalleryFolder]       = useState(null);
+  const [showInviteDialog,    setShowInviteDialog]    = useState(false);
+  const [inviteForm,          setInviteForm]          = useState({ email: '', user_type: 'parent' });
 
   // ── Queries ──────────────────────────────────────────────────────────────────
   const { data: users = [],   isLoading }   = useQuery({ queryKey: ['all-users'],          queryFn: () => base44.entities.User.list() });
@@ -388,6 +390,15 @@ export default function AdminSettings() {
     mutationFn: async ({ page, imageUrl, order }) => base44.entities.WebsiteImage.create({ page, image_url: imageUrl, order: order || 0 }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['website-images'] }); setShowGallerySelector(false); toast.success('Image added'); },
   });
+  const sendInviteMutation = useMutation({
+    mutationFn: async ({ email, user_type }) => {
+      const res = await base44.functions.invoke('sendUserInvite', { email, userType: user_type });
+      if (res.data?.error) throw new Error(res.data.error);
+      return res.data;
+    },
+    onSuccess: (data) => { setShowInviteDialog(false); setInviteForm({ email: '', user_type: 'parent' }); toast.success(data?.message || 'Invitation sent'); },
+    onError: (e) => toast.error('Error: ' + e.message),
+  });
   const sendPasswordResetMutation = useMutation({
     mutationFn: async (email) => base44.integrations.Core.SendEmail({ to: email, subject: 'Password Reset Request', body: 'You have requested a password reset.' }),
     onSuccess: () => toast.success('Password reset email sent'),
@@ -413,7 +424,14 @@ export default function AdminSettings() {
       case 'analytics': return <ParentPortalAnalyticsPanel />;
       case 'users': return (
         <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" />User Management</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />User Management
+              <Button size="sm" className="ml-auto bg-[#7413dc] hover:bg-[#5c0fb0]" onClick={() => { setInviteForm({ email: '', user_type: 'parent' }); setShowInviteDialog(true); }}>
+                <Send className="w-3.5 h-3.5 mr-1.5" />Add User
+              </Button>
+            </CardTitle>
+          </CardHeader>
           <CardContent>
             {isLoading ? <div className="py-8 text-center"><div className="animate-spin w-8 h-8 border-4 border-[#004851] border-t-transparent rounded-full mx-auto" /></div> : (
               <div className="space-y-2">
@@ -758,6 +776,38 @@ export default function AdminSettings() {
               </div>
             )}
             <Button onClick={handleSaveUser} className="w-full">Save Changes</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Invite User Dialog ────────────────────────────────────────────────── */}
+      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Invite a New User</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-4">
+            <p className="text-sm text-gray-500">Enter the person's email and choose their account type. They'll receive a link to set a password and complete registration.</p>
+            <div className="space-y-2"><Label>Email Address</Label><Input type="email" placeholder="name@example.com" value={inviteForm.email} onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })} /></div>
+            <div className="space-y-2"><Label>User Type</Label>
+              <Select value={inviteForm.user_type} onValueChange={(value) => setInviteForm({ ...inviteForm, user_type: value })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="parent">Parent</SelectItem><SelectItem value="leader">Leader</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem><SelectItem value="treasurer">Treasurer</SelectItem>
+                  <SelectItem value="glv">GLV</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              onClick={() => {
+                const email = inviteForm.email.trim();
+                if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast.error('Please enter a valid email address'); return; }
+                sendInviteMutation.mutate({ email, user_type: inviteForm.user_type });
+              }}
+              disabled={sendInviteMutation.isPending}
+              className="w-full bg-[#7413dc] hover:bg-[#5c0fb0]"
+            >
+              {sendInviteMutation.isPending ? 'Sending…' : 'Send Invitation'}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

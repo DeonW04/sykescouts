@@ -1,0 +1,91 @@
+{
+  "name": "UserInvite",
+  "type": "object",
+  "properties": {
+    "token": {
+      "type": "string",
+      "description": "Unique random token embedded in the registration link"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email address the invite was sent to"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "admin",
+        "treasurer",
+        "glv",
+        "team_leader"
+      ],
+      "default": "user",
+      "description": "Role to assign the user once they complete registration"
+    },
+    "account_type": {
+      "type": "string",
+      "enum": [
+        "ipad",
+        "leader",
+        "parent"
+      ],
+      "description": "Optional account type to set on the user once registered"
+    },
+    "make_leader": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to create a Leader record for this user on completion"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "expired"
+      ],
+      "default": "pending",
+      "description": "Invite status"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the invite link expires"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the user completed registration"
+    },
+    "sent_by": {
+      "type": "string",
+      "description": "User ID of the admin who sent the invite"
+    }
+  },
+  "required": [
+    "token",
+    "email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
