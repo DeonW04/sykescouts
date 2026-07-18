@@ -86,7 +86,7 @@ export default function TreasurerDashboard() {
   const unallocated = allocations.filter(r => r.status === 'unallocated');
   const unallocatedTotal = unallocated.reduce((s, r) => s + (r.amount || 0), 0);
 
-  const reimbursementsDue = reimbursements.filter(r => r.approval_status === 'approved' && r.payment_status === 'unpaid');
+  const reimbursementsDue = reimbursements.filter(r => r.payment_status === 'unpaid' && r.approval_status !== 'rejected');
   const reimbursementsDueTotal = reimbursementsDue.reduce((s, r) => s + (r.amount || 0), 0);
 
   const cashOutstanding = cashPayments.filter(c => !c.paid_in);
