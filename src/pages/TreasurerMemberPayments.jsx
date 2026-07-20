@@ -4,9 +4,8 @@ import { base44 } from '@/api/base44Client';
 import TreasurerLayout from '@/components/treasurer/TreasurerLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { CreditCard, Search } from 'lucide-react';
+import { CreditCard, User } from 'lucide-react';
+import SectionTabPicker from '@/components/treasurer/SectionTabPicker';
 
 const fmt = n => `£${(n || 0).toFixed(2)}`;
 const displayEB = eb => { if (!eb) return '—'; if (eb.toLowerCase().includes('stripe')) return 'Stripe'; return eb; };
@@ -22,13 +21,19 @@ function getApproxTermRange() {
 
 export default function TreasurerMemberPayments() {
   const [selectedMemberId, setSelectedMemberId] = useState('');
-  const [search, setSearch] = useState('');
 
   const { data: members = [] } = useQuery({ queryKey: ['members-active'], queryFn: () => base44.entities.Member.filter({ active: true }) });
   const { data: terms = [] } = useQuery({ queryKey: ['terms'], queryFn: () => base44.entities.Term.list() });
+  const { data: sections = [] } = useQuery({ queryKey: ['sections'], queryFn: () => base44.entities.Section.filter({ active: true }) });
 
   const sortedMembers = [...members].sort((a, b) => a.full_name.localeCompare(b.full_name));
-  const filteredMembers = search ? sortedMembers.filter(m => m.full_name.toLowerCase().includes(search.toLowerCase())) : sortedMembers;
+
+  const memberItems = useMemo(() => sortedMembers.map(m => ({
+    id: m.id,
+    label: m.full_name,
+    sectionIds: m.section_id ? [m.section_id] : [],
+    searchText: m.full_name,
+  })), [members]);
 
   const member = selectedMemberId ? members.find(m => m.id === selectedMemberId) : sortedMembers[0];
 
@@ -52,17 +57,17 @@ export default function TreasurerMemberPayments() {
 
   return (
     <TreasurerLayout title="Member Payments">
-      <div className="mb-6 flex gap-3 max-w-md">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input className="pl-9" placeholder="Search member..." value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
-        <Select value={selectedMemberId || (sortedMembers[0]?.id || '')} onValueChange={setSelectedMemberId}>
-          <SelectTrigger className="w-56"><SelectValue placeholder="Select member..." /></SelectTrigger>
-          <SelectContent>
-            {filteredMembers.map(m => <SelectItem key={m.id} value={m.id}>{m.full_name}</SelectItem>)}
-          </SelectContent>
-        </Select>
+      <div className="mb-6">
+        <SectionTabPicker
+          sections={sections}
+          items={memberItems}
+          value={member?.id}
+          onChange={setSelectedMemberId}
+          placeholder="Select member…"
+          triggerLabel={member?.full_name}
+          title="Select Member"
+          icon={User}
+        />
       </div>
 
       {!member ? (

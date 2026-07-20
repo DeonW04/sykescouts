@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import TreasurerLayout from '@/components/treasurer/TreasurerLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle, XCircle, Clock, Bell, TrendingUp, TrendingDown } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Bell, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import SectionTabPicker from '@/components/treasurer/SectionTabPicker';
 
 const fmt = n => `£${(n || 0).toFixed(2)}`;
 const displayEB = eb => { if (!eb) return '—'; if (eb.toLowerCase().includes('stripe')) return 'Stripe'; return eb; };
@@ -28,6 +28,23 @@ export default function TreasurerEventFinances() {
   });
 
   const { data: members = [] } = useQuery({ queryKey: ['members-active'], queryFn: () => base44.entities.Member.filter({ active: true }) });
+  const { data: sections = [] } = useQuery({ queryKey: ['sections'], queryFn: () => base44.entities.Section.filter({ active: true }) });
+  const { data: terms = [] } = useQuery({ queryKey: ['terms'], queryFn: () => base44.entities.Term.list() });
+
+  const termLabel = (id) => terms.find(t => t.id === id)?.title || '';
+
+  const eventItems = useMemo(() => events.map(e => {
+    const term = termLabel(e.term_id);
+    const dateStr = format(new Date(e.start_date), 'd MMM yyyy');
+    return {
+      id: e.id,
+      label: e.title,
+      sublabel: [dateStr, term].filter(Boolean).join(' · '),
+      sectionIds: e.section_ids || [],
+      searchText: `${e.title} ${term}`,
+      sortKey: e.start_date,
+    };
+  }), [events, terms]);
 
   // Default to most recently created event with cost
   const event = selectedEventId ? events.find(e => e.id === selectedEventId) : events[0];
@@ -98,12 +115,16 @@ export default function TreasurerEventFinances() {
     <TreasurerLayout title="Event Finances">
       {/* Event selector */}
       <div className="mb-6">
-        <Select value={selectedEventId || (events[0]?.id || '')} onValueChange={setSelectedEventId}>
-          <SelectTrigger className="max-w-md"><SelectValue placeholder="Select event..." /></SelectTrigger>
-          <SelectContent>
-            {events.map(e => <SelectItem key={e.id} value={e.id}>{e.title} ({format(new Date(e.start_date), 'd MMM yyyy')})</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <SectionTabPicker
+          sections={sections}
+          items={eventItems}
+          value={event?.id}
+          onChange={setSelectedEventId}
+          placeholder="Select event…"
+          triggerLabel={event ? `${event.title} (${format(new Date(event.start_date), 'd MMM yyyy')})` : ''}
+          title="Select Event"
+          icon={CalendarDays}
+        />
       </div>
 
       {!event ? (
