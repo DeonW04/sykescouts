@@ -176,39 +176,9 @@ export default function TreasurerReceiptAllocation() {
       const primaryAmt = isSplit ? Math.max(0, updates.amount - splitAmt) : updates.amount;
       const scopeSuffix = allocateDialog.expense_scope === 'group' ? ' (whole group)' : '';
 
-      const ledgerEntry = await base44.entities.LedgerEntry.create({
-        date: new Date().toISOString().split('T')[0],
-        type: 'expense',
-        amount: primaryAmt,
-        category: updates.category,
-        description: `Receipt: ${form.notes || updates.category}${scopeSuffix}`,
-        linked_event_id: updates.linked_event_id || null,
-        linked_meeting_id: updates.linked_meeting_id || null,
-        receipt_reference: allocateDialog.id,
-        entered_by: user?.email,
-        budget_allocated: allocateDialog.budget_allocated || false,
-        section_id: allocateDialog.section_id || '',
-        linked_term_id: allocateDialog.linked_term_id || '',
-      });
-
-      // Second ledger entry for the other section when split
-      if (isSplit && splitAmt > 0) {
-        await base44.entities.LedgerEntry.create({
-          date: new Date().toISOString().split('T')[0],
-          type: 'expense',
-          amount: splitAmt,
-          category: updates.category,
-          description: `Receipt (split): ${form.notes || updates.category}`,
-          linked_event_id: updates.linked_event_id || null,
-          linked_meeting_id: allocateDialog.split_meeting_id || updates.linked_meeting_id || null,
-          receipt_reference: allocateDialog.id,
-          entered_by: user?.email,
-          section_id: allocateDialog.split_section_id || '',
-          linked_term_id: allocateDialog.linked_term_id || '',
-        });
-      }
-
       if (updates.payment_method === 'leader_paid_personally' && updates.leader_id) {
+        // Paid personally by a leader — do NOT touch the ledger yet.
+        // A reimbursement is created; the ledger entry is added when the leader is paid back.
         await base44.entities.Reimbursement.create({
           leader_id: updates.leader_id,
           amount: updates.amount,
@@ -219,10 +189,41 @@ export default function TreasurerReceiptAllocation() {
           linked_receipt_id: allocateDialog.id,
           approval_status: 'pending_approval',
           payment_status: 'unpaid',
-          ledger_entry_id: ledgerEntry.id,
         });
-        toast.success('Allocated and reimbursement created for leader');
+        toast.success('Reimbursement created — will hit the ledger once the leader is paid back');
       } else {
+        // Scout bank card — no reimbursement needed, add to the ledger straight away.
+        await base44.entities.LedgerEntry.create({
+          date: new Date().toISOString().split('T')[0],
+          type: 'expense',
+          amount: primaryAmt,
+          category: updates.category,
+          description: `Receipt: ${form.notes || updates.category}${scopeSuffix}`,
+          linked_event_id: updates.linked_event_id || null,
+          linked_meeting_id: updates.linked_meeting_id || null,
+          receipt_reference: allocateDialog.id,
+          entered_by: user?.email,
+          budget_allocated: allocateDialog.budget_allocated || false,
+          section_id: allocateDialog.section_id || '',
+          linked_term_id: allocateDialog.linked_term_id || '',
+        });
+
+        // Second ledger entry for the other section when split
+        if (isSplit && splitAmt > 0) {
+          await base44.entities.LedgerEntry.create({
+            date: new Date().toISOString().split('T')[0],
+            type: 'expense',
+            amount: splitAmt,
+            category: updates.category,
+            description: `Receipt (split): ${form.notes || updates.category}`,
+            linked_event_id: updates.linked_event_id || null,
+            linked_meeting_id: allocateDialog.split_meeting_id || updates.linked_meeting_id || null,
+            receipt_reference: allocateDialog.id,
+            entered_by: user?.email,
+            section_id: allocateDialog.split_section_id || '',
+            linked_term_id: allocateDialog.linked_term_id || '',
+          });
+        }
         toast.success('Receipt allocated to ledger');
       }
 
