@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, TrendingUp, TrendingDown, Search, Edit, Trash2, CheckCircle, AlertTriangle, Clock, Download, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, Search, Edit, Trash2, CheckCircle, AlertTriangle, Clock, Download, ChevronUp, ChevronDown, Paperclip, FileText, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
@@ -39,7 +39,7 @@ const emptyForm = {
   type: 'income', amount: '', category: 'other', description: '', reference: '',
   linked_member_id: '', linked_event_id: '', linked_meeting_id: '', linked_fund_id: '',
   linked_term_id: '', receipt_reference: '', section_id: '', budget_allocated: false,
-  split_section_id: '', split_amount: '',
+  split_section_id: '', split_amount: '', invoice_url: '',
 };
 
 export default function TreasurerLedger() {
@@ -60,6 +60,7 @@ export default function TreasurerLedger() {
   const [subsDuration, setSubsDuration] = useState(3);
   const [selectedEventOrMeeting, setSelectedEventOrMeeting] = useState('');
   const [showSplit, setShowSplit] = useState(false);
+  const [uploadingInvoice, setUploadingInvoice] = useState(false);
 
   const { data: sections = [] } = useQuery({ queryKey: ['sections'], queryFn: () => base44.entities.Section.filter({ active: true }) });
   const { data: ledger = [] } = useQuery({ queryKey: ['ledger'], queryFn: () => base44.entities.LedgerEntry.list('-date', 1000) });
@@ -70,6 +71,7 @@ export default function TreasurerLedger() {
   const { data: programmes = [] } = useQuery({ queryKey: ['programmes-all'], queryFn: () => base44.entities.Programme.list('-date', 300) });
   const { data: eventAttendances = [] } = useQuery({ queryKey: ['event-attendances-all'], queryFn: () => base44.entities.EventAttendance.filter({}) });
   const { data: unallocatedReceipts = [] } = useQuery({ queryKey: ['unallocated-receipts'], queryFn: () => base44.entities.ReceiptAllocation.filter({ status: 'unallocated' }) });
+  const { data: allocatedReceipts = [] } = useQuery({ queryKey: ['allocated-receipts'], queryFn: () => base44.entities.ReceiptAllocation.filter({ status: 'allocated' }) });
   const { data: actionsRequired = [] } = useQuery({ queryKey: ['actions-required-all'], queryFn: () => base44.entities.ActionRequired.filter({}) });
   const { data: actionResponses = [] } = useQuery({ queryKey: ['action-responses-all'], queryFn: () => base44.entities.ActionResponse.filter({}) });
 
@@ -85,6 +87,30 @@ export default function TreasurerLedger() {
     members.forEach(m => { map[m.id] = m.section_id; });
     return map;
   }, [members]);
+
+  // Map ledger entry ID -> the receipt URL of the ReceiptAllocation that created it
+  const receiptByLedgerId = useMemo(() => {
+    const map = {};
+    allocatedReceipts.forEach(r => {
+      if (r.ledger_entry_id && r.receipt_url) map[r.ledger_entry_id] = r.receipt_url;
+    });
+    return map;
+  }, [allocatedReceipts]);
+
+  const handleInvoiceUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingInvoice(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setField('invoice_url', file_url);
+      toast.success('Invoice attached');
+    } catch (err) {
+      toast.error('Failed to upload invoice');
+    } finally {
+      setUploadingInvoice(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     let result = ledger.filter(e => {
@@ -330,14 +356,15 @@ export default function TreasurerLedger() {
             <div className="w-full">
               <table className="w-full table-fixed text-sm">
                 <colgroup>
-                  <col className="w-[9%]" />
-                  <col className="w-[22%]" />
-                  <col className="w-[11%]" />
-                  <col className="w-[10%]" />
-                  <col className="w-[14%]" />
-                  <col className="w-[16%]" />
                   <col className="w-[8%]" />
+                  <col className="w-[19%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[9%]" />
+                  <col className="w-[13%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[7%]" />
                   <col className="w-[6%]" />
+                  <col className="w-[10%]" />
                   <col className="w-[4%]" />
                 </colgroup>
                 <thead>
@@ -350,6 +377,7 @@ export default function TreasurerLedger() {
                     <th className="text-left py-2 px-2 font-semibold text-gray-600">Event / Meeting</th>
                     <th className="text-left py-2 px-2 font-semibold text-gray-600">Reference</th>
                     <th className="text-left py-2 px-2 font-semibold text-gray-600">Entered by</th>
+                    <th className="text-left py-2 px-2 font-semibold text-gray-600">Invoice</th>
                     <th className="py-2 px-2"></th>
                   </tr>
                 </thead>
@@ -357,6 +385,7 @@ export default function TreasurerLedger() {
                   {filtered.map(entry => {
                     const memberName = members.find(m => m.id === entry.linked_member_id)?.full_name || '';
                     const evName = entry.linked_event_id ? (events.find(ev => ev.id === entry.linked_event_id)?.title || '') : entry.linked_meeting_id ? (programmes.find(p => p.id === entry.linked_meeting_id)?.title || '') : '';
+                    const receiptUrl = receiptByLedgerId[entry.id];
                     return (
                       <tr key={entry.id} className="border-b hover:bg-gray-50">
                         <td className="py-2 px-2 text-gray-600 truncate" title={entry.date}>{entry.date}</td>
@@ -369,6 +398,19 @@ export default function TreasurerLedger() {
                         <td className="py-2 px-2 text-gray-500 truncate" title={evName}>{evName}</td>
                         <td className="py-2 px-2 text-gray-400 text-xs font-mono truncate" title={entry.reference}>{entry.reference}</td>
                         <td className="py-2 px-2 text-gray-500 text-xs truncate" title={displayEnteredBy(entry.entered_by)}>{displayEnteredBy(entry.entered_by)}</td>
+                        <td className="py-2 px-2">
+                          {receiptUrl ? (
+                            <a href={receiptUrl} target="_blank" rel="noopener noreferrer">
+                              <Button size="sm" className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-900 text-white gap-1"><FileText className="w-3 h-3" />View Receipt</Button>
+                            </a>
+                          ) : entry.invoice_url ? (
+                            <a href={entry.invoice_url} target="_blank" rel="noopener noreferrer">
+                              <Button size="sm" className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-900 text-white gap-1"><FileText className="w-3 h-3" />View Invoice</Button>
+                            </a>
+                          ) : (
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs text-gray-500 gap-1" onClick={() => openEdit(entry)}><Paperclip className="w-3 h-3" />Attach</Button>
+                          )}
+                        </td>
                         <td className="py-2 px-1">
                           <div className="flex gap-0.5">
                             <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => openEdit(entry)}><Edit className="w-3 h-3" /></Button>
@@ -546,6 +588,27 @@ export default function TreasurerLedger() {
             <div className="grid grid-cols-2 gap-4">
               <div><Label>Reference (optional)</Label><Input value={form.reference} onChange={e => setField('reference', e.target.value)} placeholder="REF001" /></div>
               <div><Label>Receipt Reference (optional)</Label><Input value={form.receipt_reference} onChange={e => setField('receipt_reference', e.target.value)} placeholder="REC-001" /></div>
+            </div>
+
+            <div>
+              <Label>Invoice (optional)</Label>
+              {form.invoice_url ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <a href={form.invoice_url} target="_blank" rel="noopener noreferrer" className="flex-1">
+                    <Button type="button" size="sm" className="w-full h-9 text-xs bg-slate-800 hover:bg-slate-900 text-white gap-1"><FileText className="w-3.5 h-3.5" />View Invoice</Button>
+                  </a>
+                  <Button type="button" size="sm" variant="ghost" className="text-xs text-red-500" onClick={() => setField('invoice_url', '')}>Remove</Button>
+                </div>
+              ) : (
+                <div className="mt-1">
+                  <input type="file" id="invoice-upload" className="hidden" accept="image/*,application/pdf" onChange={handleInvoiceUpload} disabled={uploadingInvoice} />
+                  <label htmlFor="invoice-upload">
+                    <Button type="button" size="sm" variant="outline" className="w-full text-gray-600 gap-1 cursor-pointer" disabled={uploadingInvoice} asChild>
+                      <span>{uploadingInvoice ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Uploading…</> : <><Paperclip className="w-3.5 h-3.5" />Attach Invoice</>}</span>
+                    </Button>
+                  </label>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>

@@ -68,6 +68,10 @@
       "type": "string",
       "description": "Linked receipt ID"
     },
+    "invoice_url": {
+      "type": "string",
+      "description": "URL of an attached invoice document for this ledger entry"
+    },
     "entered_by": {
       "type": "string",
       "description": "User email who entered this"
