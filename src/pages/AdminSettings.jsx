@@ -18,7 +18,7 @@ import {
   LayoutDashboard, Users, Settings, Globe, RefreshCw, Zap,
   BarChart2, Bell, Mail, Shield, Award, Calendar, Image, Camera,
   MessageCircle, CreditCard, ChevronRight, ArrowLeft, Layers,
-  TestTube, Edit, X, Upload, Play, Send, Activity, TrendingUp, ChevronDown, Archive
+  TestTube, Edit, X, Upload, Play, Send, Activity, TrendingUp, ChevronDown, Archive, Sparkles
 } from 'lucide-react';
 import {
   ResponsiveContainer, PieChart as RPieChart, Pie, Cell,
@@ -45,6 +45,7 @@ import OSMBadgeMappingTab from '../components/admin/OSMBadgeMappingTab';
 import ParentPortalAnalyticsPanel from '../components/admin/ParentPortalAnalyticsPanel';
 import ManageBadgesPanel from '../components/admin/ManageBadgesPanel';
 import ArchivedMembersPanel from '../components/admin/ArchivedMembersPanel';
+import AiPlanningDataPanel from '../components/admin/AiPlanningDataPanel';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const SECTION_STYLES = {
@@ -98,6 +99,7 @@ const SECTIONS = [
       { key: 'wa-setup',    label: 'WhatsApp Setup',        icon: MessageCircle },
       { key: 'wa-test',     label: 'WhatsApp Test Console', icon: TestTube },
       { key: 'wa-schedule', label: 'WhatsApp Schedule',     icon: Send, navigate: '/WhatsAppSchedules' },
+      { key: 'ai-planning', label: 'AI Planning Data',      icon: Sparkles },
     ]},
 ];
 
@@ -528,6 +530,7 @@ export default function AdminSettings() {
       case 'osm-awards':    return <OSMBadgeAwardSync />;
       case 'wa-setup':      return <WhatsAppSetupTab />;
       case 'wa-test':       return <WhatsAppTestTab />;
+      case 'ai-planning':   return <AiPlanningDataPanel />;
       case 'manage-badges': return <ManageBadgesPanel />;
       case 'archived-members': return <ArchivedMembersPanel />;
       case 'badge-bulk-award': return (
