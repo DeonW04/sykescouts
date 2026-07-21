@@ -71,6 +71,15 @@ export default function ConfirmPaidDialog({ obligation, onClose, onConfirmed }) 
               : 'Pay this via your bank app first, then confirm below.'}
             {' '}Confirming adds it to the ledger and moves the next due date forward.
           </div>
+          {(obligation?.payee_name || obligation?.sort_code || obligation?.account_number || obligation?.payment_reference) && (
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm space-y-1">
+              <p className="text-xs font-semibold text-gray-700 mb-1">Bank Details</p>
+              {obligation?.payee_name && <p><span className="text-gray-500">Payee:</span> <span className="font-medium">{obligation.payee_name}</span></p>}
+              {obligation?.sort_code && <p><span className="text-gray-500">Sort code:</span> <span className="font-mono font-medium">{obligation.sort_code}</span></p>}
+              {obligation?.account_number && <p><span className="text-gray-500">Account no:</span> <span className="font-mono font-medium">{obligation.account_number}</span></p>}
+              {obligation?.payment_reference && <p><span className="text-gray-500">Reference:</span> <span className="font-mono font-medium">{obligation.payment_reference}</span></p>}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div><Label>Date Paid</Label><Input type="date" value={datePaid} onChange={e => setDatePaid(e.target.value)} /></div>
             <div><Label>Amount (£)</Label><Input type="number" step="0.01" min="0" value={amount} onChange={e => setAmount(e.target.value)} /></div>

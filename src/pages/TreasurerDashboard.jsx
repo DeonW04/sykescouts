@@ -81,24 +81,26 @@ export default function TreasurerDashboard() {
       {/* ── Hero header ── */}
       <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 16px 20px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ marginBottom: '18px' }}>
-            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Treasurer Portal</p>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(20px, 4vw, 36px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.15 }}>
-              Welcome back{user ? `, ${user.display_name || user.full_name?.split(' ')[0]}` : ''}
-            </h1>
-            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>40th Rochdale (Syke) Scouts</p>
-          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+            <div>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Treasurer Portal</p>
+              <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(20px, 4vw, 36px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.15 }}>
+                Welcome back{user ? `, ${user.display_name || user.full_name?.split(' ')[0]}` : ''}
+              </h1>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>40th Rochdale (Syke) Scouts</p>
+            </div>
 
-          {/* Cash in bank */}
-          <button onClick={() => navigate(createPageUrl('TreasurerLedger'))} style={{ ...glassCard, display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 18px', cursor: 'pointer', fontFamily: 'inherit' }}>
-            <div style={{ width: '38px', height: '38px', background: cashInBank >= 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', borderRadius: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Wallet size={18} color={cashInBank >= 0 ? '#22c55e' : '#ef4444'} />
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(26,26,46,0.5)', margin: 0 }}>Cash in Bank</p>
-              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '22px', color: cashInBank >= 0 ? '#22c55e' : '#ef4444', margin: 0, lineHeight: 1.1 }}>{fmt(cashInBank)}</p>
-            </div>
-          </button>
+            {/* Cash in bank */}
+            <button onClick={() => navigate(createPageUrl('TreasurerLedger'))} style={{ ...glassCard, display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 18px', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <div style={{ width: '38px', height: '38px', background: cashInBank >= 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', borderRadius: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Wallet size={18} color={cashInBank >= 0 ? '#22c55e' : '#ef4444'} />
+              </div>
+              <div style={{ textAlign: 'left' }}>
+                <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(26,26,46,0.5)', margin: 0 }}>Cash in Bank</p>
+                <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '22px', color: cashInBank >= 0 ? '#22c55e' : '#ef4444', margin: 0, lineHeight: 1.1 }}>{fmt(cashInBank)}</p>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
 

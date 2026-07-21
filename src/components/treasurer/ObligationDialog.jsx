@@ -24,7 +24,7 @@ export const OBLIGATION_CATEGORIES = [
   { value: 'other', label: 'Other (utilities, etc.)' },
 ];
 
-const emptyForm = { name: '', amount: '', category: 'hall_hire', frequency: 'monthly', payment_method: 'standing_order', next_due_date: '', notes: '', active: true };
+const emptyForm = { name: '', amount: '', category: 'hall_hire', frequency: 'monthly', payment_method: 'standing_order', next_due_date: '', notes: '', active: true, payee_name: '', sort_code: '', account_number: '', payment_reference: '' };
 
 export default function ObligationDialog({ open, onClose, obligation, onSaved }) {
   const [form, setForm] = useState(emptyForm);
@@ -43,6 +43,7 @@ export default function ObligationDialog({ open, onClose, obligation, onSaved })
         name: form.name, amount: parseFloat(form.amount), category: form.category,
         frequency: form.frequency, payment_method: form.payment_method,
         next_due_date: form.next_due_date, notes: form.notes, active: form.active !== false,
+        payee_name: form.payee_name, sort_code: form.sort_code, account_number: form.account_number, payment_reference: form.payment_reference,
       };
       if (obligation?.id) {
         await base44.entities.RecurringPayment.update(obligation.id, payload);
@@ -87,7 +88,16 @@ export default function ObligationDialog({ open, onClose, obligation, onSaved })
               </SelectContent>
             </Select>
           </div>
-          <div><Label>Notes (optional)</Label><Input value={form.notes} onChange={e => sf('notes', e.target.value)} placeholder="Payee, account reference, etc." /></div>
+          <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg space-y-3">
+            <p className="text-xs font-semibold text-gray-700">Bank Details (optional) — shown when confirming payment</p>
+            <div><Label className="text-xs">Payee Name</Label><Input value={form.payee_name} onChange={e => sf('payee_name', e.target.value)} placeholder="e.g. Syke Community Hall" className="h-8 text-sm" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label className="text-xs">Sort Code</Label><Input value={form.sort_code} onChange={e => sf('sort_code', e.target.value)} placeholder="12-34-56" className="h-8 text-sm" /></div>
+              <div><Label className="text-xs">Account Number</Label><Input value={form.account_number} onChange={e => sf('account_number', e.target.value)} placeholder="12345678" className="h-8 text-sm" /></div>
+            </div>
+            <div><Label className="text-xs">Payment Reference</Label><Input value={form.payment_reference} onChange={e => sf('payment_reference', e.target.value)} placeholder="e.g. 40TH-RENT" className="h-8 text-sm" /></div>
+          </div>
+          <div><Label>Notes (optional)</Label><Input value={form.notes} onChange={e => sf('notes', e.target.value)} placeholder="Any other details..." /></div>
           {obligation && (
             <div className="flex items-center gap-2">
               <input type="checkbox" id="obl_active" checked={form.active !== false} onChange={e => sf('active', e.target.checked)} className="w-4 h-4 rounded" />

@@ -43,6 +43,22 @@
       ],
       "description": "standing_order = paid automatically from the bank (treasurer verifies); manual_payment = treasurer pays it via the bank app"
     },
+    "payee_name": {
+      "type": "string",
+      "description": "Bank account name of the payee"
+    },
+    "sort_code": {
+      "type": "string",
+      "description": "Payee sort code (e.g. 12-34-56)"
+    },
+    "account_number": {
+      "type": "string",
+      "description": "Payee account number"
+    },
+    "payment_reference": {
+      "type": "string",
+      "description": "Reference to use when making the bank payment"
+    },
     "next_due_date": {
       "type": "string",
       "format": "date",
