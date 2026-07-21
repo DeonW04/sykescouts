@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2 } from 'lucide-react';
+import { createPageUrl } from '@/utils';
+import { getStoredChildId, storeChildId } from '@/hooks/useSelectedChild';
+import LoginChildPicker from './LoginChildPicker';
 
 /**
  * Shared login form body — email + password + OSM SSO.
@@ -11,6 +14,7 @@ export default function LoginPanel({ onClose }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [childPicker, setChildPicker] = useState(null); // { children: [...] } when a multi-child parent logs in
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
@@ -22,11 +26,36 @@ export default function LoginPanel({ onClose }) {
     setLoading(true);
     try {
       await base44.auth.loginViaEmailPassword(email, password);
-      window.location.href = '/';
     } catch (err) {
       setError('Incorrect email or password. Please try again.');
       setLoading(false);
+      return;
     }
+    // If this is a parent with more than one child, show the child picker
+    // before entering the portal. Any failure here falls through to a normal redirect.
+    try {
+      const me = await base44.auth.me();
+      if (me.role === 'user') {
+        const leaders = await base44.entities.Leader.filter({ user_id: me.id });
+        if (leaders.length === 0) {
+          // RLS scopes this to the parent's own children
+          const kids = (await base44.entities.Member.filter({ active: true }))
+            .sort((a, b) => (a.first_name || '').localeCompare(b.first_name || ''));
+          if (kids.length > 1) {
+            setChildPicker({ children: kids });
+            setLoading(false);
+            return;
+          }
+          if (kids.length === 1) storeChildId(kids[0].id);
+        }
+      }
+    } catch { /* fall through to normal redirect */ }
+    window.location.href = '/';
+  };
+
+  const handleChildConfirm = (childId) => {
+    storeChildId(childId);
+    window.location.href = createPageUrl('ParentDashboard');
   };
 
   const inputStyle = {
@@ -50,6 +79,16 @@ export default function LoginPanel({ onClose }) {
     margin: '0 0 6px',
     display: 'block',
   };
+
+  if (childPicker) {
+    return (
+      <LoginChildPicker
+        children={childPicker.children}
+        initialSelected={getStoredChildId()}
+        onConfirm={handleChildConfirm}
+      />
+    );
+  }
 
   return (
     <div style={{ fontFamily: 'DM Sans, sans-serif' }}>

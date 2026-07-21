@@ -16,6 +16,7 @@ import {
 import { PORTAL_NAV_GROUPS } from '@/lib/navConfig';
 import { TREASURER_NAV_GROUPS } from '@/lib/treasurerNavConfig';
 import LoginDropdown from './LoginDropdown';
+import ChildSwitcherDropdown from '@/components/parent/ChildSwitcherDropdown';
 
 // Portal nav groups — single source of truth in lib/navConfig
 const portalGroups = PORTAL_NAV_GROUPS;
@@ -845,7 +846,7 @@ export default function FloatingNav() {
                     <Settings size={13} /> Admin Area
                   </Link>
                 )}
-                <AccountDropdown />
+                {isParent ? <ChildSwitcherDropdown user={user} /> : <AccountDropdown />}
               </div>
 
             </div>
