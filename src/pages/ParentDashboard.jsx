@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSelectedChildId } from '@/hooks/useSelectedChild';
 
 
 // Handle parent volunteer responses
@@ -120,7 +121,9 @@ export default function ParentDashboard() {
   });
 
   const children = portal?.children || [];
-  const childIds = children.map(c => c.id);
+  const [selectedChildId] = useSelectedChildId(children);
+  const selectedChild = children.find(c => c.id === selectedChildId) || children[0];
+  const childIds = selectedChild ? [selectedChild.id] : [];
 
   const upcomingEvents = (reference?.events || [])
     .filter(e => new Date(e.start_date) > new Date())
@@ -169,7 +172,7 @@ export default function ParentDashboard() {
     const daysLeft = Math.ceil((start - now_b) / (1000 * 60 * 60 * 24));
     outstandingItems.push(`Payment due: ${event.title} — £${event.cost.toFixed(2)}${daysLeft <= 0 ? ' (today)' : daysLeft === 1 ? ' (tomorrow)' : ` (${daysLeft} days)`}`);
   }
-  const child0 = children[0];
+  const child0 = selectedChild;
   if (child0?.next_subs_due) {
     const subsDue = new Date(child0.next_subs_due);
     if (subsDue <= in7Days && subsDue >= now_b) {
@@ -188,7 +191,7 @@ export default function ParentDashboard() {
   const badgeProgress = portal?.badgeProgress || [];
 
   const { data: actionsRequired = [] } = useQuery({
-    queryKey: ['actions-required', children, reference?.programmes, portal?.actionResponses],
+    queryKey: ['actions-required', selectedChild?.id, reference?.programmes, portal?.actionResponses],
     queryFn: async () => {
       if (children.length === 0 || !reference || !portal) return [];
       const childIds = children.map(c => c.id);
@@ -230,9 +233,9 @@ export default function ParentDashboard() {
           if (new Date(action.event.end_date || action.event.start_date) < new Date()) return false;
         }
         
-        // Check if ALL children have a completed response for this action —
+        // Check if the selected child has a completed response for this action —
         // regardless of whether it was entered by the parent or a leader manually
-        const allChildrenResponded = children.every(child =>
+        const allChildrenResponded = [selectedChild].filter(Boolean).every(child =>
           childResponses.some(r =>
             (r.action_required_id === action.id || r.action_id === action.id) &&
             (r.member_id === child.id || r.child_member_id === child.id) &&
@@ -373,7 +376,7 @@ export default function ParentDashboard() {
                           </p>
                         )}
 
-                        {children.map(child => (
+                        {children.filter(c => c.id === selectedChild?.id).map(child => (
                          <div key={child.id} className="mt-3 pt-3 border-t border-orange-200">
                            <button
                              onClick={() => navigate(createPageUrl('MemberDetail') + `?id=${child.id}`)}

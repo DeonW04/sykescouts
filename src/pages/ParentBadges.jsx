@@ -16,6 +16,7 @@ import NavBarSpacer from '../components/public/NavBarSpacer';
 import { motion } from 'framer-motion';
 import UniformDiagram from '../components/uniform/UniformDiagram';
 import { useRef } from 'react';
+import { useSelectedChildId } from '@/hooks/useSelectedChild';
 
 function StagedFamilyDialog({ selectedBadge, child, badgeProgress, getBadgeModules, getModuleRequirements, isRequirementCompleted, onUniformClick }) {
   const realStages = selectedBadge.family.stages.filter(s => s.stage_number != null && s.stage_number !== '');
@@ -125,6 +126,8 @@ export default function ParentBadges() {
   });
 
   const children = portal?.children || [];
+  const [selectedChildId] = useSelectedChildId(children);
+  const selectedChild = children.find(c => c.id === selectedChildId) || children[0];
   const sections = portal?.sections || [];
   const badgeProgress = portal?.badgeProgress || [];
   const reqProgress = portal?.requirementProgress || [];
@@ -141,7 +144,7 @@ export default function ParentBadges() {
 
   useEffect(() => {
     if (newBadgesCheckedRef.current) return;
-    const currentChild = children[0];
+    const currentChild = selectedChild;
     if (!currentChild || !awardsLoaded || !badgesLoaded) return;
     newBadgesCheckedRef.current = true;
     const storageKey = `badges_last_seen_${currentChild.id}`;
@@ -163,7 +166,7 @@ export default function ParentBadges() {
         setNewBadgesModal(true);
       }
     }
-  }, [children[0]?.id, awardsLoaded, badgesLoaded]);
+  }, [selectedChild?.id, awardsLoaded, badgesLoaded]);
 
   if (!user) {
     return (
@@ -173,7 +176,7 @@ export default function ParentBadges() {
     );
   }
 
-  const child = children[0];
+  const child = selectedChild;
 
   const dismissNewBadgesModal = () => {
     if (child) {

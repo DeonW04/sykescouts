@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
 import WebSubscriptionSection from '../components/parent/WebSubscriptionSection';
+import { useSelectedChildId } from '@/hooks/useSelectedChild';
 
 export default function MyChild() {
   const navigate = useNavigate();
@@ -44,6 +45,8 @@ export default function MyChild() {
 
   const children = portal?.children || [];
   const sections = portal?.sections || [];
+  const [selectedChildId] = useSelectedChildId(children);
+  const selectedChild = children.find(c => c.id === selectedChildId) || children[0];
 
   const updateMemberMutation = useMutation({
     mutationFn: async ({ id, data }) => {
@@ -108,7 +111,7 @@ export default function MyChild() {
     );
   }
 
-  const child = children[0];
+  const child = selectedChild;
 
   if (!child) {
     return (

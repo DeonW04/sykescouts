@@ -12,6 +12,7 @@ import NavBarSpacer from '../components/public/NavBarSpacer';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import HoneycombAwardPage from '../components/mobile/HoneycombAwardPage';
+import { useSelectedChildId } from '@/hooks/useSelectedChild';
 
 export default function ParentGoldAward() {
   const navigate = useNavigate();
@@ -40,7 +41,8 @@ export default function ParentGoldAward() {
     enabled: !!user?.email,
   });
 
-  const child = children[0];
+  const [selectedChildId] = useSelectedChildId(children);
+  const child = children.find(c => c.id === selectedChildId) || children[0];
 
   const { data: badges = [] } = useQuery({
     queryKey: ['badges'],

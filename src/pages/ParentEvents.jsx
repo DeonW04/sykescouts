@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
 import InlinePayment from '../components/mobile/InlinePayment';
+import { useSelectedChildId } from '@/hooks/useSelectedChild';
 
 const ATTENDING_VALUES = new Set(['yes', 'yes, attending', 'attending']);
 
@@ -45,9 +46,10 @@ export default function ParentEvents() {
 
   useEffect(() => { if (portal?.children) setChildren(portal.children); }, [portal]);
 
-  const childSectionIds = [...new Set(children.map(c => c.section_id).filter(Boolean))];
-  const childIds = children.map(c => c.id);
-  const child = children[0];
+  const [selectedChildId] = useSelectedChildId(children);
+  const child = children.find(c => c.id === selectedChildId) || children[0];
+  const childSectionIds = child?.section_id ? [child.section_id] : [];
+  const childIds = child ? [child.id] : [];
 
   const events = (reference?.events || [])
     .slice()

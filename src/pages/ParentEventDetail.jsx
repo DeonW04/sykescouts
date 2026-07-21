@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { useSelectedChildId } from '@/hooks/useSelectedChild';
 
 export default function ParentEventDetail() {
   const navigate = useNavigate();
@@ -72,6 +73,9 @@ export default function ParentEventDetail() {
     enabled: !!user?.email,
   });
 
+  const [selectedChildId] = useSelectedChildId(children);
+  const selectedChild = children.find(c => c.id === selectedChildId) || children[0];
+
   const { data: eventAttendances = [] } = useQuery({
     queryKey: ['event-attendances', eventId, children],
     queryFn: async () => {
@@ -116,9 +120,9 @@ export default function ParentEventDetail() {
   // primaryChild is derived after myChildrenInEvent — see below
 
   const { data: eventPaymentStatus } = useQuery({
-    queryKey: ['event-payment-status-detail', eventId, children[0]?.id],
+    queryKey: ['event-payment-status-detail', eventId, selectedChild?.id],
     queryFn: async () => {
-      const child = children[0];
+      const child = selectedChild;
       if (!child) return null;
       const records = await base44.entities.EventPaymentStatus.filter({ event_id: eventId, member_id: child.id });
       return records[0] || null;
@@ -127,9 +131,9 @@ export default function ParentEventDetail() {
   });
 
   const { data: paymentOverride } = useQuery({
-    queryKey: ['payment-override-detail', eventId, children[0]?.id],
+    queryKey: ['payment-override-detail', eventId, selectedChild?.id],
     queryFn: async () => {
-      const child = children[0];
+      const child = selectedChild;
       if (!child) return null;
       const records = await base44.entities.MeetingPaymentOverride.filter({ event_id: eventId, member_id: child.id, override_type: 'waived' });
       return records[0] || null;
@@ -194,11 +198,12 @@ export default function ParentEventDetail() {
   const documents = event.documents || [];
   const scheduleByDay = event.schedule_by_day || [];
 
-  const myChildrenInEvent = children.filter(child => 
+  const myChildrenInEvent = children.filter(child =>
+    child.id === selectedChild?.id &&
     eventAttendances.some(a => a.member_id === child.id)
   );
 
-  const primaryChild = myChildrenInEvent[0] || children[0];
+  const primaryChild = myChildrenInEvent[0] || selectedChild;
   const childIds = myChildrenInEvent.map(c => c.id);
 
   // Match responses by member_id so leader-entered responses are included
