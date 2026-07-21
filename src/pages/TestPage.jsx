@@ -1,32 +1,14 @@
 import React, { useState } from 'react';
-import SwitcherPillDemo from '@/components/parent/childswitcher/SwitcherPillDemo';
-import SwitcherTabsDemo from '@/components/parent/childswitcher/SwitcherTabsDemo';
-import SwitcherBarDemo from '@/components/parent/childswitcher/SwitcherBarDemo';
+import ParentNavDemo from '@/components/parent/childswitcher/ParentNavDemo';
 
 const MOCK_CHILDREN = [
-  { id: 'c1', first_name: 'Oliver', full_name: 'Oliver Thompson', initials: 'OT', section: 'Cubs', meeting: 'Wednesdays 6:30pm', color: '#23a950' },
-  { id: 'c2', first_name: 'Amelia', full_name: 'Amelia Thompson', initials: 'AT', section: 'Beavers', meeting: 'Mondays 6:00pm', color: '#006ddf' },
+  { id: 'c1', first_name: 'Oliver', full_name: 'Oliver Thompson', initials: 'OT', section: 'Cubs', color: '#23a950' },
+  { id: 'c2', first_name: 'Amelia', full_name: 'Amelia Thompson', initials: 'AT', section: 'Beavers', color: '#006ddf' },
 ];
 
-// Fake nav strip so each option is shown in context — mimics the bottom row of the parent nav
-function FakeNavStrip({ children }) {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-visible">
-      <div className="flex items-center gap-4 px-4 py-2.5 border-b border-gray-100">
-        <span className="text-sm font-bold text-[#7413dc]">Parent Portal</span>
-        {['Dashboard', 'My Child', 'Programme', 'Events', 'Badges'].map(l => (
-          <span key={l} className="hidden sm:inline text-sm text-gray-500">{l}</span>
-        ))}
-      </div>
-      <div className="flex items-center justify-between gap-3 px-4 py-2 bg-gray-50/60 rounded-b-2xl flex-wrap">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Bottom nav strip ↓</span>
-        {children}
-      </div>
-    </div>
-  );
-}
+const MOCK_USER = { name: 'Sarah Thompson', email: 'sarah.thompson@example.com' };
 
-function OptionCard({ tag, title, blurb, children }) {
+function Option({ tag, title, blurb, children }) {
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-3">
@@ -42,46 +24,61 @@ function OptionCard({ tag, title, blurb, children }) {
 }
 
 export default function TestPage() {
-  const [selectedA, setSelectedA] = useState('c1');
-  const [selectedB, setSelectedB] = useState('c1');
-  const [selectedC, setSelectedC] = useState('c1');
+  const [sel1, setSel1] = useState('c1');
+  const [sel2, setSel2] = useState('c1');
+  const [sel3, setSel3] = useState('c1');
+  const [sel4, setSel4] = useState('c1');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 py-10 px-4">
-      <div className="max-w-3xl mx-auto space-y-10">
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');`}</style>
+      <div className="max-w-5xl mx-auto space-y-12">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-[#7413dc] mb-1">Design Playground</p>
-          <h1 className="text-2xl font-bold text-gray-900">Child Switcher — 3 Ideas</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            All three live in the bottom strip of the parent nav bar. The selected child would be remembered as you
-            move between pages (and across visits). Click each one to try switching between Oliver and Amelia.
+          <h1 className="text-2xl font-bold text-gray-900">Child Switcher Placement — Real Parent Nav</h1>
+          <p className="text-sm text-gray-500 mt-1 max-w-2xl">
+            Below is the exact parent-mode floating nav (strip expanded), with the pill switcher in four different
+            placements. All fully clickable — try switching between Oliver (Cubs) and Amelia (Beavers).
           </p>
         </div>
 
-        <OptionCard tag="A" title="Compact Pill + Dropdown" blurb="Small and unobtrusive — an avatar pill on the nav strip that opens a dropdown listing all children. Best if the nav strip is already busy.">
-          <FakeNavStrip>
-            <SwitcherPillDemo children={MOCK_CHILDREN} selected={selectedA} onSelect={setSelectedA} />
-          </FakeNavStrip>
-        </OptionCard>
+        <Option
+          tag="1"
+          title="Combined — replaces the Account dropdown (your idea)"
+          blurb="The account button becomes the child pill for all parents. One dropdown holds everything: account details, child switching (only shown when >1 child), settings and sign out. Cleanest — no extra element added to the strip."
+        >
+          <ParentNavDemo variant="combined" children={MOCK_CHILDREN} selected={sel1} onSelect={setSel1} user={MOCK_USER} />
+        </Option>
 
-        <OptionCard tag="B" title="Segmented Tabs" blurb="Both children are always visible side by side — switching is a single tap with no menu. Scales well up to 3 children.">
-          <FakeNavStrip>
-            <SwitcherTabsDemo children={MOCK_CHILDREN} selected={selectedB} onSelect={setSelectedB} />
-          </FakeNavStrip>
-        </OptionCard>
+        <Option
+          tag="2"
+          title="Right side — next to the Account dropdown"
+          blurb="A dedicated child pill sits beside the existing account button. Child switching and account actions stay separate, at the cost of a slightly busier right side. Only rendered for parents with 2+ children."
+        >
+          <ParentNavDemo variant="right" children={MOCK_CHILDREN} selected={sel2} onSelect={setSel2} user={MOCK_USER} />
+        </Option>
 
-        <OptionCard tag="C" title="Identity Bar + Card Picker" blurb="The most prominent — a full identity bar tinted in the child's section colour, with a card grid picker. Makes it impossible to forget whose data you're looking at.">
-          <FakeNavStrip>
-            <SwitcherBarDemo children={MOCK_CHILDREN} selected={selectedC} onSelect={setSelectedC} />
-          </FakeNavStrip>
-        </OptionCard>
+        <Option
+          tag="3"
+          title="Left side — next to the Dashboard button"
+          blurb="The pill anchors the strip on the left, right after Dashboard — reads as 'context first': you pick whose portal you're in, then navigate. Very discoverable."
+        >
+          <ParentNavDemo variant="left" children={MOCK_CHILDREN} selected={sel3} onSelect={setSel3} user={MOCK_USER} />
+        </Option>
+
+        <Option
+          tag="4"
+          title="Centre — at the end of the nav links"
+          blurb="The pill joins the page links in the middle, separated by a small divider. Keeps both edges of the strip untouched."
+        >
+          <ParentNavDemo variant="centre" children={MOCK_CHILDREN} selected={sel4} onSelect={setSel4} user={MOCK_USER} />
+        </Option>
 
         <div className="bg-white rounded-2xl border border-gray-200 p-5 text-sm text-gray-600 space-y-2">
-          <p className="font-semibold text-gray-900">How it would work under the hood</p>
-          <p>• The chosen child's ID is saved to the browser (localStorage), so it persists across every page and future visits.</p>
-          <p>• Every parent page (My Child, Programme, Events, Badges) reads the same selection — switch once, it changes everywhere.</p>
-          <p>• Section colour theming carries through, so the portal subtly reflects which child is active.</p>
-          <p className="text-gray-400 pt-1">Tell me which option (or a mix) you'd like and I'll wire it into the real parent portal.</p>
+          <p className="font-semibold text-gray-900">My take</p>
+          <p>• <strong>Option 1</strong> is the most elegant — no new element, and single-child parents just see a nicer account button with their child's avatar. The tradeoff: switching takes two clicks (open menu → pick child) and is slightly less discoverable.</p>
+          <p>• <strong>Option 2 or 3</strong> make the current child impossible to miss and switching one click faster — better if parents will swap frequently.</p>
+          <p className="text-gray-400 pt-1">Pick one and I'll wire it into the real nav with persistence across all parent pages.</p>
         </div>
       </div>
     </div>
