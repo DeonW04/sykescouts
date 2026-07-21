@@ -1,88 +1,88 @@
-import React from 'react';
-import { base44 } from '@/api/base44Client';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import SwitcherPillDemo from '@/components/parent/childswitcher/SwitcherPillDemo';
+import SwitcherTabsDemo from '@/components/parent/childswitcher/SwitcherTabsDemo';
+import SwitcherBarDemo from '@/components/parent/childswitcher/SwitcherBarDemo';
+
+const MOCK_CHILDREN = [
+  { id: 'c1', first_name: 'Oliver', full_name: 'Oliver Thompson', initials: 'OT', section: 'Cubs', meeting: 'Wednesdays 6:30pm', color: '#23a950' },
+  { id: 'c2', first_name: 'Amelia', full_name: 'Amelia Thompson', initials: 'AT', section: 'Beavers', meeting: 'Mondays 6:00pm', color: '#006ddf' },
+];
+
+// Fake nav strip so each option is shown in context — mimics the bottom row of the parent nav
+function FakeNavStrip({ children }) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-visible">
+      <div className="flex items-center gap-4 px-4 py-2.5 border-b border-gray-100">
+        <span className="text-sm font-bold text-[#7413dc]">Parent Portal</span>
+        {['Dashboard', 'My Child', 'Programme', 'Events', 'Badges'].map(l => (
+          <span key={l} className="hidden sm:inline text-sm text-gray-500">{l}</span>
+        ))}
+      </div>
+      <div className="flex items-center justify-between gap-3 px-4 py-2 bg-gray-50/60 rounded-b-2xl flex-wrap">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Bottom nav strip ↓</span>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function OptionCard({ tag, title, blurb, children }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start gap-3">
+        <span className="w-8 h-8 rounded-lg bg-[#7413dc] text-white flex items-center justify-center text-sm font-bold flex-shrink-0">{tag}</span>
+        <div>
+          <h2 className="font-bold text-gray-900">{title}</h2>
+          <p className="text-sm text-gray-500">{blurb}</p>
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
 
 export default function TestPage() {
-  const { data: members = [], isLoading, isError } = useQuery({
-    queryKey: ['members'],
-    queryFn: () => base44.entities.Member.filter({ active: true }),
-  });
-
-  const calculateAge = (dob) => {
-    if (!dob) return 'N/A';
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let years = today.getFullYear() - birthDate.getFullYear();
-    let months = today.getMonth() - birthDate.getMonth();
-    if (months < 0) { years--; months += 12; }
-    if (today.getDate() < birthDate.getDate()) { months--; if (months < 0) { years--; months += 12; } }
-    return `${years}y ${months}m`;
-  };
+  const [selectedA, setSelectedA] = useState('c1');
+  const [selectedB, setSelectedB] = useState('c1');
+  const [selectedC, setSelectedC] = useState('c1');
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">🧪 Test Page</h1>
-          <p className="text-gray-500 mt-1">Members database — dev only</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 py-10 px-4">
+      <div className="max-w-3xl mx-auto space-y-10">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-[#7413dc] mb-1">Design Playground</p>
+          <h1 className="text-2xl font-bold text-gray-900">Child Switcher — 3 Ideas</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            All three live in the bottom strip of the parent nav bar. The selected child would be remembered as you
+            move between pages (and across visits). Click each one to try switching between Oliver and Amelia.
+          </p>
         </div>
 
-        {isLoading && (
-          <div className="flex items-center gap-3 text-gray-500">
-            <div className="animate-spin w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full" />
-            Loading members...
-          </div>
-        )}
+        <OptionCard tag="A" title="Compact Pill + Dropdown" blurb="Small and unobtrusive — an avatar pill on the nav strip that opens a dropdown listing all children. Best if the nav strip is already busy.">
+          <FakeNavStrip>
+            <SwitcherPillDemo children={MOCK_CHILDREN} selected={selectedA} onSelect={setSelectedA} />
+          </FakeNavStrip>
+        </OptionCard>
 
-        {isError && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4">
-            Failed to load members. Check your connection or permissions.
-          </div>
-        )}
+        <OptionCard tag="B" title="Segmented Tabs" blurb="Both children are always visible side by side — switching is a single tap with no menu. Scales well up to 3 children.">
+          <FakeNavStrip>
+            <SwitcherTabsDemo children={MOCK_CHILDREN} selected={selectedB} onSelect={setSelectedB} />
+          </FakeNavStrip>
+        </OptionCard>
 
-        {!isLoading && !isError && (
-          <>
-            <p className="text-sm text-gray-400 mb-4">{members.length} member{members.length !== 1 ? 's' : ''} found</p>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100">
-                    <th className="text-left px-5 py-3 font-semibold text-gray-600">Name</th>
-                    <th className="text-left px-5 py-3 font-semibold text-gray-600">Age</th>
-                    <th className="text-left px-5 py-3 font-semibold text-gray-600">Date of Birth</th>
-                    <th className="text-left px-5 py-3 font-semibold text-gray-600">Patrol</th>
-                    <th className="text-left px-5 py-3 font-semibold text-gray-600">Parent</th>
-                    <th className="text-left px-5 py-3 font-semibold text-gray-600">Join Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {members.map((member, i) => (
-                    <tr key={member.id} className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${i % 2 === 0 ? '' : 'bg-gray-50/40'}`}>
-                      <td className="px-5 py-3 font-medium text-gray-900">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0">
-                            {member.full_name?.charAt(0) ?? '?'}
-                          </div>
-                          {member.full_name ?? '—'}
-                        </div>
-                      </td>
-                      <td className="px-5 py-3 text-gray-600">{calculateAge(member.date_of_birth)}</td>
-                      <td className="px-5 py-3 text-gray-600">{member.date_of_birth ?? '—'}</td>
-                      <td className="px-5 py-3 text-gray-600">{member.patrol ?? <span className="text-gray-300 italic">No patrol</span>}</td>
-                      <td className="px-5 py-3 text-gray-600">{member.parent_one_name ?? '—'}</td>
-                      <td className="px-5 py-3 text-gray-600">{member.join_date ?? '—'}</td>
-                    </tr>
-                  ))}
-                  {members.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="px-5 py-10 text-center text-gray-400 italic">No active members found.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+        <OptionCard tag="C" title="Identity Bar + Card Picker" blurb="The most prominent — a full identity bar tinted in the child's section colour, with a card grid picker. Makes it impossible to forget whose data you're looking at.">
+          <FakeNavStrip>
+            <SwitcherBarDemo children={MOCK_CHILDREN} selected={selectedC} onSelect={setSelectedC} />
+          </FakeNavStrip>
+        </OptionCard>
+
+        <div className="bg-white rounded-2xl border border-gray-200 p-5 text-sm text-gray-600 space-y-2">
+          <p className="font-semibold text-gray-900">How it would work under the hood</p>
+          <p>• The chosen child's ID is saved to the browser (localStorage), so it persists across every page and future visits.</p>
+          <p>• Every parent page (My Child, Programme, Events, Badges) reads the same selection — switch once, it changes everywhere.</p>
+          <p>• Section colour theming carries through, so the portal subtly reflects which child is active.</p>
+          <p className="text-gray-400 pt-1">Tell me which option (or a mix) you'd like and I'll wire it into the real parent portal.</p>
+        </div>
       </div>
     </div>
   );
