@@ -4,7 +4,7 @@
   "properties": {
     "name": {
       "type": "string",
-      "description": "Payment name/description"
+      "description": "Obligation name, e.g. 'Hall Rent', 'Insurance'"
     },
     "amount": {
       "type": "number",
@@ -15,6 +15,8 @@
       "enum": [
         "weekly",
         "monthly",
+        "quarterly",
+        "6_months",
         "yearly"
       ],
       "description": "Payment frequency"
@@ -23,12 +25,15 @@
       "type": "string",
       "enum": [
         "hall_hire",
-        "insurance",
         "equipment",
+        "food",
+        "transport",
+        "badges",
+        "insurance",
         "subscriptions",
         "other"
       ],
-      "description": "Payment category"
+      "description": "Expense category (mapped to a ledger category when confirmed paid)"
     },
     "payment_method": {
       "type": "string",
@@ -36,17 +41,22 @@
         "standing_order",
         "manual_payment"
       ],
-      "description": "How payment is made"
+      "description": "standing_order = paid automatically from the bank (treasurer verifies); manual_payment = treasurer pays it via the bank app"
     },
     "next_due_date": {
       "type": "string",
       "format": "date",
       "description": "Next payment due date"
     },
+    "last_paid_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the last payment was confirmed"
+    },
     "active": {
       "type": "boolean",
       "default": true,
-      "description": "Is this recurring payment active"
+      "description": "Is this recurring obligation active"
     },
     "notes": {
       "type": "string",
@@ -56,7 +66,64 @@
   "required": [
     "name",
     "amount",
-    "frequency",
-    "payment_method"
-  ]
+    "frequency"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "treasurer"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "treasurer"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "treasurer"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "treasurer"
+          }
+        }
+      ]
+    }
+  }
 }

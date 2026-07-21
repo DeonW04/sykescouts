@@ -1,13 +1,12 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import {
-  ChevronDown, ArrowRight, Receipt, RefreshCw, TrendingUp, Wallet, Banknote,
+  ChevronDown, ArrowRight, Receipt, RefreshCw, Wallet, Banknote, CalendarClock,
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import TreasurerTodoBox from '@/components/treasurer/TreasurerTodoBox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
@@ -26,60 +25,17 @@ const fmt = n => `£${(n || 0).toFixed(2)}`;
 const CAT_LABEL = { subs: 'Subscriptions', event_payments: 'Event payment' };
 const catLabel = c => CAT_LABEL[c] || (c?.replace(/_/g, ' ') || '—');
 
-function getApproxTermRange() {
-  const today = new Date();
-  const month = today.getMonth() + 1;
-  const year = today.getFullYear();
-  if (month >= 9) return { start: `${year}-09-01`, end: `${year}-12-20` };
-  if (month <= 4) return { start: `${year}-01-06`, end: `${year}-04-15` };
-  return { start: `${year}-04-20`, end: `${year}-07-20` };
-}
-
-// ── Stat card (matches Leader dashboard tile feel) ────────────────────────────
-function StatCard({ label, value, sublabel, color, bg, icon: Icon, to }) {
-  const navigate = useNavigate();
-  return (
-    <button
-      onClick={() => to && navigate(to)}
-      style={{
-        ...glassCard, padding: '18px 20px', textAlign: 'left', cursor: to ? 'pointer' : 'default',
-        border: `1px solid ${color}22`, transition: 'transform 0.15s, box-shadow 0.2s',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', fontFamily: 'inherit',
-      }}
-      onMouseEnter={e => { if (to) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 8px 22px ${color}22`; } }}
-      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.05)'; }}
-    >
-      <div>
-        <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.5)', margin: '0 0 6px' }}>{label}</p>
-        <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '30px', color, margin: 0, lineHeight: 1 }}>{value}</p>
-        {sublabel && <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(26,26,46,0.4)', margin: '6px 0 0' }}>{sublabel}</p>}
-      </div>
-      <div style={{ width: '44px', height: '44px', background: bg, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon size={20} color={color} />
-      </div>
-    </button>
-  );
-}
-
 export default function TreasurerDashboard() {
   const navigate = useNavigate();
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
   const { data: ledger = [] } = useQuery({ queryKey: ['ledger-dash'], queryFn: () => base44.entities.LedgerEntry.list('-date', 1000) });
-  const { data: terms = [] } = useQuery({ queryKey: ['terms'], queryFn: () => base44.entities.Term.list() });
+  const { data: recurring = [] } = useQuery({ queryKey: ['recurring-payments-dash'], queryFn: () => base44.entities.RecurringPayment.filter({ active: true }) });
   const { data: allocations = [] } = useQuery({ queryKey: ['receipt-allocations-dash'], queryFn: () => base44.entities.ReceiptAllocation.filter({}) });
   const { data: reimbursements = [] } = useQuery({ queryKey: ['reimbursements-dash'], queryFn: () => base44.entities.Reimbursement.filter({}) });
   const { data: cashPayments = [] } = useQuery({ queryKey: ['cash-payments-dash'], queryFn: () => base44.entities.CashPayment.filter({}) });
 
   const todayStr = new Date().toISOString().split('T')[0];
-
-  const termRange = useMemo(() => {
-    const found = terms.find(t => t.start_date <= todayStr && t.end_date >= todayStr);
-    return found ? { start: found.start_date, end: found.end_date } : getApproxTermRange();
-  }, [terms, todayStr]);
-
-  const termIncome = ledger.filter(e => e.type === 'income' && e.date >= termRange.start && e.date <= termRange.end);
-  const totalTermIncome = termIncome.reduce((s, e) => s + (e.amount || 0), 0);
 
   const cashInBank = ledger.reduce((s, e) => s + (e.type === 'income' ? (e.amount || 0) : -(e.amount || 0)), 0);
 
@@ -92,25 +48,11 @@ export default function TreasurerDashboard() {
   const cashOutstanding = cashPayments.filter(c => !c.paid_in);
   const cashOutstandingTotal = cashOutstanding.reduce((s, c) => s + (c.amount || 0), 0);
 
-  // Income chart: last 12 months by month + category
-  const chartData = useMemo(() => {
-    const months = [];
-    for (let i = 11; i >= 0; i--) {
-      const d = subMonths(new Date(), i);
-      const start = format(startOfMonth(d), 'yyyy-MM-dd');
-      const end = format(endOfMonth(d), 'yyyy-MM-dd');
-      const monthEntries = ledger.filter(e => e.type === 'income' && e.date >= start && e.date <= end);
-      months.push({
-        month: format(d, 'MMM yy'),
-        Subscriptions: monthEntries.filter(e => e.category === 'subs').reduce((s, e) => s + (e.amount || 0), 0),
-        'Event payments': monthEntries.filter(e => e.category === 'event_payments').reduce((s, e) => s + (e.amount || 0), 0),
-        Other: monthEntries.filter(e => e.category !== 'subs' && e.category !== 'event_payments').reduce((s, e) => s + (e.amount || 0), 0),
-      });
-    }
-    return months;
-  }, [ledger]);
+  const in14Days = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const obligationsDue = recurring.filter(r => r.next_due_date && r.next_due_date <= in14Days);
+  const obligationsDueTotal = obligationsDue.reduce((s, r) => s + (r.amount || 0), 0);
 
-  const recentTransactions = [...ledger].slice(0, 8);
+  const recentTransactions = [...ledger].slice(0, 12);
 
   const getRowLink = entry => {
     if (entry.linked_event_id) return createPageUrl('TreasurerEventFinances');
@@ -119,11 +61,11 @@ export default function TreasurerDashboard() {
     return createPageUrl('TreasurerLedger');
   };
 
-  const statCards = [
-    { label: 'Cash in Bank', value: fmt(cashInBank), sublabel: 'Ledger net total', color: cashInBank >= 0 ? '#22c55e' : '#ef4444', bg: cashInBank >= 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', icon: Wallet, to: createPageUrl('TreasurerLedger') },
-    { label: 'Unallocated Receipts', value: String(unallocated.length), sublabel: fmt(unallocatedTotal) + ' awaiting', color: unallocated.length > 0 ? '#f97316' : '#22c55e', bg: unallocated.length > 0 ? 'rgba(249,115,22,0.1)' : 'rgba(34,197,94,0.1)', icon: Receipt, to: createPageUrl('TreasurerReceiptAllocation') },
-    { label: 'Reimbursements Due', value: String(reimbursementsDue.length), sublabel: fmt(reimbursementsDueTotal) + ' to pay', color: reimbursementsDue.length > 0 ? '#7413dc' : '#22c55e', bg: reimbursementsDue.length > 0 ? 'rgba(116,19,220,0.1)' : 'rgba(34,197,94,0.1)', icon: RefreshCw, to: createPageUrl('TreasurerReimbursements') },
-    { label: 'Cash Outstanding', value: fmt(cashOutstandingTotal), sublabel: cashOutstanding.length === 1 ? '1 payment not paid in' : `${cashOutstanding.length} payments not paid in`, color: cashOutstandingTotal > 0 ? '#eab308' : '#22c55e', bg: cashOutstandingTotal > 0 ? 'rgba(234,179,8,0.12)' : 'rgba(34,197,94,0.1)', icon: Banknote, to: createPageUrl('TreasurerCashTaken') },
+  const todoItems = [
+    { label: 'Receipts to Allocate', value: String(unallocated.length), sublabel: fmt(unallocatedTotal) + ' awaiting', color: unallocated.length > 0 ? '#f97316' : '#22c55e', icon: Receipt, to: createPageUrl('TreasurerReceiptAllocation') },
+    { label: 'Reimbursements Due', value: String(reimbursementsDue.length), sublabel: fmt(reimbursementsDueTotal) + ' to pay', color: reimbursementsDue.length > 0 ? '#7413dc' : '#22c55e', icon: RefreshCw, to: createPageUrl('TreasurerReimbursements') },
+    { label: 'Upcoming Obligations', value: String(obligationsDue.length), sublabel: fmt(obligationsDueTotal) + ' due within 14 days', color: obligationsDue.length > 0 ? '#3b82f6' : '#22c55e', icon: CalendarClock, to: createPageUrl('TreasurerRecurringPayments') },
+    { label: 'Cash Outstanding', value: fmt(cashOutstandingTotal), sublabel: cashOutstanding.length === 1 ? '1 payment not paid in' : `${cashOutstanding.length} payments not paid in`, color: cashOutstandingTotal > 0 ? '#eab308' : '#22c55e', icon: Banknote, to: createPageUrl('TreasurerCashTaken') },
   ];
 
   return (
@@ -147,10 +89,16 @@ export default function TreasurerDashboard() {
             <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>40th Rochdale (Syke) Scouts</p>
           </div>
 
-          {/* stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4" style={{ gap: '12px' }}>
-            {statCards.map(c => <StatCard key={c.label} {...c} />)}
-          </div>
+          {/* Cash in bank */}
+          <button onClick={() => navigate(createPageUrl('TreasurerLedger'))} style={{ ...glassCard, display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 18px', cursor: 'pointer', fontFamily: 'inherit' }}>
+            <div style={{ width: '38px', height: '38px', background: cashInBank >= 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', borderRadius: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Wallet size={18} color={cashInBank >= 0 ? '#22c55e' : '#ef4444'} />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(26,26,46,0.5)', margin: 0 }}>Cash in Bank</p>
+              <p style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '22px', color: cashInBank >= 0 ? '#22c55e' : '#ef4444', margin: 0, lineHeight: 1.1 }}>{fmt(cashInBank)}</p>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -217,47 +165,7 @@ export default function TreasurerDashboard() {
       </div>
 
       {/* ── Dashboard content ── */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '16px 16px 48px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {/* Income this term banner */}
-        <div style={{ ...glassCard, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 22px', background: 'linear-gradient(135deg, rgba(34,197,94,0.07) 0%, rgba(16,185,129,0.07) 100%)', border: '1px solid rgba(34,197,94,0.18)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '36px', height: '36px', background: '#22c55e', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <TrendingUp size={18} color="#fff" />
-            </div>
-            <div>
-              <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '14px', color: '#1a1a2e', margin: 0 }}>Total Income This Term</p>
-              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: 'rgba(26,26,46,0.5)', margin: '2px 0 0' }}>{termRange.start} → {termRange.end}</p>
-            </div>
-          </div>
-          <span style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: '26px', color: '#22c55e' }}>{fmt(totalTermIncome)}</span>
-        </div>
-
-        {/* Income chart */}
-        <div style={glassCard}>
-          <div style={{ padding: '20px 24px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', background: 'rgba(116,19,220,0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Wallet size={16} color="#7413dc" />
-            </div>
-            <h3 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 600, fontSize: '16px', color: '#1a1a2e', margin: 0 }}>Income Over Time — Last 12 Months</h3>
-          </div>
-          <div style={{ padding: '16px 20px 20px' }}>
-            <div style={{ height: '256px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 4, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `£${v}`} />
-                  <Tooltip formatter={v => [`£${Number(v).toFixed(2)}`]} />
-                  <Legend />
-                  <Bar dataKey="Subscriptions" stackId="a" fill="#7413dc" />
-                  <Bar dataKey="Event payments" stackId="a" fill="#a78bfa" />
-                  <Bar dataKey="Other" stackId="a" fill="#22c55e" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 items-start" style={{ maxWidth: '1200px', margin: '0 auto', padding: '16px 16px 48px', gap: '12px' }}>
         {/* Recent transactions */}
         <div style={glassCard}>
           <div style={{ padding: '20px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -298,6 +206,9 @@ export default function TreasurerDashboard() {
             )}
           </div>
         </div>
+
+        {/* To-do */}
+        <TreasurerTodoBox items={todoItems} />
       </div>
     </div>
   );
