@@ -88,14 +88,16 @@ export default function TreasurerLedger() {
     return map;
   }, [members]);
 
-  // Map ledger entry ID -> the receipt URL of the ReceiptAllocation that created it
-  const receiptByLedgerId = useMemo(() => {
+  // Map ReceiptAllocation ID -> its receipt image URL. Ledger entries created from
+  // an allocation store that allocation's ID in `receipt_reference`, so we look up
+  // the receipt image via entry.receipt_reference.
+  const receiptUrlByAllocationId = useMemo(() => {
     const map = {};
-    allocatedReceipts.forEach(r => {
-      if (r.ledger_entry_id && r.receipt_url) map[r.ledger_entry_id] = r.receipt_url;
+    [...allocatedReceipts, ...unallocatedReceipts].forEach(r => {
+      if (r.receipt_url) map[r.id] = r.receipt_url;
     });
     return map;
-  }, [allocatedReceipts]);
+  }, [allocatedReceipts, unallocatedReceipts]);
 
   const handleInvoiceUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -385,7 +387,7 @@ export default function TreasurerLedger() {
                   {filtered.map(entry => {
                     const memberName = members.find(m => m.id === entry.linked_member_id)?.full_name || '';
                     const evName = entry.linked_event_id ? (events.find(ev => ev.id === entry.linked_event_id)?.title || '') : entry.linked_meeting_id ? (programmes.find(p => p.id === entry.linked_meeting_id)?.title || '') : '';
-                    const receiptUrl = receiptByLedgerId[entry.id];
+                    const receiptUrl = entry.receipt_reference ? receiptUrlByAllocationId[entry.receipt_reference] : null;
                     return (
                       <tr key={entry.id} className="border-b hover:bg-gray-50">
                         <td className="py-2 px-2 text-gray-600 truncate" title={entry.date}>{entry.date}</td>
