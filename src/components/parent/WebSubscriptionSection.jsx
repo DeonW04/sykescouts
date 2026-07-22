@@ -8,6 +8,7 @@ import { CreditCard, RefreshCw, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import InlineCardSetup from '../mobile/InlineCardSetup';
+import SubsPaymentInfo from './SubsPaymentInfo';
 
 const INTERVAL_LABELS = { 'monthly': 'Monthly', '4_months': 'Termly', '6_months': 'Half Yearly', 'yearly': 'Yearly' };
 const INTERVAL_SHORT  = { 'monthly': 'per month', '4_months': 'every 4 months', '6_months': 'every 6 months', 'yearly': 'per year' };
@@ -63,6 +64,7 @@ export default function WebSubscriptionSection({ child }) {
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ['children'] });
     queryClient.invalidateQueries({ queryKey: ['account-settings-children'] });
+    queryClient.invalidateQueries({ queryKey: ['parent-portal'] });
   };
 
   const openSetupForm = () => {
@@ -208,6 +210,7 @@ export default function WebSubscriptionSection({ child }) {
                 From that date you will need a payment method set up to continue your child's membership.
               </p>
             </div>
+            <SubsPaymentInfo child={child} card={defaultCard} />
             {!showSetupForm ? (
               <Button
                 onClick={legacyWithin30 ? openSetupForm : undefined}
@@ -280,6 +283,7 @@ export default function WebSubscriptionSection({ child }) {
                   <span className="font-medium text-gray-800 capitalize flex-1">{defaultCard?.brand} ending {defaultCard?.last4}</span>
                   <Badge className="bg-green-600">Active card</Badge>
                 </div>
+                <SubsPaymentInfo child={child} card={defaultCard} nextDate={child.next_subs_due} nextLabel="Next Payment Due" />
                 <p className="text-sm text-gray-500">No active subscription</p>
                 <Button onClick={openSetupForm} className="bg-green-600 hover:bg-green-700">
                   Set up subscription
@@ -310,32 +314,13 @@ export default function WebSubscriptionSection({ child }) {
               </div>
             )}
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              {child.last_subs_payment_date && (
-                <div className="p-4 bg-gray-50 rounded-xl">
-                  <p className="text-xs text-gray-500 mb-1 font-medium uppercase tracking-wide">Last Payment</p>
-                  <p className="font-semibold text-gray-900">{format(new Date(child.last_subs_payment_date), 'd MMMM yyyy')}</p>
-                </div>
-              )}
-              {child.next_subs_due && (() => {
-                const isOverdue = new Date(child.next_subs_due) < new Date();
-                return (
-                  <div className={`p-4 rounded-xl ${isOverdue ? 'bg-red-50 border border-red-200' : 'bg-gray-50'}`}>
-                    <p className={`text-xs mb-1 font-bold uppercase tracking-wide ${isOverdue ? 'text-red-600' : 'text-gray-500'}`}>
-                      {isOverdue ? 'Payment overdue' : 'Next Payment'}
-                    </p>
-                    <p className={`font-bold text-lg ${isOverdue ? 'text-red-700' : 'text-gray-900'}`}>
-                      {format(new Date(child.next_subs_due), 'd MMMM yyyy')}
-                    </p>
-                    <button
-                      onClick={() => { setShowDatePicker(!showDatePicker); setDateChangeMsg(''); setNewAnchorDate(''); }}
-                      className="text-xs text-[#7413dc] mt-1.5 font-medium underline hover:no-underline">
-                      Change payment date
-                    </button>
-                  </div>
-                );
-              })()}
-            </div>
+            <SubsPaymentInfo
+              child={child}
+              amountPence={intervalPrice}
+              card={defaultCard}
+              nextDate={child.next_subs_due}
+              onChangeDate={() => { setShowDatePicker(!showDatePicker); setDateChangeMsg(''); setNewAnchorDate(''); }}
+            />
 
             {dateChangeMsg && <p className="text-sm text-green-700 font-medium">{dateChangeMsg}</p>}
             {showDatePicker && (

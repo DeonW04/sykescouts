@@ -53,6 +53,7 @@ export default function MyChild() {
       return base44.functions.invoke('updateMyChild', { memberId: id, data });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['parent-portal'] });
       queryClient.invalidateQueries({ queryKey: ['children'] });
       setEditMode(false);
       toast.success('Child details updated successfully');
