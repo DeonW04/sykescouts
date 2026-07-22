@@ -98,10 +98,17 @@ Deno.serve(async (req) => {
     });
     console.log(`Upgraded member ${member_id} from ${member.subs_interval} to ${new_interval} — prorated charge applied`);
   } else {
-    // Downgrade: change takes effect at next billing cycle, no charge/refund today
+    // Downgrade: change takes effect at the end of the current paid period.
+    // Changing the billing interval resets the billing cycle and would charge
+    // immediately, so hold the new price in a "trial" until the current period ends.
+    const currentPeriodEnd = subscription.current_period_end
+      || subscription.items?.data?.[0]?.current_period_end;
     await stripe.subscriptions.update(member.stripe_subscription_id, {
       items: [{ id: itemId, price: priceId }],
       proration_behavior: 'none',
+      ...(currentPeriodEnd && currentPeriodEnd > Math.floor(Date.now() / 1000)
+        ? { trial_end: currentPeriodEnd }
+        : {}),
     });
     console.log(`Downgraded member ${member_id} from ${member.subs_interval} to ${new_interval} — effective next billing cycle`);
   }

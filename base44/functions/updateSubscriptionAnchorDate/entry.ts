@@ -27,8 +27,11 @@ Deno.serve(async (req) => {
     return Response.json({ error: 'New payment date must be in the future' }, { status: 400 });
   }
 
+  // Stripe only accepts 'now'/'unchanged' for billing_cycle_anchor on updates.
+  // To move the next charge to a future date, pause billing with trial_end —
+  // the subscription resumes and re-anchors on that date.
   await stripe.subscriptions.update(member.stripe_subscription_id, {
-    billing_cycle_anchor: anchorTimestamp,
+    trial_end: anchorTimestamp,
     proration_behavior: 'none',
   });
 

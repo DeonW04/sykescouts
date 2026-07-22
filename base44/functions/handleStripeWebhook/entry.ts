@@ -36,8 +36,58 @@ Deno.serve(async (req) => {
     const pi = event.data.object;
     const { member_id, event_id, meeting_id } = pi.metadata || {};
 
-    // Skip subscription invoices — handled by invoice.payment_succeeded
-    if (pi.invoice) return new Response('OK', { status: 200 });
+    // Subscription invoice payments carry no metadata. On newer Stripe API versions
+    // the webhook payload omits the `invoice` field, so re-retrieve the PI with the
+    // SDK's pinned API version to check reliably.
+    let invoiceId = pi.invoice || null;
+    if (!invoiceId && !member_id) {
+      const fullPi = await stripe.paymentIntents.retrieve(pi.id);
+      invoiceId = fullPi.invoice || null;
+    }
+    if (invoiceId) {
+      // Subscription payment — ledger it tagged to the member. Keyed on the invoice id
+      // so the invoice.payment_succeeded handler can never double-count it.
+      const existingInv = await base44.asServiceRole.entities.LedgerEntry.filter({ reference: invoiceId });
+      if (existingInv.length) return new Response('OK', { status: 200 });
+
+      const invoice = await stripe.invoices.retrieve(invoiceId);
+      const subscription_id = invoice.subscription;
+      let members = subscription_id
+        ? await base44.asServiceRole.entities.Member.filter({ stripe_subscription_id: subscription_id })
+        : [];
+      if (!members.length && subscription_id) {
+        const subscription = await stripe.subscriptions.retrieve(subscription_id);
+        const metaMemberId = subscription.metadata?.member_id;
+        if (metaMemberId) {
+          members = await base44.asServiceRole.entities.Member.filter({ id: metaMemberId });
+          if (members.length) {
+            await base44.asServiceRole.entities.Member.update(members[0].id, { stripe_subscription_id: subscription_id });
+          }
+        }
+      }
+      const member = members[0] || null;
+      const memberName = member ? (member.full_name || `${member.first_name} ${member.surname}`) : 'Unknown member';
+
+      await base44.asServiceRole.entities.LedgerEntry.create({
+        date: new Date().toISOString().split('T')[0],
+        type: 'income',
+        amount: pi.amount / 100,
+        category: 'subs',
+        description: `Subscription payment — ${memberName}`,
+        reference: invoiceId,
+        linked_member_id: member?.id || null,
+        section_id: member?.section_id || null,
+        entered_by: 'Stripe'
+      });
+
+      if (member) {
+        await base44.asServiceRole.entities.Member.update(member.id, {
+          last_subs_payment_date: new Date().toISOString().split('T')[0],
+          next_subs_due: nextSubsDue(member.subs_interval),
+        });
+      }
+      return new Response('OK', { status: 200 });
+    }
 
     // Idempotency
     const existing = await base44.asServiceRole.entities.LedgerEntry.filter({ reference: pi.id });
