@@ -9,13 +9,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, User, Heart, Phone, Edit, Save, X, UserCircle, Camera, CheckCircle, Users } from 'lucide-react';
+import { ArrowLeft, User, Heart, Phone, Edit, Save, X, UserCircle, Camera, CheckCircle, Users, CreditCard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
-import WebSubscriptionSection from '../components/parent/WebSubscriptionSection';
+import ParentPaymentsSection from '../components/parent/ParentPaymentsSection';
 import { useSelectedChildId } from '@/hooks/useSelectedChild';
 
 export default function MyChild() {
@@ -175,28 +175,27 @@ export default function MyChild() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <Tabs defaultValue="personal" className="space-y-8">
-          <TabsList className="bg-white/80 backdrop-blur-sm border shadow-lg p-1 grid grid-cols-5 md:inline-flex">
-            <TabsTrigger value="personal" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex items-center justify-center md:gap-2 px-2 md:px-4">
-              <User className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline text-sm">Personal</span>
-            </TabsTrigger>
-            <TabsTrigger value="parent" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex items-center justify-center md:gap-2 px-2 md:px-4">
-              <UserCircle className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline text-sm">Parents</span>
-            </TabsTrigger>
-            <TabsTrigger value="medical" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex items-center justify-center md:gap-2 px-2 md:px-4">
-              <Heart className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline text-sm">Medical</span>
-            </TabsTrigger>
-            <TabsTrigger value="emergency" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex items-center justify-center md:gap-2 px-2 md:px-4">
-              <Phone className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline text-sm">Emergency</span>
-            </TabsTrigger>
-            <TabsTrigger value="consent" className="data-[state=active]:bg-[#7413dc] data-[state=active]:text-white flex items-center justify-center md:gap-2 px-2 md:px-4">
-              <Camera className="w-4 h-4 flex-shrink-0" />
-              <span className="hidden md:inline text-sm">Consent</span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex justify-center border-b border-gray-200">
+            <TabsList className="bg-transparent p-0 h-auto rounded-none gap-1 sm:gap-4 flex-wrap justify-center">
+              {[
+                { value: 'personal', icon: User, label: 'Personal' },
+                { value: 'parent', icon: UserCircle, label: 'Parents' },
+                { value: 'medical', icon: Heart, label: 'Medical' },
+                { value: 'emergency', icon: Phone, label: 'Emergency' },
+                { value: 'consent', icon: Camera, label: 'Consent' },
+                { value: 'payments', icon: CreditCard, label: 'Payments' },
+              ].map(({ value, icon: Icon, label }) => (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  className="rounded-none bg-transparent shadow-none px-3 sm:px-4 py-3 text-gray-500 border-b-2 border-transparent -mb-px data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-[#7413dc] data-[state=active]:text-[#7413dc] flex items-center gap-2"
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="hidden md:inline text-sm font-medium">{label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           {/* Personal Info Tab */}
           <TabsContent value="personal">
@@ -523,12 +522,12 @@ export default function MyChild() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
 
-        {/* Subscriptions section */}
-        <div className="mt-8">
-          <WebSubscriptionSection child={child} />
-        </div>
+          {/* Payments Tab */}
+          <TabsContent value="payments">
+            <ParentPaymentsSection child={child} portal={portal} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
