@@ -52,8 +52,7 @@ import OSMBadgeImport from './pages/OSMBadgeImport';
 import SilverAwardDetail from './pages/SilverAwardDetail';
 import ParentSilverAward from './pages/ParentSilverAward';
 import { ROUTE_MAP } from '@/lib/routeMap';
-import TestPage from './pages/TestPage';
-import ParentBadgesTest from './pages/ParentBadgesTest';
+
 
 // Public-only pages that should never be shown in PWA mode
 const PUBLIC_PAGES = [
@@ -241,10 +240,6 @@ const AuthenticatedApp = () => {
       <Route path="/OSMBadgeImport" element={<OSMBadgeImport />} />
       <Route path="/SilverAwardDetail" element={<LayoutWrapper currentPageName="SilverAwardDetail"><SilverAwardDetail /></LayoutWrapper>} />
       <Route path="/ParentSilverAward" element={<LayoutWrapper currentPageName="ParentSilverAward"><ParentSilverAward /></LayoutWrapper>} />
-      {/* Hidden test page — no nav link, accessible at /testpage only */}
-      <Route path="/testpage" element={<TestPage />} />
-      {/* Test redesign of the parent badges page — live page untouched */}
-      <Route path="/testbadges" element={<ParentBadgesTest />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </PWAGate>

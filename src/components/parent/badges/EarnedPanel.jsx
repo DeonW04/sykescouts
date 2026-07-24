@@ -14,13 +14,13 @@ function BadgeTile({ image, name, sub }) {
   );
 }
 
-export default function TestEarnedPanel({ earnedChallenge, earnedStaged }) {
+export default function EarnedPanel({ earnedChallenge, earnedStaged }) {
   return (
-    <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm h-full">
+    <Card className="border border-[#7413dc]/10 shadow-[0_4px_20px_rgba(0,0,0,0.05)] bg-white/90 backdrop-blur-xl rounded-[20px] h-full">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-            <Award className="w-5 h-5 text-white" />
+        <CardTitle className="flex items-center gap-2 text-lg" style={{ fontFamily: 'Outfit, sans-serif', color: '#1a1a2e' }}>
+          <div className="w-9 h-9 rounded-xl bg-green-500/10 flex items-center justify-center">
+            <Award className="w-5 h-5 text-green-600" />
           </div>
           Earned Badges
         </CardTitle>

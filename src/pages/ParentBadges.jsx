@@ -1,117 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '../utils';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, Trophy, CheckCircle, Circle, Filter, Moon, Footprints, Star, X, Shirt, MapPin } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
-import { motion } from 'framer-motion';
-import UniformDiagram from '../components/uniform/UniformDiagram';
-import { useRef } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { useSelectedChildId } from '@/hooks/useSelectedChild';
-
-function StagedFamilyDialog({ selectedBadge, child, badgeProgress, getBadgeModules, getModuleRequirements, isRequirementCompleted, onUniformClick }) {
-  const realStages = selectedBadge.family.stages.filter(s => s.stage_number != null && s.stage_number !== '');
-  // Use uniform_position from first stage that has one
-  const uniformPosition = selectedBadge.family.stages.find(s => s.uniform_position)?.uniform_position;
-  return (
-    <>
-      <DialogHeader>
-        <div className="flex items-center gap-4">
-          <img src={selectedBadge.badge.image_url} alt={selectedBadge.family.name} className="w-20 h-20 rounded-lg" />
-          <div>
-            <DialogTitle className="text-2xl">{selectedBadge.family.name}</DialogTitle>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <Badge className="capitalize">Staged Badge</Badge>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 gap-1"
-                onClick={() => onUniformClick(uniformPosition)}
-              >
-                <MapPin className="w-3 h-3" />
-                Where does this go on my uniform?
-              </Button>
-            </div>
-          </div>
-        </div>
-      </DialogHeader>
-      <Tabs defaultValue={`stage-${realStages[0]?.id}`} className="mt-4">
-        <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${realStages.length}, 1fr)` }}>
-          {realStages.map(stage => {
-            const stageCompleted = badgeProgress.some(p =>
-              p.member_id === child.id && p.badge_id === stage.id && p.status === 'completed'
-            );
-            return (
-              <TabsTrigger key={stage.id} value={`stage-${stage.id}`} className="gap-2">
-                Stage {stage.stage_number}
-                {stageCompleted && <CheckCircle className="w-4 h-4 text-green-600" />}
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
-        {realStages.map(stage => (
-          <TabsContent key={stage.id} value={`stage-${stage.id}`} className="space-y-6 mt-4">
-            {stage.description && <p className="text-gray-600 text-sm">{stage.description}</p>}
-            {getBadgeModules(stage.id).map(module => {
-              const moduleReqs = getModuleRequirements(module.id);
-              return (
-                <div key={module.id} className="border-l-4 border-[#7413dc] pl-4">
-                  <h3 className="font-bold text-lg mb-3">{module.name}</h3>
-                  <div className="space-y-2">
-                    {moduleReqs.map((req, idx) => {
-                      const completed = isRequirementCompleted(req.id);
-                      return (
-                        <div key={req.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50">
-                          {completed
-                            ? <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                            : <Circle className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
-                          }
-                          <span className={`text-sm ${completed ? 'text-gray-900 font-medium' : 'text-gray-600'}`}>
-                            <span className="font-semibold">{idx + 1}.</span> {req.text}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </TabsContent>
-        ))}
-      </Tabs>
-    </>
-  );
-}
+import AwardPanel from '../components/parent/badges/AwardPanel';
+import EarnedPanel from '../components/parent/badges/EarnedPanel';
+import ActivityAwardsRow from '../components/parent/badges/ActivityAwardsRow';
+import AllBadgesGrid from '../components/parent/badges/AllBadgesGrid';
 
 export default function ParentBadges() {
-  const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [selectedBadge, setSelectedBadge] = useState(null);
-  const [filterType, setFilterType] = useState('all');
-  const [activityDialog, setActivityDialog] = useState(null); // 'nights' | 'hikes' | 'joining'
-  const [uniformDialog, setUniformDialog] = useState(false);
-  const [uniformPositionHighlight, setUniformPositionHighlight] = useState(null); // badge to highlight on uniform
-  const [newBadgesModal, setNewBadgesModal] = useState(false);
-  const [newAwardedBadges, setNewAwardedBadges] = useState([]);
-  const newBadgesCheckedRef = useRef(false);
 
   useEffect(() => {
-    loadUserData();
+    base44.auth.me().then(setUser).catch(() => {});
   }, []);
-
-  const loadUserData = async () => {
-    const currentUser = await base44.auth.me();
-    setUser(currentUser);
-  };
 
   const { data: portal } = useQuery({
     queryKey: ['parent-portal', user?.email],
@@ -127,48 +31,16 @@ export default function ParentBadges() {
 
   const children = portal?.children || [];
   const [selectedChildId] = useSelectedChildId(children);
-  const selectedChild = children.find(c => c.id === selectedChildId) || children[0];
+  const child = children.find(c => c.id === selectedChildId) || children[0];
   const sections = portal?.sections || [];
   const badgeProgress = portal?.badgeProgress || [];
   const reqProgress = portal?.requirementProgress || [];
   const awards = portal?.awards || [];
-  const nightsAwayLogs = portal?.nightsAwayLogs || [];
-
   const badges = reference?.badges || [];
   const modules = reference?.badgeModules || [];
   const requirements = reference?.badgeRequirements || [];
-  const uniformConfigs = reference?.uniformConfigs || [];
 
-  const badgesLoaded = !!reference;
-  const awardsLoaded = !!portal;
-
-  useEffect(() => {
-    if (newBadgesCheckedRef.current) return;
-    const currentChild = selectedChild;
-    if (!currentChild || !awardsLoaded || !badgesLoaded) return;
-    newBadgesCheckedRef.current = true;
-    const storageKey = `badges_last_seen_${currentChild.id}`;
-    const lastSeen = localStorage.getItem(storageKey);
-    if (!lastSeen) {
-      localStorage.setItem(storageKey, new Date().toISOString());
-      return;
-    }
-    const lastSeenDate = new Date(lastSeen);
-    const newAwards = awards.filter(a => new Date(a.created_date) > lastSeenDate);
-    if (newAwards.length > 0) {
-      const newBadgeItems = newAwards.map(award => {
-        const b = badges.find(bd => bd.id === award.badge_id);
-        if (!b) return null;
-        return { type: 'single', badge: b, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } };
-      }).filter(Boolean);
-      if (newBadgeItems.length > 0) {
-        setNewAwardedBadges(newBadgeItems);
-        setNewBadgesModal(true);
-      }
-    }
-  }, [selectedChild?.id, awardsLoaded, badgesLoaded]);
-
-  if (!user) {
+  if (!user || !child || !reference) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full" />
@@ -176,1068 +48,175 @@ export default function ParentBadges() {
     );
   }
 
-  const child = selectedChild;
+  const childSectionName = sections.find(s => s.id === child.section_id)?.name;
 
-  const dismissNewBadgesModal = () => {
-    if (child) {
-      localStorage.setItem(`badges_last_seen_${child.id}`, new Date().toISOString());
-    }
-    setNewBadgesModal(false);
-  };
-
-  if (!child) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <FloatingNav />
-        <NavBarSpacer />
-        <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
-          <div className="max-w-7xl mx-auto">
-            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Parent Portal</p>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: 0 }}>Badges &amp; Awards</h1>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-gray-600">No child registered yet.</p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Derive badge completion: check MemberBadgeAward OR requirement progress OR MemberBadgeProgress record
+  // ── Progress helpers ────────────────────────────────────────────────────────
   const isBadgeComplete = (badgeId) => {
-    // 1. Check award record (awarded or pending = completed)
     if (awards.some(a => a.member_id === child.id && a.badge_id === badgeId && (a.award_status === 'awarded' || a.award_status === 'pending'))) return true;
-    // 2. Check MemberBadgeProgress record
     if (badgeProgress.some(p => p.member_id === child.id && p.badge_id === badgeId && p.status === 'completed')) return true;
-    // 3. Check requirement progress
     const badgeDef = badges.find(b => b.id === badgeId);
     const badgeModules = modules.filter(m => m.badge_id === badgeId);
     if (badgeModules.length === 0) return false;
     if (badgeDef?.completion_rule === 'one_module') {
       return badgeModules.some(mod => {
         const modReqs = requirements.filter(r => r.module_id === mod.id);
-        const completedReqs = reqProgress.filter(p => p.member_id === child.id && p.module_id === mod.id && p.completed);
-        return modReqs.length > 0 && completedReqs.length >= modReqs.length;
+        const done = reqProgress.filter(p => p.member_id === child.id && p.module_id === mod.id && p.completed);
+        return modReqs.length > 0 && done.length >= modReqs.length;
       });
     }
     for (const mod of badgeModules) {
       const modReqs = requirements.filter(r => r.module_id === mod.id);
-      const completedReqs = reqProgress.filter(p => p.member_id === child.id && p.module_id === mod.id && p.completed);
+      const done = reqProgress.filter(p => p.member_id === child.id && p.module_id === mod.id && p.completed);
       if (mod.completion_rule === 'x_of_n_required') {
-        if (completedReqs.length < (mod.required_count || modReqs.length)) return false;
-      } else {
-        if (completedReqs.length < modReqs.length) return false;
-      }
+        if (done.length < (mod.required_count || modReqs.length)) return false;
+      } else if (done.length < modReqs.length) return false;
     }
     return true;
   };
 
-  // Completed badges (either pending award or awarded) — use requirement truth + DB record as fallback
-  const completedBadges = badges
-    .filter(b => isBadgeComplete(b.id))
-    .map(b => ({ badge_id: b.id, member_id: child.id, status: 'completed' }));
-
-  // Group staged badges by family
-  const stagedBadgeFamilies = badges
-    .filter(b => b.category === 'staged' && b.badge_family_id)
-    .reduce((acc, badge) => {
-      if (!acc[badge.badge_family_id]) {
-        acc[badge.badge_family_id] = {
-          name: badge.name.replace(/Stage \d+/, '').trim(),
-          stages: []
-        };
-      }
-      acc[badge.badge_family_id].stages.push(badge);
-      return acc;
-    }, {});
-
-  Object.values(stagedBadgeFamilies).forEach(family => {
-    family.stages.sort((a, b) => a.stage_number - b.stage_number);
-  });
-
-  const getBadgeProgress = (badgeId) => {
-    const badgeDef = badges.find(b => b.id === badgeId);
+  const getBadgePercentage = (badgeId) => {
     const badgeModules = modules.filter(m => m.badge_id === badgeId);
-
-    if (badgeDef?.completion_rule === 'one_module') {
-      let bestPct = 0, bestCompleted = 0, bestTotal = 0;
-      let anyComplete = false;
-      badgeModules.forEach(module => {
-        const moduleReqs = requirements.filter(r => r.module_id === module.id);
-        const modTotal = moduleReqs.reduce((s, req) => s + (req.required_completions || 1), 0);
-        let modCompleted = 0;
-        moduleReqs.forEach(req => {
-          const rp = reqProgress.find(p => p.member_id === child.id && p.requirement_id === req.id);
-          modCompleted += Math.min(rp?.completion_count || 0, req.required_completions || 1);
-        });
-        const modPct = modTotal > 0 ? Math.round((modCompleted / modTotal) * 100) : 0;
-        if (modPct >= bestPct) { bestPct = modPct; bestCompleted = modCompleted; bestTotal = modTotal; }
-        if (modCompleted >= modTotal && modTotal > 0) anyComplete = true;
-      });
-      return { completed: bestCompleted, total: bestTotal, percentage: anyComplete ? 100 : bestPct };
-    }
-
-    let totalRequired = 0;
-    let totalCompleted = 0;
-    badgeModules.forEach(module => {
-      const moduleReqs = requirements.filter(r => r.module_id === module.id);
-      if (module.completion_rule === 'x_of_n_required') {
-        const needed = module.required_count || moduleReqs.length;
-        totalRequired += needed;
-        const completedReqs = reqProgress.filter(p => p.member_id === child.id && p.module_id === module.id && p.completed);
-        totalCompleted += Math.min(completedReqs.length, needed);
+    let total = 0, completed = 0;
+    badgeModules.forEach(mod => {
+      const modReqs = requirements.filter(r => r.module_id === mod.id);
+      if (mod.completion_rule === 'x_of_n_required') {
+        const needed = mod.required_count || modReqs.length;
+        total += needed;
+        completed += Math.min(reqProgress.filter(p => p.member_id === child.id && p.module_id === mod.id && p.completed).length, needed);
       } else {
-        moduleReqs.forEach(req => {
-          const requiredCount = req.required_completions || 1;
-          const reqProg = reqProgress.find(p => p.member_id === child.id && p.requirement_id === req.id);
-          totalRequired += requiredCount;
-          totalCompleted += Math.min(reqProg?.completion_count || 0, requiredCount);
-        });
+        total += modReqs.length;
+        completed += reqProgress.filter(p => p.member_id === child.id && p.module_id === mod.id && p.completed).length;
       }
     });
-
-    return {
-      completed: totalCompleted,
-      total: totalRequired,
-      percentage: totalRequired > 0 ? Math.round((totalCompleted / totalRequired) * 100) : 0,
-    };
+    return total > 0 ? Math.round((completed / total) * 100) : 0;
   };
 
-  const getBadgeModules = (badgeId) => {
-    return modules.filter(m => m.badge_id === badgeId).sort((a, b) => a.order - b.order);
-  };
-
-  const getModuleRequirements = (moduleId) => {
-    return requirements.filter(r => r.module_id === moduleId).sort((a, b) => a.order - b.order);
-  };
-
-  const isRequirementCompleted = (reqId) => {
-    return reqProgress.some(p => p.member_id === child.id && p.requirement_id === reqId && p.completed);
-  };
-
-  // Get highest stage of each staged badge family
-  const getHighestCompletedStage = (familyId) => {
-    const family = stagedBadgeFamilies[familyId];
-    if (!family) return null;
-    
-    const completedStages = family.stages.filter(stage =>
-      completedBadges.some(p => p.badge_id === stage.id)
-    );
-    
-    if (completedStages.length === 0) return null;
-    return completedStages.reduce((highest, stage) => 
-      stage.stage_number > highest.stage_number ? stage : highest
-    );
-  };
-
-  // Check if a badge has been started (any req progress) but not completed
   const isBadgeInProgress = (badgeId) => {
     if (isBadgeComplete(badgeId)) return false;
-    const badgeMods = modules.filter(m => m.badge_id === badgeId);
-    const moduleIds = badgeMods.map(m => m.id);
+    const moduleIds = modules.filter(m => m.badge_id === badgeId).map(m => m.id);
     return reqProgress.some(p => p.member_id === child.id && moduleIds.includes(p.module_id) && p.completed);
   };
 
-  // Earned badges ordered: challenge → activity → staged (non-staged, non-chief-scout)
-  const earnedByCategory = ['challenge', 'activity', 'staged', 'core', 'special'];
-  const earnedNonStaged = completedBadges
-    .filter(p => {
-      const badge = badges.find(b => b.id === p.badge_id);
-      return badge && badge.category !== 'staged' && !badge.is_chief_scout_award;
-    })
-    .sort((a, b) => {
-      const ba = badges.find(x => x.id === a.badge_id);
-      const bb = badges.find(x => x.id === b.badge_id);
-      return (earnedByCategory.indexOf(ba?.category) ?? 99) - (earnedByCategory.indexOf(bb?.category) ?? 99);
-    });
-
-  // Get child's section name
-  const childSectionRecord = sections.find(s => s.id === child.section_id);
-  const childSectionName = childSectionRecord?.name;
-
-  // Get all badges for the child's section (exclude blanket — handled separately)
-  const allSectionBadges = badges.filter(b =>
+  // ── Section badge pools ─────────────────────────────────────────────────────
+  const sectionBadges = badges.filter(b =>
     (b.section === childSectionName || b.section === 'all') &&
     !b.is_chief_scout_award &&
-    b.category !== 'special' &&
-    b.category !== 'blanket'
+    ['challenge', 'staged', 'core', 'activity'].includes(b.category)
   );
 
-  // Blanket badges: only show earned ones
-  const earnedBlanketBadges = badges.filter(b =>
-    b.category === 'blanket' &&
-    (b.section === childSectionName || b.section === 'all') &&
-    isBadgeComplete(b.id)
-  );
+  const specialName = (b, n) => b.name.toLowerCase().includes(n);
+  const nightsAwayBadges = sectionBadges.filter(b => specialName(b, 'nights away')).sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
+  const hikesAwayBadges = sectionBadges.filter(b => specialName(b, 'hikes away')).sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
+  const joiningInBadges = sectionBadges.filter(b => specialName(b, 'joining in award')).sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
+  const isSpecial = (b) => specialName(b, 'nights away') || specialName(b, 'hikes away') || specialName(b, 'joining in award');
 
-  // Special family badges to be shown in bottom strip
-  const specialFamilyNames = ['nights away', 'hikes away', 'joining in award'];
-  const isSpecialFamily = (badge) =>
-    specialFamilyNames.some(n => badge.name.toLowerCase().includes(n));
-
-  // Group staged badges by family; exclude nights/hikes/joining-in (handled separately)
+  // Staged families (excluding the special families)
   const stagedFamilies = {};
-  const nonStagedBadges = [];
-  const nightsAwayBadges = [];
-  const hikesAwayBadges = [];
-  const joiningInBadges = [];
-
-  allSectionBadges.forEach(badge => {
-    if (badge.name.toLowerCase().includes('nights away')) {
-      nightsAwayBadges.push(badge);
-    } else if (badge.name.toLowerCase().includes('hikes away')) {
-      hikesAwayBadges.push(badge);
-    } else if (badge.name.toLowerCase().includes('joining in award')) {
-      joiningInBadges.push(badge);
-    } else if (badge.category === 'staged' && badge.badge_family_id) {
-      if (!stagedFamilies[badge.badge_family_id]) {
-        stagedFamilies[badge.badge_family_id] = {
-          familyId: badge.badge_family_id,
-          name: badge.name.replace(/Stage \d+/i, '').trim(),
-          category: badge.category,
-          section: badge.section,
-          stages: []
-        };
+  const singleBadges = [];
+  sectionBadges.filter(b => !isSpecial(b)).forEach(b => {
+    if (b.category === 'staged' && b.badge_family_id) {
+      if (!stagedFamilies[b.badge_family_id]) {
+        stagedFamilies[b.badge_family_id] = { familyId: b.badge_family_id, name: b.name.replace(/Stage \d+/i, '').trim(), stages: [] };
       }
-      stagedFamilies[badge.badge_family_id].stages.push(badge);
+      stagedFamilies[b.badge_family_id].stages.push(b);
     } else {
-      nonStagedBadges.push(badge);
+      singleBadges.push(b);
     }
   });
+  Object.values(stagedFamilies).forEach(f => f.stages.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0)));
 
-  // Sort special family badges by stage number
-  nightsAwayBadges.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
-  hikesAwayBadges.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
-  joiningInBadges.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
-
-  // Find highest earned badge in a family list — checks both MemberBadgeProgress and MemberBadgeAward
-  const getHighestEarnedInFamily = (familyBadges) => {
-    const earned = familyBadges.filter(fb =>
-      badgeProgress.some(p => p.member_id === child.id && p.badge_id === fb.id && p.status === 'completed') ||
-      awards.some(a => a.member_id === child.id && a.badge_id === fb.id)
-    );
-    if (earned.length === 0) return null;
-    return earned.reduce((highest, b) => (b.stage_number || 0) > (highest.stage_number || 0) ? b : highest);
-  };
-
-  // Sort stages within families
-  Object.values(stagedFamilies).forEach(family => {
-    family.stages.sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
-  });
-
-  // Create unified badge list for display (exclude nights/hikes/joiningIn — shown separately)
-  const allAvailableBadges = [
-    ...nonStagedBadges.map(badge => {
-      const progress = getBadgeProgress(badge.id);
-      const isCompleted = isBadgeComplete(badge.id);
-      const inProgress = isBadgeInProgress(badge.id);
-      return { type: 'single', badge, progress: { ...progress, isCompleted, inProgress } };
-    }),
-    ...Object.values(stagedFamilies).map(family => {
-      let totalReqs = 0;
-      let completedReqs = 0;
-      family.stages.forEach(stage => {
-        const stageProgress = getBadgeProgress(stage.id);
-        totalReqs += stageProgress.total;
-        completedReqs += stageProgress.completed;
-      });
-      const inProgress = family.stages.some(s => isBadgeInProgress(s.id));
-      return {
-        type: 'family',
-        family,
-        badge: family.stages[0],
-        progress: {
-          completed: completedReqs, total: totalReqs,
-          percentage: totalReqs > 0 ? Math.round((completedReqs / totalReqs) * 100) : 0,
-          isCompleted: false,
-          inProgress
-        }
-      };
+  // ── Top-right: earned challenge + staged ───────────────────────────────────
+  const earnedChallenge = sectionBadges.filter(b => b.category === 'challenge' && !isSpecial(b) && isBadgeComplete(b.id));
+  const earnedStaged = Object.values(stagedFamilies)
+    .map(family => {
+      const earned = family.stages.filter(s => isBadgeComplete(s.id));
+      if (earned.length === 0) return null;
+      return { family, highest: earned.reduce((h, s) => ((s.stage_number || 0) > (h.stage_number || 0) ? s : h)) };
     })
+    .filter(Boolean);
+
+  // ── Activity awards row ─────────────────────────────────────────────────────
+  const highestEarnedIn = (list) => {
+    const earned = list.filter(b => isBadgeComplete(b.id));
+    return earned.length ? earned.reduce((h, b) => ((b.stage_number || 0) > (h.stage_number || 0) ? b : h)) : null;
+  };
+  const activityGroups = [
+    { key: 'nights', label: 'Nights Away', highest: highestEarnedIn(nightsAwayBadges), statText: `${child.total_nights_away || 0} nights away so far` },
+    { key: 'hikes', label: 'Hikes Away', highest: highestEarnedIn(hikesAwayBadges), statText: `${child.total_hikes_away || 0} hikes so far` },
+    { key: 'joining', label: 'Joining In Awards', highest: highestEarnedIn(joiningInBadges), statText: child.scouting_start_date ? `In scouting since ${new Date(child.scouting_start_date).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}` : null },
   ];
 
-  // Exclude completed badges
-  const incompleteBadges = allAvailableBadges.filter(bp => !bp.progress.isCompleted && bp.progress.percentage < 100);
+  // ── Bottom: all badges list ────────────────────────────────────────────────
+  const allItems = [
+    ...singleBadges.map(b => {
+      const completed = isBadgeComplete(b.id);
+      const pct = completed ? 100 : getBadgePercentage(b.id);
+      return {
+        key: b.id, name: b.name, image: b.image_url, category: b.category,
+        percentage: pct,
+        status: completed ? 'completed' : isBadgeInProgress(b.id) ? 'in_progress' : 'not_started',
+      };
+    }),
+    ...Object.values(stagedFamilies).map(family => {
+      const pcts = family.stages.map(s => (isBadgeComplete(s.id) ? 100 : getBadgePercentage(s.id)));
+      const pct = Math.round(pcts.reduce((s, p) => s + p, 0) / (pcts.length || 1));
+      const anyComplete = family.stages.some(s => isBadgeComplete(s.id));
+      const allComplete = family.stages.every(s => isBadgeComplete(s.id));
+      const anyStarted = family.stages.some(s => isBadgeInProgress(s.id));
+      const highest = [...family.stages].reverse().find(s => isBadgeComplete(s.id));
+      return {
+        key: family.familyId, name: family.name, image: (highest || family.stages[0]).image_url,
+        category: 'staged', stageCount: family.stages.length, percentage: pct,
+        status: allComplete ? 'completed' : (anyComplete || anyStarted) ? 'in_progress' : 'not_started',
+      };
+    }),
+  ];
 
-  // In-progress: challenge badges always go here + any badge with progress > 0
-  // Sort: challenge → activity → staged → core, then by % desc within each
-  const inProgressBadges = incompleteBadges.filter(bp => {
-    const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
-    return category === 'challenge' || bp.progress.inProgress;
-  }).sort((a, b) => {
-    const catA = a.type === 'family' ? a.family.category : a.badge.category;
-    const catB = b.type === 'family' ? b.family.category : b.badge.category;
-    const catOrder = ['challenge', 'activity', 'staged', 'core'];
-    const catDiff = catOrder.indexOf(catA) - catOrder.indexOf(catB);
-    if (catDiff !== 0) return catDiff;
-    return b.progress.percentage - a.progress.percentage;
-  });
-
-  // Not started: non-challenge badges with 0 progress
-  const notStartedBadges = incompleteBadges.filter(bp => {
-    const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
-    return category !== 'challenge' && !bp.progress.inProgress;
-  });
-
-  // Filter by filterType
-  const filteredInProgress = inProgressBadges.filter(bp => {
-    const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
-    return filterType === 'all' || category === filterType;
-  });
-
-  const filteredNotStarted = notStartedBadges.filter(bp => {
-    const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
-    return filterType === 'all' || category === filterType;
-  });
-
-  // Group not-started by category, activity sorted A-Z
-  const categoryOrder = ['challenge', 'activity', 'staged', 'core'];
-  const notStartedByCategory = filteredNotStarted.reduce((acc, bp) => {
-    const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(bp);
-    return acc;
-  }, {});
-
-  if (notStartedByCategory.activity) {
-    notStartedByCategory.activity.sort((a, b) => {
-      const nameA = a.type === 'family' ? a.family.name : a.badge.name;
-      const nameB = b.type === 'family' ? b.family.name : b.badge.name;
-      return nameA.localeCompare(nameB);
-    });
-  }
-
-  const sortedNotStartedCategories = Object.keys(notStartedByCategory).sort((a, b) =>
-    categoryOrder.indexOf(a) - categoryOrder.indexOf(b)
-  );
-
-  // Calculate nights away and hikes away totals
-  const totalNightsAway = child.total_nights_away || nightsAwayLogs
-    .filter(log => log.member_id === child.id)
-    .reduce((sum, log) => sum + (log.nights_count || 0), 0);
-
-  const totalHikesAway = child.total_hikes_away || 0;
-
-  // Section-aware chief scout award
-  const chiefScoutAward = badges.find(b => b.is_chief_scout_award && b.section === childSectionName)
-    || badges.find(b => b.is_chief_scout_award);
-  const awardPageUrl = childSectionName === 'cubs' ? 'ParentSilverAward' : 'ParentGoldAward';
-  const awardLabel = childSectionName === 'cubs' ? "Chief Scout's Silver Award" : "Chief Scout's Gold Award";
-  const awardDescription = childSectionName === 'cubs' ? "The highest award in Cubs - View progress" : "The highest award in Scouts - View progress";
-  // Legacy alias for backward compat
-  const goldAward = chiefScoutAward;
+  const awardBadge = badges.find(b => b.is_chief_scout_award && b.section === childSectionName) || badges.find(b => b.is_chief_scout_award);
+  const clusterChallenge = badges
+    .filter(b => b.category === 'challenge' && b.section === (childSectionName || 'scouts') && !b.is_chief_scout_award)
+    .sort((a, b) => (a.display_priority || 0) - (b.display_priority || 0) || a.name.localeCompare(b.name));
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(160deg, #f8f7ff 0%, #f0eeff 50%, #f0fdf4 100%)', fontFamily: 'DM Sans, sans-serif' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');`}</style>
       <FloatingNav />
       <NavBarSpacer />
       <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Parent Portal</p>
-            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Badges &amp; Awards</h1>
-            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>{child.full_name}'s progress</p>
-          </div>
-          <Button onClick={() => setUniformDialog(true)} variant="outline" className="border-[#7413dc] text-[#7413dc] hover:bg-[#7413dc] hover:text-white gap-2">
-            <Shirt className="w-4 h-4" />Uniform Guide
-          </Button>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        {/* Chief Scout Award Button — section-aware */}
-        {chiefScoutAward && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <Card
-              onClick={() => navigate(createPageUrl(awardPageUrl))}
-              className={`cursor-pointer border-3 hover:shadow-xl transition-all hover:scale-[1.02] ${
-                childSectionName === 'cubs'
-                  ? 'bg-gradient-to-r from-gray-500 via-slate-400 to-gray-500 border-gray-300'
-                  : 'bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 border-amber-300'
-              }`}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg">
-                    {chiefScoutAward.image_url
-                      ? <img src={chiefScoutAward.image_url} alt={awardLabel} className="w-12 h-12 rounded-full object-contain" />
-                      : <Trophy className={`w-10 h-10 ${childSectionName === 'cubs' ? 'text-gray-500' : 'text-amber-500'}`} />
-                    }
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-white mb-1">{awardLabel}</h3>
-                    <p className="text-white/80">{awardDescription}</p>
-                  </div>
-                  <div className="text-white">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-
-        {/* Earned Badges */}
-        <div>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-1 w-12 bg-gradient-to-r from-yellow-600 to-transparent rounded-full"></div>
-            <h2 className="text-3xl font-bold">Earned Badges</h2>
-          </div>
-          {completedBadges.length === 0 ? (
-            <Card className="bg-white/80 backdrop-blur-sm shadow-xl">
-              <CardContent className="p-12 text-center">
-                <div className="w-20 h-20 bg-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Award className="w-10 h-10 text-yellow-600" />
-                </div>
-                <p className="text-gray-600 text-lg">Keep working towards your first badge!</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-green-50 border-green-200 shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex flex-wrap gap-2">
-                  {earnedNonStaged.map(progress => {
-                    const badge = badges.find(b => b.id === progress.badge_id);
-                    if (!badge) return null;
-                    const bp = { type: 'single', badge, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } };
-                    return (
-                      <motion.button
-                        key={progress.badge_id}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        onClick={() => setSelectedBadge(bp)}
-                        className="w-14 h-14 rounded-lg overflow-hidden hover:ring-2 hover:ring-green-500 transition-all hover:scale-110 bg-white"
-                        title={badge.name}
-                      >
-                        <img src={badge.image_url} alt={badge.name} className="w-full h-full object-contain p-1" />
-                      </motion.button>
-                    );
-                  })}
-                  {Object.entries(stagedBadgeFamilies).map(([familyId, family]) => {
-                    const highestStage = getHighestCompletedStage(familyId);
-                    if (!highestStage) return null;
-                    const bp = { type: 'single', badge: highestStage, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } };
-                    return (
-                      <motion.button
-                        key={familyId}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        onClick={() => setSelectedBadge(bp)}
-                        className="w-14 h-14 rounded-lg overflow-hidden hover:ring-2 hover:ring-green-500 transition-all hover:scale-110 bg-white"
-                        title={`${family.name} – Stage ${highestStage.stage_number}`}
-                      >
-                        <img src={highestStage.image_url} alt={highestStage.name} className="w-full h-full object-contain p-1" />
-                      </motion.button>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-
-
-        {/* Earned Blanket Badges */}
-        {earnedBlanketBadges.length > 0 && (
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-1 w-12 bg-gradient-to-r from-amber-800 to-transparent rounded-full"></div>
-              <h2 className="text-2xl font-bold">Blanket Badges</h2>
-              <span className="text-xs bg-amber-100 text-amber-800 font-semibold px-2 py-1 rounded-full">🏕️ Camp Blanket</span>
-            </div>
-            <Card className="bg-amber-50 border-amber-200">
-              <CardContent className="p-4">
-                <div className="flex flex-wrap gap-2">
-                  {earnedBlanketBadges.map(badge => {
-                    const bp = { type: 'single', badge, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } };
-                    return (
-                      <motion.button
-                        key={badge.id}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        onClick={() => setSelectedBadge(bp)}
-                        className="w-14 h-14 rounded-lg overflow-hidden hover:ring-2 hover:ring-amber-500 transition-all hover:scale-110 bg-white"
-                        title={badge.name}
-                      >
-                        <img src={badge.image_url} alt={badge.name} className="w-full h-full object-contain p-1" />
-                      </motion.button>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Activity Awards - between Earned and In Progress */}
-        {(nightsAwayBadges.length > 0 || hikesAwayBadges.length > 0 || joiningInBadges.length > 0) && (
-          <div>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-1 w-12 bg-gradient-to-r from-blue-600 to-transparent rounded-full"></div>
-              <h2 className="text-3xl font-bold">Activity Awards</h2>
-            </div>
-            <div className="grid grid-cols-3 gap-3 md:gap-6">
-              {[
-                { label: 'Nights Away', family: nightsAwayBadges, emptyText: 'No Nights Away badge earned yet', key: 'nights' },
-                { label: 'Hikes Away', family: hikesAwayBadges, emptyText: 'No Hikes Away badge earned yet', key: 'hikes' },
-                { label: 'Joining In Awards', family: joiningInBadges, emptyText: 'No Joining In Award earned yet', key: 'joining' },
-              ].map(({ label, family, emptyText, key }) => {
-                if (family.length === 0) return null;
-                const highestEarned = getHighestEarnedInFamily(family);
-                return (
-                  <motion.div key={label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-                    <Card
-                      className="cursor-pointer hover:shadow-xl transition-all hover:scale-[1.02] h-full"
-                      onClick={() => setActivityDialog(key)}
-                    >
-                      <CardContent className="p-3 md:p-6 text-center">
-                        <h3 className="font-bold text-xs md:text-lg mb-2 md:mb-4 text-gray-800">{label}</h3>
-                        {highestEarned ? (
-                          <div className="space-y-1 md:space-y-3">
-                            <img
-                              src={highestEarned.image_url}
-                              alt={highestEarned.name}
-                              className="w-14 h-14 md:w-24 md:h-24 mx-auto rounded-lg object-contain"
-                            />
-                            <div>
-                              <p className="font-semibold text-xs leading-tight">{highestEarned.name}</p>
-                              {highestEarned.stage_number && (
-                                <p className="text-xs text-gray-500">Stage {highestEarned.stage_number}</p>
-                              )}
-                            </div>
-                            <div className="flex items-center justify-center gap-1">
-                              <CheckCircle className="w-3 h-3 text-green-600" />
-                              <span className="text-xs text-green-700 font-medium">Highest earned</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="space-y-2 py-2">
-                            <div className="w-12 h-12 md:w-20 md:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
-                              <Award className="w-6 h-6 md:w-10 md:h-10 text-gray-400" />
-                            </div>
-                            <p className="text-gray-500 text-xs">{emptyText}</p>
-                          </div>
-                        )}
-                        <p className="text-xs text-[#7413dc] mt-2 font-medium">View →</p>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-        {/* In Progress Badges */}
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="h-1 w-12 bg-gradient-to-r from-orange-500 to-transparent rounded-full"></div>
-              <h2 className="text-3xl font-bold">In Progress</h2>
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-500" />
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="challenge">Challenge</SelectItem>
-                  <SelectItem value="activity">Activity</SelectItem>
-                  <SelectItem value="staged">Staged</SelectItem>
-                  <SelectItem value="core">Core</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          {filteredInProgress.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <p className="text-gray-500 text-sm">No badges in progress</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {filteredInProgress.map((bp, idx) => {
-                const displayName = bp.type === 'family' ? bp.family.name : bp.badge.name;
-                const displayImage = bp.badge.image_url;
-                const category = bp.type === 'family' ? bp.family.category : bp.badge.category;
-                return (
-                  <motion.div
-                    key={bp.type === 'family' ? bp.family.familyId : bp.badge.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.02 }}
-                  >
-                    <Card
-                      onClick={() => setSelectedBadge(bp)}
-                      className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02] bg-white"
-                    >
-                      <CardContent className="p-4 flex items-center gap-4">
-                        <div className="relative flex-shrink-0">
-                          <img src={displayImage} alt={displayName} className="w-16 h-16 rounded-lg object-contain" />
-                          <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-gray-200 rounded-full">
-                            <div className="h-full bg-orange-400 rounded-full transition-all" style={{ width: `${bp.progress.percentage}%` }} />
-                          </div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 truncate">{displayName}</p>
-                          <p className="text-xs text-gray-500 capitalize">{category}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="flex-1 h-1.5 bg-gray-200 rounded-full">
-                              <div className="h-full bg-orange-400 rounded-full" style={{ width: `${bp.progress.percentage}%` }} />
-                            </div>
-                            <span className="text-xs font-medium text-orange-600">{bp.progress.percentage}%</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Badges to Work Towards (not started) */}
-        <div>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="h-1 w-12 bg-gradient-to-r from-purple-600 to-transparent rounded-full"></div>
-            <h2 className="text-3xl font-bold">Badges to Work Towards</h2>
-          </div>
-          {filteredNotStarted.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Award className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No more badges to start!</p>
-              </CardContent>
-            </Card>
-          ) : (
-            sortedNotStartedCategories.map(category => (
-              <div key={category} className="mb-6">
-                <h3 className="text-lg font-bold capitalize mb-3 text-gray-700">{category} Badges</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {notStartedByCategory[category].map((bp, idx) => {
-                    const displayName = bp.type === 'family' ? bp.family.name : bp.badge.name;
-                    const displayImage = bp.badge.image_url;
-                    return (
-                      <motion.div
-                        key={bp.type === 'family' ? bp.family.familyId : bp.badge.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.02 }}
-                      >
-                        <Card
-                          onClick={() => setSelectedBadge(bp)}
-                          className="cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] bg-white opacity-80 hover:opacity-100"
-                        >
-                          <CardContent className="p-3 flex items-center gap-3">
-                            <img src={displayImage} alt={displayName} className="w-12 h-12 rounded-lg object-contain flex-shrink-0" />
-                            <p className="font-medium text-gray-700 text-sm truncate">{displayName}</p>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Activity Awards Dialog (Nights Away / Hikes Away / Joining In) */}
-      <Dialog open={!!activityDialog} onOpenChange={(open) => !open && setActivityDialog(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          {activityDialog && (() => {
-            const isNights = activityDialog === 'nights';
-            const isHikes = activityDialog === 'hikes';
-            const isJoining = activityDialog === 'joining';
-            const family = isNights ? nightsAwayBadges : isHikes ? hikesAwayBadges : joiningInBadges;
-            const title = isNights ? 'Nights Away' : isHikes ? 'Hikes Away' : 'Joining In Awards';
-            const totalCount = isNights ? totalNightsAway : isHikes ? totalHikesAway : null;
-            const unit = isNights ? 'nights' : isHikes ? 'hikes' : null;
-
-            // For joining in: calculate years in scouting
-            let joiningInYears = null;
-            if (isJoining && child.scouting_start_date) {
-              const start = new Date(child.scouting_start_date);
-              const now = new Date();
-              joiningInYears = (now - start) / (1000 * 60 * 60 * 24 * 365.25);
-            }
-
-            const highestInDialog = getHighestEarnedInFamily(family);
-
-            return (
-              <>
-                <DialogHeader>
-                  <div className="flex items-center gap-4 mb-2">
-                    {highestInDialog ? (
-                      <img src={highestInDialog.image_url} alt={highestInDialog.name} className="w-16 h-16 rounded-lg object-contain flex-shrink-0" />
-                    ) : (
-                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Award className="w-8 h-8 text-gray-400" />
-                      </div>
-                    )}
-                    <div>
-                      <DialogTitle className="text-2xl">{title}</DialogTitle>
-                      {highestInDialog && (
-                        <p className="text-sm text-green-600 font-medium flex items-center gap-1 mt-1">
-                          <CheckCircle className="w-4 h-4" /> Highest: {highestInDialog.name}
-                        </p>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 gap-1 mt-2"
-                        onClick={() => {
-                          setUniformPositionHighlight(highestInDialog?.uniform_position || null);
-                          setActivityDialog(null);
-                          setUniformDialog(true);
-                        }}
-                      >
-                        <MapPin className="w-3 h-3" />
-                        Where does this go on my uniform?
-                      </Button>
-                    </div>
-                  </div>
-                </DialogHeader>
-                <div className="space-y-6 mt-2">
-                  {/* Summary */}
-                  {totalCount !== null && (
-                    <Card className="bg-blue-50 border-blue-200">
-                      <CardContent className="p-6 text-center">
-                        <p className="text-sm text-gray-600 mb-1">Total {unit === 'nights' ? 'Nights Away' : 'Hikes'}</p>
-                        <p className="text-5xl font-bold text-blue-600">{totalCount}</p>
-                        <p className="text-gray-600 mt-1 capitalize">{unit}</p>
-                      </CardContent>
-                    </Card>
-                  )}
-                  {isJoining && (
-                    <Card className="bg-purple-50 border-purple-200">
-                      <CardContent className="p-6 text-center">
-                        <p className="text-sm text-gray-600 mb-1">Time in Scouting</p>
-                        {child.scouting_start_date ? (
-                          <>
-                            <p className="text-5xl font-bold text-purple-600">{joiningInYears.toFixed(1)}</p>
-                            <p className="text-gray-600 mt-1">years</p>
-                            <p className="text-xs text-gray-500 mt-2">Since {new Date(child.scouting_start_date).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</p>
-                          </>
-                        ) : (
-                          <p className="text-gray-500">Start date not recorded</p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Badge stages */}
-                  <div>
-                    <h3 className="font-bold text-lg mb-3">Badge Stages</h3>
-                    <div className="space-y-3">
-                      {family.map(badge => {
-                        const isEarned = badgeProgress.some(p => p.member_id === child.id && p.badge_id === badge.id && p.status === 'completed')
-                          || awards.some(a => a.member_id === child.id && a.badge_id === badge.id);
-                        const threshold = badge.stage_number;
-                        return (
-                          <div key={badge.id} className={`flex items-center gap-4 p-3 rounded-lg border ${isEarned ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
-                            <img src={badge.image_url} alt={badge.name} className={`w-14 h-14 rounded-lg object-contain ${!isEarned ? 'opacity-40 grayscale' : ''}`} />
-                            <div className="flex-1">
-                              <p className="font-semibold text-sm">{badge.name}</p>
-                              {threshold && (
-                                <p className="text-xs text-gray-500">
-                                  {isNights || isHikes ? `${threshold} ${unit}` : `${threshold} year${threshold !== 1 ? 's' : ''}`}
-                                </p>
-                              )}
-                            </div>
-                            {isEarned ? (
-                              <div className="flex items-center gap-1 text-green-600">
-                                <CheckCircle className="w-5 h-5" />
-                                <span className="text-xs font-medium">Earned</span>
-                              </div>
-                            ) : (
-                              <div className="text-gray-400">
-                                <Circle className="w-5 h-5" />
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Nights Away log if applicable */}
-                  {isNights && nightsAwayLogs.filter(l => l.member_id === child.id).length > 0 && (
-                    <div>
-                      <h3 className="font-bold text-lg mb-3">Camp History</h3>
-                      <div className="space-y-2">
-                        {nightsAwayLogs
-                          .filter(l => l.member_id === child.id)
-                          .sort((a, b) => new Date(b.start_date) - new Date(a.start_date))
-                          .map(log => (
-                            <div key={log.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                              <div>
-                                <p className="font-medium text-sm">{log.location || 'Camp'}</p>
-                                <p className="text-xs text-gray-500">{new Date(log.start_date).toLocaleDateString('en-GB')}</p>
-                              </div>
-                              <Badge variant="secondary">{log.nights_count} night{log.nights_count !== 1 ? 's' : ''}</Badge>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            );
-          })()}
-        </DialogContent>
-      </Dialog>
-
-      {/* New Badges Awarded Modal */}
-      <Dialog open={newBadgesModal} onOpenChange={(open) => { if (!open) dismissNewBadgesModal(); }}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-xl">🎉 New Badges Awarded!</DialogTitle>
-          </DialogHeader>
-          <p className="text-gray-600 text-sm mb-4">
-            {child.full_name} has earned {newAwardedBadges.length} new badge{newAwardedBadges.length !== 1 ? 's' : ''}! Tap a badge to see the details.
+        <div className="max-w-7xl mx-auto">
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>
+            Parent Portal
           </p>
-          <div className="grid grid-cols-3 gap-4">
-            {newAwardedBadges.map((bp, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  dismissNewBadgesModal();
-                  setSelectedBadge(bp);
-                }}
-                className="flex flex-col items-center gap-2 p-3 rounded-xl border hover:bg-purple-50 hover:border-purple-300 transition-all hover:scale-105"
-              >
-                <img src={bp.badge.image_url} alt={bp.badge.name} className="w-16 h-16 object-contain rounded-lg" />
-                <span className="text-xs text-center font-medium text-gray-700 leading-tight">{bp.badge.name}</span>
-              </button>
-            ))}
+          <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>
+            Badges &amp; Awards
+          </h1>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>{child.full_name}'s progress</p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* 30/70 split: award diagram | earned badges */}
+        <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+          <div className="lg:col-span-3">
+            <AwardPanel
+              sectionName={childSectionName}
+              awardBadge={awardBadge}
+              challengeBadges={clusterChallenge}
+              isEarned={isBadgeComplete}
+              getBadgePercentage={getBadgePercentage}
+            />
           </div>
-          <Button onClick={dismissNewBadgesModal} variant="outline" className="w-full mt-4">
-            Close
-          </Button>
-        </DialogContent>
-      </Dialog>
+          <div className="lg:col-span-7">
+            <EarnedPanel earnedChallenge={earnedChallenge} earnedStaged={earnedStaged} />
+          </div>
+        </div>
 
-      {/* Uniform Guide Dialog */}
-      <Dialog open={uniformDialog} onOpenChange={(open) => { setUniformDialog(open); if (!open) setUniformPositionHighlight(null); }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Shirt className="w-5 h-5" />
-              Uniform Guide – {child.full_name}
-            </DialogTitle>
-          </DialogHeader>
-          {uniformPositionHighlight && (
-            <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm text-purple-800 flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              Showing where this badge goes on the uniform
-            </div>
-          )}
-          <UniformDiagram
-            uniformConfig={uniformConfigs.find(u => u.section === childSectionName) || null}
-            earnedBadges={completedBadges}
-            allBadges={badges}
-            highlightPosition={uniformPositionHighlight}
-            onBadgeClick={(badge) => {
-              setUniformDialog(false);
-              setSelectedBadge({ type: 'single', badge, progress: { isCompleted: true, inProgress: false, percentage: 100, completed: 0, total: 0 } });
-            }}
-          />
-          <p className="text-xs text-gray-500 text-center mt-2">Tap a circle to see which badges go in that area. Gold circles = earned badges.</p>
-        </DialogContent>
-      </Dialog>
+        {/* Nights away / Hikes away / Joining In */}
+        <ActivityAwardsRow groups={activityGroups} />
 
-      {/* Badge Detail Dialog */}
-      <Dialog open={!!selectedBadge} onOpenChange={(open) => !open && setSelectedBadge(null)}> 
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          {selectedBadge && (
-            <>
-              {/* Single Badge or Nights/Hikes Away */}
-              {selectedBadge.type === 'single' && (
-                <>
-                  <DialogHeader>
-                    <div className="flex items-center gap-4">
-                      <img
-                        src={selectedBadge.badge.image_url}
-                        alt={selectedBadge.badge.name}
-                        className="w-20 h-20 rounded-lg"
-                      />
-                      <div>
-                        <DialogTitle className="text-2xl">{selectedBadge.badge.name}</DialogTitle>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <Badge className="capitalize">{selectedBadge.badge.category}</Badge>
-                          {selectedBadge.progress?.isCompleted && (
-                            <Badge className="bg-green-600 flex items-center gap-1">
-                              <CheckCircle className="w-3 h-3" /> Earned
-                            </Badge>
-                          )}
-                          {selectedBadge.badge.category === 'blanket' ? (
-                            <span className="inline-flex items-center gap-1 text-xs bg-amber-100 text-amber-800 font-semibold px-2 py-1 rounded-full">
-                              🏕️ This badge goes on your camp blanket
-                            </span>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs border-purple-300 text-purple-700 hover:bg-purple-50 gap-1"
-                              onClick={() => {
-                                setUniformPositionHighlight(selectedBadge.badge.uniform_position || null);
-                                setSelectedBadge(null);
-                                setUniformDialog(true);
-                              }}
-                            >
-                              <MapPin className="w-3 h-3" />
-                              Where does this go on my uniform?
-                            </Button>
-                          )}
-                        </div>
-                        {selectedBadge.badge.description && (
-                          <p className="text-gray-600 mt-2">{selectedBadge.badge.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  </DialogHeader>
-
-                  {/* Check if this is Nights Away or Hikes Away */}
-                  {(selectedBadge.badge.name.toLowerCase().includes('nights away') || 
-                    selectedBadge.badge.name.toLowerCase().includes('hikes away')) ? (
-                    <div className="space-y-6 mt-4">
-                      <Card className="bg-blue-50 border-blue-200">
-                        <CardContent className="p-6">
-                          <div className="text-center space-y-4">
-                            <div>
-                              <p className="text-sm text-gray-600 mb-2">Total Achieved</p>
-                              <p className="text-4xl font-bold text-blue-600">
-                                {selectedBadge.badge.name.toLowerCase().includes('nights away') 
-                                  ? totalNightsAway 
-                                  : totalHikesAway}
-                              </p>
-                              <p className="text-gray-600">
-                                {selectedBadge.badge.name.toLowerCase().includes('nights away') 
-                                  ? 'Nights Away' 
-                                  : 'Hikes Away'}
-                              </p>
-                            </div>
-
-                            {/* Show staged badges earned and next milestone */}
-                            {selectedBadge.badge.badge_family_id && (() => {
-                              const familyBadges = badges
-                                .filter(b => b.badge_family_id === selectedBadge.badge.badge_family_id)
-                                .sort((a, b) => (a.stage_number || 0) - (b.stage_number || 0));
-                              
-                              const completedStages = familyBadges.filter(fb =>
-                                badgeProgress.some(p => p.member_id === child.id && p.badge_id === fb.id && p.status === 'completed')
-                              );
-                              
-                              const highestCompleted = completedStages[completedStages.length - 1];
-                              const nextStage = familyBadges.find(fb => 
-                                !completedStages.some(cs => cs.id === fb.id)
-                              );
-
-                              return (
-                                <>
-                                  {highestCompleted && (
-                                    <div className="pt-4 border-t">
-                                      <p className="text-sm text-gray-600 mb-2">Current Badge</p>
-                                      <div className="flex items-center justify-center gap-3">
-                                        <img src={highestCompleted.image_url} alt={highestCompleted.name} className="w-16 h-16 rounded-lg" />
-                                        <div className="text-left">
-                                          <p className="font-semibold">{highestCompleted.name}</p>
-                                          <p className="text-xs text-gray-600">Stage {highestCompleted.stage_number}</p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                  
-                                  {nextStage && (
-                                    <div className="pt-4 border-t">
-                                      <p className="text-sm text-gray-600 mb-2">Next Milestone</p>
-                                      <div className="flex items-center justify-center gap-3">
-                                        <img src={nextStage.image_url} alt={nextStage.name} className="w-16 h-16 rounded-lg opacity-60" />
-                                        <div className="text-left">
-                                          <p className="font-semibold">{nextStage.name}</p>
-                                          <p className="text-xs text-gray-600">Stage {nextStage.stage_number}</p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                </>
-                              );
-                            })()}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  ) : (
-                    /* Regular single badge criteria */
-                    <div className="space-y-6 mt-4">
-                      {selectedBadge.badge.completion_rule === 'one_module' && (
-                        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                          <CheckCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-                          <p className="text-sm text-amber-800 font-medium">Complete one module only — finishing any single module below earns this badge.</p>
-                        </div>
-                      )}
-                      {getBadgeModules(selectedBadge.badge.id).map(module => {
-                        const moduleReqs = getModuleRequirements(module.id);
-                        return (
-                          <div key={module.id} className="border-l-4 border-[#7413dc] pl-4">
-                            <h3 className="font-bold text-lg mb-3">{module.name}</h3>
-                            <div className="space-y-2">
-                              {moduleReqs.map((req, idx) => {
-                                const completed = isRequirementCompleted(req.id);
-                                return (
-                                  <div key={req.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50">
-                                    {completed ? (
-                                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                                    ) : (
-                                      <Circle className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5" />
-                                    )}
-                                    <span className={`text-sm ${completed ? 'text-gray-900 font-medium' : 'text-gray-600'}`}>
-                                      <span className="font-semibold">{idx + 1}.</span> {req.text}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Staged Badge Family */}
-              {selectedBadge.type === 'family' && (
-                <StagedFamilyDialog
-                  selectedBadge={selectedBadge}
-                  child={child}
-                  badgeProgress={badgeProgress}
-                  getBadgeModules={getBadgeModules}
-                  getModuleRequirements={getModuleRequirements}
-                  isRequirementCompleted={isRequirementCompleted}
-                  onUniformClick={(pos) => {
-                    setUniformPositionHighlight(pos || null);
-                    setSelectedBadge(null);
-                    setUniformDialog(true);
-                  }}
-                />
-              )}
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+        {/* All badges with filter */}
+        <AllBadgesGrid items={allItems} />
+      </div>
     </div>
   );
 }

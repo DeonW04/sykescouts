@@ -3,10 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Award, CheckCircle, Filter } from 'lucide-react';
 
-const STATUS_LABELS = { completed: 'Completed', in_progress: 'In Progress', not_started: 'Not Started' };
 const CATEGORY_ORDER = ['challenge', 'staged', 'core', 'activity'];
 
-export default function TestAllBadges({ items }) {
+export default function AllBadgesGrid({ items }) {
   const [statusFilter, setStatusFilter] = useState('all');
 
   const filtered = items
@@ -18,11 +17,11 @@ export default function TestAllBadges({ items }) {
     });
 
   return (
-    <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+    <Card className="border border-[#7413dc]/10 shadow-[0_4px_20px_rgba(0,0,0,0.05)] bg-white/90 backdrop-blur-xl rounded-[20px]">
       <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-3 pb-3">
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7413dc] to-[#5c0fb0] flex items-center justify-center">
-            <Award className="w-5 h-5 text-white" />
+        <CardTitle className="flex items-center gap-2 text-lg" style={{ fontFamily: 'Outfit, sans-serif', color: '#1a1a2e' }}>
+          <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center">
+            <Award className="w-5 h-5 text-[#7413dc]" />
           </div>
           All Badges
         </CardTitle>
