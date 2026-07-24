@@ -99,6 +99,18 @@ Deno.serve(async (req) => {
     metadata: { member_id },
   };
 
+  // If the member is already paid up to a future date (e.g. previous bank transfer /
+  // direct debit or legacy payment), don't charge now — start billing on that date.
+  const paidUntilCandidates = [member.next_subs_due, member.legacy_subs_expiry]
+    .filter(Boolean)
+    .map(d => new Date(d).getTime())
+    .filter(t => !isNaN(t));
+  const paidUntil = paidUntilCandidates.length ? Math.max(...paidUntilCandidates) : null;
+  if (paidUntil && paidUntil > Date.now()) {
+    subParams.trial_end = Math.floor(paidUntil / 1000);
+    console.log(`Member ${member_id} paid until ${new Date(paidUntil).toISOString()} — first charge deferred to then`);
+  }
+
   if (defaultPmId) {
     // Saved card exists — charge immediately on creation
     subParams.default_payment_method = defaultPmId;
