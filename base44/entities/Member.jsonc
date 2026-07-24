@@ -246,6 +246,15 @@
       ],
       "description": "Subscription billing interval"
     },
+    "subs_payment_type": {
+      "type": "string",
+      "enum": [
+        "card",
+        "direct_debit"
+      ],
+      "default": "card",
+      "description": "How subs are paid \u2014 card (Stripe subscription) or direct_debit (direct debit / bank transfer recorded manually by the treasurer)"
+    },
     "legacy_subs_expiry": {
       "type": "string",
       "format": "date",

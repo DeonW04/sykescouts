@@ -38,7 +38,7 @@
     },
     "description": {
       "type": "string",
-      "description": "Description of the transaction"
+      "description": "Description of the transaction (optional)"
     },
     "reference": {
       "type": "string",
@@ -98,8 +98,7 @@
     "date",
     "type",
     "amount",
-    "category",
-    "description"
+    "category"
   ],
   "rls": {
     "create": {

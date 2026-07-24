@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import TreasurerLayout from '@/components/treasurer/TreasurerLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CreditCard, User } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CreditCard, User, Landmark } from 'lucide-react';
+import { toast } from 'sonner';
 import SectionTabPicker from '@/components/treasurer/SectionTabPicker';
 
 const fmt = n => `£${(n || 0).toFixed(2)}`;
@@ -20,6 +22,7 @@ function getApproxTermRange() {
 }
 
 export default function TreasurerMemberPayments() {
+  const queryClient = useQueryClient();
   const [selectedMemberId, setSelectedMemberId] = useState('');
 
   const { data: members = [] } = useQuery({ queryKey: ['members-active'], queryFn: () => base44.entities.Member.filter({ active: true }) });
@@ -54,6 +57,13 @@ export default function TreasurerMemberPayments() {
   const termPaid = ledgerEntries.filter(e => e.type === 'income' && e.date >= termRange.start && e.date <= termRange.end).reduce((s, e) => s + (e.amount || 0), 0);
 
   const defaultCard = member?.stripe_payment_methods?.find(p => p.is_default) || member?.stripe_payment_methods?.[0];
+  const isDD = member?.subs_payment_type === 'direct_debit' && !member?.stripe_subscription_id;
+
+  const toggleDD = async () => {
+    await base44.entities.Member.update(member.id, { subs_payment_type: isDD ? 'card' : 'direct_debit' });
+    queryClient.invalidateQueries({ queryKey: ['members-active'] });
+    toast.success(isDD ? `${member.full_name} set to card payments` : `${member.full_name} set to direct debit / bank transfer`);
+  };
 
   return (
     <TreasurerLayout title="Member Payments">
@@ -77,16 +87,24 @@ export default function TreasurerMemberPayments() {
           {/* Subscription status card */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-[#004851]" />
-                {member.full_name} — Subscription Status
-              </CardTitle>
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-[#004851]" />
+                  {member.full_name} — Subscription Status
+                </CardTitle>
+                {!member.stripe_subscription_id && (
+                  <Button size="sm" variant="outline" onClick={toggleDD} className={isDD ? '' : 'border-blue-300 text-blue-700 hover:bg-blue-50'}>
+                    <Landmark className="w-4 h-4 mr-1.5" />
+                    {isDD ? 'Switch to card payments' : 'Set as Direct Debit / Bank Transfer'}
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
                   <p className="text-xs text-gray-500">Status</p>
-                  <p className="font-semibold">{member.stripe_subscription_id ? <span className="text-green-600">Active</span> : <span className="text-gray-500">No subscription</span>}</p>
+                  <p className="font-semibold">{member.stripe_subscription_id ? <span className="text-green-600">Active</span> : isDD ? <span className="text-blue-600">Direct Debit</span> : <span className="text-gray-500">No subscription</span>}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Last Payment</p>
@@ -104,7 +122,9 @@ export default function TreasurerMemberPayments() {
                 </div>
                 <div className="col-span-2">
                   <p className="text-xs text-gray-500">Payment Method</p>
-                  {defaultCard ? (
+                  {isDD ? (
+                    <p className="font-semibold text-blue-600 flex items-center gap-1.5"><Landmark className="w-4 h-4" />Direct Debit / Bank Transfer</p>
+                  ) : defaultCard ? (
                     <p className="font-semibold capitalize">{defaultCard.brand} ···· {defaultCard.last4} (exp {defaultCard.exp_month}/{defaultCard.exp_year})</p>
                   ) : (
                     <p className="font-semibold text-red-500">No payment method</p>

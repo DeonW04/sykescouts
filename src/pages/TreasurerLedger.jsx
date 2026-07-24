@@ -19,6 +19,7 @@ import SearchableSelect from '@/components/treasurer/SearchableSelect';
 const CATEGORIES = ['subs', 'event_payments', 'donations', 'fundraising', 'equipment', 'food', 'transport', 'hall_hire', 'badges', 'reimbursement', 'other'];
 const fmt = n => `£${(n || 0).toFixed(2)}`;
 const SUBS_DURATIONS = [
+  { label: '1 month', months: 1 },
   { label: '3 months', months: 3 },
   { label: '6 months', months: 6 },
   { label: '12 months (1 year)', months: 12 },
@@ -188,7 +189,7 @@ export default function TreasurerLedger() {
   };
 
   const handleSave = async () => {
-    if (!form.description || !form.amount || !form.date) { toast.error('Please fill in date, amount and description'); return; }
+    if (!form.amount || !form.date) { toast.error('Please fill in date and amount'); return; }
     setSaving(true);
     try {
       const payload = { ...form, amount: parseFloat(form.amount), entered_by: user?.email, split_amount: showSplit && form.split_amount ? parseFloat(form.split_amount) : null, split_section_id: showSplit && form.split_section_id ? form.split_section_id : '' };
@@ -586,7 +587,7 @@ export default function TreasurerLedger() {
               </div>
             )}
 
-            <div><Label>Description</Label><Input value={form.description} onChange={e => setField('description', e.target.value)} placeholder="Enter description..." /></div>
+            <div><Label>Description (optional)</Label><Input value={form.description} onChange={e => setField('description', e.target.value)} placeholder="Enter description..." /></div>
             <div className="grid grid-cols-2 gap-4">
               <div><Label>Reference (optional)</Label><Input value={form.reference} onChange={e => setField('reference', e.target.value)} placeholder="REF001" /></div>
               <div><Label>Receipt Reference (optional)</Label><Input value={form.receipt_reference} onChange={e => setField('receipt_reference', e.target.value)} placeholder="REC-001" /></div>

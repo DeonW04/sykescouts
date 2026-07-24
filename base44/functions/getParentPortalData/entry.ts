@@ -16,7 +16,7 @@ const MEMBER_FIELDS = [
   'gift_aid_eligible', 'gift_aid_declaration_date',
   'next_subs_due', 'last_subs_payment_date', 'last_subs_months_paid',
   'stripe_customer_id', 'stripe_payment_methods', 'stripe_subscription_id',
-  'subs_interval', 'legacy_subs_expiry',
+  'subs_interval', 'subs_payment_type', 'legacy_subs_expiry',
 ];
 
 const pickMember = (m) => {

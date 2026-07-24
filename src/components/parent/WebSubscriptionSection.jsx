@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CreditCard, RefreshCw, Loader2 } from 'lucide-react';
+import { CreditCard, RefreshCw, Loader2, Landmark } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import InlineCardSetup from '../mobile/InlineCardSetup';
@@ -50,8 +50,11 @@ export default function WebSubscriptionSection({ child }) {
     ? `£${(intervalPrice / 100).toFixed(2)} ${INTERVAL_SHORT[currentInterval] || 'per period'}`
     : null;
 
+  // Direct debit / bank transfer members — treasurer records payments manually
+  const isDD = child.subs_payment_type === 'direct_debit' && !hasSubscription;
+
   // Legacy state
-  const hasLegacy = !!child.legacy_subs_expiry && !hasSubscription;
+  const hasLegacy = !isDD && !!child.legacy_subs_expiry && !hasSubscription;
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const legacyExpiry = hasLegacy ? new Date(child.legacy_subs_expiry) : null;
   if (legacyExpiry) legacyExpiry.setHours(0, 0, 0, 0);
@@ -76,8 +79,11 @@ export default function WebSubscriptionSection({ child }) {
   const handleActivateWithExistingCard = async () => {
     setActivatingWithCard(true);
     const interval = getEffectiveInterval();
-    if (interval !== currentInterval) {
-      await base44.entities.Member.update(child.id, { subs_interval: interval });
+    const memberUpdates = {};
+    if (interval !== currentInterval) memberUpdates.subs_interval = interval;
+    if (child.subs_payment_type === 'direct_debit') memberUpdates.subs_payment_type = 'card';
+    if (Object.keys(memberUpdates).length) {
+      await base44.entities.Member.update(child.id, memberUpdates);
     }
     const res = await base44.functions.invoke('createStripeSubscription', { member_id: child.id });
     if (res?.data?.error) { toast.error(res.data.error); setActivatingWithCard(false); return; }
@@ -89,8 +95,11 @@ export default function WebSubscriptionSection({ child }) {
 
   const handleCardSavedThenActivate = async () => {
     const interval = getEffectiveInterval();
-    if (interval !== currentInterval) {
-      await base44.entities.Member.update(child.id, { subs_interval: interval });
+    const memberUpdates = {};
+    if (interval !== currentInterval) memberUpdates.subs_interval = interval;
+    if (child.subs_payment_type === 'direct_debit') memberUpdates.subs_payment_type = 'card';
+    if (Object.keys(memberUpdates).length) {
+      await base44.entities.Member.update(child.id, memberUpdates);
     }
     const res = await base44.functions.invoke('createStripeSubscription', { member_id: child.id });
     if (res?.data?.error) { toast.error(res.data.error); } else { toast.success('Card saved & subscription activated!'); }
@@ -196,6 +205,38 @@ export default function WebSubscriptionSection({ child }) {
       </CardHeader>
       <CardContent className="space-y-6">
 
+        {/* ── DIRECT DEBIT / BANK TRANSFER ── */}
+        {isDD && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+              <Landmark className="w-5 h-5 text-blue-600 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-blue-900">Direct Debit / Bank Transfer</p>
+                <p className="text-xs text-blue-700 mt-0.5">Subs are paid by direct debit or bank transfer — no card needed.</p>
+              </div>
+              <Badge className="bg-blue-600">Active</Badge>
+            </div>
+            <SubsPaymentInfo child={child} nextDate={child.next_subs_due} nextLabel="Next Payment Due" />
+            {!showSetupForm ? (
+              <Button variant="outline" onClick={openSetupForm} className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4" />
+                Switch to card subscription
+              </Button>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-700">Switch to card subscription</p>
+                <SetupUI
+                  onCardSaved={handleCardSavedThenActivate}
+                  onClose={() => { setShowSetupForm(false); setUseNewCard(false); }}
+                />
+                <button onClick={() => { setShowSetupForm(false); setUseNewCard(false); }} className="text-sm text-gray-500 underline hover:no-underline">
+                  Cancel — stay on direct debit
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── LEGACY PHASE-OUT (paid until date, no Stripe sub) ── */}
         {hasLegacy && !legacyExpired && (
           <div className="space-y-4">
@@ -231,7 +272,7 @@ export default function WebSubscriptionSection({ child }) {
         )}
 
         {/* ── LEGACY EXPIRED, NO STRIPE SUB → overdue ── */}
-        {legacyExpired && !hasSubscription && (
+        {!isDD && legacyExpired && !hasSubscription && (
           <div className="space-y-4">
             <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
               <CreditCard className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -254,7 +295,7 @@ export default function WebSubscriptionSection({ child }) {
         )}
 
         {/* ── NO CARD, NO SUBSCRIPTION (non-legacy) ── */}
-        {!hasLegacy && !legacyExpired && paymentMethods.length === 0 && !hasSubscription && (
+        {!isDD && !hasLegacy && !legacyExpired && paymentMethods.length === 0 && !hasSubscription && (
           <div className="space-y-4">
             <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
               <CreditCard className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -274,7 +315,7 @@ export default function WebSubscriptionSection({ child }) {
         )}
 
         {/* ── CARD EXISTS, NO SUBSCRIPTION ── */}
-        {!hasLegacy && !legacyExpired && paymentMethods.length > 0 && !hasSubscription && (
+        {!isDD && !hasLegacy && !legacyExpired && paymentMethods.length > 0 && !hasSubscription && (
           <div className="space-y-4">
             {!showSetupForm ? (
               <>

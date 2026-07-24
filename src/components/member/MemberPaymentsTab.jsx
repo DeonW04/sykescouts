@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, CreditCard, Building2, ArrowLeft } from 'lucide-react';
+import { Plus, CreditCard, Building2, ArrowLeft, Landmark } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import StripePaymentEntry from './StripePaymentEntry';
@@ -50,6 +50,20 @@ export default function MemberPaymentsTab({ memberId, memberName = '', readOnly 
   });
 
   const { data: user } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
+
+  const { data: memberRecord } = useQuery({
+    queryKey: ['member-record', memberId],
+    queryFn: () => base44.entities.Member.filter({ id: memberId }).then(r => r[0] || null),
+    enabled: !!memberId,
+  });
+
+  const isDD = memberRecord?.subs_payment_type === 'direct_debit';
+
+  const toggleDD = async () => {
+    await base44.entities.Member.update(memberId, { subs_payment_type: isDD ? 'card' : 'direct_debit' });
+    queryClient.invalidateQueries({ queryKey: ['member-record', memberId] });
+    toast.success(isDD ? 'Set to card payments' : 'Set to direct debit / bank transfer');
+  };
 
   const { data: events = [] } = useQuery({
     queryKey: ['events-list-bank'],
@@ -245,6 +259,19 @@ export default function MemberPaymentsTab({ memberId, memberName = '', readOnly 
         )}
       </CardHeader>
       <CardContent>
+        {!readOnly && memberRecord && !memberRecord.stripe_subscription_id && (
+          <div className={`flex items-center justify-between gap-3 p-3 mb-4 rounded-lg border ${isDD ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
+            <div className="flex items-center gap-2 min-w-0">
+              <Landmark className={`w-4 h-4 flex-shrink-0 ${isDD ? 'text-blue-600' : 'text-gray-400'}`} />
+              <p className="text-sm text-gray-700 truncate">
+                Subs payment method: <span className="font-semibold">{isDD ? 'Direct Debit / Bank Transfer' : 'Card'}</span>
+              </p>
+            </div>
+            <Button size="sm" variant="outline" onClick={toggleDD} className="flex-shrink-0">
+              {isDD ? 'Switch to card' : 'Set as Direct Debit'}
+            </Button>
+          </div>
+        )}
         {incomeEntries.length === 0 ? (
           <p className="text-center text-gray-400 py-8">No payment records for this member</p>
         ) : (
