@@ -65,6 +65,14 @@ export default function MemberPaymentsTab({ memberId, memberName = '', readOnly 
     toast.success(isDD ? 'Set to card payments' : 'Set to direct debit / bank transfer');
   };
 
+  const cancelSubscription = async () => {
+    if (!confirm(`Cancel ${memberName || 'this member'}'s card subscription? Membership stays paid until the end of the current billing period.`)) return;
+    const res = await base44.functions.invoke('cancelStripeSubscription', { member_id: memberId });
+    if (res?.data?.error) { toast.error(res.data.error); return; }
+    toast.success('Subscription cancelled');
+    queryClient.invalidateQueries({ queryKey: ['member-record', memberId] });
+  };
+
   const { data: events = [] } = useQuery({
     queryKey: ['events-list-bank'],
     queryFn: () => base44.entities.Event.list('-start_date', 100),
@@ -259,6 +267,19 @@ export default function MemberPaymentsTab({ memberId, memberName = '', readOnly 
         )}
       </CardHeader>
       <CardContent>
+        {!readOnly && memberRecord?.stripe_subscription_id && (
+          <div className="flex items-center justify-between gap-3 p-3 mb-4 rounded-lg border bg-green-50 border-green-200">
+            <div className="flex items-center gap-2 min-w-0">
+              <CreditCard className="w-4 h-4 flex-shrink-0 text-green-600" />
+              <p className="text-sm text-gray-700 truncate">
+                Subs payment method: <span className="font-semibold">Active card subscription</span>
+              </p>
+            </div>
+            <Button size="sm" variant="outline" onClick={cancelSubscription} className="flex-shrink-0 border-red-300 text-red-600 hover:bg-red-50">
+              Cancel subscription
+            </Button>
+          </div>
+        )}
         {!readOnly && memberRecord && !memberRecord.stripe_subscription_id && (
           <div className={`flex items-center justify-between gap-3 p-3 mb-4 rounded-lg border ${isDD ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
             <div className="flex items-center gap-2 min-w-0">

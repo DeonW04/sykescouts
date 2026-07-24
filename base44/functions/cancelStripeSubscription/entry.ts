@@ -14,6 +14,16 @@ Deno.serve(async (req) => {
   if (!members.length) return Response.json({ error: 'Member not found' }, { status: 404 });
   const member = members[0];
 
+  // Only staff (admin/treasurer/glv/team_leader), leaders, or the member's own parent may cancel
+  const isStaff = ['admin', 'treasurer', 'glv', 'team_leader'].includes(user.role);
+  const isParent = member.parent_one_email === user.email || member.parent_two_email === user.email;
+  let allowed = isStaff || isParent;
+  if (!allowed) {
+    const leaders = await base44.asServiceRole.entities.Leader.filter({ user_id: user.id });
+    allowed = leaders.length > 0;
+  }
+  if (!allowed) return Response.json({ error: 'Not authorised to cancel this subscription' }, { status: 403 });
+
   if (!member.stripe_subscription_id) return Response.json({ error: 'No active subscription found' }, { status: 400 });
 
   await stripe.subscriptions.update(member.stripe_subscription_id, {

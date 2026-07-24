@@ -28,6 +28,8 @@ export default function WebSubscriptionSection({ child }) {
   const [setupInterval, setSetupInterval] = useState(null);
   const [useNewCard, setUseNewCard] = useState(false);
   const [activatingWithCard, setActivatingWithCard] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const { data: subsConfig } = useQuery({
     queryKey: ['subs-config', child?.section_id],
@@ -123,6 +125,20 @@ export default function WebSubscriptionSection({ child }) {
       }
     } catch (err) { toast.error(err.message || 'Failed to update date'); }
     finally { setChangingDate(false); }
+  };
+
+  const handleCancelSubscription = async () => {
+    setCancelling(true);
+    try {
+      const res = await base44.functions.invoke('cancelStripeSubscription', { member_id: child.id });
+      if (res?.data?.error) { toast.error(res.data.error); }
+      else {
+        toast.success('Subscription cancelled — membership remains paid until the end of the current period.');
+        setShowCancelConfirm(false);
+        refresh();
+      }
+    } catch (err) { toast.error(err.message || 'Failed to cancel subscription'); }
+    finally { setCancelling(false); }
   };
 
   const handleIntervalConfirm = async () => {
@@ -426,6 +442,27 @@ export default function WebSubscriptionSection({ child }) {
               <div className="border rounded-xl p-5 space-y-3">
                 <p className="text-sm font-semibold text-gray-700">Enter new card details:</p>
                 <InlineCardSetup memberId={child.id} onSuccess={() => { setShowChangeCard(false); refresh(); }} onCancel={() => setShowChangeCard(false)} />
+              </div>
+            )}
+
+            {/* Cancel subscription */}
+            {!showCancelConfirm ? (
+              <div>
+                <button onClick={() => setShowCancelConfirm(true)} className="text-sm text-red-600 font-medium underline hover:no-underline">
+                  Cancel subscription
+                </button>
+              </div>
+            ) : (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl space-y-3 max-w-md">
+                <p className="text-sm text-red-800 font-medium">
+                  Cancel this subscription? Membership stays paid until the end of the current billing period — no further payments will be taken.
+                </p>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setShowCancelConfirm(false)}>Keep subscription</Button>
+                  <Button size="sm" onClick={handleCancelSubscription} disabled={cancelling} className="bg-red-600 hover:bg-red-700">
+                    {cancelling ? 'Cancelling...' : 'Confirm cancellation'}
+                  </Button>
+                </div>
               </div>
             )}
           </div>

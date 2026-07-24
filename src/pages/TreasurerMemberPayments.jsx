@@ -65,6 +65,14 @@ export default function TreasurerMemberPayments() {
     toast.success(isDD ? `${member.full_name} set to card payments` : `${member.full_name} set to direct debit / bank transfer`);
   };
 
+  const cancelSubscription = async () => {
+    if (!confirm(`Cancel ${member.full_name}'s card subscription? Membership stays paid until the end of the current billing period.`)) return;
+    const res = await base44.functions.invoke('cancelStripeSubscription', { member_id: member.id });
+    if (res?.data?.error) { toast.error(res.data.error); return; }
+    toast.success('Subscription cancelled');
+    queryClient.invalidateQueries({ queryKey: ['members-active'] });
+  };
+
   return (
     <TreasurerLayout title="Member Payments">
       <div className="mb-6">
@@ -92,10 +100,14 @@ export default function TreasurerMemberPayments() {
                   <CreditCard className="w-4 h-4 text-[#004851]" />
                   {member.full_name} — Subscription Status
                 </CardTitle>
-                {!member.stripe_subscription_id && (
+                {!member.stripe_subscription_id ? (
                   <Button size="sm" variant="outline" onClick={toggleDD} className={isDD ? '' : 'border-blue-300 text-blue-700 hover:bg-blue-50'}>
                     <Landmark className="w-4 h-4 mr-1.5" />
                     {isDD ? 'Switch to card payments' : 'Set as Direct Debit / Bank Transfer'}
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={cancelSubscription} className="border-red-300 text-red-600 hover:bg-red-50">
+                    Cancel card subscription
                   </Button>
                 )}
               </div>
