@@ -11,7 +11,8 @@
         "cta",
         "about",
         "contact",
-        "login"
+        "login",
+        "parent_dashboard"
       ],
       "description": "Which section/page this image belongs to"
     },

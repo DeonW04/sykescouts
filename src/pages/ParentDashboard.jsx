@@ -16,6 +16,9 @@ import { createPageUrl } from '../utils';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSelectedChildId } from '@/hooks/useSelectedChild';
+import DashboardHero from '@/components/parent/dashboard/DashboardHero';
+import AwardJourneySection from '@/components/parent/dashboard/AwardJourneySection';
+import ScoutingJourneyBar from '@/components/parent/dashboard/ScoutingJourneyBar';
 
 
 // Handle parent volunteer responses
@@ -121,9 +124,23 @@ export default function ParentDashboard() {
   });
 
   const children = portal?.children || [];
-  const [selectedChildId] = useSelectedChildId(children);
+  const [selectedChildId, setSelectedChildId] = useSelectedChildId(children);
   const selectedChild = children.find(c => c.id === selectedChildId) || children[0];
   const childIds = selectedChild ? [selectedChild.id] : [];
+
+  const { data: sections = [] } = useQuery({
+    queryKey: ['sections'],
+    queryFn: () => base44.entities.Section.filter({}),
+    staleTime: 30 * 60 * 1000,
+  });
+  const childSection = sections.find(s => s.id === selectedChild?.section_id);
+
+  const { data: dashHeroImages = [] } = useQuery({
+    queryKey: ['parent-dashboard-hero-images'],
+    queryFn: () => base44.entities.WebsiteImage.filter({ page: 'parent_dashboard' }),
+    staleTime: 30 * 60 * 1000,
+  });
+  const heroImage = dashHeroImages.find(i => i.label === childSection?.name)?.image_url || null;
 
   const upcomingEvents = (reference?.events || [])
     .filter(e => new Date(e.start_date) > new Date())
@@ -285,29 +302,16 @@ export default function ParentDashboard() {
       </div>
     )}
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-      {/* Header */}
-      <div className="relative bg-gradient-to-br from-[#7413dc] via-[#8b32eb] to-[#5c0fb0] text-white py-20 overflow-hidden">
-        {/* Animated background elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute top-20 right-20 w-96 h-96 bg-gradient-to-br from-pink-400/20 to-purple-400/20 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-10 left-1/3 w-80 h-80 bg-gradient-to-br from-cyan-400/15 to-blue-400/15 rounded-full blur-3xl"></div>
-        </div>
-        {/* Overlay pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.1),transparent_50%)]"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_50%,rgba(255,255,255,0.08),transparent_50%)]"></div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full mb-4 border border-white/30">
-              <Users className="w-4 h-4" />
-              <p className="text-sm font-semibold">Parent Portal</p>
-            </div>
-            <h1 className="text-5xl font-bold mb-3 drop-shadow-lg">Welcome back, {user.display_name || user.full_name}!</h1>
-            <p className="text-purple-100 text-xl drop-shadow">Manage your child's scouting journey all in one place</p>
-          </div>
-        </div>
-      </div>
+      {/* Hero — section-based configurable image */}
+      <DashboardHero
+        user={user}
+        children={children}
+        selectedChild={selectedChild}
+        onSelectChild={setSelectedChildId}
+        heroImage={heroImage}
+        sectionName={childSection?.name}
+        sectionDisplayName={childSection?.display_name}
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Quick Stats Grid */}
@@ -672,6 +676,20 @@ export default function ParentDashboard() {
             </Card>
           </div>
         </div>
+
+        {/* Award progress diagram + badge stats */}
+        {selectedChild && (
+          <div className="mt-10">
+            <AwardJourneySection child={selectedChild} sectionName={childSection?.name} />
+          </div>
+        )}
+
+        {/* Scouting journey progress */}
+        {selectedChild && (
+          <div className="mt-6">
+            <ScoutingJourneyBar child={selectedChild} />
+          </div>
+        )}
         </div>
         </div>
 
