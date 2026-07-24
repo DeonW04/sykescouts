@@ -277,10 +277,10 @@ export default function ParentDashboard() {
   }
 
   const quickStats = [
-    { icon: Users, label: 'My Child', gradient: 'from-blue-500 to-cyan-500', onClick: () => navigate(createPageUrl('MyChild')) },
-    { icon: Calendar, label: 'Programme', gradient: 'from-green-500 to-emerald-500', onClick: () => navigate(createPageUrl('ParentProgramme')) },
-    { icon: Tent, label: 'Events/Camps', gradient: 'from-purple-500 to-pink-500', onClick: () => navigate(createPageUrl('ParentEvents')) },
-    { icon: Award, label: 'Badges', gradient: 'from-yellow-500 to-orange-500', onClick: () => navigate(createPageUrl('ParentBadges')) },
+    { icon: Users, label: 'My Child', accent: '#3b82f6', onClick: () => navigate(createPageUrl('MyChild')) },
+    { icon: Calendar, label: 'Programme', accent: '#22c55e', onClick: () => navigate(createPageUrl('ParentProgramme')) },
+    { icon: Tent, label: 'Events/Camps', accent: '#a855f7', onClick: () => navigate(createPageUrl('ParentEvents')) },
+    { icon: Award, label: 'Badges', accent: '#f59e0b', onClick: () => navigate(createPageUrl('ParentBadges')) },
   ];
 
   return (
@@ -301,7 +301,8 @@ export default function ParentDashboard() {
         </div>
       </div>
     )}
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(160deg, #f8f7ff 0%, #f0eeff 50%, #f0fdf4 100%)', fontFamily: 'DM Sans, sans-serif' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap');`}</style>
       {/* Hero — section-based configurable image */}
       <DashboardHero
         user={user}
@@ -315,32 +316,19 @@ export default function ParentDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          {quickStats.map((stat, index) => (
-            <motion.div
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
+          {quickStats.map((stat) => (
+            <button
               key={stat.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.05 }}
-              whileHover={{ scale: 1.05 }}
+              onClick={stat.onClick}
+              className="bg-white/90 backdrop-blur-xl rounded-[18px] p-5 flex flex-col items-center gap-3 transition-all hover:-translate-y-1 hover:shadow-lg"
+              style={{ border: `1px solid ${stat.accent}20`, boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}
             >
-              <Card 
-                className="group hover:shadow-2xl transition-all duration-300 cursor-pointer border-0 bg-gradient-to-br from-white to-gray-50 overflow-hidden relative"
-                onClick={stat.onClick}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300" style={{
-                  background: `linear-gradient(135deg, var(--tw-gradient-stops))`
-                }} />
-                <CardContent className="p-6 relative">
-                  <div className="flex flex-col items-center text-center">
-                    <div className={`w-16 h-16 bg-gradient-to-br ${stat.gradient} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
-                      <stat.icon className="w-8 h-8 text-white" />
-                    </div>
-                    <p className="font-semibold text-gray-900">{stat.label}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${stat.accent}18` }}>
+                <stat.icon className="w-5 h-5" style={{ color: stat.accent }} />
+              </div>
+              <p className="font-semibold text-sm" style={{ color: '#1a1a2e' }}>{stat.label}</p>
+            </button>
           ))}
         </div>
 
@@ -348,12 +336,11 @@ export default function ParentDashboard() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Side - Actions Required */}
           <div className="lg:col-span-1">
-            <Card className="h-full border-0 bg-gradient-to-br from-orange-50 via-white to-orange-50/30 shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-400/10 to-transparent rounded-full blur-2xl" />
-              <CardHeader className="relative">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
-                    <AlertCircle className="w-5 h-5 text-white" />
+            <Card className="h-full border border-[#7413dc]/10 bg-white/90 backdrop-blur-xl rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg" style={{ fontFamily: 'Outfit, sans-serif', color: '#1a1a2e' }}>
+                  <div className="w-9 h-9 rounded-xl bg-orange-500/10 flex items-center justify-center">
+                    <AlertCircle className="w-5 h-5 text-orange-500" />
                   </div>
                   Actions Required
                 </CardTitle>
@@ -568,12 +555,11 @@ export default function ParentDashboard() {
           {/* Right Side - Meetings and Events */}
           <div className="lg:col-span-2 space-y-6">
             {/* Next Weekly Meeting */}
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-green-50 via-white to-emerald-50/30 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-green-400/10 to-transparent rounded-full blur-2xl" />
-              <CardHeader className="relative">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-white" />
+            <Card className="border border-[#7413dc]/10 bg-white/90 backdrop-blur-xl rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg" style={{ fontFamily: 'Outfit, sans-serif', color: '#1a1a2e' }}>
+                  <div className="w-9 h-9 rounded-xl bg-green-500/10 flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-green-600" />
                   </div>
                   Next Meeting
                 </CardTitle>
@@ -614,12 +600,11 @@ export default function ParentDashboard() {
             </Card>
 
             {/* Upcoming Events and Camps */}
-            <Card className="border-0 shadow-xl bg-gradient-to-br from-purple-50 via-white to-pink-50/30 relative overflow-hidden">
-              <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-400/10 to-transparent rounded-full blur-2xl" />
-              <CardHeader className="relative">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                    <Tent className="w-5 h-5 text-white" />
+            <Card className="border border-[#7413dc]/10 bg-white/90 backdrop-blur-xl rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.05)]">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg" style={{ fontFamily: 'Outfit, sans-serif', color: '#1a1a2e' }}>
+                  <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                    <Tent className="w-5 h-5 text-[#7413dc]" />
                   </div>
                   Upcoming Events
                 </CardTitle>

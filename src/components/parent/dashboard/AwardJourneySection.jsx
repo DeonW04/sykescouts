@@ -9,9 +9,9 @@ import { createPageUrl } from '@/utils';
 import BadgeCluster from '@/components/mobile/award/BadgeCluster';
 
 const AWARD_CONFIG = {
-  scouts: { title: "Chief Scout's Gold Award", accent: '#f59e0b', gradient: 'linear-gradient(160deg, #14213d 0%, #0f172a 55%, #1a1024 100%)', implemented: true },
-  cubs: { title: "Chief Scout's Silver Award", accent: '#94a3b8', gradient: 'linear-gradient(160deg, #1e293b 0%, #0f172a 55%, #1a1f35 100%)', implemented: false },
-  beavers: { title: "Chief Scout's Bronze Award", accent: '#b45309', gradient: 'linear-gradient(160deg, #2a1a0f 0%, #0f172a 55%, #1f1408 100%)', implemented: false },
+  scouts: { title: "Chief Scout's Gold Award", accent: '#f59e0b', implemented: true },
+  cubs: { title: "Chief Scout's Silver Award", accent: '#64748b', implemented: false },
+  beavers: { title: "Chief Scout's Bronze Award", accent: '#b45309', implemented: false },
 };
 
 export default function AwardJourneySection({ child, sectionName }) {
@@ -80,13 +80,13 @@ export default function AwardJourneySection({ child, sectionName }) {
   const goToAward = () => navigate(createPageUrl(section === 'cubs' ? 'ParentSilverAward' : 'ParentGoldAward'));
 
   return (
-    <Card className="border-0 shadow-xl overflow-hidden">
-      <div style={{ background: config.gradient }} className="px-6 pt-8 pb-6">
+    <Card className="border border-[#7413dc]/10 bg-white/90 backdrop-blur-xl rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] overflow-hidden">
+      <div className="px-6 pt-8 pb-6">
         <div className="text-center mb-4">
-          <p className="text-xs font-extrabold uppercase tracking-widest mb-1" style={{ color: config.accent }}>Highest Award</p>
-          <h2 className="text-2xl font-extrabold text-white">{config.title}</h2>
+          <p className="text-[11px] font-semibold uppercase mb-1" style={{ color: config.accent, letterSpacing: '0.12em' }}>Highest Award</p>
+          <h2 className="text-2xl font-bold" style={{ fontFamily: 'Outfit, sans-serif', color: '#1a1a2e' }}>{config.title}</h2>
           {challengeBadges.length > 0 && (
-            <p className="text-sm text-white/50 mt-1">
+            <p className="text-sm text-gray-500 mt-1">
               {challengeEarned} of {challengeBadges.length} challenge badges complete{awardEarned ? ' · 🏆 Achieved!' : ''}
             </p>
           )}
@@ -105,19 +105,19 @@ export default function AwardJourneySection({ child, sectionName }) {
               onBadgeClick={goToAward}
               onAwardClick={goToAward}
             />
-            <p className="text-center text-white/30 text-xs mt-4">Tap any badge to explore its requirements</p>
+            <p className="text-center text-gray-400 text-xs mt-4">Tap any badge to explore its requirements</p>
           </div>
         ) : (
-          <div className="max-w-md mx-auto text-center py-10 px-6 rounded-2xl border border-dashed" style={{ borderColor: `${config.accent}55`, background: 'rgba(255,255,255,0.03)' }}>
+          <div className="max-w-md mx-auto text-center py-10 px-6 rounded-2xl border border-dashed bg-gray-50/70" style={{ borderColor: `${config.accent}55` }}>
             <Sparkles className="w-10 h-10 mx-auto mb-3" style={{ color: config.accent }} />
-            <p className="text-white font-bold mb-1">{config.title} diagram coming soon</p>
-            <p className="text-white/45 text-sm">We're building the interactive badge diagram for this section. Badge progress is still tracked below.</p>
+            <p className="font-bold mb-1" style={{ color: '#1a1a2e' }}>{config.title} diagram coming soon</p>
+            <p className="text-gray-500 text-sm">We're building the interactive badge diagram for this section. Badge progress is still tracked below.</p>
           </div>
         )}
       </div>
 
       {/* Stats + view all */}
-      <CardContent className="p-6 bg-white">
+      <CardContent className="p-6 border-t border-gray-100">
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-center">
             <Trophy className="w-6 h-6 text-amber-600 mx-auto mb-1" />
