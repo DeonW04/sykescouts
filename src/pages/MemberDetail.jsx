@@ -11,6 +11,7 @@ import EditMemberDialog from '../components/EditMemberDialog';
 import OSMLinkSection from '../components/member/OSMLinkSection';
 import BadgesTab from '../components/member/BadgesTab';
 import MemberPaymentsTab from '../components/member/MemberPaymentsTab';
+import ParentPortalTab from '../components/member/ParentPortalTab';
 import { toast } from 'sonner';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
@@ -323,6 +324,7 @@ export default function MemberDetail() {
                 { value: 'attendance', icon: Calendar, label: 'Attendance' },
                 { value: 'notes', icon: FileText, label: 'Notes' },
                 { value: 'payments', icon: CreditCard, label: 'Payments' },
+                { value: 'portal', icon: Users, label: 'Parent Portal' },
               ].map(({ value, icon: Icon, label }) => (
                 <TabsTrigger key={value} value={value} className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium whitespace-nowrap flex-shrink-0">
                   <Icon className="w-3.5 h-3.5" />{label}
@@ -674,6 +676,11 @@ export default function MemberDetail() {
               </div>
             )}
             <MemberPaymentsTab memberId={memberId} memberName={member?.full_name} />
+          </TabsContent>
+
+          {/* Parent Portal Tab */}
+          <TabsContent value="portal">
+            <ParentPortalTab member={member} section={section} />
           </TabsContent>
 
           {/* Notes Tab */}

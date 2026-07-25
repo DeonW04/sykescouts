@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Upload } from 'lucide-react';
 import BannerCropStage from './BannerCropStage';
 
-export default function BannerPickerDialog({ open, onOpenChange, onComplete, allowUpload = false, title = 'Choose a banner image' }) {
+export default function BannerPickerDialog({ open, onOpenChange, onComplete, allowUpload = false, sectionId = null, title = 'Choose a banner image' }) {
   const [album, setAlbum] = useState(null);
   const [cropUrl, setCropUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -28,8 +28,12 @@ export default function BannerPickerDialog({ open, onOpenChange, onComplete, all
   });
 
   const visiblePhotos = useMemo(
-    () => photos.filter(p => p.approval_status !== 'pending' && p.visible_to !== 'leaders'),
-    [photos]
+    () => photos.filter(p =>
+      p.approval_status !== 'pending' &&
+      p.visible_to !== 'leaders' &&
+      (!sectionId || p.section_id === sectionId || p.section_id === 'all')
+    ),
+    [photos, sectionId]
   );
 
   // All camps/events/meetings combined, most recent first

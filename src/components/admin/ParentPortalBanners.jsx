@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Image, Users, X, Search } from 'lucide-react';
+import { Image, Users, X, Search, ImagePlus } from 'lucide-react';
 import { toast } from 'sonner';
 import BannerPickerDialog from '@/components/banner/BannerPickerDialog';
+import BannerPreview from '@/components/banner/BannerPreview';
 
 const SLOTS = [
   { label: 'Beavers', slug: 'beavers' },
@@ -16,32 +17,13 @@ const SLOTS = [
   { label: 'Scouts', slug: 'scouts' },
 ];
 
-function BannerPreview({ imageUrl, position, memberName, sectionLabel }) {
-  return (
-    <div className="relative h-48 rounded-xl overflow-hidden text-white">
-      {imageUrl ? (
-        <img src={imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: position || '50% 50%' }} />
-      ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-[#7413dc] via-[#8b32eb] to-[#5c0fb0]" />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/40 to-black/20" />
-      <div className="relative h-full flex flex-col justify-end p-4">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/15 backdrop-blur-sm rounded-full border border-white/25 w-fit text-[10px] font-semibold mb-2">
-          <Users className="w-3 h-3" /> Parent Portal
-        </span>
-        <p className="text-lg font-bold drop-shadow">Welcome back!</p>
-        {memberName && <p className="text-xs text-white/85">{memberName}{sectionLabel ? ` · ${sectionLabel}` : ''}</p>}
-      </div>
-    </div>
-  );
-}
-
 export default function ParentPortalBanners() {
   const queryClient = useQueryClient();
   const [pickerSlot, setPickerSlot] = useState(null);
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
   const [selectedMember, setSelectedMember] = useState(null);
+  const [memberPickerOpen, setMemberPickerOpen] = useState(false);
 
   const { data: images = [] } = useQuery({
     queryKey: ['parent-dashboard-hero-images'],
@@ -166,11 +148,14 @@ export default function ParentPortalBanners() {
 
           {selectedMember && (
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <p className="text-sm font-semibold text-gray-800">{selectedMember.full_name}'s dashboard banner</p>
                 <Badge className={selectedMember.custom_banner_url ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-600'}>
                   {selectedMember.custom_banner_url ? 'Custom' : 'Default'}
                 </Badge>
+                <Button size="sm" variant="outline" className="ml-auto" onClick={() => setMemberPickerOpen(true)}>
+                  <ImagePlus className="w-3.5 h-3.5 mr-1.5" />Change banner
+                </Button>
               </div>
               <BannerPreview
                 imageUrl={memberBannerUrl}
@@ -219,7 +204,25 @@ export default function ParentPortalBanners() {
         onOpenChange={(o) => { if (!o) setPickerSlot(null); }}
         onComplete={handleSlotComplete}
         allowUpload
+        sectionId={sections.find(s => s.name === pickerSlot)?.id}
         title={`Choose the ${SLOTS.find(s => s.slug === pickerSlot)?.label || ''} default banner`}
+      />
+
+      {/* Picker for an individual member's banner */}
+      <BannerPickerDialog
+        open={memberPickerOpen}
+        onOpenChange={setMemberPickerOpen}
+        onComplete={async (url, position) => {
+          try {
+            await base44.entities.Member.update(selectedMember.id, { custom_banner_url: url, custom_banner_position: position });
+            setSelectedMember({ ...selectedMember, custom_banner_url: url, custom_banner_position: position });
+            queryClient.invalidateQueries({ queryKey: ['all-members-admin'] });
+            toast.success('Banner updated');
+          } catch { toast.error('Failed to update banner'); }
+        }}
+        allowUpload
+        sectionId={selectedMember?.section_id}
+        title={selectedMember ? `Choose ${selectedMember.first_name}'s banner` : 'Choose a banner image'}
       />
     </div>
   );
