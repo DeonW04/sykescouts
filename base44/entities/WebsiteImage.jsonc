@@ -32,6 +32,10 @@
       "type": "string",
       "description": "URL of the image"
     },
+    "position": {
+      "type": "string",
+      "description": "CSS object-position crop focus for banner images, e.g. '50% 30%'"
+    },
     "order": {
       "type": "number",
       "description": "Display order (used for hero slideshow \u2014 lower numbers appear first)"

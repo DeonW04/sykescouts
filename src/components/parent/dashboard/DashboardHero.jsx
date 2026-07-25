@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users } from 'lucide-react';
+import { Users, ImagePlus } from 'lucide-react';
 import { childInitials, childColor } from '@/hooks/useSelectedChild';
 
 const SECTION_COLORS = {
@@ -7,18 +7,26 @@ const SECTION_COLORS = {
   scouts: '#004851', explorers: '#003982',
 };
 
-export default function DashboardHero({ user, children, selectedChild, onSelectChild, heroImage, sectionName, sectionDisplayName }) {
+export default function DashboardHero({ user, children, selectedChild, onSelectChild, heroImage, heroPosition, sectionName, sectionDisplayName, onChangeImage }) {
   const accent = SECTION_COLORS[sectionName] || '#7413dc';
 
   return (
     <div className="relative overflow-hidden text-white" style={{ minHeight: 320 }}>
       {/* Background: configurable section image, falls back to brand gradient */}
       {heroImage ? (
-        <img src={heroImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <img src={heroImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ objectPosition: heroPosition || '50% 50%' }} />
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-[#7413dc] via-[#8b32eb] to-[#5c0fb0]" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/40 to-black/20" />
+      {onChangeImage && (
+        <button
+          onClick={onChangeImage}
+          className="absolute top-4 right-4 z-10 flex items-center gap-1.5 px-3 py-1.5 bg-black/30 hover:bg-black/50 backdrop-blur-sm border border-white/30 rounded-full text-xs font-semibold text-white transition-colors"
+        >
+          <ImagePlus className="w-3.5 h-3.5" /> Change image
+        </button>
+      )}
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col justify-end" style={{ minHeight: 320 }}>
         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/15 backdrop-blur-sm rounded-full mb-4 border border-white/25 w-fit">

@@ -259,6 +259,14 @@
       "type": "string",
       "format": "date",
       "description": "Manual subscription expiry date for members on legacy/cash payment arrangements (not Stripe)"
+    },
+    "custom_banner_url": {
+      "type": "string",
+      "description": "Custom parent dashboard banner image chosen by the parent"
+    },
+    "custom_banner_position": {
+      "type": "string",
+      "description": "CSS object-position crop focus for the custom banner, e.g. '50% 30%'"
     }
   },
   "required": [

@@ -19,6 +19,7 @@ import { useSelectedChildId } from '@/hooks/useSelectedChild';
 import DashboardHero from '@/components/parent/dashboard/DashboardHero';
 import AwardJourneySection from '@/components/parent/dashboard/AwardJourneySection';
 import ScoutingJourneyBar from '@/components/parent/dashboard/ScoutingJourneyBar';
+import BannerPickerDialog from '@/components/banner/BannerPickerDialog';
 
 
 // Handle parent volunteer responses
@@ -72,6 +73,7 @@ export default function ParentDashboard() {
   const [textInputs, setTextInputs] = useState({});
   const [dropdownValues, setDropdownValues] = useState({});
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [bannerPickerOpen, setBannerPickerOpen] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -140,7 +142,16 @@ export default function ParentDashboard() {
     queryFn: () => base44.entities.WebsiteImage.filter({ page: 'parent_dashboard' }),
     staleTime: 30 * 60 * 1000,
   });
-  const heroImage = dashHeroImages.find(i => i.label === childSection?.name)?.image_url || null;
+  const defaultHero = dashHeroImages.find(i => i.label === childSection?.name);
+  const heroImage = selectedChild?.custom_banner_url || defaultHero?.image_url || null;
+  const heroPosition = (selectedChild?.custom_banner_url ? selectedChild?.custom_banner_position : defaultHero?.position) || '50% 50%';
+
+  const saveCustomBanner = async (url, position) => {
+    if (!selectedChild) return;
+    await base44.entities.Member.update(selectedChild.id, { custom_banner_url: url, custom_banner_position: position });
+    queryClient.invalidateQueries({ queryKey: ['parent-portal'] });
+    toast.success('Banner updated');
+  };
 
   const upcomingEvents = (reference?.events || [])
     .filter(e => new Date(e.start_date) > new Date())
@@ -310,8 +321,15 @@ export default function ParentDashboard() {
         selectedChild={selectedChild}
         onSelectChild={setSelectedChildId}
         heroImage={heroImage}
+        heroPosition={heroPosition}
         sectionName={childSection?.name}
         sectionDisplayName={childSection?.display_name}
+        onChangeImage={() => setBannerPickerOpen(true)}
+      />
+      <BannerPickerDialog
+        open={bannerPickerOpen}
+        onOpenChange={setBannerPickerOpen}
+        onComplete={saveCustomBanner}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

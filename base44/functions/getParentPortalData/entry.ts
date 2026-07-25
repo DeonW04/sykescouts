@@ -17,6 +17,7 @@ const MEMBER_FIELDS = [
   'next_subs_due', 'last_subs_payment_date', 'last_subs_months_paid',
   'stripe_customer_id', 'stripe_payment_methods', 'stripe_subscription_id',
   'subs_interval', 'subs_payment_type', 'legacy_subs_expiry',
+  'custom_banner_url', 'custom_banner_position',
 ];
 
 const pickMember = (m) => {

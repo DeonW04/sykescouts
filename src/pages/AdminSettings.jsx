@@ -46,6 +46,7 @@ import ParentPortalAnalyticsPanel from '../components/admin/ParentPortalAnalytic
 import ManageBadgesPanel from '../components/admin/ManageBadgesPanel';
 import ArchivedMembersPanel from '../components/admin/ArchivedMembersPanel';
 import AiPlanningDataPanel from '../components/admin/AiPlanningDataPanel';
+import ParentPortalBanners from '../components/admin/ParentPortalBanners';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const SECTION_STYLES = {
@@ -68,6 +69,7 @@ const SECTIONS = [
       { key: 'analytics',  label: 'Parent Portal Analytics', icon: BarChart2 },
       { key: 'push',       label: 'Push Notifications',      icon: Bell },
       { key: 'notif-log',  label: 'Notification Log',        icon: Mail },
+      { key: 'banners',    label: 'Parent Portal Banners',   icon: Image },
     ]},
   { key: 'group',   label: 'Group Management', icon: Settings, description: 'Sections & badges',
     pages: [
@@ -523,6 +525,7 @@ export default function AdminSettings() {
       case 'subs':          return <SubscriptionPricingTab />;
       case 'push':          return <PushNotificationsTab />;
       case 'notif-log':     return <NotificationLogTab />;
+      case 'banners':       return <ParentPortalBanners />;
       case 'osm-overview':  return <OSMOverview />;
       case 'osm-members':   return <OSMSyncPanel defaultTab="member-sync" />;
       case 'osm-programme': return <OSMSyncPanel defaultTab="programme-sync" />;
