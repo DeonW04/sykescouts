@@ -58,6 +58,7 @@ export const ROUTE_MAP = {
   JoiningInBadgeDetail: '/leader/badges/joining-in',
   GoldAwardDetail: '/leader/badges/gold-award',
   SilverAwardDetail: '/leader/badges/silver-award',
+  BronzeAwardDetail: '/leader/badges/bronze-award',
   OSMBadgeImport: '/leader/badges/import',
   ImportBadges: '/leader/badges/import-legacy',
 
@@ -113,6 +114,7 @@ export const ROUTE_MAP = {
   ParentBadges: '/parent/badges',
   ParentGoldAward: '/parent/gold-award',
   ParentSilverAward: '/parent/silver-award',
+  ParentBronzeAward: '/parent/bronze-award',
 
   // --- Account ---
   AccountSettings: '/account/settings',

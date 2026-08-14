@@ -51,6 +51,8 @@ import AccountSettings from './pages/AccountSettings';
 import OSMBadgeImport from './pages/OSMBadgeImport';
 import SilverAwardDetail from './pages/SilverAwardDetail';
 import ParentSilverAward from './pages/ParentSilverAward';
+import BronzeAwardDetail from './pages/BronzeAwardDetail';
+import ParentBronzeAward from './pages/ParentBronzeAward';
 import { ROUTE_MAP } from '@/lib/routeMap';
 import { PortalContextProvider } from '@/lib/PortalContextProvider';
 import PortalContextModal from '@/components/portal/PortalContextModal';
@@ -105,7 +107,10 @@ const ALL_PAGES = {
   OSMBadgeImport,
   SilverAwardDetail,
   ParentSilverAward,
+  BronzeAwardDetail,
+  ParentBronzeAward,
   MobileDashboardDemo,
+
 };
 
 // Pages that render standalone (no LayoutWrapper) on their original routes —
@@ -252,6 +257,8 @@ const AuthenticatedApp = () => {
       <Route path="/OSMBadgeImport" element={<OSMBadgeImport />} />
       <Route path="/SilverAwardDetail" element={<LayoutWrapper currentPageName="SilverAwardDetail"><SilverAwardDetail /></LayoutWrapper>} />
       <Route path="/ParentSilverAward" element={<LayoutWrapper currentPageName="ParentSilverAward"><ParentSilverAward /></LayoutWrapper>} />
+      <Route path="/BronzeAwardDetail" element={<LayoutWrapper currentPageName="BronzeAwardDetail"><BronzeAwardDetail /></LayoutWrapper>} />
+      <Route path="/ParentBronzeAward" element={<LayoutWrapper currentPageName="ParentBronzeAward"><ParentBronzeAward /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
     </PWAGate>

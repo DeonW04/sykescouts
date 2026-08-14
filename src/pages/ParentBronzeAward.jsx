@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy, Star, Award, CheckCircle, Circle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Trophy, Star, CheckCircle, Circle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -14,10 +13,9 @@ import { useNavigate } from 'react-router-dom';
 import HoneycombAwardPage from '../components/mobile/HoneycombAwardPage';
 import { useSelectedChildId } from '@/hooks/useSelectedChild';
 
-const CUBS_CHALLENGE_REQUIRED = 7;
-const ACTIVITY_REQUIRED = 6;
+const BEAVERS_CHALLENGE_REQUIRED = 6;
 
-export default function ParentSilverAward() {
+export default function ParentBronzeAward() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [selectedBadge, setSelectedBadge] = useState(null);
@@ -96,12 +94,12 @@ export default function ParentSilverAward() {
   }
 
   // On mobile: render the immersive honeycomb view
-  const silverAwardBadgeMobile = badges.find(b => b.is_chief_scout_award && b.section === 'cubs')
+  const bronzeAwardBadgeMobile = badges.find(b => b.is_chief_scout_award && b.section === 'beavers')
     || badges.find(b => b.is_chief_scout_award);
-  if (isMobile && silverAwardBadgeMobile) {
+  if (isMobile && bronzeAwardBadgeMobile) {
     return (
       <HoneycombAwardPage
-        badge={silverAwardBadgeMobile}
+        badge={bronzeAwardBadgeMobile}
         child={child}
         badges={badges}
         modules={modules}
@@ -110,39 +108,26 @@ export default function ParentSilverAward() {
         awards={awards}
         badgeProgress={badgeProgress}
         onClose={() => navigate(-1)}
-        section="cubs"
+        section="beavers"
       />
     );
   }
 
-  const challengeBadges = badges.filter(b =>
-    b.category === 'challenge' && b.section === 'cubs' && !b.is_chief_scout_award
-  );
-
-  const activityBadges = badges.filter(b =>
-    b.category === 'activity' && (b.section === 'cubs' || b.section === 'all') &&
-    !b.name.toLowerCase().includes('joining in award') &&
-    !b.name.toLowerCase().includes('nights away') &&
-    !b.name.toLowerCase().includes('hikes away')
-  );
+  const challengeBadges = badges
+    .filter(b => b.category === 'challenge' && b.section === 'beavers' && !b.is_chief_scout_award)
+    .sort((a, b) => (a.display_priority || 0) - (b.display_priority || 0) || a.name.localeCompare(b.name));
 
   const completedChallenges = challengeBadges.filter(badge =>
     badgeProgress.some(p => p.badge_id === badge.id && p.status === 'completed') ||
     awards.some(a => a.badge_id === badge.id && (a.award_status === 'awarded' || a.award_status === 'pending'))
   );
 
-  const completedActivities = activityBadges.filter(badge =>
-    badgeProgress.some(p => p.badge_id === badge.id && p.status === 'completed') ||
-    awards.some(a => a.badge_id === badge.id && (a.award_status === 'awarded' || a.award_status === 'pending'))
+  const bronzeAward = badges.find(b => b.is_chief_scout_award && b.section === 'beavers');
+  const hasBronzeAward = bronzeAward && awards.some(a =>
+    a.badge_id === bronzeAward.id && a.award_status === 'awarded'
   );
 
-  const silverAward = badges.find(b => b.is_chief_scout_award && b.section === 'cubs');
-  const hasSilverAward = silverAward && awards.some(a =>
-    a.badge_id === silverAward.id && a.award_status === 'awarded'
-  );
-
-  const challengeProgress = challengeBadges.length > 0 ? (completedChallenges.length / CUBS_CHALLENGE_REQUIRED) * 100 : 0;
-  const activityProgress = (completedActivities.length / ACTIVITY_REQUIRED) * 100;
+  const challengeProgress = challengeBadges.length > 0 ? (completedChallenges.length / BEAVERS_CHALLENGE_REQUIRED) * 100 : 0;
 
   const getBadgeModules = (badgeId) => modules.filter(m => m.badge_id === badgeId).sort((a, b) => a.order - b.order);
   const getModuleRequirements = (moduleId) => requirements.filter(r => r.module_id === moduleId).sort((a, b) => a.order - b.order);
@@ -174,17 +159,17 @@ export default function ParentSilverAward() {
       <div style={{ background: '#ffffff', borderBottom: '1px solid rgba(116,19,220,0.1)', padding: '20px 24px' }}>
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-gray-50 border-2 border-gray-300 rounded-xl flex items-center justify-center flex-shrink-0">
-              {silverAward?.image_url ? (
-                <img src={silverAward.image_url} alt="Silver Award" className="w-10 h-10 rounded-lg" />
+            <div className="w-14 h-14 bg-amber-50 border-2 border-amber-700/30 rounded-xl flex items-center justify-center flex-shrink-0">
+              {bronzeAward?.image_url ? (
+                <img src={bronzeAward.image_url} alt="Bronze Award" className="w-10 h-10 rounded-lg" />
               ) : (
-                <Trophy className="w-8 h-8 text-gray-500" />
+                <Trophy className="w-8 h-8 text-amber-700" />
               )}
             </div>
             <div>
               <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Parent Portal</p>
-              <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Chief Scout's Silver Award</h1>
-              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>The highest award in Cubs{hasSilverAward ? ' · 🏆 Achieved!' : ''}</p>
+              <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(22px, 3vw, 32px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.2 }}>Chief Scout's Bronze Award</h1>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>The highest award in Beavers{hasBronzeAward ? ' · 🏆 Achieved!' : ''}</p>
             </div>
           </div>
         </div>
@@ -192,31 +177,22 @@ export default function ParentSilverAward() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Requirements Overview */}
-        <Card className="mb-10 border-4 border-gray-200 bg-gradient-to-br from-white to-gray-50">
+        <Card className="mb-10 border-4 border-amber-700/20 bg-gradient-to-br from-white to-amber-50">
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center gap-3 text-gray-900">
+            <CardTitle className="text-2xl flex items-center gap-3 text-amber-900">
               <Star className="w-7 h-7" />
-              Requirements for Silver Award
+              Requirements for Bronze Award
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">1. Complete any {CUBS_CHALLENGE_REQUIRED} Challenge Badges</h3>
-                <Badge className={completedChallenges.length >= CUBS_CHALLENGE_REQUIRED ? "bg-green-600" : "bg-blue-600"}>
-                  {completedChallenges.length} / {CUBS_CHALLENGE_REQUIRED}
+                <h3 className="text-lg font-semibold">Complete ALL {BEAVERS_CHALLENGE_REQUIRED} Challenge Awards</h3>
+                <Badge className={completedChallenges.length >= BEAVERS_CHALLENGE_REQUIRED ? "bg-green-600" : "bg-blue-600"}>
+                  {completedChallenges.length} / {BEAVERS_CHALLENGE_REQUIRED}
                 </Badge>
               </div>
               <Progress value={Math.min(100, challengeProgress)} className="h-3" />
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold">2. Complete at least {ACTIVITY_REQUIRED} Activity Badges</h3>
-                <Badge className={completedActivities.length >= ACTIVITY_REQUIRED ? "bg-green-600" : "bg-blue-600"}>
-                  {completedActivities.length} / {ACTIVITY_REQUIRED}
-                </Badge>
-              </div>
-              <Progress value={Math.min(100, activityProgress)} className="h-3" />
             </div>
           </CardContent>
         </Card>
@@ -224,8 +200,8 @@ export default function ParentSilverAward() {
         {/* Challenge Badges Grid */}
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-6">
-            <Trophy className="w-6 h-6 text-gray-600" />
-            <h2 className="text-3xl font-bold text-gray-900">Challenge Badges</h2>
+            <Trophy className="w-6 h-6 text-amber-700" />
+            <h2 className="text-3xl font-bold text-amber-900">Challenge Awards</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {challengeBadges.map((badge, index) => {
@@ -237,7 +213,7 @@ export default function ParentSilverAward() {
                   <Card
                     onClick={() => setSelectedBadge(badge)}
                     className={`cursor-pointer transition-all hover:shadow-xl hover:scale-105 ${
-                      isComplete ? 'bg-green-50 border-green-300 border-2' : 'border-gray-200'
+                      isComplete ? 'bg-green-50 border-green-300 border-2' : 'border-amber-700/20'
                     }`}
                   >
                     <CardContent className="p-6 text-center relative">
@@ -263,30 +239,6 @@ export default function ParentSilverAward() {
             })}
           </div>
         </div>
-
-        {/* Activity Badges Progress */}
-        <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3">
-              <Award className="w-6 h-6 text-purple-600" />
-              Activity Badges Progress
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-semibold">
-                  {completedActivities.length} of {ACTIVITY_REQUIRED} Activity Badges Completed
-                </span>
-                <Badge className={completedActivities.length >= ACTIVITY_REQUIRED ? "bg-green-600" : "bg-purple-600"}>
-                  {completedActivities.length >= ACTIVITY_REQUIRED ? 'Requirement Met!' : 'In Progress'}
-                </Badge>
-              </div>
-              <Progress value={Math.min(100, activityProgress)} className="h-4" />
-              <p className="text-sm text-gray-600">Keep working on the activity badges that interest you!</p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Badge Detail Dialog */}
@@ -307,7 +259,7 @@ export default function ParentSilverAward() {
                 {getBadgeModules(selectedBadge.id).map(module => {
                   const moduleReqs = getModuleRequirements(module.id);
                   return (
-                    <div key={module.id} className="border-l-4 border-gray-400 pl-4">
+                    <div key={module.id} className="border-l-4 border-amber-700/40 pl-4">
                       <h3 className="font-bold text-lg mb-3">{module.name}</h3>
                       <div className="space-y-2">
                         {moduleReqs.map((req, idx) => {

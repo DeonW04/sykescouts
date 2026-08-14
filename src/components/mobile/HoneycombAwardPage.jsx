@@ -101,9 +101,8 @@ function BadgeCriteriaSheet({ badge, modules, requirements, reqProgress, child, 
 }
 
 // ─── Award overview sheet ──────────────────────────────────────────────────────
-function AwardOverviewSheet({ badge, isSilver, awards, badgeProgress, child, onClose, accentColor }) {
-  const sectionLabel = isSilver ? 'Cubs' : 'Scouts';
-  const challengeCount = isSilver ? 7 : 9;
+function AwardOverviewSheet({ badge, meta, challengeCount, awards, badgeProgress, child, onClose, accentColor }) {
+  const sectionLabel = meta.label;
   const isEarned = awards.some(a => a.member_id === child?.id && a.badge_id === badge?.id)
     || badgeProgress.some(p => p.member_id === child?.id && p.badge_id === badge?.id && p.status === 'completed');
 
@@ -143,13 +142,15 @@ function AwardOverviewSheet({ badge, isSilver, awards, badgeProgress, child, onC
                 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>Every challenge badge for {sectionLabel} must be completed</p>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: 12, background: '#0f172a' }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13, fontWeight: 800, background: accentColor, color: '#0f172a' }}>2</div>
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>{isSilver ? 'Nights Away & Activity badges' : 'At least 8 Activity Badges'}</p>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{isSilver ? 'Complete the nights away requirement and activity badges' : 'Choose any activity badges that interest you'}</p>
+            {meta.secondReq && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: 12, background: '#0f172a' }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13, fontWeight: 800, background: accentColor, color: '#0f172a' }}>2</div>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: 'white' }}>{meta.secondReq.title}</p>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{meta.secondReq.desc}</p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
           <div style={{ borderRadius: 16, padding: 16, background: '#1e293b', borderLeft: `3px solid ${accentColor}` }}>
             <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
@@ -162,18 +163,36 @@ function AwardOverviewSheet({ badge, isSilver, awards, badgeProgress, child, onC
   );
 }
 
+// ─── Award tier configuration, keyed by section ────────────────────────────────
+const AWARD_META = {
+  scouts: {
+    label: 'Scouts', title: 'Gold Award', subtitle: 'Nine Challenge Awards', accent: '#f59e0b',
+    bgGradient: 'linear-gradient(160deg, #14213d 0%, #0f172a 55%, #1a1024 100%)',
+    secondReq: { title: 'At least 8 Activity Badges', desc: 'Choose any activity badges that interest you' },
+  },
+  cubs: {
+    label: 'Cubs', title: 'Silver Award', subtitle: 'Seven Challenge Awards', accent: '#94a3b8',
+    bgGradient: 'linear-gradient(160deg, #1e293b 0%, #0f172a 55%, #1a1f35 100%)',
+    secondReq: { title: 'Nights Away & Activity badges', desc: 'Complete the nights away requirement and activity badges' },
+  },
+  beavers: {
+    label: 'Beavers', title: 'Bronze Award', subtitle: 'Six Challenge Awards', accent: '#b45309',
+    bgGradient: 'linear-gradient(160deg, #3b2412 0%, #0f172a 55%, #1a1024 100%)',
+    secondReq: null,
+  },
+};
+
 // ─── Main Award Page ───────────────────────────────────────────────────────────
-export default function HoneycombAwardPage({ badge, child, badges, modules, requirements, reqProgress, awards, badgeProgress, onClose, isSilver }) {
+export default function HoneycombAwardPage({ badge, child, badges, modules, requirements, reqProgress, awards, badgeProgress, onClose, section = 'scouts' }) {
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [showOverview, setShowOverview] = useState(false);
 
-  const sectionName = isSilver ? 'cubs' : 'scouts';
-  const accentColor = isSilver ? '#94a3b8' : '#f59e0b';
-  const bgGradient = isSilver
-    ? 'linear-gradient(160deg, #1e293b 0%, #0f172a 55%, #1a1f35 100%)'
-    : 'linear-gradient(160deg, #14213d 0%, #0f172a 55%, #1a1024 100%)';
-  const title = isSilver ? 'Silver Award' : 'Gold Award';
-  const subtitle = isSilver ? 'Seven Challenge Awards' : 'Nine Challenge Awards';
+  const meta = AWARD_META[section] || AWARD_META.scouts;
+  const sectionName = section;
+  const accentColor = meta.accent;
+  const bgGradient = meta.bgGradient;
+  const title = meta.title;
+  const subtitle = meta.subtitle;
 
   const challengeBadges = badges
     .filter(b => b.category === 'challenge' && b.section === sectionName && !b.is_chief_scout_award)
@@ -224,7 +243,7 @@ export default function HoneycombAwardPage({ badge, child, badges, modules, requ
       <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 32 }}>
         {/* Section heading */}
         <div style={{ textAlign: 'center', paddingTop: 18, paddingBottom: 6 }}>
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: accentColor }}>{isSilver ? 'Cubs' : 'Scouts'}</h2>
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: accentColor }}>{meta.label}</h2>
           <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{subtitle}</p>
         </div>
 
@@ -243,7 +262,7 @@ export default function HoneycombAwardPage({ badge, child, badges, modules, requ
         <BadgeCluster
           awardBadge={badge}
           challengeBadges={challengeBadges}
-          isSilver={isSilver}
+          section={sectionName}
           isEarned={isEarned}
           getBadgePercentage={getBadgePercentage}
           awardEarned={awardEarned}
@@ -272,7 +291,8 @@ export default function HoneycombAwardPage({ badge, child, badges, modules, requ
       {showOverview && (
         <AwardOverviewSheet
           badge={badge}
-          isSilver={isSilver}
+          meta={meta}
+          challengeCount={totalCount}
           awards={awards}
           badgeProgress={badgeProgress}
           child={child}

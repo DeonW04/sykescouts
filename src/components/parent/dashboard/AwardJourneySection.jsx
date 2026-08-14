@@ -9,9 +9,9 @@ import { createPageUrl } from '@/utils';
 import BadgeCluster from '@/components/mobile/award/BadgeCluster';
 
 const AWARD_CONFIG = {
-  scouts: { title: "Chief Scout's Gold Award", accent: '#f59e0b', implemented: true },
-  cubs: { title: "Chief Scout's Silver Award", accent: '#64748b', implemented: false },
-  beavers: { title: "Chief Scout's Bronze Award", accent: '#b45309', implemented: false },
+  scouts: { title: "Chief Scout's Gold Award", accent: '#f59e0b', page: 'ParentGoldAward' },
+  cubs: { title: "Chief Scout's Silver Award", accent: '#94a3b8', page: 'ParentSilverAward' },
+  beavers: { title: "Chief Scout's Bronze Award", accent: '#b45309', page: 'ParentBronzeAward' },
 };
 
 export default function AwardJourneySection({ child, sectionName }) {
@@ -77,7 +77,7 @@ export default function AwardJourneySection({ child, sectionName }) {
   const challengeEarned = challengeBadges.filter(b => isEarned(b.id)).length;
   const activityEarned = activityBadges.filter(b => isEarned(b.id)).length;
   const awardEarned = awardBadge ? isEarned(awardBadge.id) : false;
-  const goToAward = () => navigate(createPageUrl(section === 'cubs' ? 'ParentSilverAward' : 'ParentGoldAward'));
+  const goToAward = () => navigate(createPageUrl(config.page));
 
   return (
     <Card className="border border-[#7413dc]/10 bg-white/90 backdrop-blur-xl rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] overflow-hidden">
@@ -92,12 +92,12 @@ export default function AwardJourneySection({ child, sectionName }) {
           )}
         </div>
 
-        {config.implemented && awardBadge ? (
+        {awardBadge ? (
           <div className="max-w-md mx-auto">
             <BadgeCluster
               awardBadge={awardBadge}
               challengeBadges={challengeBadges}
-              isSilver={false}
+              section={section}
               isEarned={isEarned}
               getBadgePercentage={getBadgePercentage}
               awardEarned={awardEarned}

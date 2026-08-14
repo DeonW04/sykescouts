@@ -21,11 +21,20 @@ import BadgeHex from './BadgeHex';
 //   Row4: 4 badges
 // Cubs (Silver):
 //   Row1: 1, Row2: 2, Row3: 3, Row4: 2
+// Beavers (Bronze) — narrower pillar shape, not a pyramid:
+//   Row1: 1 (award), Row2: 2, Row3: 1, Row4: 2, Row5: 1
+
+// Row layouts (excluding the award row, which is always a single badge on top)
+const ROW_LAYOUTS = {
+  scouts: [2, 3, 4],
+  cubs: [2, 3, 2],
+  beavers: [2, 1, 2, 1],
+};
 
 export default function BadgeCluster({
   awardBadge,
   challengeBadges,   // ordered array
-  isSilver,
+  section = 'scouts', // 'scouts' | 'cubs' | 'beavers' — determines row layout
   isEarned,          // (id) => bool
   getBadgePercentage,// (id) => number
   awardEarned,
@@ -47,20 +56,17 @@ export default function BadgeCluster({
   const colStep = W * 0.74;  // horizontal centre-to-centre (overlap canvases)
   const rowStep = H * 0.55;  // vertical centre-to-centre (tight interlock)
 
-  // Build the rows
-  const rows = isSilver
-    ? [
-        [{ award: true }],
-        [challengeBadges[0], challengeBadges[1]],
-        [challengeBadges[2], challengeBadges[3], challengeBadges[4]],
-        [challengeBadges[5], challengeBadges[6]],
-      ]
-    : [
-        [{ award: true }],
-        [challengeBadges[0], challengeBadges[1]],
-        [challengeBadges[2], challengeBadges[3], challengeBadges[4]],
-        [challengeBadges[5], challengeBadges[6], challengeBadges[7], challengeBadges[8]],
-      ];
+  // Build the rows from the layout for this section
+  const rowCounts = ROW_LAYOUTS[section] || ROW_LAYOUTS.scouts;
+  let cursor = 0;
+  const rows = [
+    [{ award: true }],
+    ...rowCounts.map(count => {
+      const row = challengeBadges.slice(cursor, cursor + count);
+      cursor += count;
+      return row;
+    }),
+  ];
 
   const maxCols = Math.max(...rows.map(r => r.length));
   // Full pixel width of the widest row including the badge width itself

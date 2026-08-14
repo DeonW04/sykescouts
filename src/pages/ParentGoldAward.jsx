@@ -112,7 +112,7 @@ export default function ParentGoldAward() {
         awards={awards}
         badgeProgress={badgeProgress}
         onClose={() => navigate(-1)}
-        isSilver={false}
+        section="scouts"
       />
     );
   }

@@ -5,9 +5,9 @@ import { createPageUrl } from '@/utils';
 import BadgeCluster from '@/components/mobile/award/BadgeCluster';
 
 const CONFIG = {
-  scouts: { title: "Chief Scout's Gold Award", accent: '#f59e0b', implemented: true },
-  cubs: { title: "Chief Scout's Silver Award", accent: '#64748b', implemented: false },
-  beavers: { title: "Chief Scout's Bronze Award", accent: '#b45309', implemented: false },
+  scouts: { title: "Chief Scout's Gold Award", accent: '#f59e0b', page: 'ParentGoldAward' },
+  cubs: { title: "Chief Scout's Silver Award", accent: '#94a3b8', page: 'ParentSilverAward' },
+  beavers: { title: "Chief Scout's Bronze Award", accent: '#b45309', page: 'ParentBronzeAward' },
 };
 
 export default function AwardPanel({ sectionName, awardBadge, challengeBadges, isEarned, getBadgePercentage }) {
@@ -15,7 +15,7 @@ export default function AwardPanel({ sectionName, awardBadge, challengeBadges, i
   const config = CONFIG[sectionName] || CONFIG.scouts;
   const earnedCount = challengeBadges.filter(b => isEarned(b.id)).length;
   const awardEarned = awardBadge ? isEarned(awardBadge.id) : false;
-  const goToAward = () => navigate(createPageUrl(sectionName === 'cubs' ? 'ParentSilverAward' : 'ParentGoldAward'));
+  const goToAward = () => navigate(createPageUrl(config.page));
 
   return (
     <div className="rounded-2xl overflow-hidden bg-white/90 backdrop-blur-xl border border-[#7413dc]/10 shadow-[0_4px_20px_rgba(0,0,0,0.05)] h-full flex flex-col">
@@ -27,12 +27,12 @@ export default function AwardPanel({ sectionName, awardBadge, challengeBadges, i
         </p>
       </div>
       <div className="flex-1 flex items-center justify-center px-3 pb-6">
-        {config.implemented && awardBadge ? (
+        {awardBadge ? (
           <div className="w-full">
             <BadgeCluster
               awardBadge={awardBadge}
               challengeBadges={challengeBadges}
-              isSilver={false}
+              section={sectionName}
               isEarned={isEarned}
               getBadgePercentage={getBadgePercentage}
               awardEarned={awardEarned}
