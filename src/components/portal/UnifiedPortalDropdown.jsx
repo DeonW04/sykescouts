@@ -1,19 +1,19 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { ChevronDown, Check, Settings, LogOut, Baby, Landmark, Shield, LayoutDashboard } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { createPageUrl } from '@/utils';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { usePortalContext, SECTION_COLORS } from '@/lib/PortalContextProvider';
 import { CHILD_COLORS, childInitials } from '@/hooks/useSelectedChild';
+import { useAccountSettingsModal } from '@/lib/AccountSettingsModalProvider';
 
 const CONTEXT_ICON = { child: '🧒', section: '📋', 'role:treasurer': '💰', 'role:admin': '🛡' };
 
 export default function UnifiedPortalDropdown() {
   const { user, activeContext, availableContexts, setActiveContext } = usePortalContext();
+  const { openAccountSettingsModal } = useAccountSettingsModal();
 
   const userName = (() => {
     const n = user?.display_name || user?.full_name || 'Account';
@@ -93,10 +93,8 @@ export default function UnifiedPortalDropdown() {
         )}
 
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link to={createPageUrl('AccountSettings')} className="flex items-center gap-2 cursor-pointer">
-            <Settings className="w-4 h-4" /> Account Settings
-          </Link>
+        <DropdownMenuItem onClick={openAccountSettingsModal} className="flex items-center gap-2 cursor-pointer">
+          <Settings className="w-4 h-4" /> Account Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => base44.auth.logout()} className="cursor-pointer text-red-600 focus:text-red-600">

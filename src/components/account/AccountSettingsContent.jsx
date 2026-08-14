@@ -1,0 +1,233 @@
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, Save, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
+import PaymentMethodsPanel from '../mobile/PaymentMethodsPanel';
+
+// Shared account settings body — used by both the AccountSettings page (direct link)
+// and the AccountSettingsModal (opened from the portal dropdown).
+export default function AccountSettingsContent() {
+  const queryClient = useQueryClient();
+  const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
+  const [saved, setSaved] = useState(false);
+  const [leaderSaved, setLeaderSaved] = useState(false);
+  const [displayName, setDisplayName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [leaderForm, setLeaderForm] = useState({
+    dbs_certificate_number: '',
+    dbs_check_date: '',
+    dbs_expiry_date: '',
+    safeguarding_expiry: '',
+    first_aid_expiry: '',
+  });
+
+  useEffect(() => {
+    (async () => {
+      const u = await base44.auth.me();
+      setUser(u);
+      setDisplayName(u?.display_name || u?.full_name || '');
+      if (u?.role === 'admin') {
+        setRole('leader');
+      } else {
+        const leaders = await base44.entities.Leader.filter({ user_id: u.id });
+        setRole(leaders.length > 0 ? 'leader' : 'parent');
+      }
+    })();
+  }, []);
+
+  const { data: portal } = useQuery({
+    queryKey: ['parent-portal'],
+    queryFn: async () => (await base44.functions.invoke('getParentPortalData', {})).data,
+    enabled: !!user?.email && role === 'parent',
+  });
+  const children = portal?.children || [];
+
+  const child = children[0];
+  const isParentOne = !!child && child.parent_one_email === user?.email;
+  const isParentTwo = !!child && !isParentOne && child.parent_two_email === user?.email;
+
+  const { data: leader } = useQuery({
+    queryKey: ['account-settings-leader', user?.id],
+    queryFn: () => base44.entities.Leader.filter({ user_id: user.id }).then(r => r[0] || null),
+    enabled: !!user?.id && role === 'leader',
+  });
+
+  useEffect(() => {
+    if (role === 'parent' && child) {
+      setPhone((isParentOne ? child.parent_one_phone : child.parent_two_phone) || '');
+    }
+  }, [child, role, isParentOne]);
+
+  useEffect(() => {
+    if (role === 'leader' && leader) {
+      setPhone(leader.phone || '');
+      setLeaderForm({
+        dbs_certificate_number: leader.dbs_certificate_number || '',
+        dbs_check_date: leader.dbs_check_date || '',
+        dbs_expiry_date: leader.dbs_expiry_date || '',
+        safeguarding_expiry: leader.safeguarding_expiry || '',
+        first_aid_expiry: leader.first_aid_expiry || '',
+      });
+    }
+  }, [leader, role]);
+
+  const handleSaveAccount = async () => {
+    await base44.auth.updateMe({ display_name: displayName });
+    if (role === 'parent' && child) {
+      const updates = {};
+      const parts = displayName.trim().split(' ');
+      if (isParentOne) {
+        Object.assign(updates, { parent_one_phone: phone, parent_one_name: displayName, parent_one_first_name: parts[0] || '', parent_one_surname: parts.slice(1).join(' ') || '' });
+      } else if (isParentTwo) {
+        Object.assign(updates, { parent_two_phone: phone, parent_two_name: displayName, parent_two_first_name: parts[0] || '', parent_two_surname: parts.slice(1).join(' ') || '' });
+      }
+      if (Object.keys(updates).length) await base44.entities.Member.update(child.id, updates);
+    } else if (role === 'leader' && leader) {
+      await base44.entities.Leader.update(leader.id, { phone, display_name: displayName });
+    }
+    queryClient.invalidateQueries({ queryKey: ['parent-portal'] });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+    toast.success('Changes saved');
+  };
+
+  const handleSaveLeaderProfile = async () => {
+    if (!leader) return;
+    await base44.entities.Leader.update(leader.id, leaderForm);
+    queryClient.invalidateQueries({ queryKey: ['account-settings-leader'] });
+    setLeaderSaved(true);
+    setTimeout(() => setLeaderSaved(false), 3000);
+    toast.success('Profile updated');
+  };
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="animate-spin w-8 h-8 border-4 border-[#7413dc] border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Section 1: Account Information */}
+      <Card className="shadow-none border bg-white">
+        <CardHeader>
+          <CardTitle className="text-xl">Account Information</CardTitle>
+          <p className="text-gray-500 text-sm">
+            {role === 'parent'
+              ? isParentOne ? 'Saving as Parent One on your child\'s record' : isParentTwo ? 'Saving as Parent Two on your child\'s record' : 'Could not match your email to a parent record'
+              : 'Saving to your leader profile'}
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {role === 'parent' && !isParentOne && !isParentTwo && children.length > 0 && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+              Your email does not match any parent record. Please contact your section leader.
+            </div>
+          )}
+          <div className="grid md:grid-cols-2 gap-5">
+            <div className="space-y-1.5">
+              <Label>Display Name</Label>
+              <Input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your full name" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Phone Number</Label>
+              <Input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Your mobile number" />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Email Address</Label>
+            <p className="text-sm text-gray-700 font-medium">{user.email} <span className="text-xs text-gray-400 font-normal ml-1">(cannot be changed here)</span></p>
+          </div>
+          <div className="flex items-center gap-4 pt-2">
+            <Button onClick={handleSaveAccount} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
+              <Save className="w-4 h-4 mr-2" />
+              Save Changes
+            </Button>
+            {saved && (
+              <span className="text-green-600 text-sm flex items-center gap-1.5 font-medium">
+                <CheckCircle className="w-4 h-4" /> Changes saved
+              </span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section 2: Payment Information (parents only) */}
+      {role === 'parent' && child && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-gray-900">Payment Information</h2>
+          <PaymentMethodsPanel child={child} />
+        </div>
+      )}
+
+      {/* Section 3: Leader Profile (leaders only) */}
+      {role === 'leader' && (
+        <Card className="shadow-none border bg-white">
+          <CardHeader>
+            <CardTitle className="text-xl">Leader Profile</CardTitle>
+            <p className="text-gray-500 text-sm">Update your compliance and certification information</p>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {leader ? (
+              <>
+                {/* Status badges (read-only, set by admin) */}
+                <div className="flex flex-wrap gap-2 p-3 bg-gray-50 rounded-lg">
+                  <Badge className={leader.first_aid_certified ? 'bg-green-600' : 'bg-gray-400'}>First Aid {leader.first_aid_certified ? '✓' : '—'}</Badge>
+                  <Badge className={leader.safeguarding_trained ? 'bg-green-600' : 'bg-gray-400'}>Safeguarding {leader.safeguarding_trained ? '✓' : '—'}</Badge>
+                  <Badge className={leader.gdpr_trained ? 'bg-green-600' : 'bg-gray-400'}>GDPR {leader.gdpr_trained ? '✓' : '—'}</Badge>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-5">
+                  <div className="space-y-1.5">
+                    <Label>DBS Certificate Number</Label>
+                    <Input value={leaderForm.dbs_certificate_number} onChange={e => setLeaderForm({ ...leaderForm, dbs_certificate_number: e.target.value })} placeholder="Certificate number" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>DBS Issue Date</Label>
+                    <Input type="date" value={leaderForm.dbs_check_date} onChange={e => setLeaderForm({ ...leaderForm, dbs_check_date: e.target.value })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>DBS Expiry Date</Label>
+                    <Input type="date" value={leaderForm.dbs_expiry_date} onChange={e => setLeaderForm({ ...leaderForm, dbs_expiry_date: e.target.value })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Safeguarding Expiry Date</Label>
+                    <Input type="date" value={leaderForm.safeguarding_expiry} onChange={e => setLeaderForm({ ...leaderForm, safeguarding_expiry: e.target.value })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>First Aid Expiry Date</Label>
+                    <Input type="date" value={leaderForm.first_aid_expiry} onChange={e => setLeaderForm({ ...leaderForm, first_aid_expiry: e.target.value })} />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 pt-2">
+                  <Button onClick={handleSaveLeaderProfile} className="bg-[#7413dc] hover:bg-[#5c0fb0]">
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Profile
+                  </Button>
+                  {leaderSaved && (
+                    <span className="text-green-600 text-sm flex items-center gap-1.5 font-medium">
+                      <CheckCircle className="w-4 h-4" /> Profile updated
+                    </span>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="text-gray-500">No leader profile found. Contact an administrator.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

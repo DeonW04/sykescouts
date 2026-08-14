@@ -54,6 +54,8 @@ import ParentSilverAward from './pages/ParentSilverAward';
 import { ROUTE_MAP } from '@/lib/routeMap';
 import { PortalContextProvider } from '@/lib/PortalContextProvider';
 import PortalContextModal from '@/components/portal/PortalContextModal';
+import { AccountSettingsModalProvider } from '@/lib/AccountSettingsModalProvider';
+import AccountSettingsModal from '@/components/account/AccountSettingsModal';
 
 
 // Public-only pages that should never be shown in PWA mode
@@ -266,8 +268,11 @@ function App() {
         <Router>
           <NavigationTracker />
           <PortalContextProvider>
-            <AuthenticatedApp />
-            <PortalContextModal />
+            <AccountSettingsModalProvider>
+              <AuthenticatedApp />
+              <PortalContextModal />
+              <AccountSettingsModal />
+            </AccountSettingsModalProvider>
           </PortalContextProvider>
         </Router>
         <Toaster />
