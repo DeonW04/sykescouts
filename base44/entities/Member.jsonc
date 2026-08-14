@@ -303,6 +303,20 @@
           }
         },
         {
+          "$and": [
+            {
+              "user_condition": {
+                "role": "leader"
+              }
+            },
+            {
+              "data.section_id": {
+                "$in": "{{user.data.assigned_section_ids}}"
+              }
+            }
+          ]
+        },
+        {
           "data.parent_one_email": "{{user.email}}"
         },
         {
