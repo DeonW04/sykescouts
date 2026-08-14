@@ -7,16 +7,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { FileText, Smartphone, QrCode, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import SignatureCanvas from '@/components/parent/SignatureCanvas';
 
 // Shows the actual consent form (info blocks + fillable fields + T&Cs), then
-// offers a QR code to sign on a phone or a button to sign on this device —
-// both point at the existing /sign signature-box page for a given token.
+// offers a QR code to sign on a phone, or an inline signature box to sign on
+// this device without leaving the dialog. While waiting, it polls the
+// submission so signing on a phone via the QR code is reflected here too.
 export default function ConsentFormDialog({ open, onOpenChange, action, child, user, onSigned }) {
-  const [step, setStep] = useState('form'); // form | tcs | finish
+  const [step, setStep] = useState('form'); // form | tcs | finish | sign
   const [responses, setResponses] = useState({});
   const [tcAccepted, setTcAccepted] = useState(false);
   const [submission, setSubmission] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [signing, setSigning] = useState(false);
 
   const { data: form } = useQuery({
     queryKey: ['consent-form-detail', action?.consent_form_id],
@@ -89,6 +92,41 @@ export default function ConsentFormDialog({ open, onOpenChange, action, child, u
   const signUrl = submission ? `${window.location.origin}/sign?token=${submission.sign_token}` : null;
   const qrUrl = signUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(signUrl)}` : null;
 
+  // While waiting on the "finish" screen, poll for the submission being signed
+  // elsewhere (e.g. someone scanned the QR code and signed on their phone).
+  const { data: liveStatus } = useQuery({
+    queryKey: ['consent-submission-live-status', submission?.id],
+    queryFn: () => base44.entities.ConsentFormSubmission.filter({ id: submission.id }).then(r => r[0]?.status),
+    enabled: !!submission?.id && step === 'finish',
+    refetchInterval: 3000,
+  });
+
+  useEffect(() => {
+    if (liveStatus === 'signed') {
+      toast.success('Signed successfully!');
+      onSigned?.();
+      onOpenChange(false);
+    }
+  }, [liveStatus]);
+
+  const handleSignOnDevice = async (signature_data_url) => {
+    setSigning(true);
+    try {
+      await base44.functions.invoke('submitSignature', {
+        token: submission.sign_token,
+        signature_data_url,
+        parent_name: user?.display_name || user?.full_name,
+      });
+      toast.success('Signature submitted!');
+      onSigned?.();
+      onOpenChange(false);
+    } catch (e) {
+      toast.error('Failed to submit signature. Please try again.');
+    } finally {
+      setSigning(false);
+    }
+  };
+
   if (!action) return null;
 
   return (
@@ -156,6 +194,12 @@ export default function ConsentFormDialog({ open, onOpenChange, action, child, u
             </div>
             <Button onClick={handleNext} className="w-full bg-[#7413dc] hover:bg-[#5c0fb0]">Continue to Sign</Button>
           </div>
+        ) : step === 'sign' ? (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600 text-center">Draw your signature below</p>
+            <SignatureCanvas onSubmit={handleSignOnDevice} submitting={signing} />
+            <Button variant="ghost" className="w-full" onClick={() => setStep('finish')}>Back</Button>
+          </div>
         ) : (
           <div className="space-y-5 text-center">
             {saving || !submission ? (
@@ -175,14 +219,14 @@ export default function ConsentFormDialog({ open, onOpenChange, action, child, u
                     <Smartphone className="w-5 h-5 text-[#7413dc]" />
                     <p className="text-sm font-semibold">Sign on this device</p>
                     <Button
-                      onClick={() => { window.open(signUrl, '_blank'); onOpenChange(false); onSigned?.(); }}
+                      onClick={() => setStep('sign')}
                       className="bg-[#7413dc] hover:bg-[#5c0fb0]"
                     >
-                      Open Signature Box
+                      Sign Now
                     </Button>
                   </div>
                 </div>
-                <p className="text-xs text-gray-400">Once signed, this action will update automatically.</p>
+                <p className="text-xs text-gray-400">Once signed, this will update automatically.</p>
               </>
             )}
           </div>
