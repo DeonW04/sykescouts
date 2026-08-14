@@ -21,7 +21,7 @@ export default function RegisterUser() {
   const [invite, setInvite] = useState(null);
   const [inviteError, setInviteError] = useState(null);
 
-  const [stage, setStage] = useState('form'); // form | otp
+  const [stage, setStage] = useState('form'); // form | otp | setting_up
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [otp, setOtp] = useState('');
@@ -64,6 +64,7 @@ export default function RegisterUser() {
       const res = await base44.auth.verifyOtp({ email: invite.email, otpCode: otp.trim() });
       const accessToken = res?.access_token || res?.data?.access_token;
       if (accessToken) base44.auth.setToken(accessToken);
+      setStage('setting_up');
       const completeRes = await base44.functions.invoke('completeUserInvite', { token });
       const finalRole = completeRes?.data?.role || invite.role;
       const destination = finalRole === 'treasurer'
@@ -73,6 +74,7 @@ export default function RegisterUser() {
           : '/app';
       window.location.href = destination;
     } catch (err) {
+      setStage('otp');
       setError('That code wasn\'t right. Please check your email and try again.');
       setLoading(false);
     }
@@ -115,6 +117,19 @@ export default function RegisterUser() {
             <p style={{ ...subStyle, marginBottom: 24 }}>{messages[inviteError] || messages.invalid}</p>
             <button onClick={() => base44.auth.redirectToLogin('/')} style={primaryBtn}>Go to Sign In</button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Setting up profile ──
+  if (stage === 'setting_up') {
+    return (
+      <div style={pageWrap}>
+        <div style={{ ...cardStyle, textAlign: 'center' }}>
+          <Loader2 size={40} className="animate-spin" color="#7413dc" style={{ margin: '0 auto 20px' }} />
+          <h1 style={{ ...titleStyle, fontFamily: 'Outfit, sans-serif' }}>Setting up your profile…</h1>
+          <p style={subStyle}>Just a moment while we get everything ready for you.</p>
         </div>
       </div>
     );

@@ -448,13 +448,13 @@ export default function LeaderManagement() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <User className="w-5 h-5" />
-          Leader Management
-          <span className="ml-auto text-sm font-normal text-gray-500">{leaders.length} leaders</span>
+          Volunteer Management
+          <span className="ml-auto text-sm font-normal text-gray-500">{leaders.length} volunteers</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
         {leaders.length === 0 ? (
-          <p className="text-gray-500 text-sm py-4">No leaders found.</p>
+          <p className="text-gray-500 text-sm py-4">No volunteers found.</p>
         ) : (
           <div className="space-y-2">
             {leaders.map(leader => {

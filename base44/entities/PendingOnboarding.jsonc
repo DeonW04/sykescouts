@@ -1,0 +1,84 @@
+{
+  "name": "PendingOnboarding",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "Email address this pending onboarding record applies to"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "volunteer",
+        "parent"
+      ],
+      "description": "Which onboarding wizard this record came from"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "expired"
+      ],
+      "default": "pending",
+      "description": "Whether this pending profile has been applied yet"
+    },
+    "role": {
+      "type": "string",
+      "description": "For volunteer type: leader, team_leader, glv, or treasurer"
+    },
+    "member_id": {
+      "type": "string",
+      "description": "For parent type: the child Member ID"
+    },
+    "parent_slot": {
+      "type": "string",
+      "enum": [
+        "parent_one",
+        "parent_two"
+      ],
+      "description": "For parent type: which parent slot on the Member this invite is for"
+    },
+    "data": {
+      "type": "object",
+      "description": "All admin pre-filled profile fields collected in the onboarding wizard (name, phone, address, emergency contact, medical info, compliance, permits, etc.)"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Email of the admin who created this pending onboarding"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this pending profile was applied to the user's account"
+    }
+  },
+  "required": [
+    "email",
+    "type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

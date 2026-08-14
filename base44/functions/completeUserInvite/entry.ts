@@ -36,17 +36,54 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.User.update(user.id, updateData);
     }
 
+    // Look up any admin-prefilled onboarding profile for this email
+    const pendingList = await base44.asServiceRole.entities.PendingOnboarding.filter({ email: invite.email.toLowerCase(), status: 'pending' });
+    const pending = pendingList[0];
+
     // Create a Leader record if requested and one doesn't already exist
     if (invite.make_leader) {
       const existingLeaders = await base44.asServiceRole.entities.Leader.filter({ user_id: user.id });
+      const ROLE_LABELS = { leader: 'Leader', team_leader: 'Team Leader', glv: 'Group Lead Volunteer', treasurer: 'Treasurer' };
+      const pendingData = pending?.type === 'volunteer' ? (pending.data || {}) : {};
+      const { permits, name, ...leaderFields } = pendingData;
+
+      let leaderId;
       if (existingLeaders.length === 0) {
-        await base44.asServiceRole.entities.Leader.create({
+        const created = await base44.asServiceRole.entities.Leader.create({
           user_id: user.id,
-          phone: '',
-          display_name: user.full_name || '',
+          phone: leaderFields.phone || '',
+          display_name: name || user.full_name || '',
+          role_title: ROLE_LABELS[invite.role] || '',
           section_ids: [],
+          ...leaderFields,
         });
+        leaderId = created.id;
+      } else {
+        leaderId = existingLeaders[0].id;
+        if (pending?.type === 'volunteer') {
+          await base44.asServiceRole.entities.Leader.update(leaderId, {
+            display_name: name || existingLeaders[0].display_name,
+            role_title: ROLE_LABELS[invite.role] || existingLeaders[0].role_title,
+            ...leaderFields,
+          });
+        }
       }
+
+      // Create any permits collected during the onboarding wizard
+      if (Array.isArray(permits)) {
+        for (const permit of permits) {
+          if (permit?.permit_type || permit?.permit_name) {
+            await base44.asServiceRole.entities.Permit.create({ ...permit, leader_id: leaderId });
+          }
+        }
+      }
+    }
+
+    if (pending) {
+      await base44.asServiceRole.entities.PendingOnboarding.update(pending.id, {
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+      });
     }
 
     await base44.asServiceRole.entities.UserInvite.update(invite.id, {
