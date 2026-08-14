@@ -48,7 +48,7 @@ export default function ParentPaymentsSection({ child, portal }) {
   const upcoming = [];
 
   events
-    .filter(e => (e.cost || 0) > 0 && new Date(e.start_date) >= now && e.section_ids?.includes(child.section_id))
+    .filter(e => (e.cost || 0) > 0 && e.section_ids?.includes(child.section_id))
     .forEach(e => {
       const override = overrides.find(o => o.event_id === e.id && o.member_id === child.id);
       const ps = eventStatuses.find(s => s.event_id === e.id && s.member_id === child.id);
@@ -59,7 +59,7 @@ export default function ParentPaymentsSection({ child, portal }) {
     });
 
   programmes
-    .filter(p => (p.cost || 0) > 0 && !p.no_meeting && p.section_id === child.section_id && new Date(p.date) >= now)
+    .filter(p => (p.cost || 0) > 0 && !p.no_meeting && p.section_id === child.section_id)
     .forEach(p => {
       const override = overrides.find(o => o.meeting_id === p.id && o.member_id === child.id);
       if (override?.override_type === 'waived') return;
@@ -92,12 +92,12 @@ export default function ParentPaymentsSection({ child, portal }) {
       <Card className="shadow-xl bg-white/90 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-2xl flex items-center gap-2">
-            <Calendar className="w-6 h-6 text-[#7413dc]" />Upcoming Payments
+            <Calendar className="w-6 h-6 text-[#7413dc]" />Payments Due
           </CardTitle>
         </CardHeader>
         <CardContent>
           {upcoming.length === 0 ? (
-            <p className="text-gray-500 text-sm">No upcoming events or meetings need payment.</p>
+            <p className="text-gray-500 text-sm">No events or meetings need payment.</p>
           ) : (
             <div className="divide-y">
               {upcoming.map(item => {
