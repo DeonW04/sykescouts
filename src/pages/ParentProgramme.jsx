@@ -4,12 +4,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Award, CheckCircle } from 'lucide-react';
+import { Calendar, Award, CheckCircle, Share2, HandHeart } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
 import { motion } from 'framer-motion';
 import InlinePayment from '../components/mobile/InlinePayment';
+import MeetingDetailDialog from '@/components/parent/MeetingDetailDialog';
 import { useSelectedChildId } from '@/hooks/useSelectedChild';
 
 const ATTENDING_VALUES = new Set(['yes', 'yes, attending', 'attending']);
@@ -19,8 +21,18 @@ export default function ParentProgramme() {
   const [user, setUser] = useState(null);
   const [children, setChildren] = useState([]);
   const [payOpen, setPayOpen] = useState({}); // keyed by programme.id
+  const [selectedMeetingId, setSelectedMeetingId] = useState(null);
 
   useEffect(() => { loadUser(); }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const mid = params.get('meetingId');
+    if (mid) {
+      setSelectedMeetingId(mid);
+      if (params.get('pay') === '1') setPayOpen(prev => ({ ...prev, [mid]: true }));
+    }
+  }, []);
 
   const loadUser = async () => {
     const currentUser = await base44.auth.me();
@@ -39,6 +51,18 @@ export default function ParentProgramme() {
     enabled: !!user?.email,
   });
 
+  const { data: parentVolunteers = [] } = useQuery({
+    queryKey: ['parent-volunteers', user?.email],
+    queryFn: () => base44.entities.ParentVolunteer.filter({ parent_email: user.email, response: 'yes' }),
+    enabled: !!user?.email,
+  });
+
+  const { data: allActionsRequired = [] } = useQuery({
+    queryKey: ['all-actions-required'],
+    queryFn: () => base44.entities.ActionRequired.filter({}),
+    staleTime: 5 * 60 * 1000,
+  });
+
   useEffect(() => { if (portal?.children) setChildren(portal.children); }, [portal]);
 
   const [selectedChildId] = useSelectedChildId(children);
@@ -48,10 +72,12 @@ export default function ParentProgramme() {
 
   const terms = reference?.terms || [];
   const sections = portal?.sections || [];
+  const childSection = sections.find(s => s.id === child?.section_id);
   const programmes = reference?.programmes || [];
   const badges = reference?.badges || [];
   const badgeCriteria = reference?.badgeCriteria || [];
   const requirements = reference?.badgeRequirements || [];
+  const allResponses = portal?.actionResponses || [];
 
   const meetingPaymentStatuses = portal?.meetingPaymentStatuses || [];
   const paymentOverrides = (portal?.paymentOverrides || []).filter(o => o.programme_id);
@@ -79,6 +105,53 @@ export default function ParentProgramme() {
     if (ps?.status === 'paid') return 'paid';
     if (!isMeetingAttending(prog.id)) return null;
     return 'unpaid';
+  };
+
+  const isVolunteeredForProgramme = (progId) => parentVolunteers.some(v => v.programme_id === progId);
+
+  const getBadgeGroupsForProgramme = (progId) => {
+    const criteria = badgeCriteria.filter(c => c.programme_id === progId);
+    const map = {};
+    criteria.forEach(c => {
+      const badge = badges.find(b => b.id === c.badge_id);
+      if (!badge) return;
+      if (!map[badge.id]) map[badge.id] = { badge, requirements: [] };
+      (c.requirement_ids || []).forEach(reqId => {
+        const req = requirements.find(r => r.id === reqId);
+        if (req && !map[badge.id].requirements.find(r => r.id === reqId)) map[badge.id].requirements.push(req);
+      });
+    });
+    return Object.values(map);
+  };
+
+  const getActionItemsForProgramme = (progId) => {
+    const acts = allActionsRequired.filter(a => a.programme_id === progId && a.is_open !== false);
+    return acts.map(action => {
+      const resp = allResponses.find(r =>
+        (r.action_required_id === action.id) &&
+        (childIds.includes(r.member_id) || childIds.includes(r.child_member_id)) &&
+        (r.response_value || r.response)
+      );
+      return { action, answered: !!resp, responseValue: resp?.response_value || resp?.response };
+    });
+  };
+
+  const getMeetingLocationTime = (prog) => {
+    const timeText = prog.optional_start_time
+      ? `${prog.optional_start_time}${prog.optional_end_time ? ' – ' + prog.optional_end_time : ''}`
+      : (childSection?.meeting_start_time ? `${childSection.meeting_start_time}${childSection.meeting_end_time ? ' – ' + childSection.meeting_end_time : ''}` : null);
+    const locationText = prog.optional_location || null;
+    return { timeText, locationText };
+  };
+
+  const handleShare = async (prog) => {
+    const url = `${window.location.origin}${window.location.pathname}?meetingId=${prog.id}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: prog.title, url }); } catch { /* user cancelled */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied to clipboard');
+    }
   };
 
   const now = new Date();
@@ -111,41 +184,34 @@ export default function ParentProgramme() {
 
   const programmeBadges = {};
   allTermProgrammes.forEach(prog => {
-    const criteria = badgeCriteria.filter(c => c.programme_id === prog.id);
-    criteria.forEach(c => {
-      const badge = badges.find(b => b.id === c.badge_id);
-      if (badge) {
-        if (!programmeBadges[badge.id]) programmeBadges[badge.id] = { badge, requirements: [] };
-        (c.requirement_ids || []).forEach(reqId => {
-          const req = requirements.find(r => r.id === reqId);
-          if (req && !programmeBadges[badge.id].requirements.find(r => r.id === reqId)) programmeBadges[badge.id].requirements.push(req);
-        });
-      }
+    getBadgeGroupsForProgramme(prog.id).forEach(({ badge, requirements: reqs }) => {
+      if (!programmeBadges[badge.id]) programmeBadges[badge.id] = { badge, requirements: [] };
+      reqs.forEach(req => {
+        if (!programmeBadges[badge.id].requirements.find(r => r.id === req.id)) programmeBadges[badge.id].requirements.push(req);
+      });
     });
   });
 
   const renderPaymentRow = (prog) => {
     const payState = getMeetingPaymentState(prog);
-    if (!payState) return null;
+    if (!payState) return <p className="text-sm text-gray-500">No payment needed for this meeting.</p>;
     const ps = getMeetingPayStatus(prog.id);
 
     if (payState === 'waived') {
-      return <div className="mt-3 pt-3 border-t"><Badge variant="outline" className="text-gray-500">Waived</Badge></div>;
+      return <Badge variant="outline" className="text-gray-500">Waived</Badge>;
     }
     if (payState === 'paid') {
       return (
-        <div className="mt-3 pt-3 border-t">
-          <div className="flex flex-wrap items-center gap-3">
-            <Badge className="bg-green-600 flex items-center gap-1"><CheckCircle className="w-3 h-3" />Paid — £{prog.cost?.toFixed(2)}</Badge>
-            {ps?.paid_at && <span className="text-xs text-gray-500">{format(new Date(ps.paid_at), 'd MMM yyyy')}</span>}
-            {ps?.card_brand && ps?.card_last4 && <span className="text-xs text-gray-500 capitalize">{ps.card_brand} ···· {ps.card_last4}</span>}
-          </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge className="bg-green-600 flex items-center gap-1"><CheckCircle className="w-3 h-3" />Paid — £{prog.cost?.toFixed(2)}</Badge>
+          {ps?.paid_at && <span className="text-xs text-gray-500">{format(new Date(ps.paid_at), 'd MMM yyyy')}</span>}
+          {ps?.card_brand && ps?.card_last4 && <span className="text-xs text-gray-500 capitalize">{ps.card_brand} ···· {ps.card_last4}</span>}
         </div>
       );
     }
     // Unpaid
     return (
-      <div className="mt-3 pt-3 border-t">
+      <div>
         {!payOpen[prog.id] ? (
           <div className="flex items-center gap-3">
             <Badge className="bg-amber-500">Payment required</Badge>
@@ -174,23 +240,15 @@ export default function ParentProgramme() {
     );
   };
 
-  const renderBadges = (prog) => {
-    const progBadges = badgeCriteria.filter(c => c.programme_id === prog.id).map(c => badges.find(b => b.id === c.badge_id)).filter(Boolean);
-    if (!progBadges.length) return null;
-    return (
-      <div className="mt-5 pt-5 border-t">
-        <p className="text-sm font-semibold text-gray-700 mb-3">Badge Work:</p>
-        <div className="flex flex-wrap gap-3">
-          {progBadges.map(badge => (
-            <div key={badge.id} className="flex items-center gap-2 bg-purple-100 px-4 py-2 rounded-full">
-              <img src={badge.image_url} alt={badge.name} className="w-6 h-6 rounded" />
-              <span className="text-sm font-medium text-gray-800">{badge.name}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+  const selectedProgramme = programmes.find(p => p.id === selectedMeetingId) || allTermProgrammes.find(p => p.id === selectedMeetingId);
+
+  const meetingHeaderBadges = (prog) => (
+    <>
+      {prog.has_cost && prog.cost > 0 && getMeetingPaymentState(prog) === 'paid' && <Badge className="bg-green-600 flex items-center gap-1"><CheckCircle className="w-3 h-3" />Paid</Badge>}
+      {prog.has_cost && prog.cost > 0 && getMeetingPaymentState(prog) === 'unpaid' && <Badge className="bg-amber-500">Payment required</Badge>}
+      {isVolunteeredForProgramme(prog.id) && <Badge className="bg-green-100 text-green-700 border border-green-200 flex items-center gap-1"><HandHeart className="w-3 h-3" />Volunteering</Badge>}
+    </>
+  );
 
   if (!user || children.length === 0) {
     return (
@@ -247,27 +305,29 @@ export default function ParentProgramme() {
           <div className="mb-8">
             <h2 className="text-2xl font-bold mb-4 text-gray-900">Next Meeting</h2>
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-              <Card className="shadow-xl border-l-4 border-l-green-600 bg-gradient-to-r from-green-50 to-white">
+              <Card
+                className="shadow-xl border-l-4 border-l-green-600 bg-gradient-to-r from-green-50 to-white cursor-pointer hover:shadow-2xl transition-shadow"
+                onClick={() => setSelectedMeetingId(nextMeeting.id)}
+              >
                 <CardHeader>
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      {format(new Date(nextMeeting.date), 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd') && <Badge className="bg-green-600">Today</Badge>}
-                      {nextMeeting.has_cost && nextMeeting.cost > 0 && getMeetingPaymentState(nextMeeting) === 'paid' && <Badge className="bg-green-600 flex items-center gap-1"><CheckCircle className="w-3 h-3" />Paid</Badge>}
-                      {nextMeeting.has_cost && nextMeeting.cost > 0 && getMeetingPaymentState(nextMeeting) === 'unpaid' && <Badge className="bg-amber-500">Payment required</Badge>}
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        {format(new Date(nextMeeting.date), 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd') && <Badge className="bg-green-600">Today</Badge>}
+                        {meetingHeaderBadges(nextMeeting)}
+                      </div>
+                      <CardTitle className="text-2xl">{nextMeeting.title}</CardTitle>
+                      <div className="flex items-center gap-2 mt-2 text-gray-600"><Calendar className="w-4 h-4" /><span className="font-medium">{format(new Date(nextMeeting.date), 'EEEE, MMMM d')}</span></div>
                     </div>
-                    <CardTitle className="text-2xl">{nextMeeting.title}</CardTitle>
-                    <div className="flex items-center gap-2 mt-2 text-gray-600"><Calendar className="w-4 h-4" /><span className="font-medium">{format(new Date(nextMeeting.date), 'EEEE, MMMM d')}</span></div>
+                    <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleShare(nextMeeting); }} className="flex-shrink-0">
+                      <Share2 className="w-4 h-4" />
+                    </Button>
                   </div>
                 </CardHeader>
-                {(nextMeeting.shown_in_portal && nextMeeting.description) && (
+                {nextMeeting.shown_in_portal && nextMeeting.description && (
                   <CardContent>
-                    <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">{nextMeeting.description}</p>
-                    {renderBadges(nextMeeting)}
-                    {renderPaymentRow(nextMeeting)}
+                    <p className="text-gray-700 text-lg leading-relaxed line-clamp-2">{nextMeeting.description}</p>
                   </CardContent>
-                )}
-                {!(nextMeeting.shown_in_portal && nextMeeting.description) && renderPaymentRow(nextMeeting) && (
-                  <CardContent>{renderPaymentRow(nextMeeting)}</CardContent>
                 )}
               </Card>
             </motion.div>
@@ -281,26 +341,28 @@ export default function ParentProgramme() {
             <div className="space-y-4">
               {futureProgrammes.map((prog, index) => (
                 <motion.div key={prog.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
-                  <Card className="shadow-xl bg-white/80 backdrop-blur-sm">
+                  <Card
+                    className="shadow-xl bg-white/80 backdrop-blur-sm cursor-pointer hover:shadow-2xl transition-shadow"
+                    onClick={() => setSelectedMeetingId(prog.id)}
+                  >
                     <CardHeader>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <CardTitle className="text-2xl">{prog.title}</CardTitle>
-                          {prog.has_cost && prog.cost > 0 && getMeetingPaymentState(prog) === 'paid' && <Badge className="bg-green-600 flex items-center gap-1"><CheckCircle className="w-3 h-3" />Paid</Badge>}
-                          {prog.has_cost && prog.cost > 0 && getMeetingPaymentState(prog) === 'unpaid' && <Badge className="bg-amber-500">Payment required</Badge>}
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <CardTitle className="text-2xl">{prog.title}</CardTitle>
+                            {meetingHeaderBadges(prog)}
+                          </div>
+                          <div className="flex items-center gap-2 mt-2 text-gray-600"><Calendar className="w-4 h-4" /><span className="font-medium">{format(new Date(prog.date), 'EEEE, MMMM d')}</span></div>
                         </div>
-                        <div className="flex items-center gap-2 mt-2 text-gray-600"><Calendar className="w-4 h-4" /><span className="font-medium">{format(new Date(prog.date), 'EEEE, MMMM d')}</span></div>
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleShare(prog); }} className="flex-shrink-0">
+                          <Share2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </CardHeader>
-                    {(prog.shown_in_portal && prog.description) && (
+                    {prog.shown_in_portal && prog.description && (
                       <CardContent>
-                        <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-wrap">{prog.description}</p>
-                        {renderBadges(prog)}
-                        {renderPaymentRow(prog)}
+                        <p className="text-gray-700 text-lg leading-relaxed line-clamp-2">{prog.description}</p>
                       </CardContent>
-                    )}
-                    {!(prog.shown_in_portal && prog.description) && getMeetingPaymentState(prog) && (
-                      <CardContent>{renderPaymentRow(prog)}</CardContent>
                     )}
                   </Card>
                 </motion.div>
@@ -316,17 +378,24 @@ export default function ParentProgramme() {
             <div className="space-y-4">
               {previousProgrammes.reverse().map((prog, index) => (
                 <motion.div key={prog.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}>
-                  <Card className="shadow-lg bg-gray-50/80 backdrop-blur-sm border-gray-200">
+                  <Card
+                    className="shadow-lg bg-gray-50/80 backdrop-blur-sm border-gray-200 cursor-pointer hover:shadow-xl transition-shadow"
+                    onClick={() => setSelectedMeetingId(prog.id)}
+                  >
                     <CardHeader>
-                      <CardTitle className="text-xl text-gray-700">{prog.title}</CardTitle>
-                      <div className="flex items-center gap-2 mt-2 text-gray-500"><Calendar className="w-4 h-4" /><span className="font-medium">{format(new Date(prog.date), 'EEEE, MMMM d')}</span></div>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <CardTitle className="text-xl text-gray-700">{prog.title}</CardTitle>
+                            {isVolunteeredForProgramme(prog.id) && <Badge className="bg-green-100 text-green-700 border border-green-200 flex items-center gap-1"><HandHeart className="w-3 h-3" />Volunteered</Badge>}
+                          </div>
+                          <div className="flex items-center gap-2 mt-2 text-gray-500"><Calendar className="w-4 h-4" /><span className="font-medium">{format(new Date(prog.date), 'EEEE, MMMM d')}</span></div>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleShare(prog); }} className="flex-shrink-0">
+                          <Share2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </CardHeader>
-                    {prog.shown_in_portal && prog.description && (
-                      <CardContent>
-                        <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{prog.description}</p>
-                        {renderBadges(prog)}
-                      </CardContent>
-                    )}
                   </Card>
                 </motion.div>
               ))}
@@ -343,6 +412,24 @@ export default function ParentProgramme() {
           </Card>
         )}
       </div>
+
+      {selectedProgramme && (() => {
+        const { timeText, locationText } = getMeetingLocationTime(selectedProgramme);
+        return (
+          <MeetingDetailDialog
+            open={!!selectedMeetingId}
+            onOpenChange={(v) => !v && setSelectedMeetingId(null)}
+            programme={selectedProgramme}
+            badgeGroups={getBadgeGroupsForProgramme(selectedProgramme.id)}
+            volunteered={isVolunteeredForProgramme(selectedProgramme.id)}
+            actionItems={getActionItemsForProgramme(selectedProgramme.id)}
+            timeText={timeText}
+            locationText={locationText}
+            renderPayment={renderPaymentRow}
+            onShare={() => handleShare(selectedProgramme)}
+          />
+        );
+      })()}
     </div>
   );
 }

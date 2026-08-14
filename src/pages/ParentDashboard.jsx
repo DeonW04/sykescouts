@@ -21,6 +21,7 @@ import AwardJourneySection from '@/components/parent/dashboard/AwardJourneySecti
 import ScoutingJourneyBar from '@/components/parent/dashboard/ScoutingJourneyBar';
 import BannerPickerDialog from '@/components/banner/BannerPickerDialog';
 import ConsentFormDialog from '@/components/parent/ConsentFormDialog';
+import PaymentActionDialog from '@/components/parent/dashboard/PaymentActionDialog';
 
 
 // Handle parent volunteer responses
@@ -72,6 +73,7 @@ export default function ParentDashboard() {
   const [user, setUser] = useState(null);
   const [consentDialog, setConsentDialog] = useState(null);
   const [consentFormDialog, setConsentFormDialog] = useState(null);
+  const [paymentDialogAction, setPaymentDialogAction] = useState(null);
   const [textInputs, setTextInputs] = useState({});
   const [dropdownValues, setDropdownValues] = useState({});
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -306,7 +308,7 @@ export default function ParentDashboard() {
             action_purpose: 'payment',
             action_text: `Payment required — £${entity.record.cost.toFixed(2)} for ${entity.record.title}`,
             isPayment: true,
-            targetPage: entity.kind === 'meeting' ? 'ParentProgramme' : 'ParentEvents',
+            entity,
           };
         })
         .filter(Boolean);
@@ -421,7 +423,7 @@ export default function ParentDashboard() {
                         <Button
                           size="sm"
                           className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0"
-                          onClick={() => navigate(createPageUrl(action.targetPage))}
+                          onClick={() => setPaymentDialogAction(action)}
                         >
                           Pay Now
                         </Button>
@@ -774,6 +776,18 @@ export default function ParentDashboard() {
           onSigned={() => {
             queryClient.invalidateQueries({ queryKey: ['parent-portal'] });
             queryClient.invalidateQueries({ queryKey: ['actions-required'] });
+          }}
+        />
+
+        <PaymentActionDialog
+          open={!!paymentDialogAction}
+          onOpenChange={(v) => !v && setPaymentDialogAction(null)}
+          entity={paymentDialogAction?.entity}
+          child={selectedChild}
+          onPaid={() => {
+            queryClient.invalidateQueries({ queryKey: ['parent-portal'] });
+            queryClient.invalidateQueries({ queryKey: ['actions-required'] });
+            setPaymentDialogAction(null);
           }}
         />
         </>

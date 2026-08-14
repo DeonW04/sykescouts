@@ -28,7 +28,7 @@ export default function ParentEventDetail() {
   const [dropdownValues, setDropdownValues] = useState({});
   const [editDialog, setEditDialog] = useState(null);
   const [editValue, setEditValue] = useState('');
-  const [payDetailOpen, setPayDetailOpen] = useState(false);
+  const [payDetailOpen, setPayDetailOpen] = useState(urlParams.get('pay') === '1');
   const paymentRef = useRef(null);
 
   useEffect(() => {
@@ -185,6 +185,13 @@ export default function ParentEventDetail() {
       setEditValue('');
     },
   });
+
+  useEffect(() => {
+    if (event && urlParams.get('pay') === '1') {
+      setPayDetailOpen(true);
+      setTimeout(() => paymentRef.current?.scrollIntoView({ behavior: 'smooth' }), 300);
+    }
+  }, [event]);
 
   if (!event || !user) {
     return (

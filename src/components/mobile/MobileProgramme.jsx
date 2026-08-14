@@ -8,7 +8,7 @@ import PaymentExpander from './PaymentExpander';
 const BADGE_EMOJI = { challenge: '🏆', activity: '⭐', staged: '📈', chief_scout_award: '🥇' };
 const ATTENDING_VALUES = new Set(['yes', 'yes, attending', 'attending']);
 
-function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMeeting, badges = [], paymentState, paidDetails, memberId, paymentMethods, onPaymentComplete }) {
+function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMeeting, badges = [], paymentState, paidDetails, memberId, paymentMethods, onPaymentComplete, volunteered }) {
   const [open, setOpen] = useState(isThisWeeksMeeting);
 
   if (programme.no_meeting) {
@@ -60,6 +60,7 @@ function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMee
             {paymentState === 'paid' && <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">✓ Paid</span>}
             {paymentState === 'unpaid' && <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Payment due</span>}
             {paymentState === 'waived' && <span className="bg-gray-100 text-gray-500 text-[10px] font-bold px-2 py-0.5 rounded-full">Waived</span>}
+            {volunteered && <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">🙌 Volunteering</span>}
           </div>
           <p className="text-xs text-gray-400 mt-0.5">{format(new Date(programme.date), 'EEEE, d MMMM yyyy')}</p>
           {programme.optional_start_time && <p className="text-xs text-red-600 font-semibold mt-0.5">⏰ {programme.optional_start_time}{programme.optional_end_time ? ` – ${programme.optional_end_time}` : ''}</p>}
@@ -135,10 +136,16 @@ function MeetingCard({ programme, isPastMeeting, termMeetingTime, isThisWeeksMee
   );
 }
 
-export default function MobileProgramme({ selectedChild }) {
+export default function MobileProgramme({ selectedChild, user }) {
   const queryClient = useQueryClient();
   const childSectionIds = selectedChild?.section_id ? [selectedChild.section_id] : [];
   const primaryChild = selectedChild;
+
+  const { data: parentVolunteers = [] } = useQuery({
+    queryKey: ['mobile-parent-volunteers', user?.email],
+    queryFn: () => base44.entities.ParentVolunteer.filter({ parent_email: user.email, response: 'yes' }),
+    enabled: !!user?.email,
+  });
 
   const { data: terms = [] } = useQuery({
     queryKey: ['mobile-terms', childSectionIds],
@@ -252,6 +259,8 @@ export default function MobileProgramme({ selectedChild }) {
     queryClient.invalidateQueries({ queryKey: ['meeting-attendance-responses'] });
   };
 
+  const isVolunteered = (progId) => parentVolunteers.some(v => v.programme_id === progId);
+
   const makeMeetingCard = (p, isPastMeeting, isThisWeek) => {
     const payState = getPaymentState(p);
     return (
@@ -267,6 +276,7 @@ export default function MobileProgramme({ selectedChild }) {
         memberId={primaryChild?.id}
         paymentMethods={primaryChild?.stripe_payment_methods || []}
         onPaymentComplete={handlePaymentComplete}
+        volunteered={isVolunteered(p.id)}
       />
     );
   };

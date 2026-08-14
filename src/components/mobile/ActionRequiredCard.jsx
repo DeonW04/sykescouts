@@ -69,9 +69,11 @@ function ActionItem({ action, child, user, existingResponses, programme, event: 
 
   const isAttendanceAction = action.action_purpose === 'attendance';
   const hasMeetingCost = programme?.has_cost && (programme?.cost || 0) > 0;
+  const hasEventCost = (eventItem?.cost || 0) > 0;
+  const paymentEntity = hasMeetingCost ? programme : hasEventCost ? eventItem : null;
   const childResponse = getExistingResponse(child?.id);
   const attendanceConfirmedAttending = isAttendanceAction && childResponse && ATTENDING_VALUES.has((childResponse.response_value || '').toLowerCase());
-  const showPaymentPrompt = hasMeetingCost && attendanceConfirmedAttending && allAnswered;
+  const showPaymentPrompt = !!paymentEntity && attendanceConfirmedAttending && allAnswered;
 
   // Context line: meeting title + date
   const contextLine = programme
@@ -104,14 +106,14 @@ function ActionItem({ action, child, user, existingResponses, programme, event: 
       </div>
       {showPaymentPrompt && (
         <button
-          onClick={() => onTabChange?.('programme')}
+          onClick={() => onTabChange?.(hasMeetingCost ? 'programme' : 'events')}
           className="mt-2 w-full bg-amber-50 border border-amber-200 rounded-2xl px-3 py-2.5 flex items-center justify-between active:bg-amber-100 transition-colors"
         >
           <div className="flex items-center gap-2">
             <CreditCard className="w-4 h-4 text-amber-600 flex-shrink-0" />
             <div className="text-left">
               <p className="text-xs font-bold text-amber-800">Payment required</p>
-              <p className="text-xs text-amber-600">£{(programme.cost).toFixed(2)} for {programme.title}</p>
+              <p className="text-xs text-amber-600">£{paymentEntity.cost.toFixed(2)} for {paymentEntity.title}</p>
             </div>
           </div>
           <span className="text-amber-600 text-sm">→</span>
