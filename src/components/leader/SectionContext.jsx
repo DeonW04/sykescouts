@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { usePortalContext } from '@/lib/PortalContextProvider';
 
 const SectionContext = createContext();
 
@@ -12,6 +13,7 @@ export const useSectionContext = () => {
 };
 
 export const SectionProvider = ({ children }) => {
+  const portal = usePortalContext();
   const [selectedSection, setSelectedSection] = useState(null);
   const [previousSection, setPreviousSection] = useState(null);
   const [transitioning, setTransitioning] = useState(false);
@@ -37,6 +39,11 @@ export const SectionProvider = ({ children }) => {
     setPendingSectionId(newSectionId);
     setSelectedSection(newSectionId);
     setTransitioning(true);
+    // Keep the unified portal context in sync (no navigation — we're already on the leader portal).
+    const section = availableSections.find(s => s.id === newSectionId);
+    if (section) {
+      portal.syncActiveContext({ type: 'section', id: section.id, label: section.display_name });
+    }
   };
 
   const onTransitionComplete = () => {
@@ -55,11 +62,15 @@ export const SectionProvider = ({ children }) => {
       setUser(currentUser);
       const defaultId = currentUser.default_section_id;
 
+      // The unified portal context (when type is 'section') is the primary source of truth;
+      // fall back to the legacy localStorage key for backward compatibility.
+      const contextSectionId = portal.activeContext?.type === 'section' ? portal.activeContext.id : null;
+
       if (currentUser.role === 'admin') {
         const allSections = await base44.entities.Section.filter({ active: true });
         setAvailableSections(allSections);
         if (allSections.length > 0) {
-          const storedId = localStorage.getItem('syke_active_section');
+          const storedId = contextSectionId || localStorage.getItem('syke_active_section');
           const preferred = storedId || defaultId;
           const preferredExists = preferred && allSections.find(s => s.id === preferred);
           setSelectedSection(preferredExists ? preferred : allSections[0].id);
@@ -71,7 +82,7 @@ export const SectionProvider = ({ children }) => {
           const leaderSections = sections.filter(s => leaders[0].section_ids.includes(s.id));
           setAvailableSections(leaderSections);
           if (leaderSections.length > 0) {
-            const storedId = localStorage.getItem('syke_active_section');
+            const storedId = contextSectionId || localStorage.getItem('syke_active_section');
             const preferred = storedId || defaultId;
             const preferredExists = preferred && leaderSections.find(s => s.id === preferred);
             setSelectedSection(preferredExists ? preferred : leaderSections[0].id);

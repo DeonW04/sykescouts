@@ -16,7 +16,8 @@ import {
 import { PORTAL_NAV_GROUPS } from '@/lib/navConfig';
 import { TREASURER_NAV_GROUPS } from '@/lib/treasurerNavConfig';
 import LoginDropdown from './LoginDropdown';
-import ChildSwitcherDropdown from '@/components/parent/ChildSwitcherDropdown';
+import UnifiedPortalDropdown from '@/components/portal/UnifiedPortalDropdown';
+import { usePortalContext, getPermittedPortal } from '@/lib/PortalContextProvider';
 
 // Portal nav groups — single source of truth in lib/navConfig
 const portalGroups = PORTAL_NAV_GROUPS;
@@ -319,17 +320,20 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, isTreasurer
 export default function FloatingNav() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [user, setUser] = useState(null);
-  const [isLeader, setIsLeader] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isParent, setIsParent] = useState(false);
-  const [isTreasurerRole, setIsTreasurerRole] = useState(false);
-  const [portalLabel, setPortalLabel] = useState(null);
-  const [portalUrl, setPortalUrl] = useState(null);
   const [portalOpen, setPortalOpen] = useState(false);
   const [joinOpen,   setJoinOpen]   = useState(false);
   const [loginOpen,  setLoginOpen]  = useState(false);
   const location = useLocation();
+  const { user, activeContext, availableContexts, openPicker } = usePortalContext();
+
+  const permittedPortal = getPermittedPortal(activeContext);
+  const isLeader = permittedPortal === 'leader';
+  const isParent = permittedPortal === 'parent';
+  const isTreasurerRole = permittedPortal === 'treasurer';
+  const isAdmin = user?.role === 'admin';
+  const portalLabel = isLeader ? 'Leader Portal' : isParent ? 'Parent Portal' : isTreasurerRole ? 'Treasurer Portal' : permittedPortal === 'admin' ? 'Admin Portal' : 'Portal';
+  const portalUrl = isLeader ? createPageUrl('LeaderDashboard') : isParent ? createPageUrl('ParentDashboard') : isTreasurerRole ? createPageUrl('TreasurerDashboard') : permittedPortal === 'admin' ? createPageUrl('AdminSettings') : null;
+  const hasMultipleContexts = ((availableContexts.children?.length || 0) + (availableContexts.sections?.length || 0) + (availableContexts.roles?.length || 0)) > 1;
 
   const isPortalPage = PORTAL_PREFIXES.some(p => location.pathname.startsWith(p));
   const isTreasurer = isTreasurerRole || isTreasurerPath(location.pathname);
@@ -341,40 +345,18 @@ export default function FloatingNav() {
   }, []);
 
   useEffect(() => {
-    base44.auth.isAuthenticated().then(async (authed) => {
-      if (!authed) return;
-      const me = await base44.auth.me();
-      setUser(me);
-      if (me.role === 'admin') {
-        setIsLeader(true);
-        setIsAdmin(true);
-        setPortalLabel('Leader Portal');
-        setPortalUrl(createPageUrl('LeaderDashboard'));
-      } else {
-        if (me.role === 'treasurer') {
-          setIsTreasurerRole(true);
-          setPortalLabel('Treasurer Portal');
-          setPortalUrl(createPageUrl('TreasurerDashboard'));
-          return;
-        }
-        const leaders = await base44.entities.Leader.filter({ user_id: me.id });
-        if (leaders.length > 0) {
-          setIsLeader(true);
-          setPortalLabel('Leader Portal');
-          setPortalUrl(createPageUrl('LeaderDashboard'));
-        } else {
-          setIsParent(true);
-          setPortalLabel('Parent Portal');
-          setPortalUrl(createPageUrl('ParentDashboard'));
-        }
-      }
-    }).catch(() => {});
-  }, []);
-
-  useEffect(() => {
     setMobileDrawerOpen(false);
     setPortalOpen(isPortalPage);
   }, [location.pathname]);
+
+  // Portal button: with an active context, toggle the strip open/closed; with none (but multiple available), open the picker.
+  const handlePortalButtonClick = () => {
+    if (activeContext) {
+      setPortalOpen(v => !v);
+    } else {
+      openPicker();
+    }
+  };
 
   const navLinks = [
     { label: 'Home', to: '/' },
@@ -406,55 +388,14 @@ export default function FloatingNav() {
     whiteSpace: 'nowrap', transition: 'background 0.2s, color 0.2s',
   };
 
-  // Shared account dropdown (used in both leader and parent strips)
-  const AccountDropdown = () => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          style={{
-            display: 'flex', alignItems: 'center', gap: '6px',
-            fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '13px',
-            color: 'rgba(26,26,46,0.6)', background: 'rgba(116,19,220,0.04)',
-            border: '0.5px solid rgba(116,19,220,0.12)', borderRadius: '20px',
-            cursor: 'pointer', padding: '5px 12px 5px 10px',
-            whiteSpace: 'nowrap', transition: 'background 0.2s, color 0.2s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.08)'; e.currentTarget.style.color = '#7413dc'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.04)'; e.currentTarget.style.color = 'rgba(26,26,46,0.6)'; }}
-        >
-          <UserCircle size={14} />
-          {(() => {
-            const name = user?.display_name || user?.full_name || 'Account';
-            return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase().split(' ')[0];
-          })()}
-          <ChevronDown size={11} />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" style={{ zIndex: 1100 }}>
-        <div style={{ padding: '8px 12px 6px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-          <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '13px', color: '#1a1a2e', margin: 0 }}>
-            {(() => { const n = user?.display_name || user?.full_name || ''; return n.charAt(0).toUpperCase() + n.slice(1).toLowerCase(); })()}
-          </p>
-          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(26,26,46,0.4)', margin: '2px 0 0' }}>{user?.email}</p>
-        </div>
-        <DropdownMenuItem asChild>
-          <Link to={createPageUrl('AccountSettings')} className="flex items-center gap-2 cursor-pointer">
-            <Settings className="w-4 h-4" /> Account Settings
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => base44.auth.logout()} className="cursor-pointer text-red-600 focus:text-red-600">
-          <LogOut className="w-4 h-4 mr-2" /> Sign out
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-
-  const showStrip = isLeader || isParent || isTreasurer;
+  const showStrip = isLeader || isParent || isTreasurer || permittedPortal === 'admin';
 
   return (
     <>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+        @keyframes portalPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(116,19,220,0.35); } 50% { box-shadow: 0 0 0 6px rgba(116,19,220,0); } }
+      `}</style>
 
       <MobileSidebar
         open={mobileDrawerOpen}
@@ -530,9 +471,9 @@ export default function FloatingNav() {
 
           {/* Desktop right CTA */}
           <div className="hidden md:flex" style={{ alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-            {isLeader ? (
+            {(activeContext || (user && hasMultipleContexts)) ? (
               <button
-                onClick={() => setPortalOpen(v => !v)}
+                onClick={handlePortalButtonClick}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
                   background: (isPortalPage || portalOpen) ? '#7413dc' : 'rgba(116,19,220,0.08)',
@@ -541,53 +482,14 @@ export default function FloatingNav() {
                   padding: '8px 18px', fontSize: '14px', fontWeight: 500,
                   cursor: 'pointer', transition: 'all 0.25s ease',
                   fontFamily: 'DM Sans, sans-serif',
+                  animation: (!activeContext && hasMultipleContexts) ? 'portalPulse 2s ease-in-out infinite' : 'none',
                 }}
               >
                 <LayoutDashboard size={15} />
-                Leader Portal
+                {portalLabel}
                 <ChevronDown size={14} style={{ transform: (isPortalPage || portalOpen) ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }} />
               </button>
-            ) : isParent ? (
-              <button
-                onClick={() => setPortalOpen(v => !v)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  background: (isPortalPage || portalOpen) ? '#7413dc' : 'rgba(116,19,220,0.08)',
-                  color: (isPortalPage || portalOpen) ? '#fff' : '#7413dc',
-                  border: 'none', borderRadius: '25px',
-                  padding: '8px 18px', fontSize: '14px', fontWeight: 500,
-                  cursor: 'pointer', transition: 'all 0.25s ease',
-                  fontFamily: 'DM Sans, sans-serif',
-                }}
-              >
-                <LayoutDashboard size={15} />
-                Parent Portal
-                <ChevronDown size={14} style={{ transform: (isPortalPage || portalOpen) ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }} />
-              </button>
-            ) : isTreasurer ? (
-              <button
-                onClick={() => setPortalOpen(v => !v)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  background: (isPortalPage || portalOpen) ? '#7413dc' : 'rgba(116,19,220,0.08)',
-                  color: (isPortalPage || portalOpen) ? '#fff' : '#7413dc',
-                  border: 'none', borderRadius: '25px',
-                  padding: '8px 18px', fontSize: '14px', fontWeight: 500,
-                  cursor: 'pointer', transition: 'all 0.25s ease',
-                  fontFamily: 'DM Sans, sans-serif',
-                }}
-              >
-                <LayoutDashboard size={15} />
-                Treasurer Portal
-                <ChevronDown size={14} style={{ transform: (isPortalPage || portalOpen) ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s' }} />
-              </button>
-            ) : portalLabel ? (
-              <Link to={portalUrl} style={{
-                fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '14px',
-                color: '#fff', textDecoration: 'none', background: '#7413dc',
-                borderRadius: '25px', padding: '8px 22px',
-              }}>{portalLabel} →</Link>
-            ) : (
+            ) : user ? null : (
               <>
                 {/* Login */}
                 <button
@@ -689,7 +591,7 @@ export default function FloatingNav() {
 
               {/* Dashboard button */}
               <Link
-                to={createPageUrl(isTreasurer ? 'TreasurerDashboard' : isLeader ? 'LeaderDashboard' : 'ParentDashboard')}
+                to={createPageUrl(isTreasurer ? 'TreasurerDashboard' : isLeader ? 'LeaderDashboard' : permittedPortal === 'admin' ? 'AdminSettings' : 'ParentDashboard')}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '5px',
                   fontWeight: 600, fontSize: '12px', color: '#7413dc',
@@ -799,6 +701,10 @@ export default function FloatingNav() {
                       </DropdownMenu>
                     );
                   })
+                ) : permittedPortal === 'admin' ? (
+                  <Link to={createPageUrl('AdminSettings')} style={{ ...stripBtnStyle, textDecoration: 'none' }}>
+                    <Settings size={13} /> Admin Area
+                  </Link>
                 ) : (
                   /* Parent flat links — no dropdowns */
                   parentNavLinks.map(({ label, page, icon: Icon }) => {
@@ -848,7 +754,7 @@ export default function FloatingNav() {
                     <Settings size={13} /> Admin Area
                   </Link>
                 )}
-                {isParent ? <ChildSwitcherDropdown user={user} /> : <AccountDropdown />}
+                <UnifiedPortalDropdown />
               </div>
 
             </div>

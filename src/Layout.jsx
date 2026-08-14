@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { SectionProvider } from './components/leader/SectionContext';
 import SectionTransitionOverlay from './components/leader/SectionTransitionOverlay';
 import { useSectionContext } from './components/leader/SectionContext';
+import { usePortalContext, getPermittedPortal } from './lib/PortalContextProvider';
 
 function SectionTransitionWrapper() {
   const { transitioning, previousSection, pendingSectionId, onTransitionComplete, availableSections } = useSectionContext();
@@ -132,26 +133,35 @@ export default function Layout({ children, currentPageName }) {
   const protectedPages = [...leaderPages, ...adminPages, ...parentPages];
   const publicPages = ['Home', 'About', 'Sections', 'Parents', 'Gallery', 'Contact', 'Join', 'Volunteer', 'SharedPage'];
 
+  const navigate = useNavigate();
+  const { activeContext, openPicker, isResolved: contextResolved } = usePortalContext();
+  const permittedPortal = getPermittedPortal(activeContext);
+
   useEffect(() => {
     if (!checkingAuth) {
       if (!user && protectedPages.includes(currentPageName) && !publicPages.includes(currentPageName)) {
         window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
         return;
       }
-      if (user && user.role !== 'admin' && adminPages.includes(currentPageName)) {
-        window.location.href = createPageUrl(isLeader ? 'LeaderDashboard' : 'ParentDashboard');
+      // Admin always allowed on admin pages regardless of active context.
+      if (user && user.role !== 'admin' && adminPages.includes(currentPageName) && permittedPortal !== 'admin') {
+        navigate('/');
+        if (contextResolved) openPicker();
         return;
       }
-      if (user && !isLeader && user.role !== 'admin' && leaderPages.includes(currentPageName)) {
-        window.location.href = createPageUrl('ParentDashboard');
+      // Cross-context navigation: redirect home and open the picker rather than hard-jumping to the wrong portal.
+      if (user && user.role !== 'admin' && leaderPages.includes(currentPageName) && permittedPortal !== 'leader') {
+        navigate('/');
+        if (contextResolved) openPicker();
         return;
       }
-      if (user && isLeader && user.role !== 'admin' && parentPages.includes(currentPageName)) {
-        window.location.href = createPageUrl('LeaderDashboard');
+      if (user && user.role !== 'admin' && parentPages.includes(currentPageName) && permittedPortal !== 'parent') {
+        navigate('/');
+        if (contextResolved) openPicker();
         return;
       }
     }
-  }, [user, isLeader, currentPageName, checkingAuth]);
+  }, [user, permittedPortal, currentPageName, checkingAuth, contextResolved]);
 
   // These pages render their own FloatingNav and PublicFooter — skip Layout chrome entirely
   // Still wrap in SectionProvider so pages using useSectionContext work correctly

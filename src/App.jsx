@@ -52,6 +52,8 @@ import OSMBadgeImport from './pages/OSMBadgeImport';
 import SilverAwardDetail from './pages/SilverAwardDetail';
 import ParentSilverAward from './pages/ParentSilverAward';
 import { ROUTE_MAP } from '@/lib/routeMap';
+import { PortalContextProvider } from '@/lib/PortalContextProvider';
+import PortalContextModal from '@/components/portal/PortalContextModal';
 
 
 // Public-only pages that should never be shown in PWA mode
@@ -263,7 +265,10 @@ function App() {
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <NavigationTracker />
-          <AuthenticatedApp />
+          <PortalContextProvider>
+            <AuthenticatedApp />
+            <PortalContextModal />
+          </PortalContextProvider>
         </Router>
         <Toaster />
       </QueryClientProvider>
