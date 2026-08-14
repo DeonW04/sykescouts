@@ -36,12 +36,14 @@ const handleVolunteerResponse = async (actionId, memberId, response, user, query
     });
 
     if (existingVolunteer.length === 0) {
-      // Create parent volunteer record only once per parent per event/programme
+      // Create parent volunteer record only once per parent per event/programme.
+      // Normalize to the entity's yes/no enum — the raw response text (e.g.
+      // "Yes, I will volunteer") doesn't match the schema.
       await base44.entities.ParentVolunteer.create({
         ...(action.programme_id ? { programme_id: action.programme_id } : { event_id: action.event_id }),
         parent_email: user.email,
         parent_name: user.display_name || user.full_name,
-        response,
+        response: response.toLowerCase().startsWith('yes') ? 'yes' : 'no',
       });
     }
 

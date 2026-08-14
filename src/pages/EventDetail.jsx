@@ -17,6 +17,7 @@ import AwardNightsAwayDialog from '../components/events/AwardNightsAwayDialog';
 import TodoSection from '../components/meeting/TodoSection';
 import EventParentPortalSection from '../components/events/EventParentPortalSection';
 import EventAttendeesSection from '../components/events/EventAttendeesSection';
+import LeaderRotaSection from '../components/meeting/LeaderRotaSection';
 import SafetySection from '../components/meeting/SafetySection';
 import ProgrammeBadgeCriteriaSection from '../components/meeting/ProgrammeBadgeCriteriaSection';
 import DocumentStorageSection from '../components/meeting/DocumentStorageSection';
@@ -700,7 +701,10 @@ export default function EventDetail() {
             )}
 
             {activeSection === 'attendance' && (
-              <EventAttendeesSection eventId={eventId} event={event} />
+              <div className="space-y-6">
+                <LeaderRotaSection eventId={eventId} sectionId={eventSections[0]?.id} />
+                <EventAttendeesSection eventId={eventId} event={event} />
+              </div>
             )}
 
             {activeSection === 'parent' && (

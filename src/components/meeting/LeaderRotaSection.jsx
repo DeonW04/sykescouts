@@ -140,6 +140,15 @@ export default function LeaderRotaSection({ programmeId, eventId, sectionId }) {
     },
   });
 
+  const removeVolunteerMutation = useMutation({
+    mutationFn: (responseId) => base44.entities.ActionResponse.delete(responseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['volunteer-responses'] });
+      toast.success('Parent helper removed');
+    },
+    onError: (err) => toast.error('Failed to remove helper: ' + err.message),
+  });
+
   const deleteVolunteerActionMutation = useMutation({
     mutationFn: async (id) => {
       const assignments = await base44.entities.ActionAssignment.filter({ action_required_id: id });
@@ -305,7 +314,7 @@ export default function LeaderRotaSection({ programmeId, eventId, sectionId }) {
                     const isParentTwo = responderEmail && responderEmail === member.parent_two_email;
                     const parentName = isParentTwo ? (member.parent_two_name || member.parent_one_name) : (member.parent_one_name || member.full_name);
                     const parentEmail = isParentTwo ? member.parent_two_email : (member.parent_one_email || responderEmail);
-                    return { member, parentName, parentEmail };
+                    return { member, parentName, parentEmail, responseId: r.id };
                   })
                   .filter(Boolean);
                 const limit = action.volunteer_limit;
@@ -354,15 +363,24 @@ export default function LeaderRotaSection({ programmeId, eventId, sectionId }) {
                       {volunteers.length === 0 ? (
                         <p className="text-sm text-gray-400 px-3 py-2.5 italic">No volunteers yet</p>
                       ) : (
-                        volunteers.map(({ member, parentName, parentEmail }) => (
+                        volunteers.map(({ member, parentName, parentEmail, responseId }) => (
                           <div key={member.id} className="flex items-center gap-2.5 px-3 py-2.5">
                             <div className="w-7 h-7 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
                               {parentName.charAt(0)}
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium text-gray-800">{member.full_name || `${member.first_name} ${member.surname}`}'s Parent ({parentName})</p>
                               <p className="text-xs text-gray-500 truncate">{parentEmail}</p>
                             </div>
+                            <button
+                              onClick={() => removeVolunteerMutation.mutate(responseId)}
+                              disabled={removeVolunteerMutation.isPending}
+                              className="text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-2.5 py-1.5 rounded-lg flex-shrink-0 flex items-center gap-1"
+                              title="Remove as volunteer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              Remove
+                            </button>
                           </div>
                         ))
                       )}

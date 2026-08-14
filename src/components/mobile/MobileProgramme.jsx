@@ -141,12 +141,6 @@ export default function MobileProgramme({ selectedChild, user }) {
   const childSectionIds = selectedChild?.section_id ? [selectedChild.section_id] : [];
   const primaryChild = selectedChild;
 
-  const { data: parentVolunteers = [] } = useQuery({
-    queryKey: ['mobile-parent-volunteers', user?.email],
-    queryFn: () => base44.entities.ParentVolunteer.filter({ parent_email: user.email, response: 'yes' }),
-    enabled: !!user?.email,
-  });
-
   const { data: terms = [] } = useQuery({
     queryKey: ['mobile-terms', childSectionIds],
     queryFn: () => base44.entities.Term.filter({ active: true }),
@@ -193,6 +187,13 @@ export default function MobileProgramme({ selectedChild, user }) {
   const { data: attendanceActions = [] } = useQuery({
     queryKey: ['meeting-attendance-actions'],
     queryFn: () => base44.entities.ActionRequired.filter({ action_purpose: 'attendance' }),
+    enabled: !!primaryChild?.id,
+    select: data => data.filter(a => a.programme_id),
+  });
+
+  const { data: volunteerActions = [] } = useQuery({
+    queryKey: ['meeting-volunteer-actions'],
+    queryFn: () => base44.entities.ActionRequired.filter({ action_purpose: 'volunteer' }),
     enabled: !!primaryChild?.id,
     select: data => data.filter(a => a.programme_id),
   });
@@ -259,7 +260,13 @@ export default function MobileProgramme({ selectedChild, user }) {
     queryClient.invalidateQueries({ queryKey: ['meeting-attendance-responses'] });
   };
 
-  const isVolunteered = (progId) => parentVolunteers.some(v => v.programme_id === progId);
+  // Matches the leader-side check (LeaderRotaSection) — an ActionResponse of
+  // "Yes, I will volunteer" against this programme's volunteer-purpose action.
+  const isVolunteered = (progId) => {
+    const action = volunteerActions.find(a => a.programme_id === progId);
+    if (!action) return false;
+    return attendanceResponses.some(r => r.action_required_id === action.id && r.response_value === 'Yes, I will volunteer');
+  };
 
   const makeMeetingCard = (p, isPastMeeting, isThisWeek) => {
     const payState = getPaymentState(p);

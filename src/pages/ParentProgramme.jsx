@@ -51,12 +51,6 @@ export default function ParentProgramme() {
     enabled: !!user?.email,
   });
 
-  const { data: parentVolunteers = [] } = useQuery({
-    queryKey: ['parent-volunteers', user?.email],
-    queryFn: () => base44.entities.ParentVolunteer.filter({ parent_email: user.email, response: 'yes' }),
-    enabled: !!user?.email,
-  });
-
   const { data: allActionsRequired = [] } = useQuery({
     queryKey: ['all-actions-required'],
     queryFn: () => base44.entities.ActionRequired.filter({}),
@@ -107,7 +101,17 @@ export default function ParentProgramme() {
     return 'unpaid';
   };
 
-  const isVolunteeredForProgramme = (progId) => parentVolunteers.some(v => v.programme_id === progId);
+  // Volunteering is recorded as an ActionResponse to a 'volunteer'-purpose action —
+  // matches what the leader side (LeaderRotaSection) reads, so both stay in sync.
+  const isVolunteeredForProgramme = (progId) => {
+    const volunteerAction = allActionsRequired.find(a => a.programme_id === progId && a.action_purpose === 'volunteer');
+    if (!volunteerAction) return false;
+    return allResponses.some(r =>
+      r.action_required_id === volunteerAction.id &&
+      childIds.includes(r.member_id || r.child_member_id) &&
+      (r.response_value || r.response) === 'Yes, I will volunteer'
+    );
+  };
 
   const getBadgeGroupsForProgramme = (progId) => {
     const criteria = badgeCriteria.filter(c => c.programme_id === progId);
