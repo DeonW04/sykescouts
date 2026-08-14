@@ -18,7 +18,8 @@
         "admin",
         "treasurer",
         "glv",
-        "team_leader"
+        "team_leader",
+        "leader"
       ],
       "default": "user",
       "description": "Role to assign the user once they complete registration"

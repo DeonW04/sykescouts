@@ -390,9 +390,20 @@ export default function LeaderManagement() {
   const selectedUser = selectedLeader ? users.find(u => u.id === selectedLeader.user_id) : null;
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Leader.update(id, data),
+    mutationFn: async ({ id, data }) => {
+      await base44.entities.Leader.update(id, data);
+      // Keep the linked User's role + section scoping in sync so RLS
+      // scopes their data access to exactly the sections assigned here.
+      const leaderRecord = leaders.find(l => l.id === id);
+      if (leaderRecord?.user_id && data.section_ids) {
+        const linkedUser = users.find(u => u.id === leaderRecord.user_id);
+        const roleUpdate = linkedUser && linkedUser.role === 'user' ? { role: 'leader' } : {};
+        await base44.entities.User.update(leaderRecord.user_id, { assigned_section_ids: data.section_ids, ...roleUpdate });
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['all-leaders-mgmt'] });
+      queryClient.invalidateQueries({ queryKey: ['all-users-mgmt'] });
       setShowEdit(false);
       toast.success('Leader profile updated');
     },

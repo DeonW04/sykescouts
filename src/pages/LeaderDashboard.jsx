@@ -477,7 +477,10 @@ const getQuickActions = (user) => [
     icon: group.icon,
     label: group.label,
     accent: group.accent,
-    dropdown: group.links.filter(link => !link.adminOnly || user?.role === 'admin'),
+    dropdown: group.links.filter(link =>
+      (!link.adminOnly || user?.role === 'admin') &&
+      (!link.restrictedFromLeader || user?.role !== 'leader')
+    ),
   })),
   // Gallery also has its own standalone tile on the dashboard
   { icon: Image, label: 'Gallery', accent: '#ec4899', page: 'LeaderGallery' },

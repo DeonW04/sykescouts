@@ -5,8 +5,9 @@
  * Editing this file updates both places automatically so they can never drift apart.
  *
  * Link flags:
- *   separator : boolean  — render a divider above this item in the dropdown
- *   adminOnly : boolean  — only show when user.role === 'admin'
+ *   separator             : boolean — render a divider above this item in the dropdown
+ *   adminOnly             : boolean — only show when user.role === 'admin'
+ *   restrictedFromLeader  : boolean — hidden from the plain 'leader' role (finance/admin areas)
  */
 import {
   Users, Calendar, Award, Mail, Image, ShieldAlert,
@@ -51,9 +52,9 @@ export const PORTAL_NAV_GROUPS = [
     label: 'Section Admin', icon: BookOpen, accent: '#14b8a6',
     links: [
       { label: 'Communications',    page: 'Communications', icon: Mail },
-      { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark },
+      { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark, restrictedFromLeader: true },
       { label: 'Gallery',           page: 'LeaderGallery', icon: Image },
-      { label: 'Treasurer Portal',  page: 'TreasurerDashboard', icon: Landmark, separator: true },
+      { label: 'Treasurer Portal',  page: 'TreasurerDashboard', icon: Landmark, separator: true, restrictedFromLeader: true },
     ],
   },
 ];

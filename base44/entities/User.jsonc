@@ -9,10 +9,11 @@
         "user",
         "treasurer",
         "glv",
-        "team_leader"
+        "team_leader",
+        "leader"
       ],
       "default": "user",
-      "description": "User role: admin, user (parent), treasurer, glv (Group Lead Volunteer), team_leader"
+      "description": "User role: admin, user (parent), treasurer, glv (Group Lead Volunteer), team_leader, leader (section leader \u2014 restricted to their assigned sections)"
     },
     "display_name": {
       "type": "string",
@@ -26,6 +27,13 @@
     "default_section_id": {
       "type": "string",
       "description": "The section ID that loads by default when the leader logs in"
+    },
+    "assigned_section_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Sections this user (role 'leader') is allowed to access \u2014 kept in sync with their Leader.section_ids by admins in Leader Management. Used to scope data access for the leader role."
     },
     "account_type": {
       "type": "string",

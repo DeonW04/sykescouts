@@ -247,8 +247,9 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, isTreasurer
                         </button>
                         {expandedGroup === group.label && (
                           <div style={{ paddingLeft: '12px', marginBottom: '4px' }}>
-                            {group.links.map(({ label, page, icon: Icon, adminOnly }) => {
+                            {group.links.map(({ label, page, icon: Icon, adminOnly, restrictedFromLeader }) => {
                               if (adminOnly && !isAdmin) return null;
+                              if (restrictedFromLeader && user?.role === 'leader') return null;
                               const active = location.pathname === createPageUrl(page) || location.pathname.startsWith(createPageUrl(page) + '/');
                               return (
                                 <Link key={page} to={createPageUrl(page)} onClick={onClose} style={{
@@ -780,8 +781,9 @@ export default function FloatingNav() {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="center" style={{ zIndex: 1100 }}>
-                          {group.links.map(({ label, page, icon: Icon, separator, adminOnly }) => {
+                          {group.links.map(({ label, page, icon: Icon, separator, adminOnly, restrictedFromLeader }) => {
                             if (adminOnly && !isAdmin) return null;
+                            if (restrictedFromLeader && user?.role === 'leader') return null;
                             return (
                               <React.Fragment key={page}>
                                 {separator && <DropdownMenuSeparator />}

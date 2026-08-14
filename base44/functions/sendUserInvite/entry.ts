@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
     const normalisedEmail = String(email).trim().toLowerCase();
 
     // Map the selected user type to a role + account_type + leader flag
-    const specialRoles = ['admin', 'treasurer', 'glv', 'team_leader'];
+    const specialRoles = ['admin', 'treasurer', 'glv', 'team_leader', 'leader'];
     const role = specialRoles.includes(userType) ? userType : 'user';
     const account_type = userType === 'ipad' ? 'ipad' : userType === 'leader' ? 'leader' : userType === 'parent' ? 'parent' : null;
     const make_leader = userType === 'leader';
