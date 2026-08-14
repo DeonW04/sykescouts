@@ -32,6 +32,15 @@ export function useSelectedChildId(children) {
     return () => window.removeEventListener(EVENT, handler);
   }, []);
 
+  // Keep in sync when the child is switched via the unified portal context
+  // (e.g. the nav bar dropdown) while already on the parent portal — no
+  // navigation happens in that case, so this effect is what updates the data.
+  useEffect(() => {
+    if (contextChildId && contextChildId !== id) {
+      setId(contextChildId);
+    }
+  }, [contextChildId]);
+
   const validId = children?.length
     ? (children.some(c => c.id === id) ? id : children[0].id)
     : id;
