@@ -48,7 +48,7 @@ import ArchivedMembersPanel from '../components/admin/ArchivedMembersPanel';
 import AiPlanningDataPanel from '../components/admin/AiPlanningDataPanel';
 import ParentPortalBanners from '../components/admin/ParentPortalBanners';
 import AddUserTypeDialog from '../components/admin/onboarding/AddUserTypeDialog';
-import AdminTopNav from '../components/admin/AdminTopNav';
+import { useLocation } from 'react-router-dom';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const SECTION_STYLES = {
@@ -281,20 +281,13 @@ export default function AdminSettings() {
   const navigate    = useNavigate();
   const queryClient = useQueryClient();
 
-  // ── URL-driven state ──────────────────────────────────────────────────────────
-  const _p = new URLSearchParams(window.location.search);
-  const [selectedSection, setSelectedSection] = useState(_p.get('section') || null);
-  const [selectedPage,    setSelectedPage]    = useState(_p.get('tab')     || null);
-
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (selectedSection) params.set('section', selectedSection);
-    if (selectedPage)    params.set('tab', selectedPage);
-    const newUrl = params.toString()
-      ? `${window.location.pathname}?${params.toString()}`
-      : window.location.pathname;
-    window.history.replaceState({}, '', newUrl);
-  }, [selectedSection, selectedPage]);
+  // ── URL-driven state — navigation happens via the floating nav bar's admin
+  // dropdowns (Links to /AdminSettings?section=X&tab=Y), so this page just
+  // reads whatever the current URL says.
+  const location = useLocation();
+  const urlParams = new URLSearchParams(location.search);
+  const selectedSection = urlParams.get('section') || null;
+  const selectedPage    = urlParams.get('tab') || null;
 
   // ── Other UI state ────────────────────────────────────────────────────────────
   const [selectedUser,        setSelectedUser]        = useState(null);
@@ -361,7 +354,7 @@ export default function AdminSettings() {
   const handleEditUser = (user) => {
     setSelectedUser(user);
     const userType = getUserType(user);
-    const specialRoles = ['admin','treasurer','glv','team_leader'];
+    const specialRoles = ['admin','treasurer','glv','team_leader','leader'];
     const typeValue = user.account_type === 'ipad' ? 'ipad' : specialRoles.includes(user.role) ? user.role : userType.type === 'Parent' ? 'parent' : userType.type === 'Leader' ? 'leader' : 'user';
     const leaderRecord = leaders.find(l => l.user_id === user.id);
     setEditForm({ display_name: user.display_name || user.full_name, email: user.email, user_type: typeValue, section_ids: leaderRecord?.section_ids || [], default_section_id: user.default_section_id || '' });
@@ -370,11 +363,13 @@ export default function AdminSettings() {
 
   const handleSaveUser = async () => {
     try {
-      const specialRoles = ['admin','treasurer','glv','team_leader'];
+      const specialRoles = ['admin','treasurer','glv','team_leader','leader'];
       const role = specialRoles.includes(editForm.user_type) ? editForm.user_type : 'user';
       const account_type = editForm.user_type === 'ipad' ? 'ipad' : null;
       const response = await base44.functions.invoke('updateUser', { userId: selectedUser.id, display_name: editForm.display_name, role, default_section_id: editForm.default_section_id || null });
-      await base44.entities.User.update(selectedUser.id, { account_type });
+      // Keep the User's section scoping in sync so Member RLS can actually resolve
+      // access for the plain 'leader' role (which is scoped to assigned_section_ids).
+      await base44.entities.User.update(selectedUser.id, { account_type, assigned_section_ids: editForm.user_type === 'leader' ? editForm.section_ids : [] });
       if (response.data?.error) throw new Error(response.data.error);
       const leaderRecord = leaders.find(l => l.user_id === selectedUser.id);
       const currentType = getUserType(selectedUser).type.toLowerCase();
@@ -611,18 +606,6 @@ export default function AdminSettings() {
     <div className="min-h-screen bg-[#f5f5f8]">
       <FloatingNav />
       <NavBarSpacer />
-
-      <AdminTopNav
-        sections={SECTIONS}
-        selectedSection={activeSection.key}
-        selectedPage={selectedPage}
-        onSelectSection={(key) => { setSelectedSection(key); setSelectedPage(null); }}
-        onSelectPage={(section, page) => {
-          if (page.navigate) { navigate(page.navigate); return; }
-          setSelectedSection(section.key);
-          setSelectedPage(page.key);
-        }}
-      />
 
       <main className="max-w-6xl mx-auto p-4 md:p-6 min-w-0">
         <AnimatePresence mode="wait">

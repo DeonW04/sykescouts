@@ -8,6 +8,7 @@
  *   separator             : boolean — render a divider above this item in the dropdown
  *   adminOnly             : boolean — only show when user.role === 'admin'
  *   restrictedFromLeader  : boolean — hidden from the plain 'leader' role (finance/admin areas)
+ *   allowedRoles          : string[] — only show when user.role is one of these
  */
 import {
   Users, Calendar, Award, Mail, Image, ShieldAlert,
@@ -54,7 +55,7 @@ export const PORTAL_NAV_GROUPS = [
       { label: 'Communications',    page: 'Communications', icon: Mail },
       { label: 'Section Accounting', page: 'SectionAccounting', icon: Landmark, restrictedFromLeader: true },
       { label: 'Gallery',           page: 'LeaderGallery', icon: Image },
-      { label: 'Treasurer Portal',  page: 'TreasurerDashboard', icon: Landmark, separator: true, restrictedFromLeader: true },
+      { label: 'Treasurer Portal',  page: 'TreasurerDashboard', icon: Landmark, separator: true, allowedRoles: ['admin', 'team_leader', 'glv'] },
     ],
   },
 ];

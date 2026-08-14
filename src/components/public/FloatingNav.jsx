@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { PORTAL_NAV_GROUPS } from '@/lib/navConfig';
 import { TREASURER_NAV_GROUPS } from '@/lib/treasurerNavConfig';
+import { ADMIN_NAV_GROUPS } from '@/lib/adminNavConfig';
 import LoginDropdown from './LoginDropdown';
 import UnifiedPortalDropdown from '@/components/portal/UnifiedPortalDropdown';
 import { usePortalContext, getPermittedPortal } from '@/lib/PortalContextProvider';
@@ -248,9 +249,10 @@ function MobileSidebar({ open, onClose, isLeader, isAdmin, isParent, isTreasurer
                         </button>
                         {expandedGroup === group.label && (
                           <div style={{ paddingLeft: '12px', marginBottom: '4px' }}>
-                            {group.links.map(({ label, page, icon: Icon, adminOnly, restrictedFromLeader }) => {
+                            {group.links.map(({ label, page, icon: Icon, adminOnly, restrictedFromLeader, allowedRoles }) => {
                               if (adminOnly && !isAdmin) return null;
                               if (restrictedFromLeader && user?.role === 'leader') return null;
+                              if (allowedRoles && !allowedRoles.includes(user?.role)) return null;
                               const active = location.pathname === createPageUrl(page) || location.pathname.startsWith(createPageUrl(page) + '/');
                               return (
                                 <Link key={page} to={createPageUrl(page)} onClick={onClose} style={{
@@ -683,9 +685,10 @@ export default function FloatingNav() {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="center" style={{ zIndex: 1100 }}>
-                          {group.links.map(({ label, page, icon: Icon, separator, adminOnly, restrictedFromLeader }) => {
+                          {group.links.map(({ label, page, icon: Icon, separator, adminOnly, restrictedFromLeader, allowedRoles }) => {
                             if (adminOnly && !isAdmin) return null;
                             if (restrictedFromLeader && user?.role === 'leader') return null;
+                            if (allowedRoles && !allowedRoles.includes(user?.role)) return null;
                             return (
                               <React.Fragment key={page}>
                                 {separator && <DropdownMenuSeparator />}
@@ -702,9 +705,39 @@ export default function FloatingNav() {
                     );
                   })
                 ) : permittedPortal === 'admin' ? (
-                  <Link to={createPageUrl('AdminSettings')} style={{ ...stripBtnStyle, textDecoration: 'none' }}>
-                    <Settings size={13} /> Admin Area
-                  </Link>
+                  /* Admin groups with dropdowns */
+                  ADMIN_NAV_GROUPS.map((group) => {
+                    const isGroupActive = location.pathname === createPageUrl('AdminSettings') && new URLSearchParams(location.search).get('section') === group.key;
+                    return (
+                      <DropdownMenu key={group.label}>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            style={{
+                              ...stripBtnStyle,
+                              background: isGroupActive ? 'rgba(116,19,220,0.1)' : 'none',
+                              color: isGroupActive ? '#7413dc' : 'rgba(26,26,46,0.65)',
+                              fontWeight: isGroupActive ? 600 : 500,
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(116,19,220,0.07)'; e.currentTarget.style.color = '#7413dc'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = isGroupActive ? 'rgba(116,19,220,0.1)' : 'none'; e.currentTarget.style.color = isGroupActive ? '#7413dc' : 'rgba(26,26,46,0.65)'; }}
+                          >
+                            <group.icon size={13} />
+                            {group.label}
+                            <ChevronDown size={11} />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="center" style={{ zIndex: 1100 }}>
+                          {group.links.map(({ label, to, icon: Icon }) => (
+                            <DropdownMenuItem key={to} asChild>
+                              <Link to={to} className="flex items-center gap-2 cursor-pointer">
+                                <Icon className="w-4 h-4" /> {label}
+                              </Link>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    );
+                  })
                 ) : (
                   /* Parent flat links — no dropdowns */
                   parentNavLinks.map(({ label, page, icon: Icon }) => {

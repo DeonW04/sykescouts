@@ -95,7 +95,8 @@ export function PortalContextProvider({ children }) {
         .map(s => ({ type: 'section', id: s.id, label: s.display_name, section: s }));
 
       const roleItems = [];
-      if (currentUser.role === 'treasurer') roleItems.push({ type: 'role:treasurer', id: 'treasurer', label: 'Treasurer' });
+      // Admins can see every role, including the Treasurer portal.
+      if (currentUser.role === 'treasurer' || currentUser.role === 'admin') roleItems.push({ type: 'role:treasurer', id: 'treasurer', label: 'Treasurer' });
       if (currentUser.role === 'admin') roleItems.push({ type: 'role:admin', id: 'admin', label: 'Admin' });
 
       const contexts = { children: childItems, sections: sectionItems, roles: roleItems };

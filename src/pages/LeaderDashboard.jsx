@@ -7,15 +7,11 @@ import { useSectionContext } from '../components/leader/SectionContext';
 import {
   Users, Calendar, Award, Mail, Settings, ArrowRight, Tent,
   ChevronDown, Image, ShieldAlert, UserCheck, CalendarDays, Receipt,
-  Lightbulb, Package, TrendingUp, FileText, Landmark, BookOpen, Zap, Star, MessageSquare,
+  Lightbulb, Package, TrendingUp, FileText, Landmark, BookOpen, Zap, MessageSquare,
 } from 'lucide-react';
 import ActionsDrilldownModal from '../components/leader/ActionsDrilldownModal';
 import PaymentAlerts from '../components/leader/PaymentAlerts';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSeparator } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import { format, isThisWeek, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
@@ -31,97 +27,6 @@ const glassCard = {
   borderRadius: '20px',
   boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
 };
-
-const SECTION_ORDER = ['squirrels', 'beavers', 'cubs', 'scouts', 'explorers'];
-
-// ── Section Selector (chip-style, sits in hero) ────────────────────────────────
-function InlineSectionSelector() {
-  const { selectedSection, setSelectedSection, availableSections, loading, user } = useSectionContext();
-  const sortedSections = [...availableSections].sort(
-    (a, b) => SECTION_ORDER.indexOf(a.name) - SECTION_ORDER.indexOf(b.name)
-  );
-  const [showDefaultDialog, setShowDefaultDialog] = useState(false);
-  const [defaultSection, setDefaultSection] = useState(null);
-  const [saving, setSaving] = useState(false);
-
-  if (loading || availableSections.length <= 1) return null;
-
-  const currentDefault = user?.default_section_id;
-
-  const handleSaveDefault = async () => {
-    setSaving(true);
-    try {
-      await base44.auth.updateMe({ default_section_id: defaultSection });
-      toast.success('Default section saved');
-      setShowDefaultDialog(false);
-    } catch {
-      toast.error('Failed to save default section');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
-        <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(26,26,46,0.4)', margin: 0, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Viewing section</p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {sortedSections.map(s => (
-            <button
-              key={s.id}
-              onClick={() => setSelectedSection(s.id)}
-              style={{
-                fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '13px',
-                padding: '6px 14px', borderRadius: '25px', border: 'none', cursor: 'pointer',
-                transition: 'all 0.2s',
-                background: selectedSection === s.id ? '#7413dc' : 'rgba(116,19,220,0.07)',
-                color: selectedSection === s.id ? '#fff' : 'rgba(26,26,46,0.6)',
-                display: 'flex', alignItems: 'center', gap: '4px',
-              }}
-            >
-              {s.display_name}
-              {s.id === currentDefault && <Star size={10} color={selectedSection === s.id ? 'rgba(255,255,255,0.7)' : '#f59e0b'} fill={selectedSection === s.id ? 'rgba(255,255,255,0.7)' : '#f59e0b'} />}
-            </button>
-          ))}
-          <button
-            onClick={() => { setDefaultSection(currentDefault || selectedSection || sortedSections[0]?.id); setShowDefaultDialog(true); }}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'rgba(26,26,46,0.3)', display: 'flex', alignItems: 'center' }}
-            title="Set default section"
-          >
-            <Star size={14} />
-          </button>
-        </div>
-      </div>
-
-      <Dialog open={showDefaultDialog} onOpenChange={setShowDefaultDialog}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Star className="w-4 h-4 text-amber-400" /> Set Default Section
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-gray-500">Choose which section opens by default when you log in.</p>
-          <div className="space-y-2 mt-2">
-            {sortedSections.map(s => (
-              <button key={s.id} onClick={() => setDefaultSection(s.id)}
-                className={`w-full text-left px-4 py-2.5 rounded-lg border text-sm font-medium transition-all flex items-center justify-between ${defaultSection === s.id ? 'border-amber-400 bg-amber-50 text-amber-800' : 'border-gray-200 hover:border-gray-300'}`}
-              >
-                {s.display_name}
-                {defaultSection === s.id && <Star className="w-4 h-4 text-amber-400 fill-amber-400" />}
-              </button>
-            ))}
-          </div>
-          <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setShowDefaultDialog(false)}>Cancel</Button>
-            <Button onClick={handleSaveDefault} disabled={saving} className="bg-amber-500 hover:bg-amber-600 text-white">
-              {saving ? 'Saving…' : 'Save Default'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
 
 // ── This Week's Meeting (hero variant — horizontal compact) ───────────────────
 function ThisWeeksMeeting({ sections, selectedSection }) {
@@ -479,7 +384,8 @@ const getQuickActions = (user) => [
     accent: group.accent,
     dropdown: group.links.filter(link =>
       (!link.adminOnly || user?.role === 'admin') &&
-      (!link.restrictedFromLeader || user?.role !== 'leader')
+      (!link.restrictedFromLeader || user?.role !== 'leader') &&
+      (!link.allowedRoles || link.allowedRoles.includes(user?.role))
     ),
   })),
   // Gallery also has its own standalone tile on the dashboard
@@ -555,16 +461,13 @@ function LeaderDashboardInner() {
         padding: '20px 16px 18px',
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          {/* Top row: greeting + section selector */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
-            <div>
-              <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
-              <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(20px, 4vw, 36px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.15 }}>
-                Welcome back, {user.display_name || user.full_name?.split(' ')[0]}
-              </h1>
-              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>40th Rochdale (Syke) Scouts</p>
-            </div>
-            <InlineSectionSelector />
+          {/* Greeting */}
+          <div style={{ marginBottom: '16px' }}>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 500, fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7413dc', margin: '0 0 4px' }}>Leader Portal</p>
+            <h1 style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 700, fontSize: 'clamp(20px, 4vw, 36px)', color: '#1a1a2e', margin: '0 0 2px', lineHeight: 1.15 }}>
+              Welcome back, {user.display_name || user.full_name?.split(' ')[0]}
+            </h1>
+            <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: 'rgba(26,26,46,0.45)', margin: 0 }}>40th Rochdale (Syke) Scouts</p>
           </div>
 
           {/* This week's meeting in the hero */}
