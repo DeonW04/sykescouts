@@ -24,6 +24,34 @@ Deno.serve(async (req) => {
       submitted_at: new Date().toISOString(),
     });
 
+    // Mark the linked ActionRequired as responded so it disappears from the
+    // parent's Action Required list (mirrors the in-app signing flow).
+    const linkedActions = await base44.asServiceRole.entities.ActionRequired.filter({ consent_form_id: submission.form_id });
+    const action = linkedActions.find(a =>
+      (submission.event_id && a.event_id === submission.event_id) ||
+      (submission.programme_id && a.programme_id === submission.programme_id)
+    ) || linkedActions[0];
+
+    if (action) {
+      const existingResponses = await base44.asServiceRole.entities.ActionResponse.filter({
+        action_required_id: action.id,
+        member_id: submission.member_id,
+      });
+      if (existingResponses.length > 0) {
+        await base44.asServiceRole.entities.ActionResponse.update(existingResponses[0].id, {
+          response_value: 'signed',
+          responded_at: new Date().toISOString(),
+        });
+      } else {
+        await base44.asServiceRole.entities.ActionResponse.create({
+          action_required_id: action.id,
+          member_id: submission.member_id,
+          response_value: 'signed',
+          responded_at: new Date().toISOString(),
+        });
+      }
+    }
+
     return Response.json({ success: true, submission_id: submission.id });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

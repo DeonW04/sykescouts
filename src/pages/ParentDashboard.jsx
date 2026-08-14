@@ -5,7 +5,7 @@ import FloatingNav from '../components/public/FloatingNav';
 import NavBarSpacer from '../components/public/NavBarSpacer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Calendar, Award, AlertCircle, Clock, Check, X, Tent, CheckCircle, AlertTriangle, FileText, HandHeart } from 'lucide-react';
+import { Users, Calendar, Award, AlertCircle, Clock, Check, X, Tent, CheckCircle, AlertTriangle, FileText, HandHeart, CreditCard } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -20,6 +20,7 @@ import DashboardHero from '@/components/parent/dashboard/DashboardHero';
 import AwardJourneySection from '@/components/parent/dashboard/AwardJourneySection';
 import ScoutingJourneyBar from '@/components/parent/dashboard/ScoutingJourneyBar';
 import BannerPickerDialog from '@/components/banner/BannerPickerDialog';
+import ConsentFormDialog from '@/components/parent/ConsentFormDialog';
 
 
 // Handle parent volunteer responses
@@ -70,6 +71,7 @@ export default function ParentDashboard() {
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [consentDialog, setConsentDialog] = useState(null);
+  const [consentFormDialog, setConsentFormDialog] = useState(null);
   const [textInputs, setTextInputs] = useState({});
   const [dropdownValues, setDropdownValues] = useState({});
   const [bannerDismissed, setBannerDismissed] = useState(false);
@@ -100,6 +102,10 @@ export default function ParentDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['actions-required'] });
+      // Response is stored server-side inside getParentPortalData's actionResponses —
+      // without refreshing it the actions-required refetch above still sees stale
+      // data and the action appears to not react until a full page reload.
+      queryClient.invalidateQueries({ queryKey: ['parent-portal'] });
       toast.success('Response recorded');
     },
   });
@@ -221,13 +227,15 @@ export default function ParentDashboard() {
   const { data: actionsRequired = [] } = useQuery({
     queryKey: ['actions-required', selectedChild?.id, reference?.programmes, portal?.actionResponses],
     queryFn: async () => {
-      if (children.length === 0 || !reference || !portal) return [];
-      const childIds = children.map(c => c.id);
+      if (children.length === 0 || !reference || !portal || !selectedChild) return [];
 
-      // Programmes/events are already scoped to the children's sections server-side.
-      const relevantProgrammes = reference.programmes || [];
+      // Scope to the SELECTED child's own section only — reference.programmes/events
+      // covers every section across all of this parent's children, so without this a
+      // parent with kids in two different sections would see one child's actions
+      // (e.g. a Scout meeting) while viewing the other (e.g. a Cub) child.
+      const relevantProgrammes = (reference.programmes || []).filter(p => p.section_id === selectedChild.section_id);
       const relevantProgrammeIds = relevantProgrammes.map(p => p.id);
-      const relevantEvents = reference.events || [];
+      const relevantEvents = (reference.events || []).filter(e => e.section_ids?.includes(selectedChild.section_id));
       const relevantEventIds = relevantEvents.map(e => e.id);
 
       // All actions for these programmes/events
@@ -238,6 +246,7 @@ export default function ParentDashboard() {
 
       // Responses are already scoped to this parent's children (server-side).
       const childResponses = portal.actionResponses || [];
+      const isAttendingResponse = (val) => ['yes', 'yes, attending', 'attending'].includes((val || '').toLowerCase());
 
       // Add programme/event details to each action
       const actionsWithDetails = relevantActions.map(action => ({
@@ -245,9 +254,9 @@ export default function ParentDashboard() {
         programme: relevantProgrammes.find(p => p.id === action.programme_id),
         event: relevantEvents.find(e => e.id === action.event_id),
       }));
-      
+
       // Filter out actions that are closed or have been completed for all children
-      return actionsWithDetails.filter(action => {
+      const pendingActions = actionsWithDetails.filter(action => {
         // Don't show closed actions
         if (action.is_open === false) return false;
         // Don't show actions for past programmes
@@ -260,20 +269,51 @@ export default function ParentDashboard() {
         if (action.event && (action.event.end_date || action.event.start_date)) {
           if (new Date(action.event.end_date || action.event.start_date) < new Date()) return false;
         }
-        
+
         // Check if the selected child has a completed response for this action —
         // regardless of whether it was entered by the parent or a leader manually
-        const allChildrenResponded = [selectedChild].filter(Boolean).every(child =>
-          childResponses.some(r =>
-            (r.action_required_id === action.id || r.action_id === action.id) &&
-            (r.member_id === child.id || r.child_member_id === child.id) &&
-            (r.response_value || r.response) // count any non-empty response value
-          )
+        const responded = childResponses.some(r =>
+          (r.action_required_id === action.id || r.action_id === action.id) &&
+          (r.member_id === selectedChild.id || r.child_member_id === selectedChild.id) &&
+          (r.response_value || r.response) // count any non-empty response value
         );
-        return !allChildrenResponded;
+        return !responded;
       });
+
+      // Once the parent confirms attendance for a meeting/event with a cost,
+      // surface a payment action until it's paid (mirrors the mobile app).
+      const paymentActions = actionsWithDetails
+        .filter(a => a.action_purpose === 'attendance')
+        .map(action => {
+          const entity = action.programme?.has_cost && action.programme.cost > 0
+            ? { kind: 'meeting', record: action.programme }
+            : action.event?.cost > 0
+            ? { kind: 'event', record: action.event }
+            : null;
+          if (!entity) return null;
+          const attended = childResponses.some(r =>
+            (r.action_required_id === action.id || r.action_id === action.id) &&
+            (r.member_id === selectedChild.id || r.child_member_id === selectedChild.id) &&
+            isAttendingResponse(r.response_value || r.response)
+          );
+          if (!attended) return null;
+          const paid = entity.kind === 'meeting'
+            ? (portal.meetingPaymentStatuses || []).some(ps => ps.meeting_id === entity.record.id && ps.member_id === selectedChild.id && ps.status === 'paid')
+            : (portal.eventPaymentStatuses || []).some(ps => ps.event_id === entity.record.id && ps.member_id === selectedChild.id && ps.status === 'paid');
+          if (paid) return null;
+          return {
+            id: `pay_${action.id}`,
+            action_purpose: 'payment',
+            action_text: `Payment required — £${entity.record.cost.toFixed(2)} for ${entity.record.title}`,
+            isPayment: true,
+            targetPage: entity.kind === 'meeting' ? 'ParentProgramme' : 'ParentEvents',
+          };
+        })
+        .filter(Boolean);
+
+      return [...pendingActions, ...paymentActions];
     },
-    enabled: children.length > 0 && !!user,
+    enabled: children.length > 0 && !!user && !!selectedChild,
   });
 
   if (!user) {
@@ -372,7 +412,21 @@ export default function ParentDashboard() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {actionsRequired.map(action => (
+                    {actionsRequired.map(action => action.isPayment ? (
+                      <div key={action.id} className="p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <CreditCard className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                          <p className="font-medium text-sm text-amber-900 truncate">{action.action_text}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0"
+                          onClick={() => navigate(createPageUrl(action.targetPage))}
+                        >
+                          Pay Now
+                        </Button>
+                      </div>
+                    ) : (
                       <div key={action.id} className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
                         <p className="font-medium text-sm text-orange-900">{action.action_text}</p>
                         {action.programme && (
@@ -535,26 +589,7 @@ export default function ParentDashboard() {
                             {action.action_purpose === 'consent_form' && (
                               <Button
                                 size="sm"
-                                onClick={async () => {
-                                  const subs = await base44.entities.ConsentFormSubmission.filter({ form_id: action.consent_form_id, member_id: child.id });
-                                  let sub = subs.find(s => action.event_id ? s.event_id === action.event_id : s.programme_id === action.programme_id) || subs[0];
-                                  if (!sub) {
-                                    const token = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-                                    sub = await base44.entities.ConsentFormSubmission.create({
-                                      form_id: action.consent_form_id,
-                                      member_id: child.id,
-                                      event_id: action.event_id || null,
-                                      programme_id: action.programme_id || null,
-                                      sign_token: token,
-                                      status: 'pending',
-                                    });
-                                  } else if (!sub.sign_token) {
-                                    const token = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-                                    await base44.entities.ConsentFormSubmission.update(sub.id, { sign_token: token });
-                                    sub = { ...sub, sign_token: token };
-                                  }
-                                  window.open(`/sign?token=${sub.sign_token}`, '_blank');
-                                }}
+                                onClick={() => setConsentFormDialog({ action, child })}
                                 className="bg-[#7413dc] hover:bg-[#5c0fb0]"
                               >
                                 <FileText className="w-3 h-3 mr-1" />
@@ -729,6 +764,18 @@ export default function ParentDashboard() {
         </DialogFooter>
         </DialogContent>
         </Dialog>
+
+        <ConsentFormDialog
+          open={!!consentFormDialog}
+          onOpenChange={(v) => !v && setConsentFormDialog(null)}
+          action={consentFormDialog?.action}
+          child={consentFormDialog?.child}
+          user={user}
+          onSigned={() => {
+            queryClient.invalidateQueries({ queryKey: ['parent-portal'] });
+            queryClient.invalidateQueries({ queryKey: ['actions-required'] });
+          }}
+        />
         </>
         );
         }
