@@ -56,6 +56,13 @@ import { PortalContextProvider } from '@/lib/PortalContextProvider';
 import PortalContextModal from '@/components/portal/PortalContextModal';
 import { AccountSettingsModalProvider } from '@/lib/AccountSettingsModalProvider';
 import AccountSettingsModal from '@/components/account/AccountSettingsModal';
+import TreasurerGuard from '@/components/treasurer/TreasurerGuard';
+
+const TREASURER_PAGE_NAMES = new Set([
+  'TreasurerDashboard', 'TreasurerLedger', 'TreasurerMemberPayments', 'TreasurerEventFinances',
+  'TreasurerReceiptAllocation', 'TreasurerReimbursements', 'TreasurerBudgets', 'TreasurerRecurringPayments',
+  'TreasurerFunds', 'TreasurerReports', 'TreasurerProgrammeFinances', 'TreasurerCashTaken', 'SectionAccounting',
+]);
 
 
 // Public-only pages that should never be shown in PWA mode
@@ -194,9 +201,10 @@ const AuthenticatedApp = () => {
       {/* New grouped URLs — same page components & layout, mapped from ROUTE_MAP */}
       {GROUPED_ROUTES.map(([name, path]) => {
         const Page = ALL_PAGES[name];
-        const element = STANDALONE_PAGES.has(name)
+        let element = STANDALONE_PAGES.has(name)
           ? <Page />
           : <LayoutWrapper currentPageName={name}><Page /></LayoutWrapper>;
+        if (TREASURER_PAGE_NAMES.has(name)) element = <TreasurerGuard>{element}</TreasurerGuard>;
         return <Route key={path} path={path} element={element} />;
       })}
       <Route path="/AIProgrammePlanner" element={
@@ -220,19 +228,19 @@ const AuthenticatedApp = () => {
       <Route path="/register-user" element={<RegisterUser />} />
       <Route path="/login" element={<Login />} />
       <Route path="/approve-access" element={<ApproveAccess />} />
-      <Route path="/TreasurerDashboard" element={<TreasurerDashboard />} />
-      <Route path="/TreasurerLedger" element={<TreasurerLedger />} />
-      <Route path="/TreasurerMemberPayments" element={<TreasurerMemberPayments />} />
-      <Route path="/TreasurerEventFinances" element={<TreasurerEventFinances />} />
-      <Route path="/TreasurerReceiptAllocation" element={<TreasurerReceiptAllocation />} />
-      <Route path="/TreasurerReimbursements" element={<TreasurerReimbursements />} />
-      <Route path="/TreasurerBudgets" element={<TreasurerBudgets />} />
-      <Route path="/TreasurerRecurringPayments" element={<TreasurerRecurringPayments />} />
-      <Route path="/TreasurerFunds" element={<TreasurerFunds />} />
-      <Route path="/TreasurerReports" element={<TreasurerReports />} />
-      <Route path="/TreasurerProgrammeFinances" element={<TreasurerProgrammeFinances />} />
-      <Route path="/TreasurerCashTaken" element={<TreasurerCashTaken />} />
-      <Route path="/SectionAccounting" element={<LayoutWrapper currentPageName="SectionAccounting"><SectionAccounting /></LayoutWrapper>} />
+      <Route path="/TreasurerDashboard" element={<TreasurerGuard><TreasurerDashboard /></TreasurerGuard>} />
+      <Route path="/TreasurerLedger" element={<TreasurerGuard><TreasurerLedger /></TreasurerGuard>} />
+      <Route path="/TreasurerMemberPayments" element={<TreasurerGuard><TreasurerMemberPayments /></TreasurerGuard>} />
+      <Route path="/TreasurerEventFinances" element={<TreasurerGuard><TreasurerEventFinances /></TreasurerGuard>} />
+      <Route path="/TreasurerReceiptAllocation" element={<TreasurerGuard><TreasurerReceiptAllocation /></TreasurerGuard>} />
+      <Route path="/TreasurerReimbursements" element={<TreasurerGuard><TreasurerReimbursements /></TreasurerGuard>} />
+      <Route path="/TreasurerBudgets" element={<TreasurerGuard><TreasurerBudgets /></TreasurerGuard>} />
+      <Route path="/TreasurerRecurringPayments" element={<TreasurerGuard><TreasurerRecurringPayments /></TreasurerGuard>} />
+      <Route path="/TreasurerFunds" element={<TreasurerGuard><TreasurerFunds /></TreasurerGuard>} />
+      <Route path="/TreasurerReports" element={<TreasurerGuard><TreasurerReports /></TreasurerGuard>} />
+      <Route path="/TreasurerProgrammeFinances" element={<TreasurerGuard><TreasurerProgrammeFinances /></TreasurerGuard>} />
+      <Route path="/TreasurerCashTaken" element={<TreasurerGuard><TreasurerCashTaken /></TreasurerGuard>} />
+      <Route path="/SectionAccounting" element={<TreasurerGuard><LayoutWrapper currentPageName="SectionAccounting"><SectionAccounting /></LayoutWrapper></TreasurerGuard>} />
       <Route path="/PORHelper" element={<LayoutWrapper currentPageName="PORHelper"><PORHelper /></LayoutWrapper>} />
       <Route path="/receipt-submit" element={<QRReceiptSubmit />} />
       <Route path="/MobileDashboardDemo" element={<MobileDashboardDemo />} />
