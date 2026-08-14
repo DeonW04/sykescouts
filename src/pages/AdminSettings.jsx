@@ -48,6 +48,7 @@ import ArchivedMembersPanel from '../components/admin/ArchivedMembersPanel';
 import AiPlanningDataPanel from '../components/admin/AiPlanningDataPanel';
 import ParentPortalBanners from '../components/admin/ParentPortalBanners';
 import AddUserTypeDialog from '../components/admin/onboarding/AddUserTypeDialog';
+import AdminTopNav from '../components/admin/AdminTopNav';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const SECTION_STYLES = {
@@ -602,8 +603,8 @@ export default function AdminSettings() {
     }
   };
 
-  const currentSection = SECTIONS.find(s => s.key === selectedSection);
-  const currentStyles  = selectedSection ? SECTION_STYLES[selectedSection] : null;
+  const activeSection = SECTIONS.find(s => s.key === selectedSection) || SECTIONS[0];
+  const activeStyles  = SECTION_STYLES[activeSection.key];
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
@@ -611,138 +612,40 @@ export default function AdminSettings() {
       <FloatingNav />
       <NavBarSpacer />
 
-      <AnimatePresence mode="wait">
-        {!selectedSection ? (
-          /* ─── LANDING GRID ─────────────────────────────────────────────────── */
-          <motion.div key="landing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.15 } }}
-            className="min-h-[82vh] flex flex-col items-center justify-center px-4 py-16">
-            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="text-center mb-12">
-              <span className="inline-block text-xs font-bold uppercase tracking-widest text-[#7413dc] mb-3 bg-purple-100 px-3 py-1 rounded-full">40th Rochdale (Syke) Scouts</span>
-              <h1 className="text-4xl sm:text-5xl font-black text-gray-900 mt-2 mb-2 tracking-tight">Admin Area</h1>
-              <p className="text-gray-400 text-base">Choose a section to get started</p>
+      <AdminTopNav
+        sections={SECTIONS}
+        selectedSection={activeSection.key}
+        selectedPage={selectedPage}
+        onSelectSection={(key) => { setSelectedSection(key); setSelectedPage(null); }}
+        onSelectPage={(section, page) => {
+          if (page.navigate) { navigate(page.navigate); return; }
+          setSelectedSection(section.key);
+          setSelectedPage(page.key);
+        }}
+      />
+
+      <main className="max-w-6xl mx-auto p-4 md:p-6 min-w-0">
+        <AnimatePresence mode="wait">
+          {activeSection.isDashboard ? (
+            <motion.div key="dashboard" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 26 }}>
+              <GroupDashboard members={members} sections={sections} events={events} programmes={programmes} />
             </motion.div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5 w-full max-w-3xl">
-              {SECTIONS.map((section, idx) => {
-                const Icon = section.icon;
-                const styles = SECTION_STYLES[section.key];
-                return (
-                  <motion.button key={section.key} layoutId={`section-card-${section.key}`}
-                    initial={{ opacity: 0, y: 30, scale: 0.94 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ delay: 0.1 + idx * 0.065, type: 'spring', stiffness: 220, damping: 22 }}
-                    onClick={() => { setSelectedSection(section.key); setSelectedPage(null); }}
-                    whileHover={{ y: -5, scale: 1.03, transition: { duration: 0.18 } }} whileTap={{ scale: 0.97 }}
-                    className="relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-shadow text-left">
-                    <div className={`bg-gradient-to-br ${styles.bg} p-6 sm:p-7 flex flex-col gap-4 min-h-[150px] sm:min-h-[165px]`}>
-                      <div className="absolute -top-4 -right-4 w-20 h-20 bg-white/10 rounded-full" />
-                      <div className="absolute -bottom-6 -left-3 w-16 h-16 bg-white/10 rounded-full" />
-                      <div className="relative w-11 h-11 bg-white/25 rounded-xl flex items-center justify-center"><Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" /></div>
-                      <div className="relative"><p className="font-bold text-white text-sm sm:text-base leading-tight">{section.label}</p><p className="text-white/60 text-xs mt-0.5 hidden sm:block">{section.description}</p></div>
-                    </div>
-                  </motion.button>
-                );
-              })}
-            </div>
-          </motion.div>
-        ) : (
-          /* ─── SECTION VIEW ─────────────────────────────────────────────────── */
-          <motion.div key={`section-${selectedSection}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.12 } }}
-            className="flex flex-col md:flex-row min-h-[calc(100vh-120px)]">
-
-            {/* ── Mobile top bar ──────────────────────────────────────────── */}
-            <div className="md:hidden bg-white border-b border-gray-100 px-3 py-2 flex items-center gap-2 sticky top-0 z-30">
-              <button onClick={() => { setSelectedSection(null); setSelectedPage(null); }}
-                className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700 transition-colors px-2 py-1.5 rounded-lg hover:bg-gray-100 flex-shrink-0">
-                <ArrowLeft className="w-3.5 h-3.5" />
-              </button>
-              <motion.div layoutId={`section-card-${selectedSection}`}
-                className={`bg-gradient-to-r ${currentStyles.bg} rounded-lg px-3 py-1.5 text-white text-xs font-bold flex items-center gap-1.5 flex-shrink-0 shadow`}>
-                {currentSection && <currentSection.icon className="w-3.5 h-3.5" />}
-                <span>{currentSection?.label}</span>
-              </motion.div>
-              {!currentSection?.isDashboard && (
-                <Select value={selectedPage || '__none__'} onValueChange={(v) => setSelectedPage(v === '__none__' ? null : v)}>
-                  <SelectTrigger className="flex-1 h-8 text-xs min-w-0">
-                    <SelectValue placeholder="Select page..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">— Select page —</SelectItem>
-                    {currentSection?.pages?.map(p => (
-                      <SelectItem key={p.key} value={p.key}>{p.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            {/* ── Desktop sidebar ─────────────────────────────────────────── */}
-            <motion.aside initial={{ x: -40, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 280, damping: 28 }}
-              className="hidden md:flex w-56 flex-shrink-0 bg-white border-r border-gray-100 flex-col"
-              style={{ position: 'sticky', top: 0, height: 'calc(100vh - 120px)', overflowY: 'auto' }}>
-              {/* Mini section card */}
-              <motion.div layoutId={`section-card-${selectedSection}`}
-                className={`bg-gradient-to-br ${currentStyles.bg} m-3 rounded-xl p-4 flex items-center gap-3 text-white shadow relative overflow-hidden`}>
-                <div className="absolute -top-2 -right-2 w-10 h-10 bg-white/10 rounded-full" />
-                {currentSection && <currentSection.icon className="w-5 h-5 flex-shrink-0 relative z-10" />}
-                <span className="font-bold text-sm relative z-10 leading-tight">{currentSection?.label}</span>
-              </motion.div>
-              {/* Back */}
-              <button onClick={() => { setSelectedSection(null); setSelectedPage(null); }}
-                className="flex items-center gap-2 mx-3 mb-2 text-xs text-gray-400 hover:text-gray-700 transition-colors py-1.5 px-2 rounded-lg hover:bg-gray-50">
-                <ArrowLeft className="w-3.5 h-3.5" /> Back to all sections
-              </button>
-              <div className="h-px bg-gray-100 mx-3 mb-2" />
-              {/* Page nav */}
-              <nav className="flex-1 px-2 pb-4">
-                {currentSection?.isDashboard ? (
-                  <button onClick={() => setSelectedPage(null)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all mb-1 ${selectedPage === null ? `${currentStyles.light} ${currentStyles.lightText}` : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'}`}>
-                    <LayoutDashboard className="w-4 h-4 flex-shrink-0" /> Dashboard Overview
-                  </button>
-                ) : currentSection?.pages?.map((page, idx) => {
-                  const PageIcon = page.icon;
-                  const isActive = selectedPage === page.key;
-                  return (
-                    <motion.button key={page.key} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.04 }}
-                      onClick={() => page.navigate ? navigate(page.navigate) : setSelectedPage(page.key)}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all mb-1 text-left ${isActive ? `${currentStyles.light} ${currentStyles.lightText} font-semibold` : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-medium'}`}>
-                      <PageIcon className="w-4 h-4 flex-shrink-0" />
-                      <span className="truncate">{page.label}</span>
-                      {page.navigate && <ChevronRight className="w-3 h-3 ml-auto flex-shrink-0 opacity-40" />}
-                    </motion.button>
-                  );
-                })}
-              </nav>
-            </motion.aside>
-
-            {/* ── Main content ─────────────────────────────────────────────── */}
-            <main className="flex-1 overflow-auto p-4 md:p-6 min-w-0">
-              <AnimatePresence mode="wait">
-                {currentSection?.isDashboard ? (
-                  <motion.div key="dashboard" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 26 }}>
-                    <GroupDashboard members={members} sections={sections} events={events} programmes={programmes} />
-                  </motion.div>
-                ) : !selectedPage ? (
-                  <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="flex flex-col items-center justify-center h-full text-center py-16">
-                    {currentSection && (<>
-                      <div className={`w-16 h-16 rounded-2xl ${currentStyles.light} flex items-center justify-center mb-4`}>
-                        <currentSection.icon className={`w-8 h-8 ${currentStyles.lightText}`} />
-                      </div>
-                      <h2 className="text-xl font-bold text-gray-800 mb-2">{currentSection.label}</h2>
-                      <p className="text-gray-400 text-sm">Select a page from the sidebar to get started</p>
-                    </>)}
-                  </motion.div>
-                ) : (
-                  <motion.div key={selectedPage} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ type: 'spring', stiffness: 220, damping: 26 }}>
-                    {renderPageContent(selectedPage)}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </main>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          ) : !selectedPage ? (
+            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center text-center py-24">
+              <div className={`w-16 h-16 rounded-2xl ${activeStyles.light} flex items-center justify-center mb-4`}>
+                <activeSection.icon className={`w-8 h-8 ${activeStyles.lightText}`} />
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">{activeSection.label}</h2>
+              <p className="text-gray-400 text-sm">Select a page from the {activeSection.label} menu above</p>
+            </motion.div>
+          ) : (
+            <motion.div key={selectedPage} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ type: 'spring', stiffness: 220, damping: 26 }}>
+              {renderPageContent(selectedPage)}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
 
       {/* ── Edit User Dialog ──────────────────────────────────────────────────── */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
