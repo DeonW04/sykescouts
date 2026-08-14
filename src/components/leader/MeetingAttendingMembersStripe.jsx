@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, Clock, Bell, Users } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Bell, Users, Slash } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
 const fmt = n => `£${(n || 0).toFixed(2)}`;
 
 export default function MeetingAttendingMembersStripe({ programmeId, programme }) {
+  const queryClient = useQueryClient();
   const [reminderSent, setReminderSent] = useState({});
   const cost = programme?.cost || 0;
   const todayStr = new Date().toISOString().split('T')[0];
+  const paymentDeadline = programme?.payment_deadline;
+  const isDeadlinePassed = paymentDeadline && todayStr > paymentDeadline;
 
   const { data: paymentStatuses = [] } = useQuery({
     queryKey: ['meeting-ps-stripe', programmeId],
@@ -52,7 +55,35 @@ export default function MeetingAttendingMembersStripe({ programmeId, programme }
     enabled: actions.length > 0,
   });
 
+  const { data: overrides = [], refetch: refetchOverrides } = useQuery({
+    queryKey: ['payment-overrides-stripe', programmeId],
+    queryFn: () => base44.entities.MeetingPaymentOverride.filter({ programme_id: programmeId }),
+    enabled: !!programmeId,
+  });
+
+  const { data: currentUser } = useQuery({ queryKey: ['me'], queryFn: () => base44.auth.me() });
+
   if (!programme?.has_cost || cost <= 0) return null;
+
+  const getOverride = (memberId) => overrides.find(o => o.member_id === memberId);
+
+  const handleWaive = async (memberId) => {
+    const existing = getOverride(memberId);
+    if (existing) {
+      await base44.entities.MeetingPaymentOverride.delete(existing.id);
+      toast.success('Waiver cleared');
+    } else {
+      await base44.entities.MeetingPaymentOverride.create({
+        programme_id: programmeId,
+        member_id: memberId,
+        override_type: 'waived',
+        set_by: currentUser?.email,
+      });
+      toast.success('Payment waived');
+    }
+    refetchOverrides();
+    queryClient.invalidateQueries({ queryKey: ['payment-overrides', programmeId] });
+  };
 
   const attendanceAction = actions.find(a => a.action_purpose === 'attendance');
   const attendingMemberIds = attendanceAction
@@ -66,6 +97,7 @@ export default function MeetingAttendingMembersStripe({ programmeId, programme }
   const getPayStatus = (memberId) => {
     const ps = paymentStatuses.find(p => p.member_id === memberId);
     if (ps?.status === 'paid') return { status: 'paid', ps };
+    if (getOverride(memberId)) return { status: 'waived', ps: null };
     const deadline = programme?.payment_deadline;
     const meetingDate = programme?.date;
     const isOverdue = (deadline && todayStr > deadline) || (!deadline && meetingDate && todayStr > meetingDate);
@@ -108,6 +140,11 @@ export default function MeetingAttendingMembersStripe({ programmeId, programme }
         <p className="text-sm text-gray-600 mt-1">
           {paidCount} of {attendingMemberIds.length} members have paid — {fmt(ledgerIncome)} of {fmt(totalExpected)} received.
         </p>
+        {paymentDeadline && (
+          <p className={`text-xs mt-0.5 ${isDeadlinePassed ? 'text-red-600 font-medium' : 'text-gray-400'}`}>
+            Payment deadline: {format(new Date(paymentDeadline), 'd MMM yyyy')}{isDeadlinePassed ? ' — PASSED' : ''}
+          </p>
+        )}
       </CardHeader>
       <CardContent>
         <div className="divide-y">
@@ -131,6 +168,10 @@ export default function MeetingAttendingMembersStripe({ programmeId, programme }
                     <span className="inline-flex items-center gap-1 text-xs font-medium bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full">
                       <CheckCircle className="w-3 h-3" /> Paid
                     </span>
+                  ) : status === 'waived' ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
+                      <Slash className="w-3 h-3" /> Waived
+                    </span>
                   ) : status === 'overdue' ? (
                     <span className="inline-flex items-center gap-1 text-xs font-medium bg-red-100 text-red-700 border border-red-300 px-2 py-0.5 rounded-full">
                       <Clock className="w-3 h-3" /> Overdue
@@ -141,6 +182,13 @@ export default function MeetingAttendingMembersStripe({ programmeId, programme }
                     </span>
                   )}
                   {status !== 'paid' && (
+                    <Button size="sm" variant="outline"
+                      className={`text-xs h-7 gap-1 ${status === 'waived' ? 'border-blue-300 text-blue-600' : 'border-gray-300 text-gray-600'}`}
+                      onClick={() => handleWaive(memberId)}>
+                      {status === 'waived' ? 'Clear' : 'Waive'}
+                    </Button>
+                  )}
+                  {status !== 'paid' && status !== 'waived' && (
                     reminder ? (
                       <span className="text-xs text-gray-400">Sent {reminder}</span>
                     ) : (
