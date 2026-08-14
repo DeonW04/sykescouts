@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { createPageUrl } from '@/utils';
 
@@ -7,6 +8,7 @@ const PortalContext = createContext();
 
 export const CONTEXT_STORAGE_KEY = 'syke_active_context';
 export const CONTEXT_EVENT_NAME = 'syke-context-changed';
+export const ACTING_CHILD_STORAGE_KEY = 'syke_acting_child';
 
 export const SECTION_COLORS = {
   squirrels: '#e22e12',
@@ -25,6 +27,15 @@ export function usePortalContext() {
 function readStored() {
   try {
     const raw = localStorage.getItem(CONTEXT_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function readStoredActingChild() {
+  try {
+    const raw = localStorage.getItem(ACTING_CHILD_STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -52,12 +63,14 @@ export function getPermittedPortal(activeContext) {
 
 export function PortalContextProvider({ children }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [activeContext, setActiveContextState] = useState(readStored());
   const [availableContexts, setAvailableContexts] = useState({ children: [], sections: [], roles: [] });
   const [isResolved, setIsResolved] = useState(false);
   const [isLoadingContexts, setIsLoadingContexts] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [actingChild, setActingChild] = useState(readStoredActingChild());
 
   useEffect(() => {
     loadContexts();
@@ -73,6 +86,12 @@ export function PortalContextProvider({ children }) {
       }
       const currentUser = await base44.auth.me();
       setUser(currentUser);
+
+      // Only admins may impersonate a parent — guard against stale acting state.
+      if (currentUser.role !== 'admin' && readStoredActingChild()) {
+        try { localStorage.removeItem(ACTING_CHILD_STORAGE_KEY); } catch { /* ignore */ }
+        setActingChild(null);
+      }
 
       const [members, leaders, sectionsAll] = await Promise.all([
         base44.entities.Member.filter({}).catch(() => []),
@@ -104,7 +123,11 @@ export function PortalContextProvider({ children }) {
 
       const allItems = [...childItems, ...sectionItems, ...roleItems];
       const stored = readStored();
-      const storedValid = stored && allItems.some(i => i.type === stored.type && i.id === stored.id);
+      const actingStored = readStoredActingChild();
+      const storedValid = stored && (
+        allItems.some(i => i.type === stored.type && i.id === stored.id) ||
+        (actingStored && stored.type === 'child' && stored.id === actingStored.id)
+      );
 
       if (storedValid) {
         setActiveContextState(stored);
@@ -144,19 +167,65 @@ export function PortalContextProvider({ children }) {
   // Public: internal sync (e.g. switching child/section while already on the right page) — no navigation.
   const syncActiveContext = useCallback((context) => commitContext(context, { navigate: false }), [commitContext]);
 
+  // Admin "Act as Parent" — impersonate the real parent of the given child so the
+  // admin sees exactly what that parent sees, for testing or support purposes.
+  const startActingAsParent = useCallback((member) => {
+    const acting = {
+      id: member.id,
+      label: member.preferred_name || member.first_name,
+      first_name: member.first_name,
+      surname: member.surname,
+    };
+    try { localStorage.setItem(ACTING_CHILD_STORAGE_KEY, JSON.stringify(acting)); } catch { /* ignore */ }
+    setActingChild(acting);
+    // Force a fresh fetch of the impersonated parent's data — the query keys are
+    // keyed by the admin's own email so they wouldn't otherwise refetch.
+    queryClient.invalidateQueries({ queryKey: ['parent-portal'] });
+    queryClient.invalidateQueries({ queryKey: ['parent-reference'] });
+    commitContext({ type: 'child', id: acting.id, label: acting.label, acting: true }, { navigate: true });
+  }, [commitContext, queryClient]);
+
+  const stopActingAsParent = useCallback(() => {
+    try { localStorage.removeItem(ACTING_CHILD_STORAGE_KEY); } catch { /* ignore */ }
+    setActingChild(null);
+    queryClient.invalidateQueries({ queryKey: ['parent-portal'] });
+    queryClient.invalidateQueries({ queryKey: ['parent-reference'] });
+    if (user?.role === 'admin') {
+      commitContext({ type: 'role:admin', id: 'admin', label: 'Admin' }, { navigate: true });
+    } else {
+      try { localStorage.removeItem(CONTEXT_STORAGE_KEY); } catch { /* ignore */ }
+      setActiveContextState(null);
+      navigate('/');
+    }
+  }, [commitContext, queryClient, user, navigate]);
+
+  // Contexts as displayed in the UI — includes the currently-acted-as child
+  // (tagged `acting: true`) under "My Children" while an acting session is active.
+  const displayContexts = {
+    ...availableContexts,
+    children: actingChild && !availableContexts.children.some(c => c.id === actingChild.id)
+      ? [...availableContexts.children, { type: 'child', id: actingChild.id, label: actingChild.label, member: actingChild, acting: true }]
+      : availableContexts.children,
+  };
+
   return (
     <PortalContext.Provider value={{
       user,
       activeContext,
       setActiveContext,
       syncActiveContext,
-      availableContexts,
+      availableContexts: displayContexts,
       isResolved,
       isLoadingContexts,
       pickerOpen,
       openPicker: () => setPickerOpen(true),
       closePicker: () => setPickerOpen(false),
       refreshContexts: loadContexts,
+      actingChild,
+      isActingAsParent: !!actingChild,
+      startActingAsParent,
+      stopActingAsParent,
+      canActAsParent: user?.role === 'admin',
     }}>
       {children}
     </PortalContext.Provider>

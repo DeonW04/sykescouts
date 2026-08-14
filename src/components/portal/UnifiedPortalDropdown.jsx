@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChevronDown, Check, Settings, LogOut, Baby, Landmark, Shield, LayoutDashboard } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, Check, Settings, LogOut, Baby, Landmark, Shield, LayoutDashboard, UserCog } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -8,12 +8,17 @@ import {
 import { usePortalContext, SECTION_COLORS } from '@/lib/PortalContextProvider';
 import { CHILD_COLORS, childInitials } from '@/hooks/useSelectedChild';
 import { useAccountSettingsModal } from '@/lib/AccountSettingsModalProvider';
+import ActAsParentDialog from './ActAsParentDialog';
 
 const CONTEXT_ICON = { child: '🧒', section: '📋', 'role:treasurer': '💰', 'role:admin': '🛡' };
 
 export default function UnifiedPortalDropdown() {
-  const { user, activeContext, availableContexts, setActiveContext } = usePortalContext();
+  const {
+    user, activeContext, availableContexts, setActiveContext,
+    canActAsParent, isActingAsParent, startActingAsParent, stopActingAsParent,
+  } = usePortalContext();
   const { openAccountSettingsModal } = useAccountSettingsModal();
+  const [actAsParentOpen, setActAsParentOpen] = useState(false);
 
   const userName = (() => {
     const n = user?.display_name || user?.full_name || 'Account';
@@ -56,6 +61,7 @@ export default function UnifiedPortalDropdown() {
                   {childInitials(c.member)}
                 </span>
                 <span className="flex-1 text-sm font-medium truncate">{c.label}</span>
+                {c.acting && <UserCog className="w-3.5 h-3.5 text-amber-500 mr-1" />}
                 {isActive(c) && <Check className="w-4 h-4 text-[#7413dc]" />}
               </DropdownMenuItem>
             ))}
@@ -78,17 +84,28 @@ export default function UnifiedPortalDropdown() {
           </>
         )}
 
-        {availableContexts.roles?.length > 0 && (
+        {(availableContexts.roles?.length > 0 || canActAsParent) && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-gray-400">My Roles</DropdownMenuLabel>
-            {availableContexts.roles.map((r) => (
+            {availableContexts.roles?.map((r) => (
               <DropdownMenuItem key={`role-${r.id}`} onClick={() => setActiveContext(r)} className="cursor-pointer">
                 {r.id === 'treasurer' ? <Landmark className="w-4 h-4 mr-2 text-teal-600" /> : <Shield className="w-4 h-4 mr-2 text-[#7413dc]" />}
                 <span className="flex-1 text-sm font-medium truncate">{r.label}</span>
                 {isActive(r) && <Check className="w-4 h-4 text-[#7413dc]" />}
               </DropdownMenuItem>
             ))}
+            {canActAsParent && (
+              isActingAsParent ? (
+                <DropdownMenuItem onClick={stopActingAsParent} className="cursor-pointer text-amber-600 focus:text-amber-600">
+                  <LogOut className="w-4 h-4 mr-2" /> Exit Parent View
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => setActAsParentOpen(true)} className="cursor-pointer">
+                  <UserCog className="w-4 h-4 mr-2 text-[#7413dc]" /> Act as Parent
+                </DropdownMenuItem>
+              )
+            )}
           </>
         )}
 
@@ -101,6 +118,11 @@ export default function UnifiedPortalDropdown() {
           <LogOut className="w-4 h-4 mr-2" /> Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
+      <ActAsParentDialog
+        open={actAsParentOpen}
+        onClose={() => setActAsParentOpen(false)}
+        onSelect={(member) => { startActingAsParent(member); setActAsParentOpen(false); }}
+      />
     </DropdownMenu>
   );
 }

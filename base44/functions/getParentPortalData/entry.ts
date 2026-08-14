@@ -39,7 +39,16 @@ Deno.serve(async (req) => {
     }
 
     const svc = base44.asServiceRole;
-    const email = user.email;
+    let email = user.email;
+
+    // Admin "Act as Parent" — impersonate the real parent of the given child so
+    // the admin sees exactly what that parent sees (all their children, not just one).
+    const body = await req.json().catch(() => ({}));
+    if (body?.actingChildId && user.role === 'admin') {
+      const actingMember = await svc.entities.Member.get(body.actingChildId).catch(() => null);
+      const actingEmail = actingMember?.parent_one_email || actingMember?.parent_two_email;
+      if (actingEmail) email = actingEmail;
+    }
 
     // 1. Resolve this parent's children — server-side, by their email only.
     const [kids1, kids2] = await Promise.all([

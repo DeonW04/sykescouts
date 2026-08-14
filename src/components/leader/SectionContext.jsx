@@ -56,6 +56,19 @@ export const SectionProvider = ({ children }) => {
     loadUserAndSections();
   }, []);
 
+  // Keep in sync when the section is switched elsewhere (e.g. the unified portal
+  // dropdown) while already mounted on a leader page — without this, selectedSection
+  // never updates because loadUserAndSections only runs once on mount.
+  useEffect(() => {
+    if (portal.activeContext?.type === 'section' && portal.activeContext.id !== selectedSection) {
+      setPreviousSection(selectedSection);
+      setPendingSectionId(portal.activeContext.id);
+      setSelectedSection(portal.activeContext.id);
+      setTransitioning(true);
+      try { localStorage.setItem('syke_active_section', portal.activeContext.id); } catch { /* ignore */ }
+    }
+  }, [portal.activeContext, selectedSection]);
+
   const loadUserAndSections = async () => {
     try {
       const currentUser = await base44.auth.me();
