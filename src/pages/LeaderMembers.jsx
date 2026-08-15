@@ -67,7 +67,12 @@ export default function LeaderMembers() {
     e.preventDefault();
     setSending(true);
     try {
+      const nameParts = inviteForm.child_name.trim().split(/\s+/);
+      const first_name = nameParts[0] || '';
+      const surname = nameParts.slice(1).join(' ') || '';
       await base44.entities.Member.create({
+        first_name,
+        surname,
         full_name: inviteForm.child_name,
         date_of_birth: inviteForm.child_dob,
         parent_one_name: inviteForm.parent_one_name,
