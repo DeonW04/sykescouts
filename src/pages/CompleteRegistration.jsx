@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
 import InlineCardSetup from '../components/mobile/InlineCardSetup';
 import ScreenShell from '@/components/registration/ScreenShell';
+import WizardShell from '@/components/registration/WizardShell';
 import InstallGuide from '@/components/registration/InstallGuide';
 
 // Reusable field components
@@ -63,19 +64,19 @@ function SelectInput({ value, onChange, placeholder, options }) {
 
 function StepHeader({ icon: Icon, iconBg, title, subtitle, step, totalSteps }) {
   return (
-    <div className="px-5 pt-6 pb-5">
-      <div className="flex items-center gap-3 mb-4">
-        <div className={`w-10 h-10 ${iconBg} rounded-2xl flex items-center justify-center flex-shrink-0`}>
-          <Icon className="w-5 h-5 text-white" />
+    <div className="px-5 md:px-0 pt-6 md:pt-8 pb-5 md:pb-8">
+      <div className="flex items-center gap-3 md:gap-4 mb-4">
+        <div className={`w-10 h-10 md:w-14 md:h-14 ${iconBg} rounded-2xl flex items-center justify-center flex-shrink-0`}>
+          <Icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
         </div>
         <div className="flex-1">
-          <h2 className="font-bold text-gray-900 text-base leading-tight">{title}</h2>
-          <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>
+          <h2 className="font-bold text-gray-900 text-base md:text-2xl leading-tight">{title}</h2>
+          <p className="text-xs md:text-sm text-gray-400 mt-0.5">{subtitle}</p>
         </div>
-        <span className="text-xs text-gray-400 font-medium">{step}/{totalSteps}</span>
+        <span className="text-xs text-gray-400 font-medium md:hidden">{step}/{totalSteps}</span>
       </div>
-      {/* Progress bar */}
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      {/* Progress bar (mobile only — desktop uses the step rail) */}
+      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden md:hidden">
         <div
           className="h-full bg-gradient-to-r from-[#7413dc] to-[#004851] rounded-full transition-all duration-500"
           style={{ width: `${(step / totalSteps) * 100}%` }}
@@ -379,17 +380,34 @@ export default function CompleteRegistration() {
   const goNext = () => { scrollTop(); next(); };
   const goBack = () => { scrollTop(); back(); };
 
+  const footerButton = step < 6 ? (
+    <button
+      onClick={goNext}
+      disabled={
+        (step === 1 && !displayName.trim()) ||
+        (step === 2 && (!childForm.first_name || !childForm.surname || !childForm.date_of_birth))
+      }
+      className="w-full md:w-auto md:px-10 bg-[#7413dc] text-white font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform disabled:opacity-40 flex items-center justify-center gap-2"
+    >
+      Continue
+      <ChevronRight className="w-5 h-5" />
+    </button>
+  ) : step === 6 ? (
+    <button
+      onClick={handleComplete}
+      disabled={submitting}
+      className="w-full md:w-auto md:px-10 bg-gradient-to-r from-[#7413dc] to-[#004851] text-white font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform disabled:opacity-60 flex items-center justify-center gap-2"
+    >
+      {submitting ? (
+        <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Saving…</>
+      ) : (
+        <><CheckCircle className="w-5 h-5" /> Complete Registration</>
+      )}
+    </button>
+  ) : null;
+
   return (
-    <ScreenShell>
-      {/* Back button */}
-      <div className="flex-shrink-0 px-4 pt-4 pb-0 flex items-center">
-        <button onClick={goBack} className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-500">
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
-
+    <WizardShell step={step} totalSteps={TOTAL_CONTENT_STEPS} onBack={goBack} footer={footerButton}>
         {/* ── Step 1: Your Name ── */}
         {step === 1 && (
           <div>
@@ -599,38 +617,7 @@ export default function CompleteRegistration() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* ── Sticky Bottom Button ── */}
-      <div className="flex-shrink-0 px-4 pb-6 bg-gray-50 pt-3 border-t border-gray-100"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 20px)' }}>
-        {step < 6 ? (
-          <button
-            onClick={goNext}
-            disabled={
-              (step === 1 && !displayName.trim()) ||
-              (step === 2 && (!childForm.first_name || !childForm.surname || !childForm.date_of_birth))
-            }
-            className="w-full bg-[#7413dc] text-white font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform disabled:opacity-40 flex items-center justify-center gap-2"
-          >
-            Continue
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        ) : step === 6 ? (
-          <button
-            onClick={handleComplete}
-            disabled={submitting}
-            className="w-full bg-gradient-to-r from-[#7413dc] to-[#004851] text-white font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform disabled:opacity-60 flex items-center justify-center gap-2"
-          >
-            {submitting ? (
-              <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Saving…</>
-            ) : (
-              <><CheckCircle className="w-5 h-5" /> Complete Registration</>
-            )}
-          </button>
-        ) : null}
-      </div>
-    </ScreenShell>
+    </WizardShell>
   );
 }
 
