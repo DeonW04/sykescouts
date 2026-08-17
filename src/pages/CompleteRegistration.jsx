@@ -18,7 +18,7 @@ function Field({ label, required, children }) {
   );
 }
 
-function TextInput({ value, onChange, placeholder, type = 'text', required }) {
+function TextInput({ value, onChange, placeholder, type = 'text', required, disabled }) {
   return (
     <input
       type={type}
@@ -26,7 +26,8 @@ function TextInput({ value, onChange, placeholder, type = 'text', required }) {
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       required={required}
-      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#7413dc] focus:ring-2 focus:ring-[#7413dc]/20 transition-all"
+      disabled={disabled}
+      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#7413dc] focus:ring-2 focus:ring-[#7413dc]/20 transition-all disabled:bg-gray-100 disabled:text-gray-500"
     />
   );
 }
@@ -406,18 +407,21 @@ export default function CompleteRegistration() {
             <div className="px-5 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <Field label="First Name" required>
-                  <TextInput value={childForm.first_name} onChange={(v) => setChildForm(p => ({ ...p, first_name: v, full_name: `${v} ${p.surname}`.trim() }))} required />
+                  <TextInput value={childForm.first_name} onChange={(v) => setChildForm(p => ({ ...p, first_name: v, full_name: `${v} ${p.surname}`.trim() }))} required disabled={!!existingChildId} />
                 </Field>
                 <Field label="Surname" required>
-                  <TextInput value={childForm.surname} onChange={(v) => setChildForm(p => ({ ...p, surname: v, full_name: `${p.first_name} ${v}`.trim() }))} required />
+                  <TextInput value={childForm.surname} onChange={(v) => setChildForm(p => ({ ...p, surname: v, full_name: `${p.first_name} ${v}`.trim() }))} required disabled={!!existingChildId} />
                 </Field>
               </div>
               <Field label="Preferred Name">
                 <TextInput value={childForm.preferred_name} onChange={setField('preferred_name')} placeholder="If different from above" />
               </Field>
               <Field label="Date of Birth" required>
-                <TextInput value={childForm.date_of_birth} onChange={setField('date_of_birth')} type="date" required />
+                <TextInput value={childForm.date_of_birth} onChange={setField('date_of_birth')} type="date" required disabled={!!existingChildId} />
               </Field>
+              {existingChildId && (
+                <p className="text-xs text-gray-400 -mt-1">Name and date of birth were set by your section leader and can't be changed here.</p>
+              )}
               <Field label="Gender">
                 <SelectInput
                   value={childForm.gender}

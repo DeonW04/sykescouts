@@ -15,6 +15,7 @@ import FloatingNav from '../components/public/FloatingNav';
 import OSMImportFlow from '../components/osm/OSMImportFlow';
 import NavBarSpacer from '../components/public/NavBarSpacer';
 import { useSectionContext } from '../components/leader/SectionContext';
+import NewMemberWizard from '../components/leader/members/NewMemberWizard';
 
 export default function LeaderMembers() {
   const { selectedSection } = useSectionContext();
@@ -22,18 +23,7 @@ export default function LeaderMembers() {
   const [showMethodDialog, setShowMethodDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showOSMImport, setShowOSMImport] = useState(false);
-  const [sending, setSending] = useState(false);
   const [viewMode, setViewMode] = useState('tile'); // 'tile' or 'patrol'
-  const [inviteForm, setInviteForm] = useState({
-    parent_one_name: '',
-    parent_one_email: '',
-    parent_one_phone: '',
-    parent_two_name: '',
-    parent_two_email: '',
-    parent_two_phone: '',
-    child_name: '',
-    child_dob: '',
-  });
 
   const { data: sections = [] } = useQuery({
     queryKey: ['sections'],
@@ -62,38 +52,6 @@ export default function LeaderMembers() {
   const filteredMembers = members
     .filter(member => member.full_name.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => new Date(a.date_of_birth).getTime() - new Date(b.date_of_birth).getTime());
-
-  const handleSendInvite = async (e) => {
-    e.preventDefault();
-    setSending(true);
-    try {
-      const nameParts = inviteForm.child_name.trim().split(/\s+/);
-      const first_name = nameParts[0] || '';
-      const surname = nameParts.slice(1).join(' ') || '';
-      await base44.entities.Member.create({
-        first_name,
-        surname,
-        full_name: inviteForm.child_name,
-        date_of_birth: inviteForm.child_dob,
-        parent_one_name: inviteForm.parent_one_name,
-        parent_one_email: inviteForm.parent_one_email,
-        parent_one_phone: inviteForm.parent_one_phone,
-        parent_two_name: inviteForm.parent_two_name,
-        parent_two_email: inviteForm.parent_two_email,
-        parent_two_phone: inviteForm.parent_two_phone,
-        active: true,
-        join_date: new Date().toISOString().split('T')[0],
-      });
-      toast.success('Member added successfully!');
-      setShowInviteDialog(false);
-      setInviteForm({ parent_one_name: '', parent_one_email: '', parent_one_phone: '', parent_two_name: '', parent_two_email: '', parent_two_phone: '', child_name: '', child_dob: '' });
-      refetchMembers();
-    } catch (error) {
-      toast.error('Error adding member: ' + error.message);
-    } finally {
-      setSending(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -164,62 +122,14 @@ export default function LeaderMembers() {
             sectionId={selectedSection}
           />
 
-          {/* Step 2: Add member form */}
-          <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
-            <DialogContent className="max-w-md flex flex-col max-h-[90vh]">
-              <DialogHeader className="flex-shrink-0">
-                <DialogTitle>Add New Member</DialogTitle>
-              </DialogHeader>
-              <div className="overflow-y-auto flex-1 pr-1">
-                <form onSubmit={handleSendInvite} className="space-y-4 mt-4">
-                  <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
-                    <Label className="text-base font-semibold">Parent One</Label>
-                    <div className="space-y-2">
-                      <Label>Name *</Label>
-                      <Input required value={inviteForm.parent_one_name} onChange={(e) => setInviteForm({ ...inviteForm, parent_one_name: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Email *</Label>
-                      <Input type="email" required value={inviteForm.parent_one_email} onChange={(e) => setInviteForm({ ...inviteForm, parent_one_email: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Phone *</Label>
-                      <Input type="tel" required value={inviteForm.parent_one_phone} onChange={(e) => setInviteForm({ ...inviteForm, parent_one_phone: e.target.value })} />
-                    </div>
-                  </div>
-                  <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
-                    <Label className="text-base font-semibold">Parent Two (Optional)</Label>
-                    <div className="space-y-2">
-                      <Label>Name</Label>
-                      <Input value={inviteForm.parent_two_name} onChange={(e) => setInviteForm({ ...inviteForm, parent_two_name: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Email</Label>
-                      <Input type="email" value={inviteForm.parent_two_email} onChange={(e) => setInviteForm({ ...inviteForm, parent_two_email: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Phone</Label>
-                      <Input type="tel" value={inviteForm.parent_two_phone} onChange={(e) => setInviteForm({ ...inviteForm, parent_two_phone: e.target.value })} />
-                    </div>
-                  </div>
-                  <div className="space-y-3 p-3 bg-blue-50 rounded-lg border-t-2 border-blue-300">
-                    <Label className="text-base font-semibold">Child Details</Label>
-                    <div className="space-y-2">
-                      <Label>Child Full Name *</Label>
-                      <Input required value={inviteForm.child_name} onChange={(e) => setInviteForm({ ...inviteForm, child_name: e.target.value })} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Child's Date of Birth *</Label>
-                      <Input id="child_dob" type="date" value={inviteForm.child_dob} onChange={(e) => setInviteForm({ ...inviteForm, child_dob: e.target.value })} required />
-                    </div>
-                  </div>
-                  <Button type="submit" disabled={sending} className="w-full bg-[#7413dc] hover:bg-[#5c0fb0]">
-                    {sending ? 'Adding Member...' : 'Add Member'}
-                  </Button>
-                </form>
-              </div>
-            </DialogContent>
-          </Dialog>
+          {/* Step 2: New Member Wizard */}
+          <NewMemberWizard
+            open={showInviteDialog}
+            onClose={() => setShowInviteDialog(false)}
+            sections={sections}
+            selectedSection={selectedSection}
+            onCreated={refetchMembers}
+          />
         </div>
       </div>
 
