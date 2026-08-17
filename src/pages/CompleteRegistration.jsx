@@ -7,6 +7,8 @@ import { createPageUrl } from '../utils';
 import InlineCardSetup from '../components/mobile/InlineCardSetup';
 import ScreenShell from '@/components/registration/ScreenShell';
 import WizardShell from '@/components/registration/WizardShell';
+import HeroBackdrop from '@/components/registration/HeroBackdrop';
+import FullWidthShell from '@/components/registration/FullWidthShell';
 import InstallGuide from '@/components/registration/InstallGuide';
 
 // Reusable field components
@@ -47,21 +49,6 @@ function TextArea({ value, onChange, placeholder, rows = 3 }) {
   );
 }
 
-function SelectInput({ value, onChange, placeholder, options }) {
-  return (
-    <select
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#7413dc] focus:ring-2 focus:ring-[#7413dc]/20 transition-all appearance-none"
-    >
-      <option value="">{placeholder}</option>
-      {options.map(o => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
-    </select>
-  );
-}
-
 function StepHeader({ icon: Icon, iconBg, title, subtitle, step, totalSteps }) {
   return (
     <div className="px-5 md:px-0 pt-6 md:pt-8 pb-5 md:pb-8">
@@ -78,7 +65,7 @@ function StepHeader({ icon: Icon, iconBg, title, subtitle, step, totalSteps }) {
       {/* Progress bar (mobile only — desktop uses the step rail) */}
       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden md:hidden">
         <div
-          className="h-full bg-gradient-to-r from-[#7413dc] to-[#004851] rounded-full transition-all duration-500"
+          className="h-full bg-[#7413dc] rounded-full transition-all duration-500"
           style={{ width: `${(step / totalSteps) * 100}%` }}
         />
       </div>
@@ -128,13 +115,15 @@ export default function CompleteRegistration() {
     base44.auth.me()
       .then(async (u) => {
         setUser(u);
-        setDisplayName(u.display_name || u.full_name || '');
 
         // Pre-fill child data if found
         const members = await base44.entities.Member.filter({});
         const child = members.find(m => m.parent_one_email === u.email || m.parent_two_email === u.email);
         if (child) {
           setExistingChildId(child.id);
+          // Prefill "Your Name" from the matching parent record on the child — never from the user profile
+          const matchedParentName = child.parent_one_email === u.email ? (child.parent_one_name || '') : (child.parent_two_name || '');
+          setDisplayName(matchedParentName);
           setChildForm({
             first_name: child.first_name || '',
             surname: child.surname || '',
@@ -244,37 +233,37 @@ export default function CompleteRegistration() {
   // ── Welcome Screen ──
   if (step === 0) {
     return (
-      <ScreenShell gradient>
-        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center overflow-y-auto">
+      <HeroBackdrop>
+        <div className="bg-white/10 backdrop-blur-md border border-white/25 rounded-3xl p-8 md:p-12 text-center">
           <img
             src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png"
             alt="40th Rochdale Scouts"
-            className="w-24 h-24 object-contain mb-6 drop-shadow-2xl"
+            className="w-16 h-16 object-contain mb-5 mx-auto drop-shadow-2xl"
           />
-          <h1 className="text-3xl font-extrabold text-white mb-3 leading-tight">
-            Welcome to the<br />Scout Portal
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-white/60 mb-3">40th Rochdale (Syke) Scouts</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-3 leading-tight">
+            Welcome to the Scout Portal
           </h1>
-          <p className="text-white/75 text-base leading-relaxed mb-2">
+          <p className="text-white/80 text-base leading-relaxed mb-8">
             Let's get your profile set up — it only takes a few minutes.
           </p>
-          <p className="text-white/50 text-sm">40th Rochdale (Syke) Scouts</p>
+          <div className="space-y-3">
+            <button
+              onClick={next}
+              className="w-full bg-[#7413dc] text-white font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform shadow-lg"
+            >
+              Get Started →
+            </button>
+            <button
+              onClick={() => base44.auth.logout()}
+              className="w-full text-white/70 text-sm py-2 flex items-center justify-center gap-1.5"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign out
+            </button>
+          </div>
         </div>
-        <div className="flex-shrink-0 px-6 pb-8 space-y-3">
-          <button
-            onClick={next}
-            className="w-full bg-white text-[#7413dc] font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform shadow-lg"
-          >
-            Get Started →
-          </button>
-          <button
-            onClick={() => base44.auth.logout()}
-            className="w-full text-white/60 text-sm py-2 flex items-center justify-center gap-1.5"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </button>
-        </div>
-      </ScreenShell>
+      </HeroBackdrop>
     );
   }
 
@@ -282,30 +271,29 @@ export default function CompleteRegistration() {
   if (step === 8) {
     const isMobilePWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
     return (
-      <ScreenShell gradient>
-        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center overflow-y-auto">
-          <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-2xl flex-shrink-0">
-            <CheckCircle className="w-10 h-10 text-green-500" />
-          </div>
-          <h1 className="text-3xl font-extrabold text-white mb-3">All done!</h1>
-          <p className="text-white/75 text-base mb-6">
-            Your profile is set up and ready to go.
-          </p>
-          <div className="w-full">
-            <InstallGuide variant="light" />
-          </div>
-        </div>
-        <div className="flex-shrink-0 px-6 pb-8 pt-2">
+      <FullWidthShell
+        footer={
           <button
             onClick={() => {
               window.location.href = isMobilePWA ? '/app' : createPageUrl('ParentDashboard');
             }}
-            className="w-full bg-white text-[#7413dc] font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform shadow-lg"
+            className="w-full sm:w-auto sm:px-10 sm:ml-auto flex bg-[#7413dc] text-white font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform items-center justify-center gap-2"
           >
-            Go to my Dashboard →
+            Go to my Dashboard <ChevronRight className="w-5 h-5" />
           </button>
+        }
+      >
+        <div className="text-center mb-10">
+          <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mb-5 mx-auto">
+            <CheckCircle className="w-8 h-8 text-green-500" />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-2">All done!</h1>
+          <p className="text-gray-500 text-base">
+            Your profile is set up and ready to go. Get the app on your phone for the best experience:
+          </p>
         </div>
-      </ScreenShell>
+        <InstallGuide />
+      </FullWidthShell>
     );
   }
 
@@ -345,36 +333,6 @@ export default function CompleteRegistration() {
     );
   }
 
-  // ── Step 7: Payment Setup ──
-  if (step === 7) {
-    return (
-      <ScreenShell>
-        <div className="flex-1 overflow-y-auto">
-          <StepHeader icon={CreditCard} iconBg="bg-green-500" title="Set up your payment method" subtitle="Add a card for subscriptions and events" step={7} totalSteps={TOTAL_CONTENT_STEPS} />
-          <div className="px-5 space-y-4 pb-8">
-            <p className="text-sm text-gray-500 leading-relaxed">
-              Add a card to pay for subscriptions and events. You can update this at any time in your account settings.
-            </p>
-            {existingChildId ? (
-              <InlineCardSetup
-                memberId={existingChildId}
-                onSuccess={() => setStep(8)}
-                onCancel={() => setStep(8)}
-              />
-            ) : (
-              <p className="text-sm text-gray-400">Payment setup not available — add a card later in Account Settings.</p>
-            )}
-            <div className="text-center pt-2">
-              <button onClick={() => setStep(8)} className="text-sm text-gray-400 hover:text-gray-600 underline">
-                Skip for now
-              </button>
-            </div>
-          </div>
-        </div>
-      </ScreenShell>
-    );
-  }
-
   // ── Form Steps ──
   const scrollTop = () => window.scrollTo({ top: 0 });
   const goNext = () => { scrollTop(); next(); };
@@ -396,13 +354,20 @@ export default function CompleteRegistration() {
     <button
       onClick={handleComplete}
       disabled={submitting}
-      className="w-full md:w-auto md:px-10 bg-gradient-to-r from-[#7413dc] to-[#004851] text-white font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform disabled:opacity-60 flex items-center justify-center gap-2"
+      className="w-full md:w-auto md:px-10 bg-[#7413dc] text-white font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform disabled:opacity-60 flex items-center justify-center gap-2"
     >
       {submitting ? (
         <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Saving…</>
       ) : (
         <><CheckCircle className="w-5 h-5" /> Complete Registration</>
       )}
+    </button>
+  ) : step === 7 ? (
+    <button
+      onClick={() => setStep(8)}
+      className="text-sm text-gray-400 hover:text-gray-600 underline md:ml-auto"
+    >
+      Skip for now
     </button>
   ) : null;
 
@@ -456,13 +421,9 @@ export default function CompleteRegistration() {
                   ]}
                 />
               </Field>
-              <Field label="Section" required>
-                <SelectInput
-                  value={childForm.section_id}
-                  onChange={setField('section_id')}
-                  placeholder="Select section"
-                  options={sections.map(s => ({ value: s.id, label: s.display_name }))}
-                />
+              <Field label="Section">
+                <TextInput value={sections.find(s => s.id === childForm.section_id)?.display_name || 'Not yet assigned'} disabled />
+                <p className="text-xs text-gray-400 mt-1">Section is set by your section leader and can't be changed here.</p>
               </Field>
               <Field label="Home Address" required>
                 <TextArea value={childForm.address} onChange={setField('address')} placeholder="Full address" rows={3} />
@@ -617,7 +578,43 @@ export default function CompleteRegistration() {
             </div>
           </div>
         )}
+
+        {/* ── Step 7: Payment Setup ── */}
+        {step === 7 && (
+          <div>
+            <StepHeader icon={CreditCard} iconBg="bg-green-500" title="Set up your payment method" subtitle="Add a card for subscriptions and events" step={7} totalSteps={TOTAL_CONTENT_STEPS} />
+            <div className="px-5 space-y-4 pb-8">
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Add a card to pay for subscriptions and events. You can update this at any time in your account settings.
+              </p>
+              {existingChildId ? (
+                <InlineCardSetup
+                  memberId={existingChildId}
+                  onSuccess={() => setStep(8)}
+                  onCancel={() => setStep(8)}
+                />
+              ) : (
+                <p className="text-sm text-gray-400">Payment setup not available — add a card later in Account Settings.</p>
+              )}
+            </div>
+          </div>
+        )}
     </WizardShell>
+  );
+}
+
+function SelectInput({ value, onChange, placeholder, options }) {
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 bg-white focus:outline-none focus:border-[#7413dc] focus:ring-2 focus:ring-[#7413dc]/20 transition-all appearance-none"
+    >
+      <option value="">{placeholder}</option>
+      {options.map(o => (
+        <option key={o.value} value={o.value}>{o.label}</option>
+      ))}
+    </select>
   );
 }
 
