@@ -5,6 +5,8 @@ import { CheckCircle, ChevronRight, ChevronLeft, User, Baby, Heart, Phone, Camer
 import { toast } from 'sonner';
 import { createPageUrl } from '../utils';
 import InlineCardSetup from '../components/mobile/InlineCardSetup';
+import ScreenShell from '@/components/registration/ScreenShell';
+import InstallGuide from '@/components/registration/InstallGuide';
 
 // Reusable field components
 function Field({ label, required, children }) {
@@ -241,9 +243,8 @@ export default function CompleteRegistration() {
   // ── Welcome Screen ──
   if (step === 0) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-[#7413dc] to-[#004851] flex flex-col"
-        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+      <ScreenShell gradient>
+        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center overflow-y-auto">
           <img
             src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png"
             alt="40th Rochdale Scouts"
@@ -257,7 +258,7 @@ export default function CompleteRegistration() {
           </p>
           <p className="text-white/50 text-sm">40th Rochdale (Syke) Scouts</p>
         </div>
-        <div className="px-6 pb-8 space-y-3">
+        <div className="flex-shrink-0 px-6 pb-8 space-y-3">
           <button
             onClick={next}
             className="w-full bg-white text-[#7413dc] font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform shadow-lg"
@@ -272,7 +273,7 @@ export default function CompleteRegistration() {
             Sign out
           </button>
         </div>
-      </div>
+      </ScreenShell>
     );
   }
 
@@ -280,34 +281,39 @@ export default function CompleteRegistration() {
   if (step === 8) {
     const isMobilePWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-[#7413dc] to-[#004851] flex flex-col items-center justify-center px-8 text-center"
-        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-2xl">
-          <CheckCircle className="w-10 h-10 text-green-500" />
+      <ScreenShell gradient>
+        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center overflow-y-auto">
+          <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-2xl flex-shrink-0">
+            <CheckCircle className="w-10 h-10 text-green-500" />
+          </div>
+          <h1 className="text-3xl font-extrabold text-white mb-3">All done!</h1>
+          <p className="text-white/75 text-base mb-6">
+            Your profile is set up and ready to go.
+          </p>
+          <div className="w-full">
+            <InstallGuide variant="light" />
+          </div>
         </div>
-        <h1 className="text-3xl font-extrabold text-white mb-3">All done!</h1>
-        <p className="text-white/75 text-base mb-8">
-          Your profile is set up and ready to go.
-        </p>
-        <button
-          onClick={() => {
-            window.location.href = isMobilePWA ? '/app' : createPageUrl('ParentDashboard');
-          }}
-          className="w-full bg-white text-[#7413dc] font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform shadow-lg"
-        >
-          Go to my Dashboard →
-        </button>
-      </div>
+        <div className="flex-shrink-0 px-6 pb-8 pt-2">
+          <button
+            onClick={() => {
+              window.location.href = isMobilePWA ? '/app' : createPageUrl('ParentDashboard');
+            }}
+            className="w-full bg-white text-[#7413dc] font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform shadow-lg"
+          >
+            Go to my Dashboard →
+          </button>
+        </div>
+      </ScreenShell>
     );
   }
 
   // ── No Child Found Screen ──
   if (noChildFound) {
     return (
-      <div className="fixed inset-0 bg-gray-50 flex flex-col"
-        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-          <div className="w-16 h-16 bg-orange-100 rounded-3xl flex items-center justify-center mb-5">
+      <ScreenShell>
+        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center overflow-y-auto">
+          <div className="w-16 h-16 bg-orange-100 rounded-3xl flex items-center justify-center mb-5 flex-shrink-0">
             <AlertCircle className="w-8 h-8 text-orange-500" />
           </div>
           <h2 className="text-xl font-bold text-gray-900 mb-3">No child record found</h2>
@@ -319,7 +325,7 @@ export default function CompleteRegistration() {
             Please contact your section leader to ensure your child has been added with this email address, or sign in with the correct account.
           </p>
         </div>
-        <div className="px-6 pb-8 space-y-3">
+        <div className="flex-shrink-0 px-6 pb-8 space-y-3">
           <button
             onClick={() => { setNoChildFound(false); setStep(1); }}
             className="w-full bg-[#7413dc] text-white font-bold text-base py-4 rounded-2xl active:scale-95 transition-transform"
@@ -334,16 +340,15 @@ export default function CompleteRegistration() {
             Sign out
           </button>
         </div>
-      </div>
+      </ScreenShell>
     );
   }
 
   // ── Step 7: Payment Setup ──
   if (step === 7) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto"
-        style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="flex-1 overflow-y-auto pb-28">
+      <ScreenShell>
+        <div className="flex-1 overflow-y-auto">
           <StepHeader icon={CreditCard} iconBg="bg-green-500" title="Set up your payment method" subtitle="Add a card for subscriptions and events" step={7} totalSteps={TOTAL_CONTENT_STEPS} />
           <div className="px-5 space-y-4 pb-8">
             <p className="text-sm text-gray-500 leading-relaxed">
@@ -365,7 +370,7 @@ export default function CompleteRegistration() {
             </div>
           </div>
         </div>
-      </div>
+      </ScreenShell>
     );
   }
 
@@ -375,17 +380,15 @@ export default function CompleteRegistration() {
   const goBack = () => { scrollTop(); back(); };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col max-w-md mx-auto"
-      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
-
+    <ScreenShell>
       {/* Back button */}
-      <div className="px-4 pt-4 pb-0 flex items-center">
+      <div className="flex-shrink-0 px-4 pt-4 pb-0 flex items-center">
         <button onClick={goBack} className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-500">
           <ChevronLeft className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-28">
+      <div className="flex-1 overflow-y-auto">
 
         {/* ── Step 1: Your Name ── */}
         {step === 1 && (
@@ -599,7 +602,7 @@ export default function CompleteRegistration() {
       </div>
 
       {/* ── Sticky Bottom Button ── */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto px-4 pb-6 bg-gray-50 pt-3 border-t border-gray-100"
+      <div className="flex-shrink-0 px-4 pb-6 bg-gray-50 pt-3 border-t border-gray-100"
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 20px)' }}>
         {step < 6 ? (
           <button
@@ -627,7 +630,7 @@ export default function CompleteRegistration() {
           </button>
         ) : null}
       </div>
-    </div>
+    </ScreenShell>
   );
 }
 
