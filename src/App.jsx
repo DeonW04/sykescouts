@@ -36,6 +36,7 @@ import Register from './pages/Register';
 import RegisterUser from './pages/RegisterUser';
 import Login from './pages/Login';
 import ApproveAccess from './pages/ApproveAccess';
+import OAuthConsent from './pages/OAuthConsent';
 import { usePWA } from './hooks/usePWA';
 import PWAInstallGate from './components/pwa/PWAInstallGate';
 import { useEffect } from 'react';
@@ -233,6 +234,7 @@ const AuthenticatedApp = () => {
       <Route path="/register-user" element={<RegisterUser />} />
       <Route path="/login" element={<Login />} />
       <Route path="/approve-access" element={<ApproveAccess />} />
+      <Route path="/oauth/consent" element={<OAuthConsent />} />
       <Route path="/TreasurerDashboard" element={<TreasurerGuard><TreasurerDashboard /></TreasurerGuard>} />
       <Route path="/TreasurerLedger" element={<TreasurerGuard><TreasurerLedger /></TreasurerGuard>} />
       <Route path="/TreasurerMemberPayments" element={<TreasurerGuard><TreasurerMemberPayments /></TreasurerGuard>} />

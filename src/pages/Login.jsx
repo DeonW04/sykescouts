@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2 } from 'lucide-react';
 import LoginBackground from '@/components/login/LoginBackground';
 import RequestAccessDialog from '@/components/login/RequestAccessDialog';
+import { safeReturnTo } from '@/lib/authReturnTo';
 
 const LOGO_URL = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png';
 
@@ -17,9 +18,10 @@ export default function Login() {
   const [bgInterval, setBgInterval] = useState(6);
   const [requestOpen, setRequestOpen] = useState(false);
 
-  // Where to go after login — honour ?next= param, default to /app
+  // Where to go after login — honour ?returnTo= (OAuth consent resume) first,
+  // then ?next=, default to /app
   const params = new URLSearchParams(window.location.search);
-  const nextUrl = params.get('next') || '/app';
+  const nextUrl = params.has('returnTo') ? safeReturnTo() : (params.get('next') || '/app');
 
   useEffect(() => {
     base44.functions.invoke('getLoginConfig', {})
