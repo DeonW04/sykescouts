@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { FileText, Smartphone, QrCode, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import SignatureCanvas from '@/components/parent/SignatureCanvas';
+import ConsentChoiceOptions from '@/components/consent/ConsentChoiceOptions';
 
 // Shows the actual consent form (info blocks + fillable fields + T&Cs), then
 // offers a QR code to sign on a phone, or an inline signature box to sign on
@@ -80,7 +81,7 @@ export default function ConsentFormDialog({ open, onOpenChange, action, child, u
 
   const handleNext = () => {
     if (step === 'form') {
-      const missing = inputBlocks.filter(b => b.required && !responses[b.id]);
+      const missing = inputBlocks.filter(b => b.required && (Array.isArray(responses[b.id]) ? responses[b.id].length === 0 : !responses[b.id]));
       if (missing.length > 0) { toast.error('Please fill in all required fields'); return; }
       setStep(hasTCs ? 'tcs' : 'finish');
     } else if (step === 'tcs') {
@@ -155,17 +156,7 @@ export default function ConsentFormDialog({ open, onOpenChange, action, child, u
                     {block.label}{block.required && <span className="text-red-500 ml-1">*</span>}
                   </label>
                   {block.type === 'multiple_choice' ? (
-                    <div className="flex flex-wrap gap-2">
-                      {(block.options || []).map(opt => (
-                        <button
-                          key={opt}
-                          onClick={() => setResponses(r => ({ ...r, [block.id]: opt }))}
-                          className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${val === opt ? 'bg-[#7413dc] text-white border-[#7413dc]' : 'bg-white text-gray-700 border-gray-200'}`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </div>
+                    <ConsentChoiceOptions block={block} value={val} onChange={value => setResponses(r => ({ ...r, [block.id]: value }))} />
                   ) : block.type === 'multi_line' ? (
                     <Textarea value={val} onChange={e => setResponses(r => ({ ...r, [block.id]: e.target.value }))} rows={3} />
                   ) : (

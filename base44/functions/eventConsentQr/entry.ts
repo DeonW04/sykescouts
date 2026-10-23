@@ -69,9 +69,15 @@ export default async function(req) {
     for (const block of form.blocks || []) {
       if (['heading', 'text'].includes(block.type)) continue;
       const value = input.responses[block.id] ?? '';
+      if (block.type === 'multiple_choice') {
+        const choices = Array.isArray(value) ? value : typeof value === 'string' ? (value ? [value] : []) : null;
+        if (!choices || choices.length > (block.options || []).length || !choices.every(choice => typeof choice === 'string' && choice.length <= 10000 && block.options?.includes(choice))) return fail('Invalid choice for ' + block.label);
+        if (block.required && choices.length === 0) return fail('Please complete: ' + block.label);
+        responses[block.id] = [...new Set(choices)];
+        continue;
+      }
       if (typeof value !== 'string' || value.length > 10000) return fail('Invalid response for ' + block.label);
       if (block.required && !value.trim()) return fail('Please complete: ' + block.label);
-      if (value && block.type === 'multiple_choice' && !block.options?.includes(value)) return fail('Invalid choice for ' + block.label);
       if (value && block.type === 'number' && (!Number.isFinite(Number(value)) || (block.min != null && Number(value) < block.min) || (block.max != null && Number(value) > block.max))) return fail('Enter a valid number for ' + block.label);
       responses[block.id] = value;
     }
