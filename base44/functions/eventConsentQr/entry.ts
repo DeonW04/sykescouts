@@ -41,7 +41,7 @@ export default async function(req) {
         await links.create(payload);
       }
       // Use the published host, never a preview/editor host, so another phone can open it.
-      const url = 'https://sykescouts.base44.app/consent/event#' + token;
+      const url = 'https://sykescouts.org/consent/event#' + token;
       const svg = await QRCode.toString(url, { type: 'svg', errorCorrectionLevel: 'M', margin: 4, width: 280 });
       return ok({ token, url, svg, expires_at: payload.expires_at });
     }
