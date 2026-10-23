@@ -9,6 +9,7 @@ import { CheckCircle2, Clock, XCircle, Eye, FileText, Printer, Send, QrCode } fr
 import PushConsentFormDialog from './PushConsentFormDialog';
 import EventConsentQrDialog from '@/components/meeting/EventConsentQrDialog';
 import ConsentSignatureViewer from '@/components/parent/ConsentSignatureViewer';
+import ConsentExportButtons from '@/components/consent/ConsentExportButtons';
 
 const LOGO = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png';
 
@@ -168,6 +169,7 @@ export default function ConsentSubmissionsSection({ programmeId, entityType, lin
 
   return (
     <div className="space-y-4">
+      <ConsentExportButtons programmeId={programmeId} entityType={entityType} forms={linkedForms} entityData={entityData} />
       {linkedForms.map(form => {
         const formSubmissions = submissions.filter(s => s.form_id === form.id);
         const statusOf = (memberId) => {
