@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Clock, XCircle, Eye, FileText, Printer, Send } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle, Eye, FileText, Printer, Send, QrCode } from 'lucide-react';
 import PushConsentFormDialog from './PushConsentFormDialog';
+import EventConsentQrDialog from '@/components/meeting/EventConsentQrDialog';
+import ConsentSignatureViewer from '@/components/parent/ConsentSignatureViewer';
 
 const LOGO = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69540f3779bf32f5ccc6335b/e8eca937a_image.png';
 
@@ -128,6 +130,16 @@ export default function ConsentSubmissionsSection({ programmeId, entityType, lin
   const [viewingSubmission, setViewingSubmission] = useState(null);
   const [viewingForm, setViewingForm] = useState(null);
   const [pushingForm, setPushingForm] = useState(null);
+  const [qrTarget, setQrTarget] = useState(null);
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (entityType !== 'event' || !programmeId) return;
+    return base44.entities.ConsentFormSubmission.subscribe(event => {
+      if (event.data?.event_id === programmeId) {
+        queryClient.invalidateQueries({ queryKey: ['consent-submissions', programmeId, entityType] });
+      }
+    });
+  }, [programmeId, entityType, queryClient]);
 
   const { data: members = [] } = useQuery({
     queryKey: ['consent-members', entityType, programmeId],
@@ -139,8 +151,7 @@ export default function ConsentSubmissionsSection({ programmeId, entityType, lin
         const attendances = await base44.entities.EventAttendance.filter({ event_id: programmeId });
         if (!attendances.length) return [];
         const memberIds = attendances.map(a => a.member_id);
-        const allMembers = await base44.entities.Member.filter({});
-        result = allMembers.filter(m => memberIds.includes(m.id));
+        result = await base44.entities.Member.filter({ id: { $in: memberIds } });
       }
       return result.sort((a, b) => new Date(a.date_of_birth) - new Date(b.date_of_birth));
     },
@@ -149,12 +160,7 @@ export default function ConsentSubmissionsSection({ programmeId, entityType, lin
 
   const { data: submissions = [] } = useQuery({
     queryKey: ['consent-submissions', programmeId, entityType],
-    queryFn: async () => {
-      const all = await base44.entities.ConsentFormSubmission.filter({});
-      return all.filter(s =>
-        entityType === 'event' ? s.event_id === programmeId : s.programme_id === programmeId
-      );
-    },
+    queryFn: () => base44.entities.ConsentFormSubmission.filter(entityType === 'event' ? { event_id: programmeId } : { programme_id: programmeId }),
     enabled: !!programmeId,
   });
 
@@ -165,7 +171,7 @@ export default function ConsentSubmissionsSection({ programmeId, entityType, lin
       {linkedForms.map(form => {
         const formSubmissions = submissions.filter(s => s.form_id === form.id);
         const statusOf = (memberId) => {
-          const sub = formSubmissions.find(s => s.member_id === memberId);
+          const sub = formSubmissions.find(s => s.member_id === memberId && ['signed', 'complete'].includes(s.status)) || formSubmissions.find(s => s.member_id === memberId);
           if (!sub) return 'not_started';
           return sub.status;
         };
@@ -197,7 +203,7 @@ export default function ConsentSubmissionsSection({ programmeId, entityType, lin
                 <div className="space-y-2">
                   {members.map(member => {
                     const status = statusOf(member.id);
-                    const sub = formSubmissions.find(s => s.member_id === member.id);
+                    const sub = formSubmissions.find(s => s.member_id === member.id && ['signed', 'complete'].includes(s.status)) || formSubmissions.find(s => s.member_id === member.id);
                     return (
                       <div key={member.id} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all">
                         <div className="flex-shrink-0">
@@ -221,6 +227,11 @@ export default function ConsentSubmissionsSection({ programmeId, entityType, lin
                               : 'Not sent'}
                           </p>
                         </div>
+                        {entityType === 'event' && !['signed', 'complete'].includes(status) && (
+                          <Button size="sm" variant="outline" aria-label={`Open consent QR code for ${member.full_name}`} onClick={() => setQrTarget({ member, form })}>
+                            <QrCode className="w-4 h-4" /><span className="sr-only sm:not-sr-only">QR</span>
+                          </Button>
+                        )}
                         {sub && (status === 'signed' || status === 'complete' || status === 'pending' || status === 'awaiting_signature') && (
                           <Button
                             size="sm"
@@ -248,11 +259,14 @@ export default function ConsentSubmissionsSection({ programmeId, entityType, lin
             <DialogTitle>{viewingForm?.title} — Submission</DialogTitle>
           </DialogHeader>
           {viewingSubmission && viewingForm && (
-            <FormResponseViewer submission={viewingSubmission} form={viewingForm} />
+            viewingSubmission.signature_file_uri ? (
+              <ConsentSignatureViewer fileUri={viewingSubmission.signature_file_uri}>{url => <FormResponseViewer submission={{ ...viewingSubmission, signature_data_url: url }} form={viewingForm} />}</ConsentSignatureViewer>
+            ) : <FormResponseViewer submission={viewingSubmission} form={viewingForm} />
           )}
         </DialogContent>
       </Dialog>
 
+      {qrTarget && <EventConsentQrDialog target={qrTarget} eventId={programmeId} onClose={() => setQrTarget(null)} />}
       {pushingForm && (
         <PushConsentFormDialog
           open={!!pushingForm}

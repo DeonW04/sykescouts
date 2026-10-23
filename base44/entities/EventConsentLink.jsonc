@@ -1,0 +1,68 @@
+{
+  "name": "EventConsentLink",
+  "type": "object",
+  "properties": {
+    "token_hash": {
+      "type": "string"
+    },
+    "event_id": {
+      "type": "string"
+    },
+    "form_id": {
+      "type": "string"
+    },
+    "member_id": {
+      "type": "string"
+    },
+    "submission_id": {
+      "type": "string"
+    },
+    "issued_by": {
+      "type": "string"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "active",
+        "processing",
+        "used"
+      ]
+    }
+  },
+  "required": [
+    "token_hash",
+    "event_id",
+    "form_id",
+    "member_id",
+    "submission_id",
+    "issued_by",
+    "expires_at",
+    "state"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -29,6 +29,7 @@ import ConsentForms from './pages/ConsentForms';
 import ConsentFormBuilder from './pages/ConsentFormBuilder';
 import IpadApp from './pages/IpadApp';
 import SignaturePage from './pages/SignaturePage';
+import PublicEventConsent from '@/pages/PublicEventConsent';
 import QuizBuilder from './pages/QuizBuilder';
 import MobileApp from './pages/MobileApp';
 import CompleteRegistration from './pages/CompleteRegistration';
@@ -181,7 +182,7 @@ const AuthenticatedApp = () => {
         </div>
       );
     }
-    if (authError) {
+    if (authError && location.pathname !== '/consent/event') {
       if (authError.type === 'user_not_registered') return <UserNotRegisteredError />;
       if (authError.type === 'auth_required') { navigateToLogin(); return null; }
     }
@@ -226,6 +227,7 @@ const AuthenticatedApp = () => {
       <Route path="/app" element={<MobileApp />} />
       <Route path="/ipad" element={<IpadApp />} />
       <Route path="/sign" element={<SignaturePage />} />
+      <Route path="/consent/event" element={<PublicEventConsent />} />
       <Route path="/ConsentForms" element={<LayoutWrapper currentPageName="ConsentForms"><ConsentForms /></LayoutWrapper>} />
       <Route path="/ParentPortalAnalytics" element={<LayoutWrapper currentPageName="ParentPortalAnalytics"><ParentPortalAnalytics /></LayoutWrapper>} />
       <Route path="/ConsentFormBuilder" element={<LayoutWrapper currentPageName="ConsentFormBuilder"><ConsentFormBuilder /></LayoutWrapper>} />
